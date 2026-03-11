@@ -1,5 +1,4 @@
 <template>
-
     <div class="box">
         <h2>Nuevo trabajo</h2>
         <select v-model="sector">

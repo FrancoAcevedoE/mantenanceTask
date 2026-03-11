@@ -70,17 +70,40 @@ statusClass(status) {
 </script>
 
 
-<style>
+<style scoped>
+/* neutral, minimalist status palette */
 .done {
-    background: white;
+    background: #f9f9f9;
+    color: #000;
 }
 
 .pending {
-    background: orange;
+    background: #e0e0e0;
+    color: #000;
 }
 
 .stopped {
-    background: red;
-    color: white;
+    background: #cccccc;
+    color: #000;
+}
+
+input,
+select {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fafafa;
+    color: #000;
+    margin-bottom: 1rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+td {
+    border-bottom: 1px solid #ddd;
+    padding: 0.5rem;
 }
 </style>
