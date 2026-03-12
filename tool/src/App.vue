@@ -5,6 +5,7 @@
 <template>
   <h1>You did it!</h1>
   <nav>
+    <router-link to="logView">Login</router-link>
     <router-link to="/history">Historial</router-link>
     <router-link to="/new">Nuevo mantenimiento</router-link>
   </nav>
