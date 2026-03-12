@@ -16,6 +16,7 @@
 
 
 <script>
+import axios from "axios"
 import { Chart } from "chart.js/auto"
 export default {
     data() {
@@ -27,7 +28,17 @@ export default {
         }
     },
 
-    mounted() {
+    async mounted() {
+        try {
+            const res = await axios.get("http://localhost:3000/api/history")
+            this.history = res.data
+
+            // prepare data for chart
+            this.labels = this.history.map(h => h.machine)
+            this.data = this.history.map(h => h.hoursWorked)
+        } catch (error) {
+            console.log(error)
+        }
         this.createChart()
     },
 
