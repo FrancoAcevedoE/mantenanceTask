@@ -27,11 +27,12 @@ body {
 }
 
 nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
   padding: 1rem;
-background: transparent;
+  background: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
-     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
-    padding: 1rem;
 }
 
 nav a {
