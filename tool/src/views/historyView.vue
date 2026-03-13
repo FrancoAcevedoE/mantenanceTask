@@ -305,6 +305,28 @@ td {
         margin-top: 0.35rem;
     }
 
+/* Responsive */
+@media (max-width: 768px) {
+  .history-layout {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .history-list,
+  .charts {
+    flex: none;
+    max-width: none;
+  }
+
+  .charts {
+    width: 100%;
+  }
+
+  .chart-card {
+    max-width: none;
+  }
+}
+
 </style>
 .page-container {
     min-height: 100vh;

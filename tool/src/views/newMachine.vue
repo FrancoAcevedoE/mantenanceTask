@@ -121,6 +121,24 @@ button+button {
     margin-top: 1rem;
     background: #444;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .box {
+    margin: 1rem auto;
+    padding: 1rem;
+    max-width: none;
+  }
+
+  .button-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  button {
+    width: 100%;
+  }
+}
 </style>
 
 <style>

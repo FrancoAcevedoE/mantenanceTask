@@ -58,4 +58,19 @@ nav a:hover {
 nav a.router-link-active {
   background: rgba(255, 255, 255, 0.15);
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+  nav {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  nav a {
+    margin-right: 0;
+    width: 100%;
+    text-align: center;
+  }
+}
 </style>

@@ -159,4 +159,20 @@ button{
 
 }
 
+/* Responsive */
+@media (max-width: 768px) {
+  .login-box {
+    width: 90%;
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .title i {
+    font-size: 1.5rem;
+  }
+}
+
 </style>

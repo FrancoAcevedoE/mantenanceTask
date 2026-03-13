@@ -77,6 +77,15 @@ button {
   margin-top: 1rem;
   padding: 0.6rem 1.2rem;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-form {
+    margin: 1rem auto;
+    padding: 1rem;
+    max-width: none;
+  }
+}
 </style>
 .page-container {
     min-height: 100vh;
