@@ -56,15 +56,12 @@ export default {
             })
         },
 
-statusClass(status) {
-    if (status == "terminado") return "done"
-    if (status == "pendiente") return "pending"
-    if (status == "parada") return "stopped"
-
+        statusClass(status) {
+            if (status == "terminado") return "done"
+            if (status == "pendiente") return "pending"
+            if (status == "parada") return "stopped"
+        }
     }
-
-}
-
 }
 
 </script>

@@ -3,9 +3,9 @@
 </script>
 
 <template>
-  <h1>You did it!</h1>
   <nav>
-    <router-link to="logView">Login</router-link>
+    <router-link to="logUser">Login User</router-link>
+    <router-link to="adminView">Crear Usuario</router-link>
     <router-link to="/history">Historial</router-link>
     <router-link to="/new">Nuevo mantenimiento</router-link>
   </nav>
@@ -19,7 +19,8 @@
 body {
   margin: 0;
   padding: 0;
-  background: #fff;
+  background:#ffffff;
+  /* background:#2E3D58; */
   color: #000;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
@@ -27,18 +28,32 @@ body {
 
 nav {
   padding: 1rem;
-  background: #f2f2f2;
-  border-bottom: 1px solid #d1d1d1;
+background:#ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
+     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
+    padding: 1rem;
 }
 
-router-link {
+nav a {
+  display: inline-block;
   margin-right: 1rem;
-  color: #000;
+  padding: 0.4rem 0.75rem;
+  color: #929292;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-router-link:hover {
-  text-decoration: underline;
+nav a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+}
+
+nav a.router-link-active {
+  background: rgba(255, 255, 255, 0.15);
 }
 </style>
