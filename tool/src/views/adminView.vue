@@ -11,6 +11,7 @@
       <input type="password" id="password" v-model="user.password" />
 
       <button @click="createUser">Crear usuario</button>
+      <button @click="deleteUser">Eliminar usuario</button>
     </div>
   </div>
 </template>
