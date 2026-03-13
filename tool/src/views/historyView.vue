@@ -1,16 +1,18 @@
 <template>
-    <div>
-        <input v-model="search" placeholder="Buscar" />
-        <h2>Historial de mantenimientos</h2>
-        <table>
-            <tr v-for="item in filteredHistory" :key="item._id" :class="statusClass(item.status)">
-                <td>{{ item.sector }}</td>
-                <td>{{ item.machine }}</td>
-                <td>{{ item.hoursWorked }}</td>
-                <td>{{ item.description }}</td>
-            </tr>
-        </table>
-        <canvas ref="chart"></canvas>
+    <div class="page-container">
+        <div>
+            <input v-model="search" placeholder="Buscar" />
+            <h2>Historial de mantenimientos</h2>
+            <table>
+                <tr v-for="item in filteredHistory" :key="item._id" :class="statusClass(item.status)">
+                    <td>{{ item.sector }}</td>
+                    <td>{{ item.machine }}</td>
+                    <td>{{ item.hoursWorked }}</td>
+                    <td>{{ item.description }}</td>
+                </tr>
+            </table>
+            <canvas ref="chart"></canvas>
+        </div>
     </div>
 </template>
 
@@ -18,13 +20,16 @@
 <script>
 import axios from "axios"
 import { Chart } from "chart.js/auto"
+import backgroundImage from '@/assets/fondogeneral.jpg'
+
 export default {
     data() {
         return {
             search: "",
             history: [],
             labels: [],
-            data: []
+            data: [],
+            backgroundImage: backgroundImage
         }
     },
 
@@ -40,6 +45,20 @@ export default {
             console.log(error)
         }
         this.createChart()
+
+        document.body.style.backgroundImage = `url(${this.backgroundImage})`;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+        document.body.style.backgroundRepeat = 'no-repeat';
+        document.body.style.backgroundAttachment = 'fixed';
+    },
+
+    beforeUnmount() {
+        document.body.style.backgroundImage = '';
+        document.body.style.backgroundSize = '';
+        document.body.style.backgroundPosition = '';
+        document.body.style.backgroundRepeat = '';
+        document.body.style.backgroundAttachment = '';
     },
 
     computed: {
@@ -115,3 +134,9 @@ td {
     padding: 0.5rem;
 }
 </style>
+.page-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

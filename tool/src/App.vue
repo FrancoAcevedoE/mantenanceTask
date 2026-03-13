@@ -28,7 +28,7 @@ body {
 
 nav {
   padding: 1rem;
-background:#ffffff;
+background: transparent;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
     padding: 1rem;

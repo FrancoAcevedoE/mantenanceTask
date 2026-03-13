@@ -1,5 +1,5 @@
 <template>
-  <div class="login-container" :style="{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }">
+  <div class="login-container">
 
     <div class="login-box">
 
@@ -68,8 +68,21 @@ export default {
   },
 
   mounted() {
-    // Cargar la imagen de fondo
     this.backgroundImage = backgroundImage
+
+    document.body.style.backgroundImage = `url(${this.backgroundImage})`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundAttachment = 'fixed';
+  },
+
+  beforeUnmount() {
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundSize = '';
+    document.body.style.backgroundPosition = '';
+    document.body.style.backgroundRepeat = '';
+    document.body.style.backgroundAttachment = '';
   }
 
 }

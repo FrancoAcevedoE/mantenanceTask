@@ -1,61 +1,67 @@
 <template>
-    <div class="box">
-        <h2>Nuevo trabajo</h2>
+    <div class="page-container">
+        <div class="box">
+            <h2>Nuevo trabajo</h2>
 
-        <select v-model="sector">
-            <option disabled value="">Seleccionar sector</option>
-            <option v-for="s in sectors" :key="s._id" :value="s.name">
-                {{ s.name }}
-            </option>
-        </select>
+            <select v-model="sector">
+                <option disabled value="">Seleccionar sector</option>
+                <option v-for="s in sectors" :key="s._id" :value="s.name">
+                    {{ s.name }}
+                </option>
+            </select>
 
-        <select v-model="machine">
-            <option disabled value="">Seleccionar máquina</option>
-            <option v-for="m in machines" :key="m._id" :value="m.name">
-                {{ m.name }}
-            </option>
-        </select>
+            <select v-model="machine">
+                <option disabled value="">Seleccionar máquina</option>
+                <option v-for="m in machines" :key="m._id" :value="m.name">
+                    {{ m.name }}
+                </option>
+            </select>
 
-        <select v-model="machineParts">
-            <option disabled value="">Seleccionar piezas</option>
-            <option v-for="p in machinePartsList" :key="p._id" :value="p.name">
-                {{ p.name }}
-            </option>
-        </select>
+            <select v-model="machineParts">
+                <option disabled value="">Seleccionar piezas</option>
+                <option v-for="p in machinePartsList" :key="p._id" :value="p.name">
+                    {{ p.name }}
+                </option>
+            </select>
 
-        <select v-model="type">
-            <option value="preventivo">Preventivo</option>
-            <option value="arreglo">Arreglo</option>
-            <option value="mejora">Mejora</option>
-            <option value="Revision">Revision y disponibilidad</option>
-        </select>
+            <select v-model="type">
+                <option value="preventivo">Preventivo</option>
+                <option value="arreglo">Arreglo</option>
+                <option value="mejora">Mejora</option>
+                <option value="Revision">Revision y disponibilidad</option>
+            </select>
 
-        <textarea v-model="description" placeholder="Trabajo realizado"></textarea>
-        <textarea v-model="partsUsed" placeholder="Repuestos utilizados"></textarea>
+            <textarea v-model="description" placeholder="Trabajo realizado"></textarea>
+            <textarea v-model="partsUsed" placeholder="Repuestos utilizados"></textarea>
 
-        <input type="number" v-model="hoursWorked" placeholder="Horas trabajadas" />
-        <input type="number" v-model="hoursDowntime" placeholder="Horas de maquina parada" />
+            <input type="number" v-model="hoursWorked" placeholder="Horas trabajadas" />
+            <input type="number" v-model="hoursDowntime" placeholder="Horas de maquina parada" />
 
-        <label>
-            la maquina sigue funcionando?
-            <input type="checkbox" v-model="machineWorking" />
-        </label>
-
-        <div class="status-group">
-            <label>
-                <input type="radio" value="terminado" v-model="status" /> Si
+            <label class="checkbox-label">
+                la maquina sigue funcionando?
+                <input type="checkbox" v-model="machineWorking" />
             </label>
-            <label>
-                <input type="radio" value="pendiente" v-model="status" /> No
-            </label>
+
+            <div class="status-group">
+                <label>
+                    <input type="radio" value="terminado" v-model="status" /> Si
+                </label>
+                <label>
+                    <input type="radio" value="pendiente" v-model="status" /> No
+                </label>
+            </div>
+
+            <div class="button-group">
+                <button @click="save">Guardar</button>
+                <button @click="cancel">Cancelar</button>
+            </div>
         </div>
-
-        <button @click="save">Guardar</button>
-        <button @click="cancel">Cancelar</button>
     </div>
 </template>
 
 <script>
+import backgroundImage from '@/assets/fondogeneral.jpg'
+
 export default {
   data() {
     return {
@@ -72,7 +78,8 @@ export default {
 
       sectors: [],
       machines: [],
-      machinePartsList: []
+      machinePartsList: [],
+      backgroundImage: backgroundImage
     }
   },
   methods: {
@@ -86,7 +93,18 @@ export default {
     }
   },
   mounted() {
-    // load lists if necessary
+    document.body.style.backgroundImage = `url(${this.backgroundImage})`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundAttachment = 'fixed';
+  },
+  beforeUnmount() {
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundSize = '';
+    document.body.style.backgroundPosition = '';
+    document.body.style.backgroundRepeat = '';
+    document.body.style.backgroundAttachment = '';
   }
 }
 </script>
@@ -126,15 +144,43 @@ textarea {
     font-size: 1rem;
 }
 
+textarea {
+    resize: vertical;
+}
+
 label {
     display: flex;
     align-items: center;
+    justify-content: center;
     margin: 0.5rem 0;
     font-size: 0.95rem;
 }
 
+.checkbox-label {
+    justify-content: flex-start;
+    max-width: 300px;
+    margin: 0.5rem auto;
+}
+
 label input[type="checkbox"] {
     margin-left: 0.5rem;
+}
+
+.status-group {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 0.5rem 0;
+}
+
+.status-group label {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.status-group label input[type="radio"] {
+    margin-right: 0.5rem;
 }
 
 button {
@@ -148,8 +194,23 @@ button {
     font-weight: 500;
 }
 
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
 button+button {
     margin-left: 0.5rem;
+    margin-top: 1rem;
     background: #444;
 }
 </style>
+.page-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+}

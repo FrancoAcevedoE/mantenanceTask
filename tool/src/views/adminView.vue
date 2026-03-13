@@ -1,14 +1,23 @@
 <template>
-<label for="name">nombre</label>
-<input type="text" id="name" v-model="user.name" />
-<label for="dni">documento</label>
-<input type="number" id="dni" v-model="user.dni" />
-<label for="password">contraseña</label>
-<input type="password" id="password" v-model="user.password" />
-<button @click="createUser">Crear usuario</button>
+  <div class="page-container">
+    <div class="admin-form">
+      <label for="name">nombre</label>
+      <input type="text" id="name" v-model="user.name" />
+
+      <label for="dni">documento</label>
+      <input type="number" id="dni" v-model="user.dni" />
+
+      <label for="password">contraseña</label>
+      <input type="password" id="password" v-model="user.password" />
+
+      <button @click="createUser">Crear usuario</button>
+    </div>
+  </div>
 </template>
 
 <script>
+import backgroundImage from '@/assets/fondogeneral.jpg'
+
 export default {
   data() {
     return {
@@ -16,7 +25,8 @@ export default {
         name: "",
         dni: "",
         password: ""
-      }
+      },
+      backgroundImage: backgroundImage
     }
   },
   methods: {
@@ -24,6 +34,20 @@ export default {
       console.log('nuevo usuario', this.user)
       // call backend or emit event here
     }
+  },
+  mounted() {
+    document.body.style.backgroundImage = `url(${this.backgroundImage})`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundAttachment = 'fixed';
+  },
+  beforeUnmount() {
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundSize = '';
+    document.body.style.backgroundPosition = '';
+    document.body.style.backgroundRepeat = '';
+    document.body.style.backgroundAttachment = '';
   }
 }
 </script>
@@ -53,3 +77,10 @@ button {
   padding: 0.6rem 1.2rem;
 }
 </style>
+.page-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+}
