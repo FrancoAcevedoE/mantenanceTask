@@ -8,6 +8,7 @@
     <router-link to="adminView">Crear Usuario</router-link>
     <router-link to="/history">Historial</router-link>
     <router-link to="/new">Nuevo mantenimiento</router-link>
+    <router-link to="/newMachine">Nueva máquina</router-link>
   </nav>
 
   <!-- this is where the matched view will be rendered -->
