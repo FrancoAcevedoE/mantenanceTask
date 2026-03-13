@@ -1,9 +1,9 @@
 <template>
     <div class="box">
         <h2>Nuevo trabajo</h2>
+
         <select v-model="sector">
             <option disabled value="">Seleccionar sector</option>
-
             <option v-for="s in sectors" :key="s._id" :value="s.name">
                 {{ s.name }}
             </option>
@@ -11,18 +11,18 @@
 
         <select v-model="machine">
             <option disabled value="">Seleccionar máquina</option>
-
             <option v-for="m in machines" :key="m._id" :value="m.name">
                 {{ m.name }}
             </option>
         </select>
 
-           <select v-model="machineParts">
+        <select v-model="machineParts">
             <option disabled value="">Seleccionar piezas</option>
             <option v-for="p in machinePartsList" :key="p._id" :value="p.name">
                 {{ p.name }}
             </option>
         </select>
+
         <select v-model="type">
             <option value="preventivo">Preventivo</option>
             <option value="arreglo">Arreglo</option>
@@ -30,26 +30,66 @@
             <option value="Revision">Revision y disponibilidad</option>
         </select>
 
-        <textarea v-model="description" placeholder="Trabajo realizado" />
-<textarea v-model="description" placeholder="Repuestos utilizados" />
+        <textarea v-model="description" placeholder="Trabajo realizado"></textarea>
+        <textarea v-model="partsUsed" placeholder="Repuestos utilizados"></textarea>
+
         <input type="number" v-model="hoursWorked" placeholder="Horas trabajadas" />
-        <input type="number" v-model="hoursWorked" placeholder="Horas de maquina parada" />
+        <input type="number" v-model="hoursDowntime" placeholder="Horas de maquina parada" />
+
         <label>
             la maquina sigue funcionando?
-            <input type="checkbox" v-model="machineWorking">
+            <input type="checkbox" v-model="machineWorking" />
         </label>
 
-        <label> Trabajo terminado?
-                <input type="checkbox" v-model="status" true-value="terminado" false-value="pendiente">SI
-                <input type="checkbox" v-model="status" true-value="pendiente" false-value="terminado">NO
-
-         <input type="text" v-model="status" true-value="pendiente" false-value="terminado">
+        <div class="status-group">
+            <label>
+                <input type="radio" value="terminado" v-model="status" /> Si
             </label>
+            <label>
+                <input type="radio" value="pendiente" v-model="status" /> No
+            </label>
+        </div>
 
         <button @click="save">Guardar</button>
         <button @click="cancel">Cancelar</button>
     </div>
 </template>
+
+<script>
+export default {
+  data() {
+    return {
+      sector: "",
+      machine: "",
+      machineParts: "",
+      type: "preventivo",
+      description: "",
+      partsUsed: "",
+      hoursWorked: 0,
+      hoursDowntime: 0,
+      machineWorking: false,
+      status: "pendiente",
+
+      sectors: [],
+      machines: [],
+      machinePartsList: []
+    }
+  },
+  methods: {
+    save() {
+      // Placeholder: implement save logic or emit event
+      console.log('guardando', this.$data)
+    },
+    cancel() {
+      // Reset form or navigate away
+      this.$router.back()
+    }
+  },
+  mounted() {
+    // load lists if necessary
+  }
+}
+</script>
 
 <style scoped>
 /* simple minimalist palette for form */
@@ -60,6 +100,7 @@
     background: #fff;
     border: 1px solid #d1d1d1;
     border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
     color: #000;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
         Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
