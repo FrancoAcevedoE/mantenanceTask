@@ -1,25 +1,110 @@
-export const historyController = (req, res) => {
+import Maintenance from "../models/maintenanceModel.js"
 
-    res.json([
-        { sector: "Producción", machine: "Torno 1", hoursWorked: 3 },
-        { sector: "Mantenimiento", machine: "Compresor", hoursWorked: 2 }
-    ])
+export const newMaintenanceController = async (req,res)=>{
+
+    try{
+
+        const data = req.body
+
+        let status = "finished"
+
+        if(!data.machineRunning){
+            status = "stopped"
+        }
+
+        if(data.machineRunning && !data.jobFinished){
+            status = "pending"
+        }
+
+        const maintenance = new Maintenance({
+            ...data,
+            reportedBy: req.user.id,
+            status
+        })
+
+        await maintenance.save()
+
+        res.json(maintenance)
+
+    }catch(error){
+
+        res.status(500).json({
+            message:"Error al registrar mantenimiento"
+        })
+
+    }
 
 }
 
-export const newMaintenanceController = (req, res) => {
 
-    res.json({
-        message: "Mantenimiento registrado"
-    })
+export const finishMaintenance = async (req,res)=>{
+
+    try{
+
+        const { hoursWorked } = req.body
+
+        const maintenance = await Maintenance.findById(req.params.id)
+
+        maintenance.hoursWorked += hoursWorked
+        maintenance.jobFinished = true
+        maintenance.machineRunning = true
+        maintenance.status = "finished"
+        maintenance.updatedAt = new Date()
+
+        await maintenance.save()
+
+        res.json(maintenance)
+
+    }catch(error){
+
+        res.status(500).json({
+            message:"Error al terminar mantenimiento"
+        })
+
+    }
 
 }
 
-export const dashboardController = (req, res) => {
 
-    res.json({
-        totalMaintenances: 24,
-        machinesActive: 12
-    })
+
+
+export const historyController = async (req, res) => {
+
+    try {
+
+        const history = await Maintenance.find()
+
+        res.json(history)
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Error al obtener historial"
+        })
+
+    }
+
+}
+
+export const dashboardController = async (req, res) => {
+
+    try {
+
+        const totalMaintenances = await Maintenance.countDocuments()
+
+        const totalMachines = await Maintenance.distinct("machine")
+
+        res.json({
+            totalMaintenances,
+            machinesRegistered: totalMachines.length
+        })
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Error al cargar dashboard"
+        })
+
+    }
 
 }

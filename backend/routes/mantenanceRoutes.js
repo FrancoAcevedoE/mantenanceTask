@@ -24,6 +24,12 @@ router.post(
     checkRole("admin","operario"),
     newMaintenanceController
 )
+router.put(
+"/finish/:id",
+verifyToken,
+checkRole("admin","operario"),
+finishMaintenance
+)
 
 router.get(
     "/dashboard",
