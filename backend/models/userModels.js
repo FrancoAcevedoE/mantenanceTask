@@ -5,11 +5,11 @@ const userSchema = new mongoose.Schema({
 name:String,
 
 dni:{
-type:String,
+type:Number,
 unique:true
 },
 
-password:String,
+password:Number,
 
 role:{
 type:String,

@@ -1,20 +1,29 @@
-const User = require("../models/User")
+import User from "../models/userModels.js"
+import jwt from "jsonwebtoken"
 
-exports.createUser = async (req,res)=>{
+export const login = async (req, res) => {
 
-const {name,dni,password,role} = req.body
+    const { dni, password } = req.body
 
-const user = new User({
+    const user = await User.findOne({
+        dni,
+        password
+    })
 
-name,
-dni,
-password,
-role
+    if (!user) {
+        return res.status(401).json({
+            message: "Credenciales invalidas"
+        })
+    }
 
-})
+    const token = jwt.sign(
+        {
+            id: user._id,
+            role: user.role
+        },
+        "secretkey",
+        { expiresIn: "1h" }
+    )
 
-await user.save()
-
-res.json(user)
-
+    res.json({ token })
 }
