@@ -1,112 +1,171 @@
+```html
 <template>
-    <div class="page-container">
-        <div class="box">
-            <h2>Nuevo trabajo</h2>
 
-            <select v-model="sector">
-                <option disabled value="">Seleccionar sector</option>
-                <option v-for="s in sectors" :key="s._id" :value="s.name">
-                    {{ s.name }}
-                </option>
-            </select>
+<div class="page-container">
+    <div class="box">
+        <h2>Nuevo Mantenimiento</h2>
 
-            <select v-model="machine">
-                <option disabled value="">Seleccionar máquina</option>
-                <option v-for="m in machines" :key="m._id" :value="m.name">
-                    {{ m.name }}
-                </option>
-            </select>
+        <form @submit.prevent="saveMaintenance">
 
-            <select v-model="machineParts">
-                <option disabled value="">Seleccionar piezas</option>
-                <option v-for="p in machinePartsList" :key="p._id" :value="p.name">
-                    {{ p.name }}
-                </option>
-            </select>
+<label>Sector</label>
+<input v-model="form.sector" required>
 
-            <select v-model="type">
-                <option value="preventivo">Preventivo</option>
-                <option value="arreglo">Arreglo</option>
-                <option value="mejora">Mejora</option>
-                <option value="Revision">Revision y disponibilidad</option>
-            </select>
+<label>Máquina</label>
+<input v-model="form.machine" required>
 
-            <textarea v-model="description" placeholder="Trabajo realizado"></textarea>
-            <textarea v-model="partsUsed" placeholder="Repuestos utilizados"></textarea>
+<label>Parte de máquina</label>
+<input v-model="form.machinePart" required>
 
-            <input type="number" v-model="hoursWorked" placeholder="Horas trabajadas" />
-            <input type="number" v-model="hoursDowntime" placeholder="Horas de maquina parada" />
+<label>Tipo de mantenimiento</label>
+<select v-model="form.maintenanceType">
 
-            <label class="checkbox-label">
-                la maquina sigue funcionando?
-                <input type="checkbox" v-model="machineWorking" />
-            </label>
+<option value="preventivo">Preventivo</option>
+<option value="MEJORA">MEJORA</option>
+<option value="puesta en marcha">Puesta en marcha</option>
+<option value="arreglo">Arreglo</option>
 
-            <div class="status-group">
-                <label>
-                    <input type="radio" value="terminado" v-model="status" /> Si
-                </label>
-                <label>
-                    <input type="radio" value="pendiente" v-model="status" /> No
-                </label>
-            </div>
+</select>
 
-            <div class="button-group">
-                <button @click="save">Guardar</button>
-                <button @click="cancel">Cancelar</button>
-            </div>
-        </div>
+<label>Descripción del trabajo realizado</label>
+<textarea v-model="form.workDescription"></textarea>
+
+<label>Repuestos utilizados</label>
+<textarea v-model="form.spareParts"></textarea>
+
+<label>Horas trabajadas</label>
+<input type="number" v-model="form.hoursWorked">
+
+<label>¿La máquina sigue funcionando?</label>
+
+<select v-model="form.machineRunning">
+
+<option :value="true">SI</option>
+<option :value="false">NO</option>
+
+</select>
+
+<label>¿El trabajo se terminó?</label>
+
+<select v-model="form.jobFinished">
+
+<option :value="true">SI</option>
+<option :value="false">NO</option>
+
+</select>
+
+<div v-if="form.jobFinished === false">
+
+<label>Motivo por el que no se terminó</label>
+<textarea v-model="form.unfinishedReason"></textarea>
+
+</div>
+
+<button type="submit">
+
+Guardar mantenimiento
+
+</button>
+
+</form>
     </div>
+</div>
+
 </template>
 
 <script>
+
 import backgroundImage from '@/assets/fondogeneral.jpg'
 
-export default {
-  data() {
-    return {
-      sector: "",
-      machine: "",
-      machineParts: "",
-      type: "preventivo",
-      description: "",
-      partsUsed: "",
-      hoursWorked: 0,
-      hoursDowntime: 0,
-      machineWorking: false,
-      status: "pendiente",
+export default{
 
-      sectors: [],
-      machines: [],
-      machinePartsList: [],
-      backgroundImage: backgroundImage
-    }
-  },
-  methods: {
-    save() {
-      // Placeholder: implement save logic or emit event
-      console.log('guardando', this.$data)
-    },
-    cancel() {
-      // Reset form or navigate away
-      this.$router.back()
-    }
-  },
-  mounted() {
+data(){
+
+return{
+
+form:{
+
+sector:"",
+machine:"",
+machinePart:"",
+maintenanceType:"MEJORA",
+workDescription:"",
+spareParts:"",
+hoursWorked:0,
+machineRunning:true,
+jobFinished:true,
+unfinishedReason:""
+
+},
+backgroundImage: backgroundImage
+
+}
+
+},
+
+mounted() {
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
     document.body.style.backgroundRepeat = 'no-repeat';
     document.body.style.backgroundAttachment = 'fixed';
-  },
-  beforeUnmount() {
+},
+
+beforeUnmount() {
     document.body.style.backgroundImage = '';
     document.body.style.backgroundSize = '';
     document.body.style.backgroundPosition = '';
     document.body.style.backgroundRepeat = '';
     document.body.style.backgroundAttachment = '';
-  }
+},
+
+methods:{
+
+async saveMaintenance(){
+
+try{
+
+await apiClient.post(
+
+"/maintenance/newmaintenance",
+this.form
+
+)
+
+alert("Mantenimiento registrado")
+
+this.resetForm()
+
+}catch(error){
+
+alert("Error al guardar mantenimiento")
+
 }
+
+},
+
+resetForm(){
+
+this.form = {
+
+sector:"",
+machine:"",
+machinePart:"",
+maintenanceType:"MEJORA",
+workDescription:"",
+spareParts:"",
+hoursWorked:0,
+machineRunning:true,
+jobFinished:true,
+unfinishedReason:""
+
+}
+
+}
+
+}
+
+}
+
 </script>
 
 <style scoped>
@@ -130,9 +189,10 @@ h2 {
     color: #111;
 }
 
-select,
+input[type="text"],
 input[type="number"],
-textarea {
+textarea,
+select {
     display: block;
     width: 100%;
     margin: 0.5rem 0;
@@ -148,41 +208,6 @@ textarea {
     resize: vertical;
 }
 
-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0.5rem 0;
-    font-size: 0.95rem;
-}
-
-.checkbox-label {
-    justify-content: flex-start;
-    max-width: 300px;
-    margin: 0.5rem auto;
-}
-
-label input[type="checkbox"] {
-    margin-left: 0.5rem;
-}
-
-.status-group {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin: 0.5rem 0;
-}
-
-.status-group label {
-    display: flex;
-    align-items: center;
-    margin: 0;
-}
-
-.status-group label input[type="radio"] {
-    margin-right: 0.5rem;
-}
-
 button {
     margin-top: 1rem;
     padding: 0.6rem 1.2rem;
@@ -194,19 +219,6 @@ button {
     font-weight: 500;
 }
 
-.button-group {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-button+button {
-    margin-left: 0.5rem;
-    margin-top: 1rem;
-    background: #444;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .box {
@@ -214,26 +226,15 @@ button+button {
     padding: 1rem;
     max-width: none;
   }
-
-  .status-group {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .button-group {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  button {
-    width: 100%;
-  }
 }
 </style>
+
+<style>
 .page-container {
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    
 }
+</style>
+```
