@@ -86,25 +86,41 @@ export const historyController = async (req, res) => {
 
 }
 
-export const dashboardController = async (req, res) => {
+export const dashboardController = async (req,res)=>{
 
-    try {
+try{
 
-        const totalMaintenances = await Maintenance.countDocuments()
+const totalMaintenances = await Maintenance.countDocuments()
 
-        const totalMachines = await Maintenance.distinct("machine")
+const machines = await Maintenance.distinct("machine")
 
-        res.json({
-            totalMaintenances,
-            machinesRegistered: totalMachines.length
-        })
+const pending = await Maintenance.countDocuments({
+status:"pending"
+})
 
-    } catch (error) {
+const stopped = await Maintenance.countDocuments({
+status:"stopped"
+})
 
-        res.status(500).json({
-            message: "Error al cargar dashboard"
-        })
+res.json({
 
-    }
+totalMaintenances,
+
+machinesRegistered:machines.length,
+
+pending,
+
+stopped
+
+})
+
+}catch(error){
+
+res.status(500).json({
+message:"Error cargando dashboard"
+})
 
 }
+
+}
+
