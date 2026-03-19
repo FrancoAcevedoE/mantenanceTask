@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import backgroundImage from '@/assets/fondogeneral.jpg'
+import backgroundImage from '@/assets/fondogeneral.png'
 
 export default {
   data() {

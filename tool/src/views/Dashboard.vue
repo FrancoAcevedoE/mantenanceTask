@@ -1,6 +1,7 @@
 ```html
 <template>
 
+<div class="page-container">
 <div class="container">
 
 <h1>Dashboard de mantenimiento</h1>
@@ -43,6 +44,8 @@
 
 </div>
 
+</div>
+
 </template>
 
 <script>
@@ -75,6 +78,15 @@ this.stats = res.data
 
 <style>
 
+.page-container{
+background-image: url('@/assets/fondogeneral.png');
+background-size: cover;
+background-position: center;
+background-repeat: no-repeat;
+background-attachment: fixed;
+min-height: 100vh;
+}
+
 .container{
 width:80%;
 margin:auto;
@@ -97,6 +109,5 @@ border-radius:8px;
 font-size:28px;
 font-weight:bold;
 }
-
 </style>
 ```

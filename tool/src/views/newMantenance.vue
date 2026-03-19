@@ -74,7 +74,7 @@ Guardar mantenimiento
 
 <script>
 
-import backgroundImage from '@/assets/fondogeneral.jpg'
+import backgroundImage from '@/assets/fondogeneral.png'
 
 export default{
 
