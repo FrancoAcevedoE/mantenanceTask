@@ -25,14 +25,34 @@
         {{ error }}
       </p>
 
+    </div>
+
+    <footer class="login-footer">
       <div class="pwa-qr-box">
-        <h3>Instalar app</h3>
-        <p>Escanea el QR desde tu celular para abrir la web y agregarla a pantalla de inicio.</p>
+        <h3>Descarga la app</h3>
+        <p>Escanea el QR y agrega Tool a la pantalla de inicio.</p>
         <img :src="qrUrl" alt="QR para abrir Tool" class="qr-image" />
         <a :href="pwaUrl" target="_blank" rel="noopener">Abrir enlace directo</a>
       </div>
 
-    </div>
+      <div class="social-box">
+        <h3>Mis redes</h3>
+        <div class="social-links">
+          <a href="https://www.instagram.com/_.francoacevedo?igsh=MXBkZTcxYTdjbHZ4dQ%3D%3D&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">
+            <i class="bi bi-instagram"></i>
+          </a>
+          <a href="https://www.facebook.com/share/1AupcjuHiM/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">
+            <i class="bi bi-facebook"></i>
+          </a>
+          <a href="https://github.com/FrancoAcevedoE" target="_blank" rel="noopener" aria-label="GitHub">
+            <i class="bi bi-github"></i>
+          </a>
+          <a href="https://wa.me/5493564581448" target="_blank" rel="noopener" aria-label="WhatsApp">
+            <i class="bi bi-whatsapp"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
 
   </div>
 </template>
@@ -53,7 +73,7 @@ export default {
       error:null,
       backgroundImage: backgroundImage,
       pwaUrl: PWA_URL,
-      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(PWA_URL)}`
+      qrUrl: ""
     }
   },
 
@@ -84,6 +104,17 @@ export default {
   mounted() {
     this.backgroundImage = backgroundImage
 
+    let normalizedUrl = this.pwaUrl
+    try {
+      const parsed = new URL(this.pwaUrl)
+      normalizedUrl = `${parsed.origin}${parsed.pathname}`.replace(/\/$/, "")
+    } catch (error) {
+      normalizedUrl = this.pwaUrl
+    }
+
+    this.pwaUrl = normalizedUrl
+    this.qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(this.pwaUrl)}`
+
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
@@ -112,10 +143,13 @@ export default {
 
   height:100vh;
   display:flex;
+  flex-direction: column;
   justify-content:center;
   align-items:center;
   background-image: url('/assets/login-background.jpg');
   background-position: center;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .login-box{
@@ -174,9 +208,7 @@ button{
 }
 
 .pwa-qr-box {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
+  margin-top: 0;
   text-align: center;
 }
 
@@ -214,6 +246,54 @@ button{
   text-decoration: underline;
 }
 
+.login-footer {
+  width: 100%;
+  max-width: 520px;
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.social-box {
+  border-left: 1px solid #e0e0e0;
+  padding-left: 0.75rem;
+}
+
+.social-box h3 {
+  margin: 0 0 0.75rem;
+  color: #333;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.social-links a {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  color: #0369a1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  text-decoration: none;
+}
+
+.social-links a i {
+  font-size: 1.2rem;
+}
+
+.social-links a:hover {
+  transform: translateY(-1px);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .login-box {
@@ -227,6 +307,18 @@ button{
 
   .title i {
     font-size: 1.5rem;
+  }
+
+  .login-footer {
+    width: 90%;
+    grid-template-columns: 1fr;
+  }
+
+  .social-box {
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+    padding-left: 0;
+    padding-top: 0.75rem;
   }
 }
 
