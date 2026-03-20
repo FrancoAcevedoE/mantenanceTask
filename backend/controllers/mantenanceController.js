@@ -104,7 +104,7 @@ const totalMaintenances = await Maintenance.countDocuments()
 
 const machines = await Maintenance.distinct("machine")
 
-const clients = await Maintenance.distinct("clientId")
+const operarios = await Maintenance.distinct("clientId")
 
 const recentMaintenances = await Maintenance.find()
 .populate("clientId", "name company")
@@ -125,7 +125,7 @@ totalMaintenances,
 
 machinesRegistered:machines.length,
 
-clientsAttended: clients.filter(Boolean).length,
+operariosAttended: operarios.filter(Boolean).length,
 
 pending,
 

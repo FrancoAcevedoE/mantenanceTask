@@ -19,8 +19,8 @@
 <select v-model="form.clientId" required>
 
 <option disabled value="">Seleccionar operario</option>
-<option v-for="client in clients" :key="client._id" :value="client._id">
-{{ client.company ? `${client.name} - ${client.company}` : client.name }}
+<option v-for="operario in operarios" :key="operario._id" :value="operario._id">
+{{ operario.company ? `${operario.name} - ${operario.company}` : operario.name }}
 </option>
 
 </select>
@@ -103,7 +103,7 @@ data(){
 
 return{
 
-clients:[],
+operarios:[],
 
 form:{
 
@@ -127,7 +127,7 @@ backgroundImage: backgroundImage
 },
 
 async mounted() {
-    await this.loadClients()
+    await this.loadOperarios()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
@@ -157,7 +157,7 @@ Authorization: `Bearer ${token}`
 
 },
 
-async loadClients(){
+async loadOperarios(){
 
 try{
 
@@ -166,7 +166,7 @@ const response = await axios.get(
 this.authConfig()
 )
 
-this.clients = response.data
+this.operarios = response.data
 
 }catch(error){
 

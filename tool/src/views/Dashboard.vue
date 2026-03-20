@@ -43,7 +43,7 @@
 
 <h3>Operarios atendidos</h3>
 
-<p>{{ stats.clientsAttended }}</p>
+<p>{{ stats.operariosAttended }}</p>
 
 </div>
 
@@ -53,7 +53,7 @@
 <h2>Últimos mantenimientos</h2>
 
 <div class="recent-toolbar">
-<input v-model="searchClient" type="text" placeholder="Buscar por operario" />
+<input v-model="searchOperario" type="text" placeholder="Buscar por operario" />
 <input v-model="searchMachine" type="text" placeholder="Buscar por máquina" />
 <select v-model="searchStatus">
 <option value="">Todos los estados</option>
@@ -79,7 +79,7 @@ Limpiar filtros
 </thead>
 <tbody>
 <tr v-for="item in filteredRecentMaintenances" :key="item._id">
-<td class="recent-client">{{ formatClientName(item.clientId) }}</td>
+<td class="recent-operario">{{ formatOperarioName(item.clientId) }}</td>
 <td>{{ item.machine }}</td>
 <td>{{ item.machinePart }}</td>
 <td>{{ item.sector }}</td>
@@ -114,7 +114,7 @@ return{
 
 stats:{},
 
-searchClient:"",
+searchOperario:"",
 
 searchMachine:"",
 
@@ -129,18 +129,18 @@ filteredRecentMaintenances() {
 
 const recentMaintenances = this.stats.recentMaintenances || []
 
-const clientQuery = this.searchClient.toLowerCase().trim()
+const operarioQuery = this.searchOperario.toLowerCase().trim()
 const machineQuery = this.searchMachine.toLowerCase().trim()
 const statusQuery = this.searchStatus
 
-if (!clientQuery && !machineQuery && !statusQuery) {
+if (!operarioQuery && !machineQuery && !statusQuery) {
 return recentMaintenances
 }
 
 return recentMaintenances.filter(item =>
-this.formatClientName(item.clientId)
+this.formatOperarioName(item.clientId)
 .toLowerCase()
-.includes(clientQuery)
+.includes(operarioQuery)
 && item.machine.toLowerCase().includes(machineQuery)
 && item.status.includes(statusQuery)
 )
@@ -168,13 +168,13 @@ this.stats = res.data
 
 methods:{
 
-formatClientName(client) {
+formatOperarioName(operario) {
 
-if (!client) return "Sin operario"
+if (!operario) return "Sin operario"
 
-return client.company
-? `${client.name} - ${client.company}`
-: client.name
+return operario.company
+? `${operario.name} - ${operario.company}`
+: operario.name
 
 },
 
@@ -192,7 +192,7 @@ return status || "-"
 
 clearRecentFilters() {
 
-this.searchClient = ""
+this.searchOperario = ""
 this.searchMachine = ""
 this.searchStatus = ""
 
@@ -360,7 +360,7 @@ color: #333;
 border-bottom: none;
 }
 
-.recent-client {
+.recent-operario {
 font-weight: 700;
 color: #2f2f2f;
 }

@@ -17,10 +17,10 @@
                 </option>
             </select>
 
-            <select v-model="filterClient">
+            <select v-model="filterOperario">
                 <option value="">Todos los operarios</option>
-                <option v-for="client in clients" :key="client.value" :value="client.value">
-                    {{ client.label }}
+                <option v-for="operario in operarios" :key="operario.value" :value="operario.value">
+                    {{ operario.label }}
                 </option>
             </select>
 
@@ -44,7 +44,7 @@
 
             <tbody>
                <tr v-for="item in filteredHistory" :key="item._id" :class="getRowClass(item.status)">
-                    <td>{{ formatClientName(item.clientId) }}</td>
+                    <td>{{ formatOperarioName(item.clientId) }}</td>
                     <td>{{ item.sector }}</td>
                     <td>{{ item.machine }}</td>
                     <td>{{ item.machinePart }}</td>
@@ -108,13 +108,13 @@ export default {
 
             filterSector: "",
 
-            filterClient: "",
+            filterOperario: "",
 
             filterDate: "",
 
             sectors: [],
 
-            clients: [],
+            operarios: [],
 
             showModal: false,
 
@@ -146,8 +146,8 @@ export default {
                     ? item.sector === this.filterSector
                     : true
 
-                const clientMatch = this.filterClient
-                    ? item.clientId?._id === this.filterClient
+                const operarioMatch = this.filterOperario
+                    ? item.clientId?._id === this.filterOperario
                     : true
 
                 const dateMatch = this.filterDate
@@ -155,7 +155,7 @@ export default {
                         .slice(0, 10) === this.filterDate
                     : true
 
-                return machineMatch && sectorMatch && clientMatch && dateMatch
+                return machineMatch && sectorMatch && operarioMatch && dateMatch
 
             })
 
@@ -177,14 +177,14 @@ export default {
                 )
             ]
 
-            this.clients = res.data
+            this.operarios = res.data
                 .filter(item => item.clientId?._id)
                 .reduce((accumulator, item) => {
 
-                    if (!accumulator.some(client => client.value === item.clientId._id)) {
+                    if (!accumulator.some(operario => operario.value === item.clientId._id)) {
                         accumulator.push({
                             value: item.clientId._id,
-                            label: this.formatClientName(item.clientId)
+                            label: this.formatOperarioName(item.clientId)
                         })
                     }
 
@@ -204,13 +204,13 @@ export default {
 
         },
 
-        formatClientName(client) {
+        formatOperarioName(operario) {
 
-            if (!client) return "-"
+            if (!operario) return "-"
 
-            return client.company
-                ? `${client.name} - ${client.company}`
-                : client.name
+            return operario.company
+                ? `${operario.name} - ${operario.company}`
+                : operario.name
 
         },
 
