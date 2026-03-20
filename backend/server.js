@@ -50,6 +50,10 @@ app.use(express.json())
 
 const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/mantenanceDB"
 
+if (process.env.NODE_ENV === "production" && !process.env.MONGODB_URI) {
+  throw new Error("Falta MONGODB_URI en variables de entorno")
+}
+
 mongoose.connect(mongoURI)
 
 .then(async()=>{
