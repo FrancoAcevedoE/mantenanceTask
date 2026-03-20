@@ -9,9 +9,18 @@ export const login = async (req, res) => {
 
         const { dni, password } = req.body
 
+        const dniNumber = Number(dni)
+        const passwordNumber = Number(password)
+
+        if (!Number.isFinite(dniNumber) || !Number.isFinite(passwordNumber)) {
+            return res.status(400).json({
+                message: "Documento y contrasena deben ser numericos"
+            })
+        }
+
         const user = await User.findOne({
-            dni,
-            password
+            dni: dniNumber,
+            password: passwordNumber
         })
 
         if (!user) {
@@ -40,7 +49,8 @@ export const login = async (req, res) => {
         })
     } catch (error) {
         res.status(500).json({
-            message: "Error al iniciar sesion"
+            message: "Error al iniciar sesion",
+            detail: error.message
         })
     }
 }
