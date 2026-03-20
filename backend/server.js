@@ -68,9 +68,17 @@ app.use("/api/maintenance", maintenanceRoutes)
 app.use("/api/machines", machineRoutes)
 
 app.get("/api/health", (req, res) => {
+  const mongoStateMap = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting"
+  }
+
   res.json({
     ok: true,
-    corsVersion: "v4-open"
+    corsVersion: "v4-open",
+    mongoState: mongoStateMap[mongoose.connection.readyState] || "unknown"
   })
 })
 
