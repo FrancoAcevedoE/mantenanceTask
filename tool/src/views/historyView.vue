@@ -1,4 +1,5 @@
 <template>
+    <div class="page-container">
     <div class="container">
         <div class="topbar">
             <h1>Historial de mantenimiento</h1>
@@ -78,6 +79,7 @@
                 </button>
             </div>
         </div>
+    </div>
     </div>
 </template>
 
@@ -211,32 +213,83 @@ export default {
 </script>
 
 <style>
+.page-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 1rem;
+}
+
 .container {
-    width: 95%;
-    margin: auto;
+    width: 100%;
+    max-width: 1180px;
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+    padding: 1.5rem;
+    margin: 0;
 }
 
 .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+h1 {
+    margin: 0;
+    color: #333;
+    font-size: 2rem;
+    letter-spacing: 0.04rem;
 }
 
 .filters {
-    margin: 20px 0;
+    margin: 0 0 1rem;
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filters input,
+.filters select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 2rem;
+    min-width: 200px;
+    background: #fff;
+}
+
+.filters input:hover,
+.filters input:focus,
+.filters select:hover,
+.filters select:focus {
+    outline: none;
+    background: #f0f0f0;
+    transition: 0.2s;
+    box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 th,
 td {
-    border: 1px solid #ccc;
-    padding: 8px;
+    border: 1px solid #e2e2e2;
+    padding: 10px;
+}
+
+th {
+    background: #efefef;
+    color: #333;
+    text-align: left;
 }
 
 .yellow {
@@ -266,5 +319,60 @@ td {
 .modal-box {
     background: white;
     padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+    width: min(420px, 90vw);
+}
+
+.modal-box h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.modal-box input {
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 2rem;
+}
+
+button {
+    border-radius: 2rem;
+    padding: 10px 14px;
+    background: #a6a6a6;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #8f8f8f;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filters input,
+    .filters select {
+        min-width: 100%;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
 }
 </style>

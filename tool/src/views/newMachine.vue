@@ -60,92 +60,106 @@ export default {
 </script>
 
 <style scoped>
-/* simple minimalist palette for form */
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
 .box {
-    max-width: 600px;
-    margin: 2rem auto;
-    padding: 1.5rem;
-    background: #fff;
-    border: 1px solid #d1d1d1;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
-    color: #000;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+  color: #000;
+  text-align: center;
+}
+
+.box:hover {
+  transition: 0.3s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
 }
 
 h2 {
     margin-top: 0;
-    font-weight: 600;
-    color: #111;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 2rem;
+  letter-spacing: 0.04rem;
 }
 
 input[type="text"],
 input[type="number"],
 textarea {
-    display: block;
-    width: 100%;
-    margin: 0.5rem 0;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background: #fafafa;
-    color: #000;
-    font-size: 1rem;
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 2rem;
+  background: #fff;
+  color: #000;
+  font-size: 1rem;
+  text-align: center;
 }
 
 textarea {
     resize: vertical;
+  min-height: 110px;
+}
+
+input:hover,
+input:focus,
+textarea:hover,
+textarea:focus {
+  outline: none;
+  background: #f0f0f0;
+  transition: 0.2s;
+  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
 }
 
 button {
-    margin-top: 1rem;
-    padding: 0.6rem 1.2rem;
+  padding: 10px;
     border: none;
-    border-radius: 6px;
-    background: #000;
+  border-radius: 2rem;
+  background: #a6a6a6;
     color: #fff;
     cursor: pointer;
-    font-weight: 500;
+}
+
+button:hover {
+  background: #8f8f8f;
 }
 
 .button-group {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-button+button {
-    margin-left: 0.5rem;
-    margin-top: 1rem;
-    background: #444;
+  width: 100%;
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .box {
-    margin: 1rem auto;
     padding: 1rem;
-    max-width: none;
+  max-width: 90%;
+  }
+
+  h2 {
+  font-size: 1.6rem;
   }
 
   .button-group {
-    flex-direction: column;
-    gap: 0.5rem;
+  gap: 0.6rem;
   }
 
   button {
     width: 100%;
   }
-}
-</style>
-
-<style>
-.page-container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 </style>
