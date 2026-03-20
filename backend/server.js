@@ -28,13 +28,6 @@ const ensureDefaultAdmin = async () => {
 
 const app = express()
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://localhost",
-  "https://mantenance-task.vercel.app"
-]
-
 app.use((req, res, next) => {
   const origin = req.headers.origin
 
@@ -42,18 +35,34 @@ app.use((req, res, next) => {
     return next()
   }
 
-  const isAllowedOrigin = allowedOrigins.includes(origin)
-  const isVercelPreview = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+  const isLocalOrigin = /^http:\/\/localhost(?::\d+)?$/i.test(origin)
+  const isVercelOrigin = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+  const isAllowedOrigin = isLocalOrigin || isVercelOrigin
 
-  if (isAllowedOrigin || isVercelPreview) {
+  if (isAllowedOrigin) {
     res.header("Access-Control-Allow-Origin", origin)
     res.header("Vary", "Origin")
+    res.header("Access-Control-Allow-Credentials", "true")
     res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization")
   }
 
   if (req.method === "OPTIONS") {
-    return res.sendStatus(204)
+    if (isAllowedOrigin) {
+      return res.sendStatus(204)
+    }
+
+    return res.status(403).json({
+      message: "Origen no permitido por CORS",
+      origin
+    })
+  }
+
+  if (!isAllowedOrigin) {
+    return res.status(403).json({
+      message: "Origen no permitido por CORS",
+      origin
+    })
   }
 
   return next()
