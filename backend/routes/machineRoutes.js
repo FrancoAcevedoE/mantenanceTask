@@ -6,24 +6,24 @@ import {
   updateMachineController,
   deleteMachineController
 } from "../controllers/machineController.js"
-import { authMiddleware } from "../middlewares/authMiddleware.js"
-import { roleMiddleware } from "../middlewares/roleMiddleware.js"
+import { verifyToken } from "../middlewares/authMiddleware.js"
+import { checkRole } from "../middlewares/roleMiddleware.js"
 
 const router = express.Router()
 
 // GET all machines
-router.get("/", authMiddleware, getAllMachinesController)
+router.get("/", verifyToken, getAllMachinesController)
 
 // GET machine by ID
-router.get("/:id", authMiddleware, getMachineByIdController)
+router.get("/:id", verifyToken, getMachineByIdController)
 
 // POST new machine
-router.post("/", authMiddleware, roleMiddleware(["admin", "operario"]), newMachineController)
+router.post("/", verifyToken, checkRole("admin", "operario"), newMachineController)
 
 // PUT update machine
-router.put("/:id", authMiddleware, roleMiddleware(["admin"]), updateMachineController)
+router.put("/:id", verifyToken, checkRole("admin"), updateMachineController)
 
 // DELETE machine
-router.delete("/:id", authMiddleware, roleMiddleware(["admin"]), deleteMachineController)
+router.delete("/:id", verifyToken, checkRole("admin"), deleteMachineController)
 
 export default router
