@@ -252,13 +252,15 @@ button{
 
 .login-footer {
   width: 100%;
-  max-width: 520px;
-  margin-top: 1rem;
+  max-width: 760px;
+  margin-top: auto;
   margin-bottom: 1rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   background: rgba(255, 255, 255, 0.92);
+  border-top: 2px solid #d7d7d7;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
   padding: 0.85rem;
@@ -266,7 +268,7 @@ button{
 
 .social-box {
   border-left: 1px solid #e0e0e0;
-  padding-left: 0.75rem;
+  padding-left: 1rem;
 }
 
 .social-box h3 {
@@ -283,8 +285,8 @@ button{
 }
 
 .social-links a {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -296,7 +298,7 @@ button{
 }
 
 .social-links a i {
-  font-size: 1.2rem;
+  font-size: 1.8rem;
 }
 
 .social-links a:hover {
@@ -320,7 +322,8 @@ button{
 
   .login-footer {
     width: 90%;
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .social-box {
