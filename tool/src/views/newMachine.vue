@@ -3,13 +3,15 @@
         <div class="box">
             <h2>Nueva máquina</h2>
 
-            <input type="text" v-model="sector" placeholder="Sector de la fábrica" />
+            <input type="text" v-model="form.sector" placeholder="Sector de la fábrica" />
 
-            <input type="text" v-model="machine" placeholder="Máquina" />
+            <input type="text" v-model="form.name" placeholder="Máquina" />
 
-            <textarea v-model="machineParts" placeholder="Partes de la máquina"></textarea>
+            <textarea v-model="form.machineParts" placeholder="Partes de la máquina"></textarea>
 
-            <input type="number" v-model="horometro" placeholder="Horómetro" />
+            <input type="number" v-model="form.horometro" placeholder="Horómetro" />
+
+            <textarea v-model="form.instructions" placeholder="Instrucciones/observaciones de la máquina"></textarea>
 
             <div class="button-group">
                 <button @click="save">Guardar</button>
@@ -21,24 +23,48 @@
 
 <script>
 import backgroundImage from '@/assets/fondogeneral.png'
+import axios from 'axios'
+
+const API_BASE_URL = "http://localhost:3000/api"
 
 export default {
   data() {
     return {
-      sector: "",
-      machine: "",
-      machineParts: "",
-      horometro: 0,
+      form: {
+        sector: "",
+        name: "",
+        machineParts: "",
+        horometro: 0,
+        instructions: ""
+      },
       backgroundImage: backgroundImage
     }
   },
   methods: {
-    save() {
-      // Placeholder: implement save logic or emit event
-      console.log('guardando nueva máquina', this.$data)
+    authConfig() {
+      const token = localStorage.getItem("token")
+      return {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    },
+    async save() {
+      try {
+        if (!this.form.sector || !this.form.name || !this.form.machineParts) {
+          alert("Por favor completa los campos obligatorios")
+          return
+        }
+
+        await axios.post(`${API_BASE_URL}/machines`, this.form, this.authConfig())
+        alert("Máquina creada correctamente")
+        this.$router.push('/') // Navigate back to home or list
+      } catch (error) {
+        console.error("Error al crear máquina:", error)
+        alert("Error al crear la máquina: " + (error.response?.data?.error || error.message))
+      }
     },
     cancel() {
-      // Reset form or navigate away
       this.$router.back()
     }
   },

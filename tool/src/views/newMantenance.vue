@@ -10,7 +10,22 @@
 <input v-model="form.sector" required>
 
 <label>Máquina</label>
-<input v-model="form.machine" required>
+<div style="display: flex; gap: 0.5rem; align-items: center;">
+  <select v-model="form.machine" required style="flex: 1;">
+    <option value="">Seleccionar máquina</option>
+    <option v-for="machine in machines" :key="machine._id" :value="machine.name">
+      {{ machine.name }}
+    </option>
+  </select>
+  <button 
+    v-if="form.machine && selectedMachine && selectedMachine.instructions"
+    type="button" 
+    @click="showMachineInstructions"
+    style="padding: 0.5rem 1rem; background-color: #00a878; color: white; border: none; border-radius: 5px; cursor: pointer;"
+  >
+    Ver instrucciones
+  </button>
+</div>
 
 <label>Parte de máquina</label>
 <input v-model="form.machinePart" required>
@@ -104,6 +119,7 @@ data(){
 return{
 
 operarios:[],
+machines:[],
 
 form:{
 
@@ -128,6 +144,7 @@ backgroundImage: backgroundImage
 
 async mounted() {
     await this.loadOperarios()
+    await this.loadMachines()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
@@ -141,6 +158,12 @@ beforeUnmount() {
     document.body.style.backgroundPosition = '';
     document.body.style.backgroundRepeat = '';
     document.body.style.backgroundAttachment = '';
+},
+
+computed: {
+  selectedMachine() {
+    return this.machines.find(m => m.name === this.form.machine)
+  }
 },
 
 methods:{
@@ -171,6 +194,25 @@ this.operarios = response.data
 }catch(error){
 
     alert("Error al cargar operarios")
+
+}
+
+},
+
+async loadMachines(){
+
+try{
+
+const response = await axios.get(
+`${API_BASE_URL}/machines`,
+this.authConfig()
+)
+
+this.machines = response.data
+
+}catch(error){
+
+    alert("Error al cargar máquinas")
 
 }
 
@@ -215,6 +257,16 @@ hoursWorked:0,
 machineRunning:true,
 jobFinished:true,
 unfinishedReason:""
+
+}
+
+},
+
+showMachineInstructions(){
+
+if(this.selectedMachine && this.selectedMachine.instructions){
+
+alert(`Instrucciones para ${this.selectedMachine.name}:\n\n${this.selectedMachine.instructions}`)
 
 }
 
