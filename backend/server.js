@@ -29,13 +29,28 @@ const ensureDefaultAdmin = async () => {
 
 const app = express()
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost",
+  "https://mantenance-task.vercel.app"
+]
+
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://mantenancedb-frontend.vercel.app", // Reemplaza con tu URL de Vercel
-    "http://localhost"
-  ],
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true)
+    }
+
+    const isAllowedOrigin = allowedOrigins.includes(origin)
+    const isVercelPreview = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+
+    if (isAllowedOrigin || isVercelPreview) {
+      return callback(null, true)
+    }
+
+    return callback(new Error("Origen no permitido por CORS"))
+  },
   credentials: true
 }))
 app.use(express.json())
