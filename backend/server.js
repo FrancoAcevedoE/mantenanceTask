@@ -31,38 +31,16 @@ const app = express()
 app.use((req, res, next) => {
   const origin = req.headers.origin
 
-  if (!origin) {
-    return next()
-  }
+  res.header("X-CORS-Version", "v4-open")
 
-  const isLocalOrigin = /^http:\/\/localhost(?::\d+)?$/i.test(origin)
-  const isVercelOrigin = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
-  const isAllowedOrigin = isLocalOrigin || isVercelOrigin
-
-  if (isAllowedOrigin) {
-    res.header("Access-Control-Allow-Origin", origin)
-    res.header("Vary", "Origin")
-    res.header("Access-Control-Allow-Credentials", "true")
-    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-  }
+  res.header("Access-Control-Allow-Origin", origin || "*")
+  res.header("Vary", "Origin")
+  res.header("Access-Control-Allow-Credentials", "true")
+  res.header("Access-Control-Allow-Methods", "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS")
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 
   if (req.method === "OPTIONS") {
-    if (isAllowedOrigin) {
-      return res.sendStatus(204)
-    }
-
-    return res.status(403).json({
-      message: "Origen no permitido por CORS",
-      origin
-    })
-  }
-
-  if (!isAllowedOrigin) {
-    return res.status(403).json({
-      message: "Origen no permitido por CORS",
-      origin
-    })
+    return res.sendStatus(204)
   }
 
   return next()
@@ -84,6 +62,13 @@ app.use("/api/clients", clientRoutes)
 app.use("/api/users", userRoutes)
 app.use("/api/maintenance", maintenanceRoutes)
 app.use("/api/machines", machineRoutes)
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    corsVersion: "v4-open"
+  })
+})
 
 const PORT = process.env.PORT || 3000
 
