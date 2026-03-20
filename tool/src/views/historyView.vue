@@ -131,14 +131,13 @@ export default {
     },
 
     async mounted() {
-
-        await this.loadHistory()
-
         document.body.style.backgroundImage = `url(${this.backgroundImage})`
         document.body.style.backgroundSize = 'cover'
         document.body.style.backgroundPosition = 'center'
         document.body.style.backgroundRepeat = 'no-repeat'
         document.body.style.backgroundAttachment = 'fixed'
+
+        await this.loadHistory()
 
     },
 
