@@ -1,5 +1,4 @@
 import express from "express"
-import cors from "cors"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 // esto levanta el servidor e importa las todas las rutas
@@ -36,23 +35,29 @@ const allowedOrigins = [
   "https://mantenance-task.vercel.app"
 ]
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) {
-      return callback(null, true)
-    }
+app.use((req, res, next) => {
+  const origin = req.headers.origin
 
-    const isAllowedOrigin = allowedOrigins.includes(origin)
-    const isVercelPreview = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+  if (!origin) {
+    return next()
+  }
 
-    if (isAllowedOrigin || isVercelPreview) {
-      return callback(null, true)
-    }
+  const isAllowedOrigin = allowedOrigins.includes(origin)
+  const isVercelPreview = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
 
-    return callback(new Error("Origen no permitido por CORS"))
-  },
-  credentials: true
-}))
+  if (isAllowedOrigin || isVercelPreview) {
+    res.header("Access-Control-Allow-Origin", origin)
+    res.header("Vary", "Origin")
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+  }
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204)
+  }
+
+  return next()
+})
 app.use(express.json())
 // conexion con mongoose
 
