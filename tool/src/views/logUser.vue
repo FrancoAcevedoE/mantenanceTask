@@ -214,6 +214,10 @@ button{
 .pwa-qr-box {
   margin-top: 0;
   text-align: center;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  padding: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
 }
 
 .pwa-qr-box h3 {
@@ -259,11 +263,7 @@ button{
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: rgba(255, 255, 255, 0.92);
-  border-top: 2px solid #d7d7d7;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
-  padding: 0.85rem;
+  padding: 0.25rem;
 }
 
 .social-box {
