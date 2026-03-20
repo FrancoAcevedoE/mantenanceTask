@@ -34,6 +34,8 @@
 import axios from "axios"
 import backgroundImage from '@/assets/fondo.jpg'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
+
 export default {
 
   data(){
@@ -48,14 +50,16 @@ export default {
   methods:{
     async login(){
       try{
-        const response = await axios.post("/login",{
+        const response = await axios.post(`${API_BASE_URL}/users/login`,{
           dni:this.dni,
           password:this.password
         })
 
         const token = response.data.token
+        const user = response.data.user
         localStorage.setItem("token",token)
-        this.$router.push("/dashboard")
+        localStorage.setItem("user", JSON.stringify(user))
+        this.$router.push(user.role === "admin" ? "/adminView" : "/dashboard")
 
       }
       catch(err){

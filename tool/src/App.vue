@@ -1,11 +1,44 @@
 <script setup>
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
+const route = useRoute()
+const router = useRouter()
+
+const getStoredUser = () => {
+  try {
+    const rawUser = localStorage.getItem('user')
+    return rawUser ? JSON.parse(rawUser) : null
+  } catch {
+    return null
+  }
+}
+
+const currentUser = computed(() => {
+  route.fullPath
+  return getStoredUser()
+})
+
+const showNav = computed(() => {
+  route.fullPath
+  return route.name !== 'LogUser' && Boolean(localStorage.getItem('token'))
+})
+
+const isAdmin = computed(() => currentUser.value?.role === 'admin')
+
+const logout = async () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  await router.push('/logUser')
+}
 </script>
 
 <template>
-  <nav>
-    <router-link to="logUser"><i class="bi bi-box-arrow-in-right"></i></router-link>
-    <router-link to="adminView"><i class="bi bi-person-plus-fill"></i></router-link>
+  <nav v-if="showNav">
+    <button type="button" class="nav-button" @click="logout">
+      <i class="bi bi-box-arrow-right"></i>
+    </button>
+    <router-link v-if="isAdmin" to="/adminView"><i class="bi bi-person-plus-fill"></i></router-link>
       <router-link to="/newMachine"><i class="bi bi-building-add"></i></router-link>
     <router-link to="/new"><i class="bi bi-wrench-adjustable-circle"></i></router-link>
     <router-link to="/history"><i class="bi bi-clock-history"></i></router-link>
@@ -13,7 +46,7 @@
   </nav>
 
   <!-- this is where the matched view will be rendered -->
-  <main class="app-content">
+  <main :class="['app-content', { 'with-nav': showNav }]">
     <router-view />
   </main>
 </template>
@@ -29,7 +62,7 @@ body {
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
-.app-content {
+.app-content.with-nav {
   padding-top: 4.8rem;
 }
 
@@ -60,7 +93,8 @@ nav::after {
   content: none;
 }
 
-nav a {
+nav a,
+.nav-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -78,14 +112,20 @@ nav a {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-nav a i {
+nav a i,
+.nav-button i {
   font-size: 1.7rem;
 }
 
-nav a:hover {
+nav a:hover,
+.nav-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
   text-decoration: none;
+}
+
+.nav-button {
+  cursor: pointer;
 }
 
 nav a.router-link-active {
@@ -95,7 +135,7 @@ nav a.router-link-active {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .app-content {
+  .app-content.with-nav {
     padding-top: 4.2rem;
   }
 
@@ -107,12 +147,14 @@ nav a.router-link-active {
     border-radius: 0 0 16px 16px;
   }
 
-  nav a {
+  nav a,
+  .nav-button {
     width: 46px;
     height: 46px;
   }
 
-  nav a i {
+  nav a i,
+  .nav-button i {
     font-size: 1.45rem;
   }
 }

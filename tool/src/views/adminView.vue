@@ -1,20 +1,57 @@
 <template>
   <div class="page-container">
-    <div class="admin-form">
-      <h2 class="title">Panel de Admin</h2>
+    <div class="admin-layout">
+      <div class="panel-card admin-form">
+        <h2 class="title">Panel de Admin</h2>
 
-      <label for="name">nombre</label>
-      <input type="text" id="name" v-model="user.name" />
+        <label for="name">nombre</label>
+        <input type="text" id="name" v-model="user.name" />
 
-      <label for="dni">documento</label>
-      <input type="number" id="dni" v-model="user.dni" />
+        <label for="dni">documento</label>
+        <input type="number" id="dni" v-model="user.dni" />
 
-      <label for="password">contraseña</label>
-      <input type="password" id="password" v-model="user.password" />
+        <label for="password">contraseña</label>
+        <input type="password" id="password" v-model="user.password" />
 
-      <div class="actions">
-        <button @click="createUser">Crear usuario</button>
-        <button @click="deleteUser">Eliminar usuario</button>
+        <label for="role">rol</label>
+        <select id="role" v-model="user.role">
+          <option value="operario">Operario</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="admin">Admin</option>
+        </select>
+
+        <p v-if="message" class="message">{{ message }}</p>
+
+        <div class="actions">
+          <button @click="createUser">Crear usuario</button>
+          <button class="secondary-button" @click="resetForm">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="panel-card users-panel">
+        <h2 class="title">Usuarios creados</h2>
+
+        <p v-if="!users.length" class="empty-state">
+          No hay usuarios cargados todavía.
+        </p>
+
+        <div v-else class="users-list">
+          <div v-for="createdUser in users" :key="createdUser._id" class="user-item">
+            <div class="user-info">
+              <strong>{{ createdUser.name }}</strong>
+              <span>Documento: {{ createdUser.dni }}</span>
+              <span>Rol: {{ createdUser.role }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="danger-button"
+              @click="deleteUser(createdUser._id)"
+            >
+              Eliminar
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -22,6 +59,9 @@
 
 <script>
 import backgroundImage from '@/assets/fondogeneral.png'
+import axios from 'axios'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
 
 export default {
   data() {
@@ -29,18 +69,65 @@ export default {
       user: {
         name: "",
         dni: "",
-        password: ""
+        password: "",
+        role: "operario"
       },
+      users: [],
+      message: "",
       backgroundImage: backgroundImage
     }
   },
   methods: {
-    createUser() {
-      console.log('nuevo usuario', this.user)
-      // call backend or emit event here
+    authConfig() {
+      const token = localStorage.getItem("token")
+
+      return {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    },
+    async loadUsers() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/users`, this.authConfig())
+        this.users = response.data
+      } catch (error) {
+        this.message = "No se pudo cargar la lista de usuarios"
+      }
+    },
+    async createUser() {
+      try {
+        this.message = ""
+
+        await axios.post(`${API_BASE_URL}/users`, this.user, this.authConfig())
+
+        this.message = "Usuario creado correctamente"
+        this.resetForm()
+        await this.loadUsers()
+      } catch (error) {
+        this.message = error.response?.data?.message || "No se pudo crear el usuario"
+      }
+    },
+    async deleteUser(userId) {
+      try {
+        await axios.delete(`${API_BASE_URL}/users/${userId}`, this.authConfig())
+        this.message = "Usuario eliminado correctamente"
+        await this.loadUsers()
+      } catch (error) {
+        this.message = error.response?.data?.message || "No se pudo eliminar el usuario"
+      }
+    },
+    resetForm() {
+      this.user = {
+        name: "",
+        dni: "",
+        password: "",
+        role: "operario"
+      }
     }
   },
   mounted() {
+    this.loadUsers()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
@@ -62,13 +149,20 @@ export default {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 1rem;
 }
 
-.admin-form {
+.admin-layout {
   width: 100%;
-  max-width: 360px;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.panel-card {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -79,7 +173,7 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
 }
 
-.admin-form:hover {
+.panel-card:hover {
   transition: 0.3s;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
 }
@@ -101,7 +195,8 @@ export default {
   text-align: center;
 }
 
-.admin-form input {
+.admin-form input,
+.admin-form select {
   width: 100%;
   padding: 10px;
   margin: 10px 0;
@@ -111,7 +206,9 @@ export default {
 }
 
 .admin-form input:hover,
-.admin-form input:focus {
+.admin-form input:focus,
+.admin-form select:hover,
+.admin-form select:focus {
   outline: none;
   background: #f0f0f0;
   transition: 0.2s;
@@ -138,15 +235,74 @@ button:hover {
   background: #8f8f8f;
 }
 
+.secondary-button {
+  background: #7e8a97;
+}
+
+.users-panel {
+  align-items: stretch;
+  text-align: left;
+}
+
+.users-list {
+  width: 100%;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.user-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
+}
+
+.user-info {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.user-info strong,
+.user-info span {
+  color: #333;
+}
+
+.danger-button {
+  margin: 0;
+  background: #cb5f5f;
+}
+
+.danger-button:hover {
+  background: #b14d4d;
+}
+
+.message {
+  color: #3b4b3b;
+  margin: 0.5rem 0 0;
+}
+
+.empty-state {
+  color: #4b4b4b;
+  text-align: center;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
-  .admin-form {
+  .panel-card {
     padding: 1rem;
-    max-width: 90%;
   }
 
   .title {
     font-size: 1.6rem;
+  }
+
+  .user-item {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

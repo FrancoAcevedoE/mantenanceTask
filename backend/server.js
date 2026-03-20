@@ -9,6 +9,23 @@ import userRoutes from "./routes/userRoutes.js"
 import clientRoutes from './routes/clientRoutes.js'
 import maintenanceRoutes from "./routes/mantenanceRoutes.js"
 import machineRoutes from "./routes/machineRoutes.js"
+import User from "./models/userModels.js"
+
+const DEFAULT_ADMIN = {
+  name: "Franco Acevedo",
+  dni: 40317809,
+  password: 3121,
+  role: "admin"
+}
+
+const ensureDefaultAdmin = async () => {
+  const existingAdmin = await User.findOne({ dni: DEFAULT_ADMIN.dni })
+
+  if (!existingAdmin) {
+    await User.create(DEFAULT_ADMIN)
+    console.log("Admin inicial creado")
+  }
+}
 
 const app = express()
 
@@ -28,7 +45,10 @@ const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/mantenanc
 
 mongoose.connect(mongoURI)
 
-.then(()=>console.log("Mongo conectado"))
+.then(async()=>{
+  console.log("Mongo conectado")
+  await ensureDefaultAdmin()
+})
 .catch(err=>console.log(err))
 
 app.use("/api/clients", clientRoutes)
