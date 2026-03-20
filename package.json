@@ -1,0 +1,8 @@
+{
+  "name": "mantenance-task-root",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm --prefix tool install && npm --prefix tool run build"
+  }
+}
