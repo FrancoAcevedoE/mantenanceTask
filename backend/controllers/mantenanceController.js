@@ -1,10 +1,19 @@
-import Maintenance from "../models/maintenanceModel.js"
+import Client from "../models/clientModel.js"
+import Maintenance from "../models/mantenanceModels.js"
 
 export const newMaintenanceController = async (req,res)=>{
 
     try{
 
         const data = req.body
+
+        const client = await Client.findById(data.clientId)
+
+        if(!client){
+            return res.status(404).json({
+                message:"Cliente no encontrado"
+            })
+        }
 
         let status = "finished"
 
@@ -73,6 +82,7 @@ export const historyController = async (req, res) => {
     try {
 
         const history = await Maintenance.find()
+            .populate("clientId", "name company")
 
         res.json(history)
 
@@ -94,6 +104,13 @@ const totalMaintenances = await Maintenance.countDocuments()
 
 const machines = await Maintenance.distinct("machine")
 
+const clients = await Maintenance.distinct("clientId")
+
+const recentMaintenances = await Maintenance.find()
+.populate("clientId", "name company")
+.sort({ createdAt: -1 })
+.limit(5)
+
 const pending = await Maintenance.countDocuments({
 status:"pending"
 })
@@ -108,9 +125,13 @@ totalMaintenances,
 
 machinesRegistered:machines.length,
 
+clientsAttended: clients.filter(Boolean).length,
+
 pending,
 
-stopped
+stopped,
+
+recentMaintenances
 
 })
 

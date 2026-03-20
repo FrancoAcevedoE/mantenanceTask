@@ -15,11 +15,21 @@
 <label>Parte de máquina</label>
 <input v-model="form.machinePart" required>
 
+<label>Operario</label>
+<select v-model="form.clientId" required>
+
+<option disabled value="">Seleccionar operario</option>
+<option v-for="client in clients" :key="client._id" :value="client._id">
+{{ client.company ? `${client.name} - ${client.company}` : client.name }}
+</option>
+
+</select>
+
 <label>Tipo de mantenimiento</label>
 <select v-model="form.maintenanceType">
 
 <option value="preventivo">Preventivo</option>
-<option value="MEJORA">MEJORA</option>
+<option value="mejora">MEJORA</option>
 <option value="puesta en marcha">Puesta en marcha</option>
 <option value="arreglo">Arreglo</option>
 
@@ -81,7 +91,11 @@ Cancelar
 
 <script>
 
+import axios from "axios"
+
 import backgroundImage from '@/assets/fondogeneral.png'
+
+const API_BASE_URL = "http://localhost:3000/api"
 
 export default{
 
@@ -89,12 +103,15 @@ data(){
 
 return{
 
+clients:[],
+
 form:{
 
 sector:"",
 machine:"",
 machinePart:"",
-maintenanceType:"MEJORA",
+clientId:"",
+maintenanceType:"mejora",
 workDescription:"",
 spareParts:"",
 hoursWorked:0,
@@ -109,7 +126,8 @@ backgroundImage: backgroundImage
 
 },
 
-mounted() {
+async mounted() {
+    await this.loadClients()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
@@ -127,14 +145,46 @@ beforeUnmount() {
 
 methods:{
 
+authConfig(){
+
+const token = localStorage.getItem("token")
+
+return {
+headers:{
+Authorization: `Bearer ${token}`
+}
+}
+
+},
+
+async loadClients(){
+
+try{
+
+const response = await axios.get(
+`${API_BASE_URL}/clients`,
+this.authConfig()
+)
+
+this.clients = response.data
+
+}catch(error){
+
+    alert("Error al cargar operarios")
+
+}
+
+},
+
 async saveMaintenance(){
 
 try{
 
-await apiClient.post(
+await axios.post(
 
-"/maintenance/newmaintenance",
-this.form
+`${API_BASE_URL}/maintenance/newmaintenance`,
+this.form,
+this.authConfig()
 
 )
 
@@ -157,7 +207,8 @@ this.form = {
 sector:"",
 machine:"",
 machinePart:"",
-maintenanceType:"MEJORA",
+clientId:"",
+maintenanceType:"mejora",
 workDescription:"",
 spareParts:"",
 hoursWorked:0,

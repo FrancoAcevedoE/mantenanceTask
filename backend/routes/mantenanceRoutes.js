@@ -1,13 +1,13 @@
 import express from "express"
 import { verifyToken } from "../middlewares/authMiddleware.js"
 import { checkRole } from "../middlewares/roleMiddleware.js"
-import { dashboardController } from "../controllers/maintenanceController.js"
 
 import {
+    finishMaintenance,
     historyController,
     newMaintenanceController,
     dashboardController
-} from "../controllers/maintenanceController.js"
+} from "../controllers/mantenanceController.js"
 
 const router = express.Router()
 

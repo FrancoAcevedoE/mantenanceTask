@@ -47,7 +47,7 @@ const maintenanceSchema = new mongoose.Schema({
 
     maintenanceType:{
         type:String,
-        enum:["preventivo","correctivo"],
+        enum:["preventivo","correctivo","mejora","puesta en marcha","arreglo"],
         required:true
     },
 
@@ -59,6 +59,12 @@ const maintenanceSchema = new mongoose.Schema({
 
     reportedBy:{
         type:String
+    },
+
+    clientId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Client",
+        required: true
     },
 
     photo:{

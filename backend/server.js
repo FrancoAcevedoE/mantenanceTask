@@ -3,8 +3,8 @@ import cors from "cors"
 import mongoose from "mongoose"
 // esto levanta el servidor e importa las todas las rutas 
 import userRoutes from "./routes/userRoutes.js"
-import maintenanceRoutes from "./routes/maintenanceRoutes.js"
-
+import clientRoutes from './routes/clientRoutes.js'
+import maintenanceRoutes from "./routes/mantenanceRoutes.js"
 
 const app = express()
 
@@ -17,6 +17,7 @@ mongoose.connect("mongodb://localhost:27017/mantenanceDB")
 .then(()=>console.log("Mongo conectado"))
 .catch(err=>console.log(err))
 
+app.use("/api/clients", clientRoutes)
 app.use("/api/users", userRoutes)
 app.use("/api/maintenance", maintenanceRoutes)
 

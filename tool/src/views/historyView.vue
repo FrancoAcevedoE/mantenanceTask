@@ -17,12 +17,20 @@
                 </option>
             </select>
 
+            <select v-model="filterClient">
+                <option value="">Todos los operarios</option>
+                <option v-for="client in clients" :key="client.value" :value="client.value">
+                    {{ client.label }}
+                </option>
+            </select>
+
             <input type="date" v-model="filterDate" />
         </div>
 
         <table>
             <thead>
                 <tr>
+                    <th>Operario</th>
                     <th>Sector</th>
                     <th>Máquina</th>
                     <th>Parte</th>
@@ -36,6 +44,7 @@
 
             <tbody>
                <tr v-for="item in filteredHistory" :key="item._id" :class="getRowClass(item.status)">
+                    <td>{{ formatClientName(item.clientId) }}</td>
                     <td>{{ item.sector }}</td>
                     <td>{{ item.machine }}</td>
                     <td>{{ item.machinePart }}</td>
@@ -99,9 +108,13 @@ export default {
 
             filterSector: "",
 
+            filterClient: "",
+
             filterDate: "",
 
             sectors: [],
+
+            clients: [],
 
             showModal: false,
 
@@ -133,12 +146,16 @@ export default {
                     ? item.sector === this.filterSector
                     : true
 
+                const clientMatch = this.filterClient
+                    ? item.clientId?._id === this.filterClient
+                    : true
+
                 const dateMatch = this.filterDate
                     ? item.createdAt
                         .slice(0, 10) === this.filterDate
                     : true
 
-                return machineMatch && sectorMatch && dateMatch
+                return machineMatch && sectorMatch && clientMatch && dateMatch
 
             })
 
@@ -160,6 +177,21 @@ export default {
                 )
             ]
 
+            this.clients = res.data
+                .filter(item => item.clientId?._id)
+                .reduce((accumulator, item) => {
+
+                    if (!accumulator.some(client => client.value === item.clientId._id)) {
+                        accumulator.push({
+                            value: item.clientId._id,
+                            label: this.formatClientName(item.clientId)
+                        })
+                    }
+
+                    return accumulator
+
+                }, [])
+
         },
 
         getRowClass(status) {
@@ -169,6 +201,16 @@ export default {
             if (status === "stopped") return "red"
 
             return "white"
+
+        },
+
+        formatClientName(client) {
+
+            if (!client) return "-"
+
+            return client.company
+                ? `${client.name} - ${client.company}`
+                : client.name
 
         },
 
