@@ -200,6 +200,8 @@ this.searchStatus = ""
 
 }
 
+}
+
 </script>
 
 <style>
