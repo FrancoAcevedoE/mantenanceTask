@@ -59,11 +59,19 @@
 
 </div>
 
+<div class="button-group">
 <button type="submit">
 
 Guardar mantenimiento
 
 </button>
+
+<button type="button" class="secondary-button" @click="resetForm">
+
+Cancelar
+
+</button>
+</div>
 
 </form>
     </div>
@@ -258,8 +266,26 @@ button {
     width: 100%;
 }
 
+.button-group {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.button-group button {
+    margin-top: 0;
+}
+
+.secondary-button {
+    background: #8d8d8d;
+}
+
 button:hover {
     background: #8f8f8f;
+}
+
+.secondary-button:hover {
+    background: #767676;
 }
 
 /* Responsive */
