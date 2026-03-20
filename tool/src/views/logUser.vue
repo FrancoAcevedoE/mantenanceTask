@@ -25,6 +25,13 @@
         {{ error }}
       </p>
 
+      <div class="pwa-qr-box">
+        <h3>Instalar app</h3>
+        <p>Escanea el QR desde tu celular para abrir la web y agregarla a pantalla de inicio.</p>
+        <img :src="qrUrl" alt="QR para abrir Tool" class="qr-image" />
+        <a :href="pwaUrl" target="_blank" rel="noopener">Abrir enlace directo</a>
+      </div>
+
     </div>
 
   </div>
@@ -35,6 +42,7 @@ import axios from "axios"
 import backgroundImage from '@/assets/fondo.jpg'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
+const PWA_URL = import.meta.env.VITE_PWA_URL || "https://mantenance-task.vercel.app"
 
 export default {
 
@@ -43,7 +51,9 @@ export default {
       dni:"",
       password:"",
       error:null,
-      backgroundImage: backgroundImage
+      backgroundImage: backgroundImage,
+      pwaUrl: PWA_URL,
+      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(PWA_URL)}`
     }
   },
 
@@ -161,6 +171,47 @@ button{
   color:red;
   margin-top:10px;
 
+}
+
+.pwa-qr-box {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.pwa-qr-box h3 {
+  margin: 0 0 0.5rem;
+  color: #333;
+  font-size: 1rem;
+}
+
+.pwa-qr-box p {
+  margin: 0 0 0.75rem;
+  color: #555;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.qr-image {
+  width: 140px;
+  height: 140px;
+  display: block;
+  margin: 0.25rem auto 0.75rem;
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px;
+}
+
+.pwa-qr-box a {
+  color: #0369a1;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.pwa-qr-box a:hover {
+  text-decoration: underline;
 }
 
 /* Responsive */
