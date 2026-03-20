@@ -141,15 +141,18 @@ export default {
 }
 .login-container{
 
-  height:100vh;
+  min-height:100vh;
   display:flex;
   flex-direction: column;
-  justify-content:center;
+  justify-content:flex-start;
   align-items:center;
   background-image: url('/assets/login-background.jpg');
   background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   padding: 1rem;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .login-box{
@@ -157,6 +160,7 @@ export default {
   padding:40px;
   border-radius:10px;
   width:300px;
+  margin-top: 1.25rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
 }
 .login-box:hover {
@@ -250,9 +254,14 @@ button{
   width: 100%;
   max-width: 520px;
   margin-top: 1rem;
+  margin-bottom: 1rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+  padding: 0.85rem;
 }
 
 .social-box {
