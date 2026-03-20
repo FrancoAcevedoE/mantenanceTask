@@ -96,6 +96,8 @@
 
 // import apiClient from "../services/apiClient"
 
+import backgroundImage from '@/assets/fondogeneral.png'
+
 export default {
 
     data() {
@@ -120,7 +122,9 @@ export default {
 
             selectedId: null,
 
-            extraHours: 0
+            extraHours: 0,
+
+            backgroundImage
 
         }
 
@@ -129,6 +133,22 @@ export default {
     async mounted() {
 
         await this.loadHistory()
+
+        document.body.style.backgroundImage = `url(${this.backgroundImage})`
+        document.body.style.backgroundSize = 'cover'
+        document.body.style.backgroundPosition = 'center'
+        document.body.style.backgroundRepeat = 'no-repeat'
+        document.body.style.backgroundAttachment = 'fixed'
+
+    },
+
+    beforeUnmount() {
+
+        document.body.style.backgroundImage = ''
+        document.body.style.backgroundSize = ''
+        document.body.style.backgroundPosition = ''
+        document.body.style.backgroundRepeat = ''
+        document.body.style.backgroundAttachment = ''
 
     },
 

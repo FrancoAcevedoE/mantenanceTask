@@ -101,6 +101,7 @@ Limpiar filtros
 <script>
 
 import axios from "axios"
+import backgroundImage from '@/assets/fondogeneral.png'
 
 // import apiClient from "../services/apiClient"
 
@@ -118,7 +119,9 @@ searchOperario:"",
 
 searchMachine:"",
 
-searchStatus:""
+searchStatus:"",
+
+backgroundImage
 
 }
 },
@@ -151,6 +154,12 @@ this.formatOperarioName(item.clientId)
 
 async mounted(){
 
+document.body.style.backgroundImage = `url(${this.backgroundImage})`
+document.body.style.backgroundSize = 'cover'
+document.body.style.backgroundPosition = 'center'
+document.body.style.backgroundRepeat = 'no-repeat'
+document.body.style.backgroundAttachment = 'fixed'
+
 const token = localStorage.getItem("token")
 
 const res = await axios.get(
@@ -163,6 +172,16 @@ Authorization: `Bearer ${token}`
 )
 
 this.stats = res.data
+
+},
+
+beforeUnmount() {
+
+document.body.style.backgroundImage = ''
+document.body.style.backgroundSize = ''
+document.body.style.backgroundPosition = ''
+document.body.style.backgroundRepeat = ''
+document.body.style.backgroundAttachment = ''
 
 },
 
