@@ -3,7 +3,7 @@
 <div class="page-container">
 <div class="container">
 
-<h1>Dashboard de mantenimiento</h1>
+<h1>Dashboard</h1>
 
 <div class="cards">
 

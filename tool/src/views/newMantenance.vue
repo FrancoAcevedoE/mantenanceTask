@@ -2,7 +2,7 @@
 
 <div class="page-container">
     <div class="box">
-        <h2>Nuevo Mantenimiento</h2>
+        <h2>Nuevo trabajo</h2>
 
         <form @submit.prevent="saveMaintenance">
 
@@ -44,7 +44,7 @@
 <select v-model="form.maintenanceType">
 
 <option value="preventivo">Preventivo</option>
-<option value="mejora">MEJORA</option>
+<option value="mejora">Mejora</option>
 <option value="puesta en marcha">Puesta en marcha</option>
 <option value="arreglo">Arreglo</option>
 

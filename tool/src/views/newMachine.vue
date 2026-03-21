@@ -9,7 +9,7 @@
 
             <textarea v-model="form.machineParts" placeholder="Partes de la máquina"></textarea>
 
-            <input type="number" v-model="form.horometro" placeholder="Horómetro" />
+            <input type="number" v-model="form.horometro" placeholder="Horómetro"/>
 
             <textarea v-model="form.instructions" placeholder="Instrucciones/observaciones de la máquina"></textarea>
 
