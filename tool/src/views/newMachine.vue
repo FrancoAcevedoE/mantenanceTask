@@ -24,6 +24,7 @@
 <script>
 import backgroundImage from '@/assets/fondogeneral.png'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
 
@@ -52,16 +53,28 @@ export default {
     async save() {
       try {
         if (!this.form.sector || !this.form.name || !this.form.machineParts) {
-          alert("Por favor completa los campos obligatorios")
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Por favor completa los campos obligatorios"
+          })
           return
         }
 
         await axios.post(`${API_BASE_URL}/machines`, this.form, this.authConfig())
-        alert("Máquina creada correctamente")
+        Swal.fire({
+          icon: "success",
+          title: "Listo",
+          text: "Maquina creada correctamente"
+        })
         this.$router.push('/') // Navigate back to home or list
       } catch (error) {
         console.error("Error al crear máquina:", error)
-        alert("Error al crear la máquina: " + (error.response?.data?.error || error.message))
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error al crear la maquina: " + (error.response?.data?.error || error.message)
+        })
       }
     },
     cancel() {

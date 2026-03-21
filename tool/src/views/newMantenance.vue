@@ -107,6 +107,7 @@ Cancelar
 <script>
 
 import axios from "axios"
+import Swal from "sweetalert2"
 
 import backgroundImage from '@/assets/fondogeneral.png'
 
@@ -193,7 +194,11 @@ this.operarios = response.data
 
 }catch(error){
 
-    alert("Error al cargar operarios")
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Error al cargar operarios"
+        })
 
 }
 
@@ -212,7 +217,11 @@ this.machines = response.data
 
 }catch(error){
 
-    alert("Error al cargar máquinas")
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Error al cargar maquinas"
+        })
 
 }
 
@@ -230,13 +239,21 @@ this.authConfig()
 
 )
 
-alert("Mantenimiento registrado")
+Swal.fire({
+icon: "success",
+title: "Listo",
+text: "Mantenimiento registrado"
+})
 
 this.resetForm()
 
 }catch(error){
 
-alert("Error al guardar mantenimiento")
+Swal.fire({
+icon: "error",
+title: "Error",
+text: "Error al guardar mantenimiento"
+})
 
 }
 

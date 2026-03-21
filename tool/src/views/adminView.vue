@@ -60,6 +60,7 @@
 <script>
 import backgroundImage from '@/assets/fondogeneral.png'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
 
@@ -92,7 +93,11 @@ export default {
         const response = await axios.get(`${API_BASE_URL}/users`, this.authConfig())
         this.users = response.data
       } catch (error) {
-        this.message = "No se pudo cargar la lista de usuarios"
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo cargar la lista de usuarios"
+        })
       }
     },
     async createUser() {
@@ -103,12 +108,20 @@ export default {
         this.user.password = String(this.user.password).replace(/\D/g, "").slice(0, 4)
 
         if (!/^\d{8}$/.test(this.user.dni)) {
-          this.message = "El documento debe tener exactamente 8 digitos numericos"
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "El documento debe tener exactamente 8 digitos numericos"
+          })
           return
         }
 
         if (!/^\d{4}$/.test(this.user.password)) {
-          this.message = "La contrasena debe tener exactamente 4 digitos numericos"
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "La contrasena debe tener exactamente 4 digitos numericos"
+          })
           return
         }
 
@@ -118,7 +131,11 @@ export default {
         this.resetForm()
         await this.loadUsers()
       } catch (error) {
-        this.message = error.response?.data?.message || "No se pudo crear el usuario"
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.response?.data?.message || "No se pudo crear el usuario"
+        })
       }
     },
     async deleteUser(userId) {
@@ -127,7 +144,11 @@ export default {
         this.message = "Usuario eliminado correctamente"
         await this.loadUsers()
       } catch (error) {
-        this.message = error.response?.data?.message || "No se pudo eliminar el usuario"
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.response?.data?.message || "No se pudo eliminar el usuario"
+        })
       }
     },
     resetForm() {
