@@ -1,19 +1,17 @@
 <template>
   <div class="page-container">
-    <div class="admin-layout">
-      <div class="panel-card admin-form">
+    <div :class="['admin-layout', { 'single-column': !showCreateForm }]">
+      <div v-if="showCreateForm" class="panel-card admin-form">
         <h2 class="title">Panel de Admin</h2>
 
-        <label for="name">nombre</label>
-        <input type="text" id="name" v-model="user.name" />
+        <input type="text" id="name" v-model="user.name" placeholder="Nombre"/>
 
-        <label for="dni">documento</label>
-        <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" />
+        <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" placeholder="Documento"/>
 
-        <label for="password">contraseña</label>
-        <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" />
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" placeholder="Contraseña"/>
 
-        <label for="role">rol</label>
+        <label for="role">Rol</label>
         <select id="role" v-model="user.role">
           <option value="operario">Operario</option>
           <option value="supervisor">Supervisor</option>
@@ -23,13 +21,19 @@
         <p v-if="message" class="message">{{ message }}</p>
 
         <div class="actions">
-          <button @click="createUser">Crear usuario</button>
+          <button @click="createUser">Guardar usuario</button>
           <button class="secondary-button" @click="resetForm">Limpiar</button>
+          <button class="secondary-button" @click="toggleCreateForm">Cerrar formulario</button>
         </div>
       </div>
 
       <div class="panel-card users-panel">
-        <h2 class="title">Usuarios creados</h2>
+        <div class="panel-header">
+          <h2 class="title">Usuarios creados</h2>
+          <button class="toggle-form-button" @click="toggleCreateForm">
+            {{ showCreateForm ? "Ocultar formulario" : "Crear usuario" }}
+          </button>
+        </div>
 
         <p v-if="!users.length" class="empty-state">
           No hay usuarios cargados todavía.
@@ -75,10 +79,15 @@ export default {
       },
       users: [],
       message: "",
+      showCreateForm: false,
       backgroundImage: backgroundImage
     }
   },
   methods: {
+    toggleCreateForm() {
+      this.showCreateForm = !this.showCreateForm
+      this.message = ""
+    },
     authConfig() {
       const token = localStorage.getItem("token")
 
@@ -195,6 +204,11 @@ export default {
   gap: 1rem;
 }
 
+.admin-layout.single-column {
+  max-width: 720px;
+  grid-template-columns: 1fr;
+}
+
 .panel-card {
   width: 100%;
   display: flex;
@@ -278,6 +292,23 @@ button:hover {
   text-align: left;
 }
 
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.panel-header .title {
+  margin: 0;
+}
+
+.toggle-form-button {
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
 .users-list {
   width: 100%;
   display: grid;
@@ -335,6 +366,11 @@ button:hover {
   }
 
   .user-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .panel-header {
     flex-direction: column;
     align-items: stretch;
   }
