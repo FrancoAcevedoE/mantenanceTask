@@ -8,12 +8,16 @@
       <input
         v-model="dni"
         type="text"
+        inputmode="numeric"
+        maxlength="8"
         placeholder="DNI"
       />
 
       <input
         v-model="password"
         type="password"
+        inputmode="numeric"
+        maxlength="4"
         placeholder="Contraseña"
       />
 
@@ -79,7 +83,21 @@ export default {
 
   methods:{
     async login(){
+      this.dni = this.dni.replace(/\D/g, "").slice(0, 8)
+      this.password = this.password.replace(/\D/g, "").slice(0, 4)
+
+      if (!/^\d{8}$/.test(this.dni)) {
+        this.error = "El usuario debe ser un DNI de 8 digitos numericos"
+        return
+      }
+
+      if (!/^\d{4}$/.test(this.password)) {
+        this.error = "La contrasena debe tener 4 digitos numericos"
+        return
+      }
+
       try{
+        this.error = null
         const response = await axios.post(`${API_BASE_URL}/users/login`,{
           dni:this.dni,
           password:this.password
@@ -93,7 +111,7 @@ export default {
 
       }
       catch(err){
-        this.error = "Usuario o contraseña incorrectos"
+        this.error = err.response?.data?.message || "Usuario o contraseña incorrectos"
 
       }
 
@@ -273,7 +291,7 @@ button{
 
 .social-box h3 {
   margin: 0 0 0.75rem;
-  color: #333;
+  color: #fff;
   font-size: 1rem;
   text-align: center;
 }

@@ -7,16 +7,23 @@ export const login = async (req, res) => {
 
     try {
 
-        const { dni, password } = req.body
+        const dniRaw = String(req.body.dni ?? "").trim()
+        const passwordRaw = String(req.body.password ?? "").trim()
 
-        const dniNumber = Number(dni)
-        const passwordNumber = Number(password)
-
-        if (!Number.isFinite(dniNumber) || !Number.isFinite(passwordNumber)) {
+        if (!/^\d{8}$/.test(dniRaw)) {
             return res.status(400).json({
-                message: "Documento y contrasena deben ser numericos"
+                message: "El usuario debe ser un DNI de 8 digitos numericos"
             })
         }
+
+        if (!/^\d{4}$/.test(passwordRaw)) {
+            return res.status(400).json({
+                message: "La contrasena debe tener 4 digitos numericos"
+            })
+        }
+
+        const dniNumber = Number(dniRaw)
+        const passwordNumber = Number(passwordRaw)
 
         const user = await User.findOne({
             dni: dniNumber,
@@ -71,13 +78,30 @@ export const getUsers = async (req, res) => {
 
 export const createUser = async (req, res) => {
     try {
-        const { name, dni, password, role } = req.body
+        const { name, role } = req.body
+        const dniRaw = String(req.body.dni ?? "").trim()
+        const passwordRaw = String(req.body.password ?? "").trim()
 
-        if (!name || !dni || !password) {
+        if (!name || !dniRaw || !passwordRaw) {
             return res.status(400).json({
                 message: "Nombre, documento y contrasena son obligatorios"
             })
         }
+
+        if (!/^\d{8}$/.test(dniRaw)) {
+            return res.status(400).json({
+                message: "El documento debe tener exactamente 8 digitos numericos"
+            })
+        }
+
+        if (!/^\d{4}$/.test(passwordRaw)) {
+            return res.status(400).json({
+                message: "La contrasena debe tener exactamente 4 digitos numericos"
+            })
+        }
+
+        const dni = Number(dniRaw)
+        const password = Number(passwordRaw)
 
         const existingUser = await User.findOne({ dni })
 

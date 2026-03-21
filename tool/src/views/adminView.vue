@@ -8,10 +8,10 @@
         <input type="text" id="name" v-model="user.name" />
 
         <label for="dni">documento</label>
-        <input type="number" id="dni" v-model="user.dni" />
+        <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" />
 
         <label for="password">contraseña</label>
-        <input type="password" id="password" v-model="user.password" />
+        <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" />
 
         <label for="role">rol</label>
         <select id="role" v-model="user.role">
@@ -98,6 +98,19 @@ export default {
     async createUser() {
       try {
         this.message = ""
+
+        this.user.dni = String(this.user.dni).replace(/\D/g, "").slice(0, 8)
+        this.user.password = String(this.user.password).replace(/\D/g, "").slice(0, 4)
+
+        if (!/^\d{8}$/.test(this.user.dni)) {
+          this.message = "El documento debe tener exactamente 8 digitos numericos"
+          return
+        }
+
+        if (!/^\d{4}$/.test(this.user.password)) {
+          this.message = "La contrasena debe tener exactamente 4 digitos numericos"
+          return
+        }
 
         await axios.post(`${API_BASE_URL}/users`, this.user, this.authConfig())
 
