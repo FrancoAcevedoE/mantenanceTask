@@ -7,9 +7,24 @@
 
             <input type="text" v-model="form.name" placeholder="Máquina" />
 
-            <textarea v-model="form.machineParts" placeholder="Partes de la máquina"></textarea>
+            <label class="parts-label">Partes de la máquina</label>
+            <div class="parts-chips" v-if="form.machineParts.length">
+              <span v-for="(part, index) in form.machineParts" :key="index" class="part-chip">
+                {{ part }}
+                <button type="button" class="chip-remove" @click="removePart(index)">×</button>
+              </span>
+            </div>
+            <div class="part-input-row">
+              <input
+                type="text"
+                v-model="newPart"
+                placeholder="Nombre de la parte"
+                @keyup.enter="addPart"
+              />
+              <button type="button" class="add-part-button" @click="addPart">+</button>
+            </div>
 
-            <input type="number" v-model="form.horometro" placeholder="Horómetro"/>
+            <input type="number" v-model.number="form.horometro" placeholder="Horómetro"/>
 
             <textarea v-model="form.instructions" placeholder="Instrucciones/observaciones de la máquina"></textarea>
 
@@ -34,14 +49,25 @@ export default {
       form: {
         sector: "",
         name: "",
-        machineParts: "",
-        horometro: 0,
+        machineParts: [],
+        horometro: null,
         instructions: ""
       },
+      newPart: "",
       backgroundImage: backgroundImage
     }
   },
   methods: {
+    addPart() {
+      const trimmed = this.newPart.trim()
+      if (trimmed) {
+        this.form.machineParts.push(trimmed)
+        this.newPart = ""
+      }
+    },
+    removePart(index) {
+      this.form.machineParts.splice(index, 1)
+    },
     authConfig() {
       const token = localStorage.getItem("token")
       return {
@@ -52,7 +78,11 @@ export default {
     },
     async save() {
       try {
-        if (!this.form.sector || !this.form.name || !this.form.machineParts) {
+        const filteredParts = this.form.machineParts
+          .map(part => part.trim())
+          .filter(Boolean)
+
+        if (!this.form.sector || !this.form.name || !filteredParts.length) {
           Swal.fire({
             icon: "error",
             title: "Error",
@@ -61,7 +91,13 @@ export default {
           return
         }
 
-        await axios.post(`${API_BASE_URL}/machines`, this.form, this.authConfig())
+        const payload = {
+          ...this.form,
+          machineParts: filteredParts,
+          horometro: this.form.horometro ?? 0
+        }
+
+        await axios.post(`${API_BASE_URL}/machines`, payload, this.authConfig())
         Swal.fire({
           icon: "success",
           title: "Listo",
@@ -130,6 +166,65 @@ h2 {
   color: #333;
   font-size: 2rem;
   letter-spacing: 0.04rem;
+}
+
+.parts-label {
+  display: block;
+  margin-top: 0.25rem;
+  color: #4b4b4b;
+  font-size: 0.95rem;
+}
+
+.parts-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0.4rem;
+}
+
+.part-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #0369a1;
+  color: #fff;
+  border-radius: 2rem;
+  padding: 4px 12px;
+  font-size: 0.88rem;
+}
+
+.chip-remove {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+  border-radius: 0;
+}
+
+.chip-remove:hover {
+  background: none;
+  color: #ffd;
+}
+
+.part-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.part-input-row input {
+  margin: 0;
+}
+
+.add-part-button {
+  padding: 10px 18px;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 input[type="text"],

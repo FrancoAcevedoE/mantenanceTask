@@ -4,10 +4,18 @@ export const newMachineController = async (req, res) => {
   try {
     const { sector, name, machineParts, horometro, instructions } = req.body
 
+    const normalizedMachineParts = Array.isArray(machineParts)
+      ? machineParts.map(part => String(part).trim()).filter(Boolean)
+      : [String(machineParts || "").trim()].filter(Boolean)
+
+    if (!normalizedMachineParts.length) {
+      return res.status(400).json({ error: "Debes cargar al menos una parte de maquina" })
+    }
+
     const machine = new Machine({
       sector,
       name,
-      machineParts,
+      machineParts: normalizedMachineParts,
       horometro: horometro || 0,
       instructions: instructions || ""
     })
@@ -48,9 +56,17 @@ export const updateMachineController = async (req, res) => {
     const { id } = req.params
     const { sector, name, machineParts, horometro, instructions } = req.body
 
+    const normalizedMachineParts = Array.isArray(machineParts)
+      ? machineParts.map(part => String(part).trim()).filter(Boolean)
+      : [String(machineParts || "").trim()].filter(Boolean)
+
+    if (!normalizedMachineParts.length) {
+      return res.status(400).json({ error: "Debes cargar al menos una parte de maquina" })
+    }
+
     const machine = await Machine.findByIdAndUpdate(
       id,
-      { sector, name, machineParts, horometro, instructions },
+      { sector, name, machineParts: normalizedMachineParts, horometro, instructions },
       { new: true }
     )
 

@@ -7,11 +7,16 @@
         <form @submit.prevent="saveMaintenance">
 
 <label>Sector</label>
-<input v-model="form.sector" required>
+<select v-model="form.sector" required>
+    <option value="">Seleccionar sector</option>
+    <option v-for="sector in sectors" :key="sector" :value="sector">
+        {{ sector }}
+    </option>
+</select>
 
 <label>Máquina</label>
 <div style="display: flex; gap: 0.5rem; align-items: center;">
-  <select v-model="form.machine" required style="flex: 1;">
+    <select v-model="form.machine" required style="flex: 1;" @change="onMachineChange">
     <option value="">Seleccionar máquina</option>
     <option v-for="machine in machines" :key="machine._id" :value="machine.name">
       {{ machine.name }}
@@ -28,7 +33,12 @@
 </div>
 
 <label>Parte de máquina</label>
-<input v-model="form.machinePart" required>
+<select v-model="form.machinePart" required>
+    <option value="">Seleccionar parte</option>
+    <option v-for="part in selectedMachineParts" :key="part" :value="part">
+        {{ part }}
+    </option>
+</select>
 
 <label>Operario</label>
 <select v-model="form.clientId" required>
@@ -121,6 +131,7 @@ return{
 
 operarios:[],
 machines:[],
+sectors:[],
 
 form:{
 
@@ -164,6 +175,17 @@ beforeUnmount() {
 computed: {
   selectedMachine() {
     return this.machines.find(m => m.name === this.form.machine)
+    },
+    selectedMachineParts() {
+        if (!this.selectedMachine) return []
+
+        const parts = this.selectedMachine.machineParts
+
+        if (Array.isArray(parts)) {
+            return parts
+        }
+
+        return parts ? [parts] : []
   }
 },
 
@@ -215,6 +237,8 @@ this.authConfig()
 
 this.machines = response.data
 
+this.sectors = [...new Set(this.machines.map(machine => machine.sector).filter(Boolean))]
+
 }catch(error){
 
         Swal.fire({
@@ -224,6 +248,18 @@ this.machines = response.data
         })
 
 }
+
+},
+
+onMachineChange(){
+
+if(!this.selectedMachine){
+this.form.machinePart = ""
+return
+}
+
+this.form.sector = this.selectedMachine.sector || ""
+this.form.machinePart = ""
 
 },
 

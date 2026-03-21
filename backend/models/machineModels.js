@@ -10,7 +10,7 @@ const machineSchema = new mongoose.Schema({
     required: true
   },
   machineParts: {
-    type: String,
+    type: [String],
     required: true
   },
   horometro: {
