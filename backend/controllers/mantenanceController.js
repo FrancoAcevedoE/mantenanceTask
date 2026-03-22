@@ -1,4 +1,4 @@
-import Client from "../models/clientModel.js"
+import User from "../models/userModels.js"
 import Maintenance from "../models/mantenanceModels.js"
 
 export const newMaintenanceController = async (req,res)=>{
@@ -7,11 +7,11 @@ export const newMaintenanceController = async (req,res)=>{
 
         const data = req.body
 
-        const client = await Client.findById(data.clientId)
+        const client = await User.findById(data.clientId)
 
-        if(!client){
+        if(!client || client.role !== "operario"){
             return res.status(404).json({
-                message:"Cliente no encontrado"
+                message:"Operario no encontrado"
             })
         }
 
@@ -82,7 +82,7 @@ export const historyController = async (req, res) => {
     try {
 
         const history = await Maintenance.find()
-            .populate("clientId", "name company")
+            .populate("clientId", "name role")
 
         res.json(history)
 
@@ -107,7 +107,7 @@ const machines = await Maintenance.distinct("machine")
 const operarios = await Maintenance.distinct("clientId")
 
 const recentMaintenances = await Maintenance.find()
-.populate("clientId", "name company")
+.populate("clientId", "name role")
 .sort({ createdAt: -1 })
 .limit(5)
 

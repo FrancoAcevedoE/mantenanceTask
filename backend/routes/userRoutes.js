@@ -1,11 +1,18 @@
 import express from "express"
-import { createUser, deleteUser, getUsers, login } from "../controllers/userController.js"
+import { createUser, deleteUser, getOperarios, getUsers, login } from "../controllers/userController.js"
 import { verifyToken } from "../middlewares/authMiddleware.js"
 import { checkRole } from "../middlewares/roleMiddleware.js"
 
 const router = express.Router()
 
 router.post("/login", login)
+
+router.get(
+    "/operarios",
+    verifyToken,
+    checkRole("admin", "supervisor", "operario"),
+    getOperarios
+)
 
 router.get(
     "/",

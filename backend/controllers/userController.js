@@ -76,6 +76,20 @@ export const getUsers = async (req, res) => {
     }
 }
 
+export const getOperarios = async (req, res) => {
+    try {
+        const operarios = await User.find({ role: "operario" })
+            .select("name dni role")
+            .sort({ name: 1 })
+
+        res.json(operarios)
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al obtener operarios"
+        })
+    }
+}
+
 export const createUser = async (req, res) => {
     try {
         const { name, role } = req.body

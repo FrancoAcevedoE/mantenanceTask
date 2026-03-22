@@ -208,7 +208,7 @@ async loadOperarios(){
 try{
 
 const response = await axios.get(
-`${API_BASE_URL}/clients`,
+`${API_BASE_URL}/users/operarios`,
 this.authConfig()
 )
 
