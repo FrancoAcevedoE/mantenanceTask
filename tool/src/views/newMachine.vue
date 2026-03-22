@@ -472,6 +472,7 @@ button:hover {
 
 .machine-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
