@@ -17,6 +17,22 @@ const machineSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  horometroHistory: {
+    type: [
+      {
+        value: {
+          type: Number,
+          required: true,
+          min: 0
+        },
+        recordedAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ],
+    default: []
+  },
   instructions: {
     type: String,
     default: ""

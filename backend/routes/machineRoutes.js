@@ -4,6 +4,12 @@ import {
   getAllMachinesController,
   getMachineByIdController,
   updateMachineController,
+  modifyMachineController,
+  updateHorometroController,
+  updateInstructionsController,
+  updateMachinePartsController,
+  updateSectorController,
+  updateNameController,
   deleteMachineController
 } from "../controllers/machineController.js"
 import { verifyToken } from "../middlewares/authMiddleware.js"
@@ -22,6 +28,14 @@ router.post("/", verifyToken, checkRole("admin", "operario"), newMachineControll
 
 // PUT update machine
 router.put("/:id", verifyToken, checkRole("admin"), updateMachineController)
+
+// PATCH update machine fields
+router.patch("/:id", verifyToken, checkRole("admin"), modifyMachineController)
+router.patch("/:id/horometro", verifyToken, checkRole("admin"), updateHorometroController)
+router.patch("/:id/instructions", verifyToken, checkRole("admin"), updateInstructionsController)
+router.patch("/:id/machine-parts", verifyToken, checkRole("admin"), updateMachinePartsController)
+router.patch("/:id/sector", verifyToken, checkRole("admin"), updateSectorController)
+router.patch("/:id/name", verifyToken, checkRole("admin"), updateNameController)
 
 // DELETE machine
 router.delete("/:id", verifyToken, checkRole("admin"), deleteMachineController)
