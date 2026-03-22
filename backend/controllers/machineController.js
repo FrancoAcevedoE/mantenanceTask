@@ -7,6 +7,12 @@ const parseHorometro = (value) => {
   return parsed
 }
 
+const normalizeSector = (value = "") =>
+  String(value)
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+
 const addHorometroHistoryIfChanged = (machine, nextHorometro) => {
   if (machine.horometro !== nextHorometro) {
     machine.horometroHistory.push({ value: nextHorometro, recordedAt: new Date() })
@@ -16,6 +22,11 @@ const addHorometroHistoryIfChanged = (machine, nextHorometro) => {
 export const newMachineController = async (req, res) => {
   try {
     const { sector, name, machineParts, horometro, instructions } = req.body
+    const normalizedSector = normalizeSector(sector)
+
+    if (!normalizedSector) {
+      return res.status(400).json({ error: "El sector es obligatorio" })
+    }
 
     const normalizedMachineParts = Array.isArray(machineParts)
       ? machineParts.map(part => String(part).trim()).filter(Boolean)
@@ -33,7 +44,7 @@ export const newMachineController = async (req, res) => {
     const initialHorometro = normalizedHorometro ?? 0
 
     const machine = new Machine({
-      sector,
+      sector: normalizedSector,
       name,
       machineParts: normalizedMachineParts,
       horometro: initialHorometro,
@@ -76,6 +87,11 @@ export const updateMachineController = async (req, res) => {
   try {
     const { id } = req.params
     const { sector, name, machineParts, horometro, instructions } = req.body
+    const normalizedSector = normalizeSector(sector)
+
+    if (!normalizedSector) {
+      return res.status(400).json({ error: "El sector es obligatorio" })
+    }
 
     const normalizedMachineParts = Array.isArray(machineParts)
       ? machineParts.map(part => String(part).trim()).filter(Boolean)
@@ -96,7 +112,7 @@ export const updateMachineController = async (req, res) => {
       return res.status(404).json({ error: "Máquina no encontrada" })
     }
 
-    machine.sector = sector
+    machine.sector = normalizedSector
     machine.name = name
     machine.machineParts = normalizedMachineParts
     machine.instructions = instructions
@@ -190,10 +206,15 @@ export const updateSectorController = async (req, res) => {
   try {
     const { id } = req.params
     const { sector } = req.body
+    const normalizedSector = normalizeSector(sector)
+
+    if (!normalizedSector) {
+      return res.status(400).json({ error: "El sector es obligatorio" })
+    }
 
     const machine = await Machine.findByIdAndUpdate(
       id,
-      { sector },
+      { sector: normalizedSector },
       { new: true }
     )
 
@@ -256,7 +277,13 @@ export const modifyMachineController = async (req, res) => {
     }
 
     if (Object.prototype.hasOwnProperty.call(updates, "sector")) {
-      machine.sector = updates.sector
+      const normalizedSector = normalizeSector(updates.sector)
+
+      if (!normalizedSector) {
+        return res.status(400).json({ error: "El sector es obligatorio" })
+      }
+
+      machine.sector = normalizedSector
     }
 
     if (Object.prototype.hasOwnProperty.call(updates, "name")) {

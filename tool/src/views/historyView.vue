@@ -31,6 +31,8 @@
             <thead>
                 <tr>
                     <th>Operario</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
                     <th>Sector</th>
                     <th>Máquina</th>
                     <th>Parte</th>
@@ -45,6 +47,8 @@
             <tbody>
                <tr v-for="item in filteredHistory" :key="item._id" :class="getRowClass(item.status)">
                     <td>{{ formatOperarioName(item.clientId) }}</td>
+                <td>{{ formatDate(item.createdAt) }}</td>
+                <td>{{ formatTime(item.createdAt) }}</td>
                     <td>{{ item.sector }}</td>
                     <td>{{ item.machine }}</td>
                     <td>{{ item.machinePart }}</td>
@@ -245,6 +249,19 @@ export default {
                 ? `${operario.name} - ${operario.company}`
                 : operario.name
 
+        },
+
+        formatDate(value) {
+            if (!value) return "-"
+            return new Date(value).toLocaleDateString("es-AR")
+        },
+
+        formatTime(value) {
+            if (!value) return "-"
+            return new Date(value).toLocaleTimeString("es-AR", {
+                hour: "2-digit",
+                minute: "2-digit"
+            })
         },
 
         openModal(item) {

@@ -1,11 +1,27 @@
 import User from "../models/userModels.js"
 import Maintenance from "../models/mantenanceModels.js"
 
+const formatSectorLabel = (value = "") =>
+    value
+        .split(" ")
+        .filter(Boolean)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+
+const normalizeSector = (value = "") =>
+    String(value)
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLowerCase()
+
 export const newMaintenanceController = async (req,res)=>{
 
     try{
 
-        const data = req.body
+        const data = {
+            ...req.body,
+            sector: normalizeSector(req.body?.sector)
+        }
 
         const client = await User.findById(data.clientId)
 
@@ -119,6 +135,97 @@ const stopped = await Maintenance.countDocuments({
 status:"stopped"
 })
 
+const statusBreakdownRaw = await Maintenance.aggregate([
+{
+$group: {
+_id: "$status",
+count: { $sum: 1 }
+}
+}
+])
+
+const typeBreakdownRaw = await Maintenance.aggregate([
+{
+$group: {
+_id: "$maintenanceType",
+count: { $sum: 1 }
+}
+}
+])
+
+const sectorBreakdownRaw = await Maintenance.aggregate([
+{
+$addFields: {
+normalizedSector: {
+    $toLower: {
+        $trim: {
+            input: { $ifNull: ["$sector", ""] }
+        }
+    }
+}
+}
+},
+{
+$match: {
+normalizedSector: { $nin: [""] }
+}
+},
+{
+$group: {
+_id: "$normalizedSector",
+count: { $sum: 1 }
+}
+},
+{
+$sort: { count: -1 }
+},
+{
+$limit: 8
+}
+])
+
+const dailyRaw = await Maintenance.aggregate([
+{
+$addFields: {
+createdDay: {
+$dateToString: {
+format: "%Y-%m-%d",
+date: "$createdAt"
+}
+}
+}
+},
+{
+$group: {
+_id: "$createdDay",
+count: { $sum: 1 }
+}
+},
+{
+$sort: { _id: 1 }
+}
+])
+
+const lastSevenDays = dailyRaw.slice(-7).map(item => ({
+date: item._id,
+count: item.count
+}))
+
+const statusBreakdown = statusBreakdownRaw.map(item => ({
+status: item._id || "sin_estado",
+count: item.count
+}))
+
+const typeBreakdown = typeBreakdownRaw.map(item => ({
+type: item._id || "sin_tipo",
+count: item.count
+}))
+
+const sectorBreakdown = sectorBreakdownRaw.map(item => ({
+sector: formatSectorLabel(item._id),
+count: item.count
+}))
+
 res.json({
 
 totalMaintenances,
@@ -131,7 +238,14 @@ pending,
 
 stopped,
 
-recentMaintenances
+recentMaintenances,
+
+charts: {
+statusBreakdown,
+typeBreakdown,
+sectorBreakdown,
+lastSevenDays
+}
 
 })
 

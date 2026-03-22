@@ -49,6 +49,28 @@
 
 </div>
 
+<section class="charts-section">
+<h2>Analítica de mantenimientos</h2>
+<div class="charts-grid">
+<div class="chart-card">
+<h3>Estados</h3>
+<canvas ref="statusChart"></canvas>
+</div>
+<div class="chart-card">
+<h3>Tipos de mantenimiento</h3>
+<canvas ref="typeChart"></canvas>
+</div>
+<div class="chart-card">
+<h3>Mantenimientos por sector</h3>
+<canvas ref="sectorChart"></canvas>
+</div>
+<div class="chart-card chart-card-wide">
+<h3>Últimos 7 días</h3>
+<canvas ref="dailyChart"></canvas>
+</div>
+</div>
+</section>
+
 <section class="recent-section">
 <h2>Últimos mantenimientos</h2>
 
@@ -75,6 +97,8 @@ Limpiar filtros
 <th>Parte</th>
 <th>Sector</th>
 <th>Estado</th>
+<th>Fecha</th>
+<th>Hora</th>
 </tr>
 </thead>
 <tbody>
@@ -84,6 +108,8 @@ Limpiar filtros
 <td>{{ item.machinePart }}</td>
 <td>{{ item.sector }}</td>
 <td>{{ formatStatus(item.status) }}</td>
+<td>{{ formatDate(item.createdAt) }}</td>
+<td>{{ formatTime(item.createdAt) }}</td>
 </tr>
 </tbody>
 </table>
@@ -101,11 +127,33 @@ Limpiar filtros
 <script>
 
 import axios from "axios"
+import {
+Chart,
+ArcElement,
+BarElement,
+LineElement,
+CategoryScale,
+LinearScale,
+PointElement,
+Tooltip,
+Legend
+} from "chart.js"
 import backgroundImage from '@/assets/fondogeneral.png'
 
 // import apiClient from "../services/apiClient"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
+
+Chart.register(
+ArcElement,
+BarElement,
+LineElement,
+CategoryScale,
+LinearScale,
+PointElement,
+Tooltip,
+Legend
+)
 
 export default{
 
@@ -120,6 +168,14 @@ searchOperario:"",
 searchMachine:"",
 
 searchStatus:"",
+
+statusChartInstance: null,
+
+typeChartInstance: null,
+
+sectorChartInstance: null,
+
+dailyChartInstance: null,
 
 backgroundImage
 
@@ -160,18 +216,7 @@ document.body.style.backgroundPosition = 'center'
 document.body.style.backgroundRepeat = 'no-repeat'
 document.body.style.backgroundAttachment = 'fixed'
 
-const token = localStorage.getItem("token")
-
-const res = await axios.get(
-`${API_BASE_URL}/maintenance/dashboard`,
-{
-headers:{
-Authorization: `Bearer ${token}`
-}
-}
-)
-
-this.stats = res.data
+await this.loadDashboard()
 
 },
 
@@ -183,9 +228,168 @@ document.body.style.backgroundPosition = ''
 document.body.style.backgroundRepeat = ''
 document.body.style.backgroundAttachment = ''
 
+this.destroyCharts()
+
 },
 
 methods:{
+
+authConfig() {
+
+const token = localStorage.getItem("token")
+
+return {
+headers: {
+Authorization: `Bearer ${token}`
+}
+}
+
+},
+
+async loadDashboard() {
+
+const res = await axios.get(
+`${API_BASE_URL}/maintenance/dashboard`,
+this.authConfig()
+)
+
+this.stats = res.data
+
+this.$nextTick(() => {
+this.renderCharts()
+})
+
+},
+
+destroyCharts() {
+
+if (this.statusChartInstance) {
+this.statusChartInstance.destroy()
+this.statusChartInstance = null
+}
+
+if (this.typeChartInstance) {
+this.typeChartInstance.destroy()
+this.typeChartInstance = null
+}
+
+if (this.sectorChartInstance) {
+this.sectorChartInstance.destroy()
+this.sectorChartInstance = null
+}
+
+if (this.dailyChartInstance) {
+this.dailyChartInstance.destroy()
+this.dailyChartInstance = null
+}
+
+},
+
+renderCharts() {
+
+this.destroyCharts()
+
+const chartData = this.stats.charts || {}
+
+const statusData = chartData.statusBreakdown || []
+const typeData = chartData.typeBreakdown || []
+const sectorData = chartData.sectorBreakdown || []
+const dailyData = chartData.lastSevenDays || []
+
+if (this.$refs.statusChart) {
+this.statusChartInstance = new Chart(this.$refs.statusChart, {
+type: "doughnut",
+data: {
+labels: statusData.map(item => this.formatStatus(item.status)),
+datasets: [{
+data: statusData.map(item => item.count),
+backgroundColor: ["#2e7d32", "#f9a825", "#c62828", "#607d8b"]
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+position: "bottom"
+}
+}
+}
+})
+}
+
+if (this.$refs.typeChart) {
+this.typeChartInstance = new Chart(this.$refs.typeChart, {
+type: "bar",
+data: {
+labels: typeData.map(item => this.formatType(item.type)),
+datasets: [{
+label: "Cantidad",
+data: typeData.map(item => item.count),
+backgroundColor: "#1e88e5",
+borderRadius: 8
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+display: false
+}
+}
+}
+})
+}
+
+if (this.$refs.sectorChart) {
+this.sectorChartInstance = new Chart(this.$refs.sectorChart, {
+type: "bar",
+data: {
+labels: sectorData.map(item => item.sector),
+datasets: [{
+label: "Cantidad",
+data: sectorData.map(item => item.count),
+backgroundColor: "#6d4c41",
+borderRadius: 8
+}]
+},
+options: {
+indexAxis: "y",
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+display: false
+}
+}
+}
+})
+}
+
+if (this.$refs.dailyChart) {
+this.dailyChartInstance = new Chart(this.$refs.dailyChart, {
+type: "line",
+data: {
+labels: dailyData.map(item => this.formatShortDate(item.date)),
+datasets: [{
+label: "Mantenimientos",
+data: dailyData.map(item => item.count),
+borderColor: "#00a878",
+backgroundColor: "rgba(0, 168, 120, 0.2)",
+fill: true,
+tension: 0.35,
+pointRadius: 4
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false
+}
+})
+}
+
+},
 
 formatOperarioName(operario) {
 
@@ -206,6 +410,44 @@ if (status === "pending") return "Pendiente"
 if (status === "stopped") return "Máquina parada"
 
 return status || "-"
+
+},
+
+formatType(type) {
+
+if (!type) return "Sin tipo"
+
+return type.charAt(0).toUpperCase() + type.slice(1)
+
+},
+
+formatDate(value) {
+
+if (!value) return "-"
+
+return new Date(value).toLocaleDateString("es-AR")
+
+},
+
+formatTime(value) {
+
+if (!value) return "-"
+
+return new Date(value).toLocaleTimeString("es-AR", {
+hour: "2-digit",
+minute: "2-digit"
+})
+
+},
+
+formatShortDate(value) {
+
+if (!value) return "-"
+
+return new Date(`${value}T00:00:00`).toLocaleDateString("es-AR", {
+day: "2-digit",
+month: "2-digit"
+})
 
 },
 
@@ -286,6 +528,49 @@ font-size:28px;
 font-weight:bold;
 margin: 0;
 color: #333;
+}
+
+.charts-section {
+margin-top: 1.5rem;
+}
+
+.charts-section h2 {
+margin: 0 0 1rem;
+text-align: center;
+color: #333;
+font-size: 1.5rem;
+}
+
+.charts-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+gap: 1rem;
+}
+
+.chart-card {
+background: linear-gradient(135deg, #ffffff, #f4f9ff);
+border: 1px solid #e7edf7;
+border-radius: 12px;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+padding: 0.85rem;
+height: 300px;
+}
+
+.chart-card h3 {
+margin: 0 0 0.65rem;
+text-align: center;
+color: #2f3d4f;
+font-size: 1.05rem;
+}
+
+.chart-card canvas {
+width: 100%;
+height: calc(100% - 32px) !important;
+}
+
+.chart-card-wide {
+grid-column: 1 / -1;
+height: 320px;
 }
 
 .recent-section {
