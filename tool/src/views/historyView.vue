@@ -71,15 +71,44 @@
                     </td>
 
                     <td>
-                        <button v-if="item.status !== 'finished'" @click="openModal(item)">
-                            Terminar trabajo
-                        </button>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button @click="openDetailModal(item)" style="background: #1e88e5;">
+                                Detalles
+                            </button>
+                            <button v-if="item.status !== 'finished'" @click="openFinishModal(item)" style="background: #2e7d32;">
+                                Terminar
+                            </button>
+                        </div>
                     </td>
                 </tr>
             </tbody>
         </table>
 
-        <div v-if="showModal" class="modal">
+        <div v-if="showDetailModal" class="modal">
+            <div class="modal-box" style="max-width: 600px;">
+                <h3>Detalles del mantenimiento</h3>
+                <div style="text-align: left; line-height: 1.8;">
+                    <p><strong>Operario:</strong> {{ formatOperarioName(selectedDetail?.clientId) }}</p>
+                    <p><strong>Sector:</strong> {{ selectedDetail?.sector }}</p>
+                    <p><strong>Máquina:</strong> {{ selectedDetail?.machine }}</p>
+                    <p><strong>Parte:</strong> {{ selectedDetail?.machinePart }}</p>
+                    <p><strong>Tipo de mantenimiento:</strong> {{ selectedDetail?.maintenanceType }}</p>
+                    <p><strong>Horas trabajadas:</strong> {{ selectedDetail?.hoursWorked }}</p>
+                    <p><strong>Estado:</strong> {{ formatStatus(selectedDetail?.status) }}</p>
+                    <p><strong>Fecha:</strong> {{ formatDate(selectedDetail?.createdAt) }}</p>
+                    <p><strong>Hora:</strong> {{ formatTime(selectedDetail?.createdAt) }}</p>
+                    <p><strong>Descripción del trabajo:</strong></p>
+                    <p style="background: #f5f5f5; padding: 0.75rem; border-radius: 8px; white-space: pre-wrap;">{{ selectedDetail?.workDescription || "-" }}</p>
+                    <p><strong>Repuestos utilizados:</strong></p>
+                    <p style="background: #f5f5f5; padding: 0.75rem; border-radius: 8px; white-space: pre-wrap;">{{ selectedDetail?.spareParts || "-" }}</p>
+                </div>
+                <button @click="closeDetailModal" style="margin-top: 1rem;">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+
+        <div v-if="showFinishModal" class="modal">
             <div class="modal-box">
                 <h3>Finalizar mantenimiento</h3>
                 <label>Horas adicionales</label>
@@ -87,7 +116,7 @@
                 <button @click="finishMaintenance">
                     Guardar
                 </button>
-                <button @click="closeModal">
+                <button @click="closeFinishModal">
                     Cancelar
                 </button>
             </div>
@@ -124,7 +153,11 @@ export default {
 
             operarios: [],
 
-            showModal: false,
+            showDetailModal: false,
+
+            showFinishModal: false,
+
+            selectedDetail: null,
 
             selectedId: null,
 
@@ -264,20 +297,32 @@ export default {
             })
         },
 
-        openModal(item) {
-
-            this.selectedId = item._id
-
-            this.showModal = true
-
+        formatStatus(status) {
+            if (status === "finished") return "Terminado"
+            if (status === "pending") return "Pendiente"
+            if (status === "stopped") return "Máquina parada"
+            return status || "-"
         },
 
-        closeModal() {
+        openDetailModal(item) {
+            this.selectedDetail = item
+            this.showDetailModal = true
+        },
 
-            this.showModal = false
+        closeDetailModal() {
+            this.showDetailModal = false
+            this.selectedDetail = null
+        },
 
+        openFinishModal(item) {
+            this.selectedId = item._id
+            this.showFinishModal = true
+        },
+
+        closeFinishModal() {
+            this.showFinishModal = false
             this.extraHours = 0
-
+            this.selectedId = null
         },
 
         async finishMaintenance() {
@@ -293,7 +338,7 @@ export default {
 
             )
 
-            this.closeModal()
+            this.closeFinishModal()
 
             this.loadHistory()
 

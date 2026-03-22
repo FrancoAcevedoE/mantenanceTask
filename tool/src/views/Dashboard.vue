@@ -136,7 +136,8 @@ CategoryScale,
 LinearScale,
 PointElement,
 Tooltip,
-Legend
+Legend,
+DoughnutController
 } from "chart.js"
 import backgroundImage from '@/assets/fondogeneral.png'
 
@@ -152,7 +153,8 @@ CategoryScale,
 LinearScale,
 PointElement,
 Tooltip,
-Legend
+Legend,
+DoughnutController
 )
 
 export default{
