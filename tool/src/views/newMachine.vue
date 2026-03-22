@@ -1,37 +1,61 @@
 <template>
     <div class="page-container">
-        <div class="box">
-            <h2>Nueva máquina</h2>
+        <div class="machine-layout">
 
-            <input type="text" v-model="form.sector" placeholder="Sector de la fábrica" />
+            <!-- Formulario -->
+            <div class="box">
+                <h2>Nueva máquina</h2>
 
-            <input type="text" v-model="form.name" placeholder="Máquina" />
+                <input type="text" v-model="form.sector" placeholder="Sector de la fábrica" />
 
-            <label class="parts-label">Partes de la máquina</label>
-            <div class="parts-chips" v-if="form.machineParts.length">
-              <span v-for="(part, index) in form.machineParts" :key="index" class="part-chip">
-                {{ part }}
-                <button type="button" class="chip-remove" @click="removePart(index)">×</button>
-              </span>
+                <input type="text" v-model="form.name" placeholder="Máquina" />
+
+                <label class="parts-label">Partes de la máquina</label>
+                <div class="parts-chips" v-if="form.machineParts.length">
+                  <span v-for="(part, index) in form.machineParts" :key="index" class="part-chip">
+                    {{ part }}
+                    <button type="button" class="chip-remove" @click="removePart(index)">×</button>
+                  </span>
+                </div>
+                <div class="part-input-row">
+                  <input
+                    type="text"
+                    v-model="newPart"
+                    placeholder="Nombre de la parte"
+                    @keyup.enter="addPart"
+                  />
+                  <button type="button" class="add-part-button" @click="addPart">+</button>
+                </div>
+
+                <input type="number" v-model.number="form.horometro" placeholder="Horómetro"/>
+
+                <textarea v-model="form.instructions" placeholder="Instrucciones/observaciones de la máquina"></textarea>
+
+                <div class="button-group">
+                    <button @click="save">Guardar</button>
+                    <button @click="cancel">Cancelar</button>
+                </div>
             </div>
-            <div class="part-input-row">
-              <input
-                type="text"
-                v-model="newPart"
-                placeholder="Nombre de la parte"
-                @keyup.enter="addPart"
-              />
-              <button type="button" class="add-part-button" @click="addPart">+</button>
+
+            <!-- Lista de máquinas -->
+            <div class="box machines-panel">
+                <h2>Máquinas cargadas</h2>
+
+                <p v-if="!machines.length" class="empty-state">No hay máquinas cargadas todavía.</p>
+
+                <div v-else class="machines-list">
+                    <div v-for="machine in machines" :key="machine._id" class="machine-item">
+                        <div class="machine-info">
+                            <strong>{{ machine.name }}</strong>
+                            <span>Sector: {{ machine.sector }}</span>
+                            <span>Horómetro: {{ machine.horometro }}h</span>
+                            <span v-if="machine.machineParts?.length">Partes: {{ machine.machineParts.join(', ') }}</span>
+                        </div>
+                        <button type="button" class="danger-button" @click="deleteMachine(machine._id)">Eliminar</button>
+                    </div>
+                </div>
             </div>
 
-            <input type="number" v-model.number="form.horometro" placeholder="Horómetro"/>
-
-            <textarea v-model="form.instructions" placeholder="Instrucciones/observaciones de la máquina"></textarea>
-
-            <div class="button-group">
-                <button @click="save">Guardar</button>
-                <button @click="cancel">Cancelar</button>
-            </div>
         </div>
     </div>
 </template>
@@ -54,6 +78,7 @@ export default {
         instructions: ""
       },
       newPart: "",
+      machines: [],
       backgroundImage: backgroundImage
     }
   },
@@ -103,7 +128,9 @@ export default {
           title: "Listo",
           text: "Maquina creada correctamente"
         })
-        this.$router.push('/') // Navigate back to home or list
+        this.form = { sector: "", name: "", machineParts: [], horometro: null, instructions: "" }
+        this.newPart = ""
+        await this.loadMachines()
       } catch (error) {
         console.error("Error al crear máquina:", error)
         Swal.fire({
@@ -113,11 +140,42 @@ export default {
         })
       }
     },
+    async loadMachines() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/machines`, this.authConfig())
+        this.machines = response.data
+      } catch (error) {
+        console.error("Error al cargar máquinas:", error)
+      }
+    },
+    async deleteMachine(machineId) {
+      const confirm = await Swal.fire({
+        icon: "warning",
+        title: "¿Eliminar máquina?",
+        text: "Esta acción no se puede deshacer.",
+        showCancelButton: true,
+        confirmButtonText: "Eliminar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#dc2626"
+      })
+      if (!confirm.isConfirmed) return
+      try {
+        await axios.delete(`${API_BASE_URL}/machines/${machineId}`, this.authConfig())
+        await this.loadMachines()
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.response?.data?.error || "No se pudo eliminar la máquina"
+        })
+      }
+    },
     cancel() {
       this.$router.back()
     }
   },
   mounted() {
+    this.loadMachines()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
@@ -139,13 +197,21 @@ export default {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 1rem;
+}
+
+.machine-layout {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: flex-start;
 }
 
 .box {
   width: 100%;
-  max-width: 480px;
   padding: 2rem;
   background: rgba(255, 255, 255, 0.94);
   border-radius: 10px;
@@ -277,19 +343,72 @@ button:hover {
   margin-top: 0.5rem;
 }
 
+.machines-panel {
+  text-align: left;
+}
+
+.empty-state {
+  color: #888;
+  font-size: 0.95rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.machines-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.machine-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0,0,0,0.04);
+  border-radius: 0.5rem;
+}
+
+.machine-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.9rem;
+}
+
+.machine-info strong {
+  font-size: 1rem;
+  color: #1e3a5f;
+}
+
+.danger-button {
+  background: #dc2626;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.danger-button:hover {
+  background: #b91c1c;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .machine-layout {
+    grid-template-columns: 1fr;
+  }
+
   .box {
     padding: 1rem;
-  max-width: 90%;
   }
 
   h2 {
-  font-size: 1.6rem;
+    font-size: 1.6rem;
   }
 
   .button-group {
-  gap: 0.6rem;
+    gap: 0.6rem;
   }
 
   button {
