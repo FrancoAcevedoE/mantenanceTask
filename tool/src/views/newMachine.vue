@@ -414,5 +414,15 @@ button:hover {
   button {
     width: 100%;
   }
+
+  .machine-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .machine-item .danger-button {
+    width: auto;
+    align-self: flex-end;
+  }
 }
 </style>
