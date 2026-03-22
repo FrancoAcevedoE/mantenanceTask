@@ -11,6 +11,7 @@ export default defineConfig({
     vueDevTools(),
     VitePWA({
       registerType: 'autoUpdate',
+      useCredentials: true,
       includeAssets: ['tool.svg', 'favicon.ico', 'pwa-192.png', 'pwa-512.png'],
       manifest: {
         name: 'Tool',

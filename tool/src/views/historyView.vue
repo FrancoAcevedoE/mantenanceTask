@@ -94,9 +94,11 @@
 
 <script>
 
-// import apiClient from "../services/apiClient"
+import axios from "axios"
 
 import backgroundImage from '@/assets/fondogeneral.png'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
 
 export default {
 
@@ -184,9 +186,21 @@ export default {
 
     methods: {
 
+        authConfig() {
+            const token = localStorage.getItem("token")
+            return {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        },
+
         async loadHistory() {
 
-            const res = await apiClient.get("/maintenance/history")
+            const res = await axios.get(
+                `${API_BASE_URL}/maintenance/history`,
+                this.authConfig()
+            )
 
             this.history = res.data
 
@@ -251,13 +265,14 @@ export default {
 
         async finishMaintenance() {
 
-            await apiClient.put(
+            await axios.put(
 
-                `/maintenance/finish/${this.selectedId}`,
+                `${API_BASE_URL}/maintenance/finish/${this.selectedId}`,
 
                 {
                     hoursWorked: this.extraHours
-                }
+                },
+                this.authConfig()
 
             )
 
