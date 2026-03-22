@@ -4,7 +4,7 @@
 
             <!-- Formulario -->
             <div class="box">
-                <h2>Nueva máquina</h2>
+              <h2>{{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}</h2>
 
                 <input type="text" v-model="form.sector" placeholder="Sector de la fábrica" />
 
@@ -32,8 +32,8 @@
                 <textarea v-model="form.instructions" placeholder="Instrucciones/observaciones de la máquina"></textarea>
 
                 <div class="button-group">
-                    <button @click="save">Guardar</button>
-                    <button @click="cancel">Cancelar</button>
+                  <button @click="save">{{ editingMachineId ? 'Guardar cambios' : 'Guardar' }}</button>
+                  <button @click="cancel">{{ editingMachineId ? 'Cancelar edición' : 'Cancelar' }}</button>
                 </div>
             </div>
 
@@ -50,10 +50,12 @@
                             <span>Sector: {{ machine.sector }}</span>
                             <span>Horómetro: {{ machine.horometro }}h</span>
                             <span v-if="machine.machineParts?.length">Partes: {{ machine.machineParts.join(', ') }}</span>
-                            </div>
-                            <button type="button" class="edit-button" @click="modifyMachine(machine._id)">Modificar</button>
-                            <button type="button" class="danger-button" @click="deleteMachine(machine._id)">Eliminar</button>
-                            
+                    </div>
+                    <div class="machine-actions">
+                      <button type="button" class="history-button" @click="showHorometroHistory(machine)">Historial</button>
+                      <button type="button" class="edit-button" @click="modifyMachine(machine._id)">Modificar</button>
+                      <button type="button" class="danger-button" @click="deleteMachine(machine._id)">Eliminar</button>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -81,10 +83,16 @@ export default {
       },
       newPart: "",
       machines: [],
+      editingMachineId: null,
       backgroundImage: backgroundImage
     }
   },
   methods: {
+    resetForm() {
+      this.form = { sector: "", name: "", machineParts: [], horometro: null, instructions: "" }
+      this.newPart = ""
+      this.editingMachineId = null
+    },
     addPart() {
       const trimmed = this.newPart.trim()
       if (trimmed) {
@@ -124,21 +132,25 @@ export default {
           horometro: this.form.horometro ?? 0
         }
 
-        await axios.post(`${API_BASE_URL}/machines`, payload, this.authConfig())
+        const isEditing = Boolean(this.editingMachineId)
+        const request = isEditing
+          ? axios.patch(`${API_BASE_URL}/machines/${this.editingMachineId}`, payload, this.authConfig())
+          : axios.post(`${API_BASE_URL}/machines`, payload, this.authConfig())
+
+        await request
         Swal.fire({
           icon: "success",
           title: "Listo",
-          text: "Maquina creada correctamente"
+          text: isEditing ? "Maquina actualizada correctamente" : "Maquina creada correctamente"
         })
-        this.form = { sector: "", name: "", machineParts: [], horometro: null, instructions: "" }
-        this.newPart = ""
+        this.resetForm()
         await this.loadMachines()
       } catch (error) {
-        console.error("Error al crear máquina:", error)
+        console.error("Error al guardar máquina:", error)
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Error al crear la maquina: " + (error.response?.data?.error || error.message)
+          text: "Error al guardar la maquina: " + (error.response?.data?.error || error.message)
         })
       }
     },
@@ -150,8 +162,95 @@ export default {
         console.error("Error al cargar máquinas:", error)
       }
     },
-      modifyMachine(machineId) {
-      this.$router.push(`/machines/${machineId}/edit`)
+    modifyMachine(machineId) {
+      const machine = this.machines.find(item => item._id === machineId)
+      if (!machine) return
+
+      this.form = {
+        sector: machine.sector || "",
+        name: machine.name || "",
+        machineParts: Array.isArray(machine.machineParts) ? [...machine.machineParts] : [],
+        horometro: machine.horometro ?? 0,
+        instructions: machine.instructions || ""
+      }
+      this.newPart = ""
+      this.editingMachineId = machineId
+
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    },
+    formatDate(value) {
+      return new Date(value).toLocaleDateString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      })
+    },
+    buildHorometroSummary(sortedHistory) {
+      if (sortedHistory.length < 2) {
+        return "<p>Se necesitan al menos 2 lecturas para calcular tendencia.</p>"
+      }
+
+      const latest = sortedHistory[sortedHistory.length - 1]
+      const previous = sortedHistory[sortedHistory.length - 2]
+
+      const latestValue = Number(latest.value)
+      const previousValue = Number(previous.value)
+      const latestDate = new Date(latest.recordedAt)
+      const previousDate = new Date(previous.recordedAt)
+
+      if (!Number.isFinite(latestValue) || !Number.isFinite(previousValue)) {
+        return "<p>No se pudo calcular la tendencia por valores inválidos.</p>"
+      }
+
+      const deltaHours = latestValue - previousValue
+      const deltaDaysRaw = (latestDate - previousDate) / (1000 * 60 * 60 * 24)
+
+      if (!Number.isFinite(deltaDaysRaw) || deltaDaysRaw <= 0) {
+        return "<p>No se pudo calcular la tendencia porque las fechas son iguales o inválidas.</p>"
+      }
+
+      const avgPerDay = deltaHours / deltaDaysRaw
+
+      if (!Number.isFinite(avgPerDay) || avgPerDay < 0) {
+        return "<p>La última lectura es menor a la anterior. Revisá los datos cargados.</p>"
+      }
+
+      const deltaDays = Math.round(deltaDaysRaw * 10) / 10
+      const normalizedAvg = Math.round(avgPerDay * 100) / 100
+
+      return `
+        <p><strong>Diferencia:</strong> ${deltaHours}h en ${deltaDays} días</p>
+        <p><strong>Promedio:</strong> ${normalizedAvg} h/día</p>
+      `
+    },
+    async showHorometroHistory(machine) {
+      const history = Array.isArray(machine.horometroHistory) ? [...machine.horometroHistory] : []
+
+      if (!history.length) {
+        await Swal.fire({
+          icon: "info",
+          title: `Historial de ${machine.name}`,
+          text: "Todavía no hay registros de horómetro para esta máquina."
+        })
+        return
+      }
+
+      const sortedHistory = history
+        .filter(item => item && item.recordedAt)
+        .sort((a, b) => new Date(a.recordedAt) - new Date(b.recordedAt))
+
+      const rows = [...sortedHistory]
+        .sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt))
+        .map(item => `<li><strong>${item.value}h</strong> - ${this.formatDate(item.recordedAt)}</li>`)
+        .join("")
+
+      const summary = this.buildHorometroSummary(sortedHistory)
+
+      await Swal.fire({
+        title: `Historial de ${machine.name}`,
+        html: `<div class=\"horometro-summary\">${summary}</div><ul class=\"horometro-history\">${rows}</ul>`,
+        confirmButtonText: "Cerrar"
+      })
     },
     async deleteMachine(machineId) {
       const confirm = await Swal.fire({
@@ -176,6 +275,11 @@ export default {
       }
     },
     cancel() {
+      if (this.editingMachineId) {
+        this.resetForm()
+        return
+      }
+
       this.$router.back()
     }
   },
@@ -390,6 +494,41 @@ button:hover {
   color: #1e3a5f;
 }
 
+.machine-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.machine-actions .edit-button,
+.machine-actions .danger-button,
+.machine-actions .history-button {
+  min-width: 104px;
+  text-align: center;
+}
+
+.history-button {
+  background: #4b5563;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.history-button:hover {
+  background: #374151;
+}
+
+.edit-button {
+  background: #0ea5a4;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.edit-button:hover {
+  background: #0b8a89;
+}
+
 .danger-button {
   background: #dc2626;
   white-space: nowrap;
@@ -427,9 +566,38 @@ button:hover {
     align-items: stretch;
   }
 
-  .machine-item .danger-button {
-    width: auto;
-    align-self: flex-end;
+  .machine-actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
+
+  .machine-item .danger-button,
+  .machine-item .edit-button,
+  .machine-item .history-button {
+    width: auto;
+  }
+}
+
+:deep(.horometro-history) {
+  text-align: left;
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+:deep(.horometro-history li) {
+  margin-bottom: 0.35rem;
+}
+
+:deep(.horometro-summary) {
+  text-align: left;
+  margin: 0 0 0.9rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.55rem;
+  background: rgba(14, 165, 164, 0.12);
+  color: #0f172a;
+}
+
+:deep(.horometro-summary p) {
+  margin: 0.2rem 0;
 }
 </style>
