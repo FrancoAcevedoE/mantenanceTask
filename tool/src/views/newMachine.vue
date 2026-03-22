@@ -50,8 +50,10 @@
                             <span>Sector: {{ machine.sector }}</span>
                             <span>Horómetro: {{ machine.horometro }}h</span>
                             <span v-if="machine.machineParts?.length">Partes: {{ machine.machineParts.join(', ') }}</span>
-                        </div>
-                        <button type="button" class="danger-button" @click="deleteMachine(machine._id)">Eliminar</button>
+                            </div>
+                            <button type="button" class="edit-button" @click="modifyMachine(machine._id)">Modificar</button>
+                            <button type="button" class="danger-button" @click="deleteMachine(machine._id)">Eliminar</button>
+                            
                     </div>
                 </div>
             </div>
@@ -147,6 +149,9 @@ export default {
       } catch (error) {
         console.error("Error al cargar máquinas:", error)
       }
+    },
+      modifyMachine(machineId) {
+      this.$router.push(`/machines/${machineId}/edit`)
     },
     async deleteMachine(machineId) {
       const confirm = await Swal.fire({
@@ -376,6 +381,8 @@ button:hover {
   flex-direction: column;
   gap: 0.15rem;
   font-size: 0.9rem;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .machine-info strong {
@@ -413,6 +420,16 @@ button:hover {
 
   button {
     width: 100%;
+  }
+
+  .machine-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .machine-item .danger-button {
+    width: auto;
+    align-self: flex-end;
   }
 }
 </style>
