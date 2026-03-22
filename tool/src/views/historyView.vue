@@ -27,6 +27,7 @@
             <input type="date" v-model="filterDate" />
         </div>
 
+        <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
@@ -52,7 +53,7 @@
                     <td>{{ item.sector }}</td>
                     <td>{{ item.machine }}</td>
                     <td>{{ item.machinePart }}</td>
-                    <td>{{ item.workDescription }}</td>
+                    <td>{{ truncateText(item.workDescription, 55) }}</td>
                     <td>{{ item.hoursWorked }}</td>
                     <td>
                         <span v-if="item.status === 'finished'">
@@ -83,9 +84,10 @@
                 </tr>
             </tbody>
         </table>
+        </div>
 
         <div v-if="showDetailModal" class="modal">
-            <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-box modal-box-detail">
                 <h3>Detalles del mantenimiento</h3>
                 <div style="text-align: left; line-height: 1.8;">
                     <p><strong>Operario:</strong> {{ formatOperarioName(selectedDetail?.clientId) }}</p>
@@ -112,7 +114,7 @@
             <div class="modal-box">
                 <h3>Finalizar mantenimiento</h3>
                 <label>Horas adicionales</label>
-                <input type="number" v-model="extraHours" />
+                <input type="number" min="0" step="0.5" v-model.number="extraHours" />
                 <button @click="finishMaintenance">
                     Guardar
                 </button>
@@ -304,6 +306,13 @@ export default {
             return status || "-"
         },
 
+        truncateText(value, maxLength = 55) {
+            if (!value) return "-"
+            const text = String(value)
+            if (text.length <= maxLength) return text
+            return `${text.slice(0, maxLength)}...`
+        },
+
         openDetailModal(item) {
             this.selectedDetail = item
             this.showDetailModal = true
@@ -326,6 +335,11 @@ export default {
         },
 
         async finishMaintenance() {
+
+            if (!Number.isFinite(this.extraHours) || this.extraHours < 0) {
+                alert("Las horas adicionales deben ser un numero mayor o igual a 0")
+                return
+            }
 
             await axios.put(
 
@@ -418,6 +432,11 @@ table {
     overflow: hidden;
 }
 
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
 th,
 td {
     border: 1px solid #e2e2e2;
@@ -460,6 +479,12 @@ th {
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
     width: min(420px, 90vw);
+}
+
+.modal-box-detail {
+    width: min(700px, 92vw);
+    max-height: 85vh;
+    overflow-y: auto;
 }
 
 .modal-box h3 {

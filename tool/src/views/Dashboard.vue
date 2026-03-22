@@ -57,7 +57,7 @@
 <canvas ref="statusChart"></canvas>
 </div>
 <div class="chart-card">
-<h3>Tipos de mantenimiento</h3>
+<h3>Mantenimientos por operario</h3>
 <canvas ref="typeChart"></canvas>
 </div>
 <div class="chart-card">
@@ -132,6 +132,8 @@ Chart,
 ArcElement,
 BarElement,
 LineElement,
+BarController,
+LineController,
 CategoryScale,
 LinearScale,
 PointElement,
@@ -149,6 +151,8 @@ Chart.register(
 ArcElement,
 BarElement,
 LineElement,
+BarController,
+LineController,
 CategoryScale,
 LinearScale,
 PointElement,
@@ -294,7 +298,7 @@ this.destroyCharts()
 const chartData = this.stats.charts || {}
 
 const statusData = chartData.statusBreakdown || []
-const typeData = chartData.typeBreakdown || []
+const operarioData = chartData.operarioBreakdown || []
 const sectorData = chartData.sectorBreakdown || []
 const dailyData = chartData.lastSevenDays || []
 
@@ -324,15 +328,16 @@ if (this.$refs.typeChart) {
 this.typeChartInstance = new Chart(this.$refs.typeChart, {
 type: "bar",
 data: {
-labels: typeData.map(item => this.formatType(item.type)),
+labels: operarioData.map(item => this.formatType(item.operario)),
 datasets: [{
 label: "Cantidad",
-data: typeData.map(item => item.count),
+data: operarioData.map(item => item.count),
 backgroundColor: "#1e88e5",
 borderRadius: 8
 }]
 },
 options: {
+indexAxis: "y",
 responsive: true,
 maintainAspectRatio: false,
 plugins: {

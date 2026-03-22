@@ -23,6 +23,16 @@ export const newMaintenanceController = async (req,res)=>{
             sector: normalizeSector(req.body?.sector)
         }
 
+        const normalizedHoursWorked = Number(data.hoursWorked)
+
+        if (!Number.isFinite(normalizedHoursWorked) || normalizedHoursWorked < 0) {
+            return res.status(400).json({
+                message: "Las horas trabajadas deben ser un numero mayor o igual a 0"
+            })
+        }
+
+        data.hoursWorked = normalizedHoursWorked
+
         const client = await User.findById(data.clientId)
 
         if(!client || client.role !== "operario"){
@@ -66,11 +76,23 @@ export const finishMaintenance = async (req,res)=>{
 
     try{
 
-        const { hoursWorked } = req.body
+        const additionalHours = Number(req.body.hoursWorked)
+
+        if (!Number.isFinite(additionalHours) || additionalHours < 0) {
+            return res.status(400).json({
+                message: "Las horas adicionales deben ser un numero mayor o igual a 0"
+            })
+        }
 
         const maintenance = await Maintenance.findById(req.params.id)
 
-        maintenance.hoursWorked += hoursWorked
+        if (!maintenance) {
+            return res.status(404).json({
+                message: "Mantenimiento no encontrado"
+            })
+        }
+
+        maintenance.hoursWorked += additionalHours
         maintenance.jobFinished = true
         maintenance.machineRunning = true
         maintenance.status = "finished"
@@ -144,12 +166,34 @@ count: { $sum: 1 }
 }
 ])
 
-const typeBreakdownRaw = await Maintenance.aggregate([
+const operarioBreakdownRaw = await Maintenance.aggregate([
+{
+$match: {
+clientId: { $ne: null }
+}
+},
+{
+$lookup: {
+from: "users",
+localField: "clientId",
+foreignField: "_id",
+as: "operario"
+}
+},
+{
+$unwind: "$operario"
+},
 {
 $group: {
-_id: "$maintenanceType",
+_id: "$operario.name",
 count: { $sum: 1 }
 }
+},
+{
+$sort: { count: -1 }
+},
+{
+$limit: 8
 }
 ])
 
@@ -216,8 +260,8 @@ status: item._id || "sin_estado",
 count: item.count
 }))
 
-const typeBreakdown = typeBreakdownRaw.map(item => ({
-type: item._id || "sin_tipo",
+const operarioBreakdown = operarioBreakdownRaw.map(item => ({
+operario: item._id || "Sin operario",
 count: item.count
 }))
 
@@ -242,7 +286,7 @@ recentMaintenances,
 
 charts: {
 statusBreakdown,
-typeBreakdown,
+operarioBreakdown,
 sectorBreakdown,
 lastSevenDays
 }

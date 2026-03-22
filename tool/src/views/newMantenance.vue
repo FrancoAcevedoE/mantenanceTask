@@ -67,7 +67,7 @@
 <textarea v-model="form.spareParts"></textarea>
 
 <label>Horas trabajadas</label>
-<input type="number" v-model="form.hoursWorked">
+<input type="number" min="0" step="0.5" v-model.number="form.hoursWorked">
 
 <label>¿La máquina sigue funcionando?</label>
 
@@ -266,6 +266,15 @@ this.form.machinePart = ""
 async saveMaintenance(){
 
 try{
+
+if (!Number.isFinite(this.form.hoursWorked) || this.form.hoursWorked < 0) {
+Swal.fire({
+icon: "error",
+title: "Error",
+text: "Las horas trabajadas deben ser un numero mayor o igual a 0"
+})
+return
+}
 
 await axios.post(
 
