@@ -26,6 +26,7 @@ const showNav = computed(() => {
 
 const isAdmin = computed(() => currentUser.value?.role === 'admin')
 const canViewNewMachine = computed(() => ['admin'].includes(currentUser.value?.role))
+const canViewNew = computed(() => ['admin', 'operario'].includes(currentUser.value?.role))
 
 const logout = async () => {
   localStorage.removeItem('token')
@@ -41,7 +42,7 @@ const logout = async () => {
     </button>
     <router-link v-if="isAdmin" to="/adminView"><i class="bi bi-person-plus-fill"></i></router-link>
       <router-link v-if="canViewNewMachine" to="/newMachine"><i class="bi bi-building-add"></i></router-link>
-    <router-link to="/new"><i class="bi bi-wrench-adjustable-circle"></i></router-link>
+    <router-link v-if="canViewNew" to="/new"><i class="bi bi-wrench-adjustable-circle"></i></router-link>
     <router-link to="/history"><i class="bi bi-clock-history"></i></router-link>
     <router-link to="/dashboard"><i class="bi bi-bar-chart-fill"></i></router-link>
   </nav>

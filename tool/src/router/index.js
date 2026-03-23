@@ -34,7 +34,7 @@ const router = createRouter({
       path: '/newMachine', name: 'NewMachine', component: newMachine, meta: { requiresAuth: true, roles: ['admin'] }
     },
       {
-      path: '/new',name: 'New',component: newMantenance, meta: { requiresAuth: true }
+      path: '/new',name: 'New',component: newMantenance, meta: { requiresAuth: true, roles: ['admin', 'operario'] }
     },
     {
       path: '/history', name: 'History', component: historyView, meta: { requiresAuth: true }
