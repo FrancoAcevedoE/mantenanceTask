@@ -14,6 +14,30 @@ const normalizeSector = (value = "") =>
         .replace(/\s+/g, " ")
         .toLowerCase()
 
+const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/
+
+const formatMonth = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    return `${year}-${month}`
+}
+
+const getMonthStart = (monthValue) => {
+    if (!MONTH_REGEX.test(monthValue)) return null
+    const [yearRaw, monthRaw] = monthValue.split("-")
+    const year = Number(yearRaw)
+    const monthIndex = Number(monthRaw) - 1
+    return new Date(year, monthIndex, 1, 0, 0, 0, 0)
+}
+
+const getMonthEnd = (monthValue) => {
+    if (!MONTH_REGEX.test(monthValue)) return null
+    const [yearRaw, monthRaw] = monthValue.split("-")
+    const year = Number(yearRaw)
+    const monthIndex = Number(monthRaw) - 1
+    return new Date(year, monthIndex + 1, 0, 23, 59, 59, 999)
+}
+
 export const newMaintenanceController = async (req,res)=>{
 
     try{
@@ -138,26 +162,60 @@ export const dashboardController = async (req,res)=>{
 
 try{
 
-const totalMaintenances = await Maintenance.countDocuments()
+const requestedStartMonth = String(req.query.startMonth || "").trim()
+const requestedEndMonth = String(req.query.endMonth || "").trim()
 
-const machines = await Maintenance.distinct("machine")
+const now = new Date()
+const defaultStartDate = new Date(now.getFullYear(), now.getMonth() - 11, 1, 0, 0, 0, 0)
+const defaultEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
 
-const operarios = await Maintenance.distinct("clientId")
+const startDate = requestedStartMonth ? getMonthStart(requestedStartMonth) : defaultStartDate
+const endDate = requestedEndMonth ? getMonthEnd(requestedEndMonth) : defaultEndDate
 
-const recentMaintenances = await Maintenance.find()
+if (!startDate || !endDate) {
+return res.status(400).json({
+message: "Periodo invalido. Usa formato YYYY-MM"
+})
+}
+
+if (startDate > endDate) {
+return res.status(400).json({
+message: "El periodo es invalido: inicio mayor que fin"
+})
+}
+
+const periodFilter = {
+createdAt: {
+$gte: startDate,
+$lte: endDate
+}
+}
+
+const totalMaintenances = await Maintenance.countDocuments(periodFilter)
+
+const machines = await Maintenance.distinct("machine", periodFilter)
+
+const operarios = await Maintenance.distinct("clientId", periodFilter)
+
+const recentMaintenances = await Maintenance.find(periodFilter)
 .populate("clientId", "name role")
 .sort({ createdAt: -1 })
 .limit(5)
 
 const pending = await Maintenance.countDocuments({
+...periodFilter,
 status:"pending"
 })
 
 const stopped = await Maintenance.countDocuments({
+...periodFilter,
 status:"stopped"
 })
 
 const statusBreakdownRaw = await Maintenance.aggregate([
+{
+$match: periodFilter
+},
 {
 $group: {
 _id: "$status",
@@ -169,6 +227,7 @@ count: { $sum: 1 }
 const operarioBreakdownRaw = await Maintenance.aggregate([
 {
 $match: {
+...periodFilter,
 clientId: { $ne: null }
 }
 },
@@ -198,6 +257,9 @@ $limit: 8
 ])
 
 const sectorBreakdownRaw = await Maintenance.aggregate([
+{
+$match: periodFilter
+},
 {
 $addFields: {
 normalizedSector: {
@@ -230,6 +292,9 @@ $limit: 8
 
 const dailyRaw = await Maintenance.aggregate([
 {
+$match: periodFilter
+},
+{
 $addFields: {
 createdDay: {
 $dateToString: {
@@ -250,7 +315,7 @@ $sort: { _id: 1 }
 }
 ])
 
-const lastSevenDays = dailyRaw.slice(-7).map(item => ({
+const dailySeries = dailyRaw.map(item => ({
 date: item._id,
 count: item.count
 }))
@@ -288,7 +353,11 @@ charts: {
 statusBreakdown,
 operarioBreakdown,
 sectorBreakdown,
-lastSevenDays
+dailySeries
+},
+period: {
+startMonth: formatMonth(startDate),
+endMonth: formatMonth(endDate)
 }
 
 })

@@ -5,6 +5,19 @@
 
 <h1>Dashboard</h1>
 
+<section class="period-section">
+<h2>Periodo de gráficos</h2>
+<div class="period-toolbar">
+<input type="month" v-model="periodStart" />
+<input type="month" v-model="periodEnd" />
+<button type="button" class="period-button" @click="applyPeriodFilter">Aplicar periodo</button>
+<button type="button" class="period-button secondary" @click="resetPeriodFilter">Ultimo año</button>
+</div>
+<p class="period-label">
+Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{ formatMonthLabel(periodEnd) }}
+</p>
+</section>
+
 <div class="cards">
 
 <div class="card">
@@ -65,7 +78,7 @@
 <canvas ref="sectorChart"></canvas>
 </div>
 <div class="chart-card chart-card-wide">
-<h3>Últimos 7 días</h3>
+<h3>Evolución diaria del periodo</h3>
 <canvas ref="dailyChart"></canvas>
 </div>
 </div>
@@ -176,6 +189,10 @@ searchMachine:"",
 
 searchStatus:"",
 
+periodStart:"",
+
+periodEnd:"",
+
 statusChartInstance: null,
 
 typeChartInstance: null,
@@ -223,6 +240,7 @@ document.body.style.backgroundPosition = 'center'
 document.body.style.backgroundRepeat = 'no-repeat'
 document.body.style.backgroundAttachment = 'fixed'
 
+this.setDefaultPeriod()
 await this.loadDashboard()
 
 if (this.$route.query.reason === "role" && this.$route.query.denied) {
@@ -269,12 +287,39 @@ Authorization: `Bearer ${token}`
 
 async loadDashboard() {
 
+if (!this.periodStart || !this.periodEnd) {
+this.setDefaultPeriod()
+}
+
+if (this.periodStart > this.periodEnd) {
+await Swal.fire({
+icon: "error",
+title: "Periodo inválido",
+text: "El mes de inicio no puede ser mayor al mes de fin"
+})
+return
+}
+
 const res = await axios.get(
 `${API_BASE_URL}/maintenance/dashboard`,
-this.authConfig()
+{
+...this.authConfig(),
+params: {
+startMonth: this.periodStart,
+endMonth: this.periodEnd
+}
+}
 )
 
 this.stats = res.data
+
+if (res.data?.period?.startMonth) {
+this.periodStart = res.data.period.startMonth
+}
+
+if (res.data?.period?.endMonth) {
+this.periodEnd = res.data.period.endMonth
+}
 
 this.$nextTick(() => {
 this.renderCharts()
@@ -315,7 +360,7 @@ const chartData = this.stats.charts || {}
 const statusData = chartData.statusBreakdown || []
 const operarioData = chartData.operarioBreakdown || []
 const sectorData = chartData.sectorBreakdown || []
-const dailyData = chartData.lastSevenDays || []
+const dailyData = chartData.dailySeries || []
 
 if (this.$refs.statusChart) {
 this.statusChartInstance = new Chart(this.$refs.statusChart, {
@@ -473,6 +518,47 @@ month: "2-digit"
 
 },
 
+formatMonthLabel(value) {
+
+if (!value) return "-"
+
+const [yearRaw, monthRaw] = value.split("-")
+const year = Number(yearRaw)
+const monthIndex = Number(monthRaw) - 1
+
+if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0 || monthIndex > 11) {
+return value
+}
+
+return new Date(year, monthIndex, 1).toLocaleDateString("es-AR", {
+month: "long",
+year: "numeric"
+})
+
+},
+
+setDefaultPeriod() {
+const now = new Date()
+const start = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+this.periodStart = this.toMonthValue(start)
+this.periodEnd = this.toMonthValue(now)
+},
+
+toMonthValue(date) {
+const year = date.getFullYear()
+const month = String(date.getMonth() + 1).padStart(2, "0")
+return `${year}-${month}`
+},
+
+async applyPeriodFilter() {
+await this.loadDashboard()
+},
+
+async resetPeriodFilter() {
+this.setDefaultPeriod()
+await this.loadDashboard()
+},
+
 clearRecentFilters() {
 
 this.searchOperario = ""
@@ -510,6 +596,73 @@ background: rgba(255, 255, 255, 0.94);
 padding: 2rem;
 border-radius: 12px;
 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+}
+
+.period-section {
+margin-bottom: 1.2rem;
+background: #f7fbff;
+border: 1px solid #dce9f7;
+border-radius: 12px;
+padding: 0.9rem;
+}
+
+.period-section h2 {
+margin: 0 0 0.7rem;
+text-align: center;
+font-size: 1.05rem;
+color: #2f3d4f;
+}
+
+.period-toolbar {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+gap: 0.6rem;
+align-items: center;
+}
+
+.period-toolbar input {
+width: 100%;
+padding: 10px 14px;
+border: 1px solid #ccc;
+border-radius: 2rem;
+background: #fff;
+}
+
+.period-toolbar input:hover,
+.period-toolbar input:focus {
+outline: none;
+background: #f0f0f0;
+transition: 0.2s;
+box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
+}
+
+.period-button {
+width: 100%;
+padding: 10px 12px;
+border: none;
+border-radius: 2rem;
+background: #1e88e5;
+color: #fff;
+cursor: pointer;
+}
+
+.period-button:hover {
+background: #1976d2;
+}
+
+.period-button.secondary {
+background: #7a8a9a;
+}
+
+.period-button.secondary:hover {
+background: #657483;
+}
+
+.period-label {
+margin: 0.65rem 0 0;
+text-align: center;
+color: #4b4b4b;
+font-size: 0.95rem;
 }
 
 h1 {
