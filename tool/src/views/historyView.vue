@@ -114,7 +114,7 @@
             <div class="modal-box">
                 <h3>Finalizar mantenimiento</h3>
                 <label>Horas adicionales</label>
-                <input type="number" min="0" step="0.5" v-model.number="extraHours" />
+                <input type="number" min="0.5" step="0.5" v-model.number="extraHours" />
                 <button @click="finishMaintenance">
                     Guardar
                 </button>
@@ -336,8 +336,8 @@ export default {
 
         async finishMaintenance() {
 
-            if (!Number.isFinite(this.extraHours) || this.extraHours < 0) {
-                alert("Las horas adicionales deben ser un numero mayor o igual a 0")
+            if (!Number.isFinite(this.extraHours) || this.extraHours <= 0) {
+                alert("Las horas adicionales deben ser un numero mayor a 0")
                 return
             }
 

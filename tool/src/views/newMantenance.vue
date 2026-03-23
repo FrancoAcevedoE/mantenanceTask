@@ -67,7 +67,7 @@
 <textarea v-model="form.spareParts"></textarea>
 
 <label>Horas trabajadas</label>
-<input type="number" min="0" step="0.5" v-model.number="form.hoursWorked">
+<input type="number" min="0.5" step="0.5" v-model.number="form.hoursWorked">
 
 <label>¿La máquina sigue funcionando?</label>
 
@@ -148,6 +148,7 @@ operarios:[],
 machines:[],
 sectors:[],
 currentUserRole:"",
+currentUserId:"",
 
 form:{
 
@@ -158,7 +159,7 @@ clientId:"",
 maintenanceType:"mejora",
 workDescription:"",
 spareParts:"",
-hoursWorked:0,
+hoursWorked:null,
 machineRunning:true,
 jobFinished:true,
 unfinishedReason:""
@@ -175,6 +176,7 @@ showMachineDetailModal: false
 async mounted() {
     const currentUser = this.getStoredUser()
     this.currentUserRole = currentUser?.role || ""
+    this.currentUserId = currentUser?.id || ""
     await this.loadOperarios()
     await this.loadMachines()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
@@ -313,11 +315,11 @@ async saveMaintenance(){
 
 try{
 
-if (!Number.isFinite(this.form.hoursWorked) || this.form.hoursWorked < 0) {
+if (!Number.isFinite(this.form.hoursWorked) || this.form.hoursWorked <= 0) {
 Swal.fire({
 icon: "error",
 title: "Error",
-text: "Las horas trabajadas deben ser un numero mayor o igual a 0"
+text: "Las horas trabajadas deben ser un numero mayor a 0"
 })
 return
 }
@@ -375,11 +377,11 @@ this.form = {
 sector:"",
 machine:"",
 machinePart:"",
-clientId:"",
+clientId:this.currentUserRole === "operario" ? this.currentUserId : "",
 maintenanceType:"mejora",
 workDescription:"",
 spareParts:"",
-hoursWorked:0,
+hoursWorked:null,
 machineRunning:true,
 jobFinished:true,
 unfinishedReason:""

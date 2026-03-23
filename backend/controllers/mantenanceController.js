@@ -49,9 +49,9 @@ export const newMaintenanceController = async (req,res)=>{
 
         const normalizedHoursWorked = Number(data.hoursWorked)
 
-        if (!Number.isFinite(normalizedHoursWorked) || normalizedHoursWorked < 0) {
+        if (!Number.isFinite(normalizedHoursWorked) || normalizedHoursWorked <= 0) {
             return res.status(400).json({
-                message: "Las horas trabajadas deben ser un numero mayor o igual a 0"
+                message: "Las horas trabajadas deben ser un numero mayor a 0"
             })
         }
 
@@ -102,9 +102,9 @@ export const finishMaintenance = async (req,res)=>{
 
         const additionalHours = Number(req.body.hoursWorked)
 
-        if (!Number.isFinite(additionalHours) || additionalHours < 0) {
+        if (!Number.isFinite(additionalHours) || additionalHours <= 0) {
             return res.status(400).json({
-                message: "Las horas adicionales deben ser un numero mayor o igual a 0"
+                message: "Las horas adicionales deben ser un numero mayor a 0"
             })
         }
 
