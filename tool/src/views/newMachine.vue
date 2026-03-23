@@ -41,10 +41,15 @@
             <div class="box machines-panel">
                 <h2>Máquinas cargadas</h2>
 
-                <p v-if="!machines.length" class="empty-state">No hay máquinas cargadas todavía.</p>
+                <select class="sector-select" v-model="sectorFilter">
+                  <option value="">Seleccioná un sector</option>
+                  <option v-for="s in availableSectors" :key="s" :value="s">{{ s }}</option>
+                </select>
 
+                <p v-if="!sectorFilter" class="empty-state">Seleccioná un sector para ver las máquinas.</p>
+                <p v-else-if="!filteredMachines.length" class="empty-state">No hay máquinas en este sector.</p>
                 <div v-else class="machines-list">
-                    <div v-for="machine in machines" :key="machine._id" class="machine-item">
+                    <div v-for="machine in filteredMachines" :key="machine._id" class="machine-item">
                         <div class="machine-info">
                             <strong>{{ machine.name }}</strong>
                             <span>Sector: {{ machine.sector }}</span>
@@ -52,7 +57,7 @@
                             <span v-if="machine.machineParts?.length">Partes: {{ machine.machineParts.join(', ') }}</span>
                     </div>
                     <div class="machine-actions">
-                      <button type="button" class="history-button" @click="showHorometroHistory(machine)">Historial</button>
+                      <button type="button" class="history-button" @click="openMachineModal(machine)">Detalles</button>
                       <button type="button" class="edit-button" @click="modifyMachine(machine._id)">Modificar</button>
                       <button type="button" class="danger-button" @click="deleteMachine(machine._id)">Eliminar</button>
                     </div>
@@ -60,6 +65,35 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- Modal detalles máquina -->
+        <div v-if="showMachineModal" class="modal">
+            <div class="modal-box modal-box-detail">
+                <h3>{{ selectedMachine?.name }}</h3>
+                <div style="text-align: left; line-height: 1.8;">
+                    <p><strong>Sector:</strong> {{ selectedMachine?.sector }}</p>
+                    <p><strong>Horómetro actual:</strong> {{ selectedMachine?.horometro }}h</p>
+                    <p v-if="selectedMachine?.machineParts?.length">
+                        <strong>Partes:</strong> {{ selectedMachine.machineParts.join(', ') }}
+                    </p>
+                    <template v-if="selectedMachine?.instructions">
+                        <p><strong>Instrucciones/observaciones:</strong></p>
+                        <p style="background: #f5f5f5; padding: 0.75rem; border-radius: 8px; white-space: pre-wrap;">{{ selectedMachine.instructions }}</p>
+                    </template>
+                    <template v-if="sortedHorometroHistory.length">
+                        <p><strong>Historial de horómetro:</strong></p>
+                        <div style="background: rgba(14,165,164,0.12); padding: 0.65rem 0.75rem; border-radius: 0.55rem; margin-bottom: 0.5rem;" v-html="machineHorometroSummary"></div>
+                        <ul style="text-align: left; padding-left: 1.2rem; margin: 0;">
+                            <li v-for="(item, i) in sortedHorometroHistory" :key="i" style="margin-bottom: 0.35rem;">
+                                <strong>{{ item.value }}h</strong> - {{ formatDate(item.recordedAt) }}
+                            </li>
+                        </ul>
+                    </template>
+                    <p v-else><em style="color: #888;">Sin historial de horómetro registrado.</em></p>
+                </div>
+                <button @click="closeMachineModal" style="margin-top: 1rem;">Cerrar</button>
+            </div>
         </div>
     </div>
 </template>
@@ -84,7 +118,30 @@ export default {
       newPart: "",
       machines: [],
       editingMachineId: null,
-      backgroundImage: backgroundImage
+      backgroundImage: backgroundImage,
+      showMachineModal: false,
+      selectedMachine: null,
+      sectorFilter: "",
+      availableSectors: []
+    }
+  },
+  computed: {
+    filteredMachines() {
+      if (!this.sectorFilter) return []
+      return this.machines.filter(m => m.sector === this.sectorFilter)
+    },
+    sortedHorometroHistory() {
+      if (!this.selectedMachine?.horometroHistory?.length) return []
+      return [...this.selectedMachine.horometroHistory]
+        .filter(item => item && item.recordedAt)
+        .sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt))
+    },
+    machineHorometroSummary() {
+      if (!this.selectedMachine?.horometroHistory?.length) return ""
+      const sorted = [...this.selectedMachine.horometroHistory]
+        .filter(item => item && item.recordedAt)
+        .sort((a, b) => new Date(a.recordedAt) - new Date(b.recordedAt))
+      return this.buildHorometroSummary(sorted)
     }
   },
   methods: {
@@ -158,6 +215,7 @@ export default {
       try {
         const response = await axios.get(`${API_BASE_URL}/machines`, this.authConfig())
         this.machines = response.data
+        this.availableSectors = [...new Set(response.data.map(m => m.sector).filter(Boolean))].sort()
       } catch (error) {
         console.error("Error al cargar máquinas:", error)
       }
@@ -223,34 +281,13 @@ export default {
         <p><strong>Promedio:</strong> ${normalizedAvg} h/día</p>
       `
     },
-    async showHorometroHistory(machine) {
-      const history = Array.isArray(machine.horometroHistory) ? [...machine.horometroHistory] : []
-
-      if (!history.length) {
-        await Swal.fire({
-          icon: "info",
-          title: `Historial de ${machine.name}`,
-          text: "Todavía no hay registros de horómetro para esta máquina."
-        })
-        return
-      }
-
-      const sortedHistory = history
-        .filter(item => item && item.recordedAt)
-        .sort((a, b) => new Date(a.recordedAt) - new Date(b.recordedAt))
-
-      const rows = [...sortedHistory]
-        .sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt))
-        .map(item => `<li><strong>${item.value}h</strong> - ${this.formatDate(item.recordedAt)}</li>`)
-        .join("")
-
-      const summary = this.buildHorometroSummary(sortedHistory)
-
-      await Swal.fire({
-        title: `Historial de ${machine.name}`,
-        html: `<div class=\"horometro-summary\">${summary}</div><ul class=\"horometro-history\">${rows}</ul>`,
-        confirmButtonText: "Cerrar"
-      })
+    openMachineModal(machine) {
+      this.selectedMachine = machine
+      this.showMachineModal = true
+    },
+    closeMachineModal() {
+      this.showMachineModal = false
+      this.selectedMachine = null
     },
     async deleteMachine(machineId) {
       const confirm = await Swal.fire({
@@ -579,26 +616,58 @@ button:hover {
   }
 }
 
-:deep(.horometro-history) {
-  text-align: left;
-  margin: 0;
-  padding-left: 1.2rem;
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-:deep(.horometro-history li) {
-  margin-bottom: 0.35rem;
+.modal-box {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+  width: min(420px, 90vw);
 }
 
-:deep(.horometro-summary) {
-  text-align: left;
-  margin: 0 0 0.9rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: 0.55rem;
-  background: rgba(14, 165, 164, 0.12);
-  color: #0f172a;
+.modal-box-detail {
+  width: min(700px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
-:deep(.horometro-summary p) {
-  margin: 0.2rem 0;
+.modal-box h3 {
+  margin-top: 0;
+  color: #333;
 }
+
+.sector-select {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 2rem;
+  background: #fff;
+  color: #000;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.sector-select:hover,
+.sector-select:focus {
+  outline: none;
+  background: #f0f0f0;
+  transition: 0.2s;
+  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
+}
+
 </style>
