@@ -7,7 +7,7 @@
         <form @submit.prevent="saveMaintenance">
 
 <label>Sector</label>
-<select v-model="form.sector" required>
+<select v-model="form.sector" required @change="onSectorChange">
     <option value="">Seleccionar sector</option>
     <option v-for="sector in sectors" :key="sector" :value="sector">
         {{ sector }}
@@ -16,24 +16,24 @@
 
 <label>Máquina</label>
 <div style="display: flex; gap: 0.5rem; align-items: center;">
-    <select v-model="form.machine" required style="flex: 1;" @change="onMachineChange">
-    <option value="">Seleccionar máquina</option>
-    <option v-for="machine in machines" :key="machine._id" :value="machine.name">
+        <select v-model="form.machine" required style="flex: 1;" @change="onMachineChange" :disabled="!form.sector">
+        <option value="">{{ form.sector ? 'Seleccionar máquina' : 'Primero seleccioná un sector' }}</option>
+        <option v-for="machine in filteredMachinesBySector" :key="machine._id" :value="machine.name">
       {{ machine.name }}
     </option>
   </select>
   <button 
     v-if="form.machine && selectedMachine && selectedMachine.instructions"
     type="button" 
-    @click="showMachineInstructions"
+        @click="openMachineDetailModal"
     style="padding: 0.5rem 1rem; background-color: #00a878; color: white; border: none; border-radius: 5px; cursor: pointer;"
   >
-    Ver instrucciones
+        Ver detalle
   </button>
 </div>
 
 <label>Parte de máquina</label>
-<select v-model="form.machinePart" required>
+<select v-model="form.machinePart" required :disabled="!form.machine">
     <option value="">Seleccionar parte</option>
     <option v-for="part in selectedMachineParts" :key="part" :value="part">
         {{ part }}
@@ -109,6 +109,21 @@ Cancelar
 </div>
 
 </form>
+
+<div v-if="showMachineDetailModal" class="modal">
+    <div class="modal-box modal-box-detail">
+        <h3>Detalle de máquina</h3>
+        <div style="text-align: left; line-height: 1.8;">
+            <p><strong>Sector:</strong> {{ selectedMachine?.sector || "-" }}</p>
+            <p><strong>Máquina:</strong> {{ selectedMachine?.name || "-" }}</p>
+            <p><strong>Horómetro:</strong> {{ selectedMachine?.horometro ?? 0 }}h</p>
+            <p><strong>Partes:</strong> {{ selectedMachineParts.length ? selectedMachineParts.join(', ') : "-" }}</p>
+            <p><strong>Instrucciones/observaciones:</strong></p>
+            <p style="background: #f5f5f5; padding: 0.75rem; border-radius: 8px; white-space: pre-wrap;">{{ selectedMachine?.instructions || "-" }}</p>
+        </div>
+        <button type="button" @click="closeMachineDetailModal" style="margin-top: 1rem;">Cerrar</button>
+    </div>
+</div>
     </div>
 </div>
 
@@ -149,6 +164,8 @@ unfinishedReason:""
 
 },
 backgroundImage: backgroundImage
+,
+showMachineDetailModal: false
 
 }
 
@@ -173,8 +190,13 @@ beforeUnmount() {
 },
 
 computed: {
+    filteredMachinesBySector() {
+        if (!this.form.sector) return []
+        return this.machines.filter(machine => machine.sector === this.form.sector)
+    },
   selectedMachine() {
-    return this.machines.find(m => m.name === this.form.machine)
+        if (!this.form.sector || !this.form.machine) return null
+        return this.filteredMachinesBySector.find(m => m.name === this.form.machine)
     },
     selectedMachineParts() {
         if (!this.selectedMachine) return []
@@ -190,6 +212,11 @@ computed: {
 },
 
 methods:{
+
+onSectorChange() {
+this.form.machine = ""
+this.form.machinePart = ""
+},
 
 authConfig(){
 
@@ -258,7 +285,6 @@ this.form.machinePart = ""
 return
 }
 
-this.form.sector = this.selectedMachine.sector || ""
 this.form.machinePart = ""
 
 },
@@ -272,6 +298,24 @@ Swal.fire({
 icon: "error",
 title: "Error",
 text: "Las horas trabajadas deben ser un numero mayor o igual a 0"
+})
+return
+}
+
+if (!this.form.sector) {
+Swal.fire({
+icon: "error",
+title: "Error",
+text: "Primero seleccioná un sector"
+})
+return
+}
+
+if (!this.selectedMachine) {
+Swal.fire({
+icon: "error",
+title: "Error",
+text: "Seleccioná una máquina del sector elegido"
 })
 return
 }
@@ -328,9 +372,22 @@ showMachineInstructions(){
 
 if(this.selectedMachine && this.selectedMachine.instructions){
 
-alert(`Instrucciones para ${this.selectedMachine.name}:\n\n${this.selectedMachine.instructions}`)
+this.showMachineDetailModal = true
 
 }
+
+},
+
+openMachineDetailModal(){
+
+if(this.selectedMachine){
+this.showMachineDetailModal = true
+}
+
+},
+
+closeMachineDetailModal(){
+this.showMachineDetailModal = false
 
 }
 
@@ -447,6 +504,33 @@ button {
 
 button:hover {
     background: #8f8f8f;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+    width: min(420px, 90vw);
+}
+
+.modal-box-detail {
+    width: min(700px, 92vw);
+    max-height: 85vh;
+    overflow-y: auto;
 }
 
 .secondary-button:hover {
