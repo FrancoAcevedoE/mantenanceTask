@@ -54,6 +54,7 @@
           <a href="https://wa.me/5493564581448" target="_blank" rel="noopener" aria-label="WhatsApp">
             <i class="bi bi-whatsapp"></i>
           </a>
+          <p>Acevedo Franco Emanuel | Desarrollo de Software ~ 2026</p>
         </div>
       </div>
     </footer>
