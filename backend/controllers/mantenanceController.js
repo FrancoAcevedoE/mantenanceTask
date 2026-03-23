@@ -1,5 +1,6 @@
 import User from "../models/userModels.js"
 import Maintenance from "../models/mantenanceModels.js"
+import Machine from "../models/machineModels.js"
 
 const formatSectorLabel = (value = "") =>
     value
@@ -335,6 +336,50 @@ sector: formatSectorLabel(item._id),
 count: item.count
 }))
 
+const allMachines = await Machine.find()
+.select("name sector")
+.sort({ sector: 1, name: 1 })
+
+const latestMachineStatusRaw = await Maintenance.aggregate([
+{
+$sort: { createdAt: -1 }
+},
+{
+$group: {
+_id: "$machine",
+status: { $first: "$status" },
+updatedAt: { $first: "$createdAt" }
+}
+}
+])
+
+const latestMachineStatusMap = new Map(
+latestMachineStatusRaw.map(item => [item._id, item])
+)
+
+const machineStatusOverview = allMachines.map(machine => {
+const latestStatus = latestMachineStatusMap.get(machine.name)
+const currentStatus = latestStatus?.status || "ok"
+
+return {
+id: machine._id,
+name: machine.name,
+sector: formatSectorLabel(machine.sector || ""),
+status: currentStatus,
+indicator: currentStatus === "stopped"
+? "red"
+: currentStatus === "pending"
+? "yellow"
+: "green",
+label: currentStatus === "stopped"
+? "Detenida"
+: currentStatus === "pending"
+? "Pendiente"
+: "Operativa",
+updatedAt: latestStatus?.updatedAt || null
+}
+})
+
 res.json({
 
 totalMaintenances,
@@ -355,6 +400,7 @@ operarioBreakdown,
 sectorBreakdown,
 dailySeries
 },
+machineStatusOverview,
 period: {
 startMonth: formatMonth(startDate),
 endMonth: formatMonth(endDate)

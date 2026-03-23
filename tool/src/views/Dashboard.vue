@@ -91,6 +91,49 @@
 </div>
 </section>
 
+<section class="machine-status-section">
+<h2>Estado actual de máquinas</h2>
+<div v-if="machineStatusSummary.total" class="machine-status-summary">
+<article class="machine-summary-card summary-green">
+<div class="machine-summary-top">
+<span class="machine-status-dot status-green"></span>
+<strong>Operativas</strong>
+</div>
+<p>{{ machineStatusSummary.green.count }} máquinas</p>
+<span>{{ machineStatusSummary.green.percentage }}%</span>
+</article>
+<article class="machine-summary-card summary-yellow">
+<div class="machine-summary-top">
+<span class="machine-status-dot status-yellow"></span>
+<strong>Pendientes</strong>
+</div>
+<p>{{ machineStatusSummary.yellow.count }} máquinas</p>
+<span>{{ machineStatusSummary.yellow.percentage }}%</span>
+</article>
+<article class="machine-summary-card summary-red">
+<div class="machine-summary-top">
+<span class="machine-status-dot status-red"></span>
+<strong>Detenidas</strong>
+</div>
+<p>{{ machineStatusSummary.red.count }} máquinas</p>
+<span>{{ machineStatusSummary.red.percentage }}%</span>
+</article>
+</div>
+<div v-if="machineStatusOverview.length" class="machine-status-grid">
+<article v-for="machine in machineStatusOverview" :key="machine.id" class="machine-status-card">
+<div class="machine-status-header">
+<span :class="['machine-status-dot', `status-${machine.indicator}`]"></span>
+<div>
+<h3>{{ machine.name }}</h3>
+<p>{{ machine.sector || 'Sin sector' }}</p>
+</div>
+</div>
+<p class="machine-status-label">{{ machine.label }}</p>
+</article>
+</div>
+<p v-else class="empty-state">No hay máquinas registradas todavía.</p>
+</section>
+
 <section class="recent-section">
 <h2>Últimos mantenimientos</h2>
 
@@ -214,6 +257,47 @@ backgroundImage
 },
 
 computed:{
+
+machineStatusOverview() {
+const statusPriority = {
+red: 0,
+yellow: 1,
+green: 2
+}
+
+return [...(this.stats.machineStatusOverview || [])].sort((left, right) => {
+const priorityDifference = (statusPriority[left.indicator] ?? 99) - (statusPriority[right.indicator] ?? 99)
+
+if (priorityDifference !== 0) {
+return priorityDifference
+}
+
+const sectorDifference = String(left.sector || "").localeCompare(String(right.sector || ""), "es")
+
+if (sectorDifference !== 0) {
+return sectorDifference
+}
+
+return String(left.name || "").localeCompare(String(right.name || ""), "es")
+})
+},
+
+machineStatusSummary() {
+const total = this.machineStatusOverview.length
+
+const buildSummary = (indicator) => {
+const count = this.machineStatusOverview.filter(machine => machine.indicator === indicator).length
+const percentage = total ? Math.round((count / total) * 100) : 0
+return { count, percentage }
+}
+
+return {
+total,
+green: buildSummary("green"),
+yellow: buildSummary("yellow"),
+red: buildSummary("red")
+}
+},
 
 filteredRecentMaintenances() {
 
@@ -765,6 +849,125 @@ height: calc(100% - 32px) !important;
 .chart-card-wide {
 grid-column: 1 / -1;
 height: 320px;
+}
+
+.machine-status-section {
+margin-top: 1.5rem;
+}
+
+.machine-status-section h2 {
+margin: 0 0 1rem;
+text-align: center;
+color: #333;
+font-size: 1.5rem;
+}
+
+.machine-status-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+gap: 0.9rem;
+}
+
+.machine-status-summary {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 0.9rem;
+margin-bottom: 1rem;
+}
+
+.machine-summary-card {
+border-radius: 12px;
+padding: 0.9rem;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
+border: 1px solid transparent;
+}
+
+.machine-summary-top {
+display: flex;
+align-items: center;
+gap: 0.6rem;
+margin-bottom: 0.55rem;
+}
+
+.machine-summary-card p {
+margin: 0;
+font-size: 0.95rem;
+color: #364152;
+}
+
+.machine-summary-card span:last-child {
+display: inline-block;
+margin-top: 0.45rem;
+font-size: 1.45rem;
+font-weight: 700;
+color: #111827;
+}
+
+.summary-green {
+background: #eef8f0;
+border-color: #cfe9d3;
+}
+
+.summary-yellow {
+background: #fff8e8;
+border-color: #f5df9e;
+}
+
+.summary-red {
+background: #fdeeee;
+border-color: #efc1c1;
+}
+
+.machine-status-card {
+background: #fff;
+border: 1px solid #e4e7eb;
+border-radius: 12px;
+padding: 0.95rem;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
+}
+
+.machine-status-header {
+display: flex;
+align-items: center;
+gap: 0.75rem;
+}
+
+.machine-status-header h3 {
+margin: 0;
+font-size: 1rem;
+color: #243447;
+}
+
+.machine-status-header p {
+margin: 0.2rem 0 0;
+font-size: 0.88rem;
+color: #667085;
+}
+
+.machine-status-dot {
+width: 16px;
+height: 16px;
+border-radius: 999px;
+flex-shrink: 0;
+box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.status-green {
+background: #2e7d32;
+}
+
+.status-yellow {
+background: #f9a825;
+}
+
+.status-red {
+background: #c62828;
+}
+
+.machine-status-label {
+margin: 0.8rem 0 0;
+font-weight: 700;
+color: #364152;
 }
 
 .recent-section {
