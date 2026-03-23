@@ -136,6 +136,13 @@ nav a.router-link-active {
 
 /* Responsive */
 @media (max-width: 768px) {
+  body {
+    background-color: #0f172a;
+    background-attachment: scroll !important;
+    background-size: cover !important;
+    background-position: center top !important;
+  }
+
   .app-content.with-nav {
     padding-top: 4.2rem;
   }

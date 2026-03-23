@@ -10,11 +10,18 @@
 <div class="period-toolbar">
 <input type="month" v-model="periodStart" />
 <input type="month" v-model="periodEnd" />
-<button type="button" class="period-button" @click="applyPeriodFilter">Aplicar periodo</button>
-<button type="button" class="period-button secondary" @click="resetPeriodFilter">Ultimo año</button>
+<button type="button" class="period-button" @click="applyPeriodFilter">
+<span class="label-full">Aplicar periodo</span>
+<span class="label-compact">Aplicar</span>
+</button>
+<button type="button" class="period-button secondary" @click="resetPeriodFilter">
+<span class="label-full">Ultimo año</span>
+<span class="label-compact">12 meses</span>
+</button>
 </div>
 <p class="period-label">
-Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{ formatMonthLabel(periodEnd) }}
+<span class="period-label-full">Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{ formatMonthLabel(periodEnd) }}</span>
+<span class="period-label-compact">{{ formatMonthLabel(periodStart) }} - {{ formatMonthLabel(periodEnd) }}</span>
 </p>
 </section>
 
@@ -620,6 +627,10 @@ gap: 0.6rem;
 align-items: center;
 }
 
+.period-toolbar > * {
+min-width: 0;
+}
+
 .period-toolbar input {
 width: 100%;
 padding: 10px 14px;
@@ -658,11 +669,19 @@ background: #7a8a9a;
 background: #657483;
 }
 
+.period-button .label-compact {
+display: none;
+}
+
 .period-label {
 margin: 0.65rem 0 0;
 text-align: center;
 color: #4b4b4b;
 font-size: 0.95rem;
+}
+
+.period-label-compact {
+display: none;
 }
 
 h1 {
@@ -857,12 +876,57 @@ color: #666;
 padding: 1rem;
 }
 
+.page-container {
+align-items: flex-start;
+padding: 0.6rem;
+background-attachment: scroll;
+}
+
+.period-toolbar {
+grid-template-columns: 1fr;
+}
+
+.period-toolbar input,
+.period-button {
+width: 100%;
+max-width: 100%;
+}
+
+.period-label {
+font-size: 0.88rem;
+line-height: 1.35;
+}
+
 h1 {
 font-size: 1.6rem;
 }
 
 .recent-table-wrapper {
 overflow-x: auto;
+}
+}
+
+@media (max-width: 380px) {
+.period-button .label-full {
+display: none;
+}
+
+.period-button .label-compact {
+display: inline;
+}
+
+.period-button {
+padding: 10px;
+font-size: 0.9rem;
+}
+
+.period-label-full {
+display: none;
+}
+
+.period-label-compact {
+display: inline;
+font-size: 0.85rem;
 }
 }
 </style>
