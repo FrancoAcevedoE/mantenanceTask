@@ -54,8 +54,8 @@
           <a href="https://wa.me/5493564581448" target="_blank" rel="noopener" aria-label="WhatsApp">
             <i class="bi bi-whatsapp"></i>
           </a>
-          <p>Acevedo Franco Emanuel | Desarrollo de Software ~ 2026</p>
         </div>
+        <p class="social-signature">Acevedo Franco Emanuel | Desarrollo de Software ~ 2026</p>
       </div>
     </footer>
 
@@ -307,6 +307,14 @@ button{
   display: flex;
   justify-content: center;
   gap: 0.75rem;
+}
+
+.social-signature {
+  margin: 0.75rem 0 0;
+  text-align: center;
+  color: #fff;
+  font-size: 0.92rem;
+  line-height: 1.35;
 }
 
 .social-links a {
