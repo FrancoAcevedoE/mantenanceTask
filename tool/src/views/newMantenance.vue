@@ -50,6 +50,25 @@
 
 </select>
 
+<div v-if="availableAdditionalWorkers.length > 0 || additionalWorkersList.length > 0">
+    <label>Otros operarios</label>
+    <div v-if="additionalWorkersList.length" class="workers-chips">
+        <span v-for="worker in additionalWorkersList" :key="worker._id" class="worker-chip">
+            {{ worker.company ? `${worker.name} - ${worker.company}` : worker.name }}
+            <button type="button" class="chip-remove" @click="removeWorker(worker._id)">&#xD7;</button>
+        </span>
+    </div>
+    <div v-if="availableAdditionalWorkers.length" style="display:flex;gap:0.5rem;align-items:center;margin:8px 0;">
+        <select v-model="selectedAdditionalWorker" style="flex:1;margin:0;">
+            <option value="">Seleccionar operario</option>
+            <option v-for="op in availableAdditionalWorkers" :key="op._id" :value="op._id">
+                {{ op.company ? `${op.name} - ${op.company}` : op.name }}
+            </option>
+        </select>
+        <button type="button" @click="addWorker" :disabled="!selectedAdditionalWorker" class="add-worker-btn">Agregar</button>
+    </div>
+</div>
+
 <label>Tipo de mantenimiento</label>
 <select v-model="form.maintenanceType">
 
@@ -145,6 +164,9 @@ data(){
 return{
 
 operarios:[],
+allOperarios:[],
+additionalWorkersList:[],
+selectedAdditionalWorker:"",
 machines:[],
 sectors:[],
 currentUserRole:"",
@@ -195,6 +217,13 @@ beforeUnmount() {
 },
 
 computed: {
+    availableAdditionalWorkers() {
+        const usedIds = new Set([
+            this.form.clientId,
+            ...this.additionalWorkersList.map(w => w._id)
+        ])
+        return this.allOperarios.filter(op => !usedIds.has(op._id))
+    },
     filteredMachinesBySector() {
         if (!this.form.sector) return []
         return this.machines.filter(machine => machine.sector === this.form.sector)
@@ -256,6 +285,8 @@ this.authConfig()
 const currentUser = this.getStoredUser()
 const operarios = response.data || []
 
+this.allOperarios = operarios
+
 if (currentUser?.role === "operario") {
 this.operarios = operarios.filter(operario => operario._id === currentUser.id)
 this.form.clientId = this.operarios[0]?._id || ""
@@ -311,6 +342,19 @@ this.form.machinePart = ""
 
 },
 
+addWorker(){
+if(!this.selectedAdditionalWorker) return
+const worker = this.allOperarios.find(op => op._id === this.selectedAdditionalWorker)
+if(worker && !this.additionalWorkersList.find(w => w._id === worker._id)){
+    this.additionalWorkersList.push(worker)
+}
+this.selectedAdditionalWorker = ""
+},
+
+removeWorker(workerId){
+this.additionalWorkersList = this.additionalWorkersList.filter(w => w._id !== workerId)
+},
+
 async saveMaintenance(){
 
 try{
@@ -345,7 +389,10 @@ return
 await axios.post(
 
 `${API_BASE_URL}/maintenance/newmaintenance`,
-this.form,
+{
+    ...this.form,
+    additionalWorkers: this.additionalWorkersList.map(w => w._id)
+},
 this.authConfig()
 
 )
@@ -387,6 +434,9 @@ jobFinished:true,
 unfinishedReason:""
 
 }
+
+this.additionalWorkersList = []
+this.selectedAdditionalWorker = ""
 
 },
 
@@ -557,6 +607,61 @@ button:hover {
 
 .secondary-button:hover {
     background: #767676;
+}
+
+.workers-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.5rem 0;
+    justify-content: center;
+}
+
+.worker-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+    border-radius: 2rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.88rem;
+}
+
+.chip-remove {
+    background: none;
+    border: none;
+    color: #c62828;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    margin-top: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: inline;
+}
+
+.chip-remove:hover {
+    background: none;
+    color: #b71c1c;
+}
+
+.add-worker-btn {
+    width: auto;
+    padding: 0.5rem 1rem;
+    background: #00a878;
+    margin-top: 0;
+    white-space: nowrap;
+}
+
+.add-worker-btn:hover {
+    background: #008f67;
+}
+
+.add-worker-btn:disabled {
+    background: #b2dfdb;
+    cursor: not-allowed;
 }
 
 /* Responsive */

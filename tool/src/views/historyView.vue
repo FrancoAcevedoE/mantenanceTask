@@ -91,6 +91,9 @@
                 <h3>Detalles del mantenimiento</h3>
                 <div style="text-align: left; line-height: 1.8;">
                     <p><strong>Operario:</strong> {{ formatOperarioName(selectedDetail?.clientId) }}</p>
+                    <p v-if="selectedDetail?.additionalWorkers?.length">
+                        <strong>Otros operarios:</strong> {{ selectedDetail.additionalWorkers.map(w => formatOperarioName(w)).join(', ') }}
+                    </p>
                     <p><strong>Sector:</strong> {{ selectedDetail?.sector }}</p>
                     <p><strong>Máquina:</strong> {{ selectedDetail?.machine }}</p>
                     <p><strong>Parte:</strong> {{ selectedDetail?.machinePart }}</p>
@@ -207,7 +210,8 @@ export default {
                     : true
 
                 const operarioMatch = this.filterOperario
-                    ? item.clientId?._id === this.filterOperario
+                    ? item.clientId?._id === this.filterOperario ||
+                      (item.additionalWorkers || []).some(w => w?._id === this.filterOperario)
                     : true
 
                 const dateMatch = this.filterDate
@@ -250,15 +254,23 @@ export default {
             ]
 
             this.operarios = res.data
-                .filter(item => item.clientId?._id)
                 .reduce((accumulator, item) => {
 
-                    if (!accumulator.some(operario => operario.value === item.clientId._id)) {
+                    if (item.clientId?._id && !accumulator.some(operario => operario.value === item.clientId._id)) {
                         accumulator.push({
                             value: item.clientId._id,
                             label: this.formatOperarioName(item.clientId)
                         })
                     }
+
+                    ;(item.additionalWorkers || []).forEach(worker => {
+                        if (worker?._id && !accumulator.some(op => op.value === worker._id)) {
+                            accumulator.push({
+                                value: worker._id,
+                                label: this.formatOperarioName(worker)
+                            })
+                        }
+                    })
 
                     return accumulator
 

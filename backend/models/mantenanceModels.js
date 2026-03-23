@@ -82,7 +82,12 @@ const maintenanceSchema = new mongoose.Schema({
 
     updatedAt:{
         type:Date
-    }
+    },
+
+    additionalWorkers:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }]
 
 })
 

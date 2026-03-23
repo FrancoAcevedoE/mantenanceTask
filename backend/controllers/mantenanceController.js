@@ -66,6 +66,15 @@ export const newMaintenanceController = async (req,res)=>{
             })
         }
 
+        const additionalWorkerIds = Array.isArray(data.additionalWorkers) ? data.additionalWorkers : []
+
+        for (const workerId of additionalWorkerIds) {
+            const worker = await User.findById(workerId)
+            if (!worker || worker.role !== "operario") {
+                return res.status(400).json({ message: "Operario adicional no válido" })
+            }
+        }
+
         let status = "finished"
 
         if(!data.machineRunning){
@@ -78,6 +87,7 @@ export const newMaintenanceController = async (req,res)=>{
 
         const maintenance = new Maintenance({
             ...data,
+            additionalWorkers: additionalWorkerIds,
             reportedBy: req.user.id,
             status
         })
@@ -145,7 +155,8 @@ export const historyController = async (req, res) => {
     try {
 
         const history = await Maintenance.find()
-            .populate("clientId", "name role")
+            .populate("clientId", "name role company")
+            .populate("additionalWorkers", "name role company")
 
         res.json(history)
 
