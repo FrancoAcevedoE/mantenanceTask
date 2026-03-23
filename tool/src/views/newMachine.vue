@@ -221,8 +221,26 @@ export default {
       }
     },
     modifyMachine(machineId) {
+      if (!this.sectorFilter) {
+        Swal.fire({
+          icon: "warning",
+          title: "Sector requerido",
+          text: "Primero seleccioná un sector para modificar una máquina."
+        })
+        return
+      }
+
       const machine = this.machines.find(item => item._id === machineId)
       if (!machine) return
+
+      if (machine.sector !== this.sectorFilter) {
+        Swal.fire({
+          icon: "warning",
+          title: "Sector incorrecto",
+          text: "Solo podés modificar máquinas del sector seleccionado."
+        })
+        return
+      }
 
       this.form = {
         sector: machine.sector || "",
@@ -282,6 +300,24 @@ export default {
       `
     },
     openMachineModal(machine) {
+      if (!this.sectorFilter) {
+        Swal.fire({
+          icon: "warning",
+          title: "Sector requerido",
+          text: "Primero seleccioná un sector para ver el detalle."
+        })
+        return
+      }
+
+      if (machine?.sector !== this.sectorFilter) {
+        Swal.fire({
+          icon: "warning",
+          title: "Sector incorrecto",
+          text: "Solo podés ver detalles de máquinas del sector seleccionado."
+        })
+        return
+      }
+
       this.selectedMachine = machine
       this.showMachineModal = true
     },
