@@ -21,7 +21,7 @@
         <p v-if="message" class="message">{{ message }}</p>
 
         <div class="actions">
-          <button @click="createUser">Guardar usuario</button>
+          <button @click="createUser">{{ editingUserId ? 'Guardar cambios' : 'Guardar usuario' }}</button>
           <button class="secondary-button" @click="resetForm">Limpiar</button>
           <button class="secondary-button" @click="toggleCreateForm">Cerrar formulario</button>
         </div>
@@ -46,6 +46,14 @@
               <span>Documento: {{ createdUser.dni }}</span>
               <span>Rol: {{ createdUser.role }}</span>
             </div>
+
+            <button
+              type="button"
+              class="edit-button"
+              @click="editUser(createdUser)"
+            >
+              Modificar
+            </button>
 
             <button
               type="button"
@@ -79,6 +87,7 @@ export default {
       },
       users: [],
       message: "",
+      editingUserId: null,
       showCreateForm: false,
       backgroundImage: backgroundImage
     }
@@ -134,9 +143,24 @@ export default {
           return
         }
 
-        await axios.post(`${API_BASE_URL}/users`, this.user, this.authConfig())
+        if (this.editingUserId) {
+          const payload = {
+            name: this.user.name,
+            dni: this.user.dni,
+            role: this.user.role
+          }
 
-        this.message = "Usuario creado correctamente"
+          if (this.user.password) {
+            payload.password = this.user.password
+          }
+
+          await axios.patch(`${API_BASE_URL}/users/${this.editingUserId}`, payload, this.authConfig())
+          this.message = "Usuario actualizado correctamente"
+        } else {
+          await axios.post(`${API_BASE_URL}/users`, this.user, this.authConfig())
+          this.message = "Usuario creado correctamente"
+        }
+
         this.resetForm()
         await this.loadUsers()
       } catch (error) {
@@ -146,6 +170,18 @@ export default {
           text: error.response?.data?.message || "No se pudo crear el usuario"
         })
       }
+    },
+    editUser(createdUser) {
+      this.showCreateForm = true
+      this.message = ""
+      this.editingUserId = createdUser._id
+      this.user = {
+        name: createdUser.name || "",
+        dni: String(createdUser.dni || ""),
+        password: "",
+        role: createdUser.role || "operario"
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" })
     },
     async deleteUser(userId) {
       try {
@@ -167,6 +203,7 @@ export default {
         password: "",
         role: "operario"
       }
+      this.editingUserId = null
     }
   },
   mounted() {
@@ -339,6 +376,15 @@ button:hover {
 .danger-button {
   margin: 0;
   background: #cb5f5f;
+}
+
+.edit-button {
+  margin: 0;
+  background: #0ea5a4;
+}
+
+.edit-button:hover {
+  background: #0b8a89;
 }
 
 .danger-button:hover {

@@ -24,7 +24,7 @@ router.get("/", verifyToken, getAllMachinesController)
 router.get("/:id", verifyToken, getMachineByIdController)
 
 // POST new machine
-router.post("/", verifyToken, checkRole("admin", "operario"), newMachineController)
+router.post("/", verifyToken, checkRole("admin"), newMachineController)
 
 // PUT update machine
 router.put("/:id", verifyToken, checkRole("admin"), updateMachineController)

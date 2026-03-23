@@ -1,5 +1,5 @@
 import express from "express"
-import { createUser, deleteUser, getOperarios, getUsers, login } from "../controllers/userController.js"
+import { createUser, deleteUser, getOperarios, getUsers, login, updateUser } from "../controllers/userController.js"
 import { verifyToken } from "../middlewares/authMiddleware.js"
 import { checkRole } from "../middlewares/roleMiddleware.js"
 
@@ -26,6 +26,13 @@ router.post(
     verifyToken,
     checkRole("admin"),
     createUser
+)
+
+router.patch(
+    "/:id",
+    verifyToken,
+    checkRole("admin"),
+    updateUser
 )
 
 router.delete(

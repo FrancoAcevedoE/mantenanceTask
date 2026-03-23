@@ -78,7 +78,11 @@ export const getUsers = async (req, res) => {
 
 export const getOperarios = async (req, res) => {
     try {
-        const operarios = await User.find({ role: "operario" })
+        const operarioFilter = req.user?.role === "operario"
+            ? { role: "operario", _id: req.user.id }
+            : { role: "operario" }
+
+        const operarios = await User.find(operarioFilter)
             .select("name dni role")
             .sort({ name: 1 })
 
@@ -144,6 +148,84 @@ export const createUser = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             message: "Error al crear usuario"
+        })
+    }
+}
+
+export const updateUser = async (req, res) => {
+    try {
+        const { name, role } = req.body
+        const dniRaw = req.body.dni !== undefined ? String(req.body.dni).trim() : undefined
+        const passwordRaw = req.body.password !== undefined ? String(req.body.password).trim() : undefined
+
+        const updateData = {}
+
+        if (name !== undefined) {
+            const normalizedName = String(name).trim()
+            if (!normalizedName) {
+                return res.status(400).json({
+                    message: "El nombre no puede estar vacio"
+                })
+            }
+            updateData.name = normalizedName
+        }
+
+        if (role !== undefined) {
+            if (!["admin", "operario", "supervisor"].includes(role)) {
+                return res.status(400).json({
+                    message: "Rol invalido"
+                })
+            }
+            updateData.role = role
+        }
+
+        if (dniRaw !== undefined) {
+            if (!/^\d{8}$/.test(dniRaw)) {
+                return res.status(400).json({
+                    message: "El documento debe tener exactamente 8 digitos numericos"
+                })
+            }
+
+            const dni = Number(dniRaw)
+            const existingUser = await User.findOne({ dni, _id: { $ne: req.params.id } })
+
+            if (existingUser) {
+                return res.status(409).json({
+                    message: "Ya existe un usuario con ese documento"
+                })
+            }
+
+            updateData.dni = dni
+        }
+
+        if (passwordRaw !== undefined && passwordRaw !== "") {
+            if (!/^\d{4}$/.test(passwordRaw)) {
+                return res.status(400).json({
+                    message: "La contrasena debe tener exactamente 4 digitos numericos"
+                })
+            }
+            updateData.password = Number(passwordRaw)
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true, runValidators: true }
+        ).select("name dni role")
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                message: "Usuario no encontrado"
+            })
+        }
+
+        res.json({
+            message: "Usuario actualizado correctamente",
+            user: updatedUser
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al actualizar usuario"
         })
     }
 }

@@ -41,7 +41,7 @@
 </select>
 
 <label>Operario</label>
-<select v-model="form.clientId" required>
+<select v-model="form.clientId" required :disabled="currentUserRole === 'operario'">
 
 <option disabled value="">Seleccionar operario</option>
 <option v-for="operario in operarios" :key="operario._id" :value="operario._id">
@@ -147,6 +147,7 @@ return{
 operarios:[],
 machines:[],
 sectors:[],
+currentUserRole:"",
 
 form:{
 
@@ -172,6 +173,8 @@ showMachineDetailModal: false
 },
 
 async mounted() {
+    const currentUser = this.getStoredUser()
+    this.currentUserRole = currentUser?.role || ""
     await this.loadOperarios()
     await this.loadMachines()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
@@ -213,6 +216,15 @@ computed: {
 
 methods:{
 
+getStoredUser() {
+try {
+const rawUser = localStorage.getItem("user")
+return rawUser ? JSON.parse(rawUser) : null
+} catch {
+return null
+}
+},
+
 onSectorChange() {
 this.form.machine = ""
 this.form.machinePart = ""
@@ -239,7 +251,15 @@ const response = await axios.get(
 this.authConfig()
 )
 
-this.operarios = response.data
+const currentUser = this.getStoredUser()
+const operarios = response.data || []
+
+if (currentUser?.role === "operario") {
+this.operarios = operarios.filter(operario => operario._id === currentUser.id)
+this.form.clientId = this.operarios[0]?._id || ""
+} else {
+this.operarios = operarios
+}
 
 }catch(error){
 

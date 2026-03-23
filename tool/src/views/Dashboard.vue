@@ -127,6 +127,7 @@ Limpiar filtros
 <script>
 
 import axios from "axios"
+import Swal from "sweetalert2"
 import {
 Chart,
 ArcElement,
@@ -223,6 +224,20 @@ document.body.style.backgroundRepeat = 'no-repeat'
 document.body.style.backgroundAttachment = 'fixed'
 
 await this.loadDashboard()
+
+if (this.$route.query.reason === "role" && this.$route.query.denied) {
+const deniedPath = String(this.$route.query.denied)
+await Swal.fire({
+icon: "warning",
+title: "Acceso denegado",
+text: `No tenes permisos para acceder a ${deniedPath}`
+})
+
+this.$router.replace({
+path: this.$route.path,
+query: {}
+})
+}
 
 },
 

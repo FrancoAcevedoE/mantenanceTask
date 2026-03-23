@@ -31,7 +31,7 @@ const router = createRouter({
         path: '/adminView', name: 'AdminView', component: adminView, meta: { requiresAuth: true, adminOnly: true }
       },
       {
-      path: '/newMachine', name: 'NewMachine', component: newMachine, meta: { requiresAuth: true }
+      path: '/newMachine', name: 'NewMachine', component: newMachine, meta: { requiresAuth: true, roles: ['admin'] }
     },
       {
       path: '/new',name: 'New',component: newMantenance, meta: { requiresAuth: true }
@@ -60,6 +60,16 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.adminOnly && user?.role !== 'admin') {
     return next('/dashboard')
+  }
+
+  if (to.meta.roles && !to.meta.roles.includes(user?.role)) {
+    return next({
+      path: '/dashboard',
+      query: {
+        denied: to.path,
+        reason: 'role'
+      }
+    })
   }
 
   return next()
