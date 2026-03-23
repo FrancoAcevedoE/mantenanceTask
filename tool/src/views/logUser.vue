@@ -170,7 +170,7 @@ export default {
   flex-direction: column;
   justify-content:flex-start;
   align-items:center;
-  background-image: url('/assets/login-background.jpg');
+  background-image: none;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
