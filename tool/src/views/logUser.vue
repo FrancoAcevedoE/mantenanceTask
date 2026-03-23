@@ -67,7 +67,7 @@ import Swal from "sweetalert2"
 import backgroundImage from '@/assets/fondo.jpg'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
-const PWA_URL = import.meta.env.VITE_PWA_URL || "https://mantenance-task.vercel.app"
+const PWA_URL = import.meta.env.VITE_PWA_URL || "https://mantenance-task-francoacevedoes-projects.vercel.app/logUser"
 
 export default {
 
