@@ -1,6 +1,7 @@
 import express from "express"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
+import cors from "cors"
 // esto levanta el servidor e importa las todas las rutas
 
 dotenv.config() 
@@ -28,22 +29,45 @@ const ensureDefaultAdmin = async () => {
 
 const app = express()
 
+const allowedOriginsFromEnv = String(process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map(origin => origin.trim())
+  .filter(Boolean)
+
+const dynamicAllowedPatterns = [
+  /^https:\/\/[a-z0-9-]+\.vercel\.app$/i,
+  /^http:\/\/localhost(?::\d+)?$/i,
+  /^http:\/\/127\.0\.0\.1(?::\d+)?$/i
+]
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true)
+    }
+
+    if (allowedOriginsFromEnv.includes(origin)) {
+      return callback(null, true)
+    }
+
+    if (dynamicAllowedPatterns.some(pattern => pattern.test(origin))) {
+      return callback(null, true)
+    }
+
+    return callback(new Error(`Origen no permitido por CORS: ${origin}`))
+  },
+  methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  credentials: true,
+  optionsSuccessStatus: 204
+}
+
+app.use(cors(corsOptions))
+app.options(/.*/, cors(corsOptions))
+
 app.use((req, res, next) => {
-  const origin = req.headers.origin
-
-  res.header("X-CORS-Version", "v4-open")
-
-  res.header("Access-Control-Allow-Origin", origin || "*")
-  res.header("Vary", "Origin")
-  res.header("Access-Control-Allow-Credentials", "true")
-  res.header("Access-Control-Allow-Methods", "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS")
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204)
-  }
-
-  return next()
+  res.header("X-CORS-Version", "v5-cors-middleware")
+  next()
 })
 app.use(express.json())
 // conexion con mongoose
@@ -77,7 +101,7 @@ app.get("/api/health", (req, res) => {
 
   res.json({
     ok: true,
-    corsVersion: "v4-open",
+    corsVersion: "v5-cors-middleware",
     mongoState: mongoStateMap[mongoose.connection.readyState] || "unknown"
   })
 })

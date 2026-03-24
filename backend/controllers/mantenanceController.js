@@ -277,9 +277,14 @@ involvedOperarios: { $ne: null }
 }
 },
 {
+$addFields: {
+involvedOperarioKey: { $toString: "$involvedOperarios" }
+}
+},
+{
 $group: {
 _id: null,
-operarioIds: { $addToSet: "$involvedOperarios" }
+operarioIds: { $addToSet: "$involvedOperarioKey" }
 }
 },
 {
@@ -347,15 +352,32 @@ involvedOperarios: { $ne: null }
 },
 {
 $group: {
-_id: "$involvedOperarios",
+_id: { $toString: "$involvedOperarios" },
 count: { $sum: 1 }
 }
 },
 {
 $lookup: {
 from: "users",
-localField: "_id",
-foreignField: "_id",
+let: { workerId: "$_id" },
+pipeline: [
+{
+$match: {
+$expr: {
+$eq: [
+{ $toString: "$_id" },
+"$$workerId"
+]
+}
+}
+},
+{
+$project: {
+name: 1,
+company: 1
+}
+}
+],
 as: "operario"
 }
 },
