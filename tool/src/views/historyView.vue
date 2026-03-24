@@ -439,26 +439,28 @@ h1 {
 table {
     width: 100%;
     border-collapse: collapse;
-    background: #fff;
-    border-radius: 10px;
-    overflow: hidden;
 }
 
 .table-wrapper {
     width: 100%;
     overflow-x: auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
+    overflow: hidden;
 }
 
 th,
 td {
-    border: 1px solid #e2e2e2;
-    padding: 10px;
+    padding: 12px 10px;
+    border-bottom: 1px solid #e8e8e8;
+    text-align: left;
+    color: #555;
 }
 
 th {
     background: #efefef;
     color: #333;
-    text-align: left;
 }
 
 .yellow {
@@ -544,10 +546,8 @@ button:hover {
         min-width: 100%;
     }
 
-    table {
-        display: block;
+    .table-wrapper {
         overflow-x: auto;
-        white-space: nowrap;
     }
 }
 </style>
