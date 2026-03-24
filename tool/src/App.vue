@@ -145,16 +145,19 @@ nav a.router-link-active {
   }
 
   .app-content.with-nav {
-    padding-top: 4.2rem;
+    padding-top: 0;
+    padding-bottom: 4.6rem;
   }
 
   nav {
+    top: auto;
+    bottom: 0;
     width: fit-content;
     max-width: calc(100% - 0.6rem);
     flex-wrap: nowrap;
     gap: 0.32rem;
     padding: 0.28rem 0.32rem;
-    border-radius: 0 0 16px 16px;
+    border-radius: 16px 16px 0 0;
   }
 
   nav a,
