@@ -249,7 +249,48 @@ const totalMaintenances = await Maintenance.countDocuments(periodFilter)
 
 const machines = await Maintenance.distinct("machine", periodFilter)
 
-const operarios = await Maintenance.distinct("clientId", periodFilter)
+const operariosAttendedRaw = await Maintenance.aggregate([
+{
+$match: periodFilter
+},
+{
+$project: {
+involvedOperarios: {
+$setUnion: [
+{
+$concatArrays: [
+["$clientId"],
+{ $ifNull: ["$additionalWorkers", []] }
+]
+},
+[]
+]
+}
+}
+},
+{
+$unwind: "$involvedOperarios"
+},
+{
+$match: {
+involvedOperarios: { $ne: null }
+}
+},
+{
+$group: {
+_id: null,
+operarioIds: { $addToSet: "$involvedOperarios" }
+}
+},
+{
+$project: {
+_id: 0,
+count: { $size: "$operarioIds" }
+}
+}
+])
+
+const operariosAttended = operariosAttendedRaw[0]?.count || 0
 
 const recentMaintenances = await Maintenance.find(periodFilter)
 .populate("clientId", "name role")
@@ -279,15 +320,41 @@ count: { $sum: 1 }
 
 const operarioBreakdownRaw = await Maintenance.aggregate([
 {
+$match: periodFilter
+},
+{
+$project: {
+involvedOperarios: {
+$setUnion: [
+{
+$concatArrays: [
+["$clientId"],
+{ $ifNull: ["$additionalWorkers", []] }
+]
+},
+[]
+]
+}
+}
+},
+{
+$unwind: "$involvedOperarios"
+},
+{
 $match: {
-...periodFilter,
-clientId: { $ne: null }
+involvedOperarios: { $ne: null }
+}
+},
+{
+$group: {
+_id: "$involvedOperarios",
+count: { $sum: 1 }
 }
 },
 {
 $lookup: {
 from: "users",
-localField: "clientId",
+localField: "_id",
 foreignField: "_id",
 as: "operario"
 }
@@ -296,8 +363,23 @@ as: "operario"
 $unwind: "$operario"
 },
 {
+$project: {
+_id: {
+$cond: [
+{ $and: [
+{ $ne: ["$operario.company", null] },
+{ $ne: ["$operario.company", ""] }
+] },
+{ $concat: ["$operario.name", " - ", "$operario.company"] },
+"$operario.name"
+]
+},
+count: 1
+}
+},
+{
 $group: {
-_id: "$operario.name",
+_id: "$_id",
 count: { $sum: 1 }
 }
 },
@@ -506,7 +588,7 @@ totalMaintenances,
 
 machinesRegistered:machines.length,
 
-operariosAttended: operarios.filter(Boolean).length,
+operariosAttended,
 
 pending,
 
