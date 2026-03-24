@@ -249,53 +249,51 @@ const totalMaintenances = await Maintenance.countDocuments(periodFilter)
 
 const machines = await Maintenance.distinct("machine", periodFilter)
 
-const operariosAttendedRaw = await Maintenance.aggregate([
-{
-$match: periodFilter
-},
-{
-$project: {
-involvedOperarios: {
-$setUnion: [
-{
-$concatArrays: [
-["$clientId"],
-{ $ifNull: ["$additionalWorkers", []] }
-]
-},
-[]
-]
-}
-}
-},
-{
-$unwind: "$involvedOperarios"
-},
-{
-$match: {
-involvedOperarios: { $ne: null }
-}
-},
-{
-$addFields: {
-involvedOperarioKey: { $toString: "$involvedOperarios" }
-}
-},
-{
-$group: {
-_id: null,
-operarioIds: { $addToSet: "$involvedOperarioKey" }
-}
-},
-{
-$project: {
-_id: 0,
-count: { $size: "$operarioIds" }
-}
-}
-])
+const maintenancesForOperarioBreakdown = await Maintenance.find(periodFilter)
+.select("clientId additionalWorkers")
+.populate("clientId", "name company")
+.populate("additionalWorkers", "name company")
+.lean()
 
-const operariosAttended = operariosAttendedRaw[0]?.count || 0
+const operarioCountByLabel = new Map()
+const uniqueOperarioIds = new Set()
+
+for (const maintenance of maintenancesForOperarioBreakdown) {
+const participants = []
+
+if (maintenance?.clientId) {
+participants.push(maintenance.clientId)
+}
+
+if (Array.isArray(maintenance?.additionalWorkers)) {
+participants.push(...maintenance.additionalWorkers)
+}
+
+const maintenanceParticipantIds = new Set()
+
+for (const participant of participants) {
+if (!participant || !participant._id) continue
+
+const participantId = String(participant._id)
+
+if (maintenanceParticipantIds.has(participantId)) continue
+maintenanceParticipantIds.add(participantId)
+uniqueOperarioIds.add(participantId)
+
+const participantName = String(participant.name || "").trim()
+const participantCompany = String(participant.company || "").trim()
+
+if (!participantName) continue
+
+const label = participantCompany
+? `${participantName} - ${participantCompany}`
+: participantName
+
+operarioCountByLabel.set(label, (operarioCountByLabel.get(label) || 0) + 1)
+}
+}
+
+const operariosAttended = uniqueOperarioIds.size
 
 const recentMaintenances = await Maintenance.find(periodFilter)
 .populate("clientId", "name role")
@@ -323,100 +321,10 @@ count: { $sum: 1 }
 }
 ])
 
-const operarioBreakdownRaw = await Maintenance.aggregate([
-{
-$match: periodFilter
-},
-{
-$project: {
-involvedOperarios: {
-$setUnion: [
-{
-$concatArrays: [
-["$clientId"],
-{ $ifNull: ["$additionalWorkers", []] }
-]
-},
-[]
-]
-}
-}
-},
-{
-$unwind: "$involvedOperarios"
-},
-{
-$match: {
-involvedOperarios: { $ne: null }
-}
-},
-{
-$group: {
-_id: { $toString: "$involvedOperarios" },
-count: { $sum: 1 }
-}
-},
-{
-$lookup: {
-from: "users",
-let: { workerId: "$_id" },
-pipeline: [
-{
-$match: {
-$expr: {
-$eq: [
-{ $toString: "$_id" },
-"$$workerId"
-]
-}
-}
-},
-{
-$project: {
-name: 1,
-company: 1
-}
-}
-],
-as: "operario"
-}
-},
-{
-$unwind: "$operario"
-},
-{
-$project: {
-_id: {
-$cond: [
-{ $and: [
-{ $ne: ["$operario.company", null] },
-{ $ne: ["$operario.company", ""] }
-] },
-{ $concat: ["$operario.name", " - ", "$operario.company"] },
-"$operario.name"
-]
-},
-count: 1
-}
-},
-{
-$match: {
-_id: { $nin: [null, ""] }
-}
-},
-{
-$group: {
-_id: "$_id",
-count: { $sum: 1 }
-}
-},
-{
-$sort: { count: -1 }
-},
-{
-$limit: 8
-}
-])
+const operarioBreakdownRaw = [...operarioCountByLabel.entries()]
+.map(([operario, count]) => ({ _id: operario, count }))
+.sort((left, right) => right.count - left.count)
+.slice(0, 8)
 
 const sectorBreakdownRaw = await Maintenance.aggregate([
 {
