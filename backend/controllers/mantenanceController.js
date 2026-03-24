@@ -378,6 +378,11 @@ count: 1
 }
 },
 {
+$match: {
+_id: { $nin: [null, ""] }
+}
+},
+{
 $group: {
 _id: "$_id",
 count: { $sum: 1 }
@@ -460,8 +465,10 @@ status: item._id || "sin_estado",
 count: item.count
 }))
 
-const operarioBreakdown = operarioBreakdownRaw.map(item => ({
-operario: item._id || "Sin operario",
+const operarioBreakdown = operarioBreakdownRaw
+.filter(item => item && item._id)
+.map(item => ({
+operario: item._id,
 count: item.count
 }))
 
