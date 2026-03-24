@@ -486,12 +486,11 @@ export default {
 }
 
 .container {
-    width: 100%;
-    max-width: 1180px;
+    width: min(96vw, 1650px);
     background: rgba(255, 255, 255, 0.94);
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
-    padding: 1.5rem;
+    padding: 1.9rem;
     margin: 0;
 }
 
@@ -592,6 +591,14 @@ table {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
 }
 
+.table-wrapper {
+    scrollbar-width: none;
+}
+
+.table-wrapper::-webkit-scrollbar {
+    height: 0;
+}
+
 th,
 td {
     padding: 12px 10px;
@@ -647,6 +654,10 @@ th {
     border-radius: 999px;
     z-index: 1200;
     margin-top: 0.35rem;
+}
+
+.fixed-horizontal-scroll::-webkit-scrollbar {
+    height: 10px;
 }
 
 .fixed-horizontal-scroll-inner {
@@ -739,6 +750,27 @@ button {
 
 button:hover {
     background: #8f8f8f;
+}
+
+@media (max-width: 1400px) {
+    .container {
+        width: min(97vw, 1400px);
+        padding: 1.7rem;
+    }
+}
+
+@media (max-width: 1200px) {
+    .container {
+        width: min(98vw, 1200px);
+        padding: 1.45rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .container {
+        width: 100%;
+        padding: 1.15rem;
+    }
 }
 
 @media (max-width: 768px) {
