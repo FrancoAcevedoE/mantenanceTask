@@ -1,5 +1,14 @@
 import mongoose from "mongoose"
 
+const UNFINISHED_REASON_CATEGORIES = [
+    "Tiempo de parada insuficiente.",
+    "Falta de personal.",
+    "Falta de repuestos (en el acto)",
+    "Falta de repuestos (Mas de una semana).",
+    "Falta de presupuesto.",
+    "Otros"
+]
+
 const maintenanceSchema = new mongoose.Schema({
 
     sector:{
@@ -42,7 +51,14 @@ const maintenanceSchema = new mongoose.Schema({
     },
 
     unfinishedReason:{
-        type:String
+        type:String,
+        default: ""
+    },
+
+    unfinishedReasonCategory:{
+        type:String,
+        enum: UNFINISHED_REASON_CATEGORIES,
+        default: ""
     },
 
     maintenanceType:{
