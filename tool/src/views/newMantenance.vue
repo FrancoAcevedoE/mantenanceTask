@@ -106,10 +106,20 @@
 
 </select>
 
-<div v-if="form.jobFinished === false">
+<div v-if="form.jobFinished === false || form.machineRunning === false">
 
 <label>Motivo por el que no se terminó</label>
-<textarea v-model="form.unfinishedReason"></textarea>
+<select v-model="form.unfinishedReasonCategory" @change="onUnfinishedReasonCategoryChange">
+<option value="">Seleccionar motivo</option>
+<option v-for="reason in unfinishedReasonOptions" :key="reason" :value="reason">
+{{ reason }}
+</option>
+</select>
+
+<div v-if="form.unfinishedReasonCategory === 'Otros'">
+<label>Detalle del motivo</label>
+<textarea v-model="form.unfinishedReason" placeholder="Escribí el motivo"></textarea>
+</div>
 
 </div>
 
@@ -184,9 +194,18 @@ spareParts:"",
 hoursWorked:null,
 machineRunning:true,
 jobFinished:true,
+unfinishedReasonCategory:"",
 unfinishedReason:""
 
 },
+unfinishedReasonOptions:[
+"Tiempo de parada insuficiente.",
+"Falta de personal.",
+"Falta de repuestos (en el acto)",
+"Falta de repuestos (Mas de una semana).",
+"Falta de presupuesto.",
+"Otros"
+],
 backgroundImage: backgroundImage
 ,
 showMachineDetailModal: false
@@ -342,6 +361,12 @@ this.form.machinePart = ""
 
 },
 
+onUnfinishedReasonCategoryChange() {
+if (this.form.unfinishedReasonCategory !== "Otros") {
+this.form.unfinishedReason = ""
+}
+},
+
 addWorker(){
 if(!this.selectedAdditionalWorker) return
 const worker = this.allOperarios.find(op => op._id === this.selectedAdditionalWorker)
@@ -386,13 +411,39 @@ text: "Seleccioná una máquina del sector elegido"
 return
 }
 
+if ((this.form.jobFinished === false || this.form.machineRunning === false) && !this.form.unfinishedReasonCategory) {
+Swal.fire({
+icon: "error",
+title: "Error",
+text: "Debes seleccionar un motivo por el que no se terminó"
+})
+return
+}
+
+if ((this.form.jobFinished === false || this.form.machineRunning === false)
+&& this.form.unfinishedReasonCategory === "Otros"
+&& !String(this.form.unfinishedReason || "").trim()) {
+Swal.fire({
+icon: "error",
+title: "Error",
+text: "Debes detallar el motivo cuando seleccionás 'Otros'"
+})
+return
+}
+
+const payload = {
+...this.form,
+unfinishedReasonCategory: this.form.unfinishedReasonCategory,
+unfinishedReason: this.form.unfinishedReasonCategory === "Otros"
+? String(this.form.unfinishedReason || "").trim()
+: this.form.unfinishedReasonCategory,
+additionalWorkers: this.additionalWorkersList.map(w => w._id)
+}
+
 await axios.post(
 
 `${API_BASE_URL}/maintenance/newmaintenance`,
-{
-    ...this.form,
-    additionalWorkers: this.additionalWorkersList.map(w => w._id)
-},
+payload,
 this.authConfig()
 
 )
@@ -431,6 +482,7 @@ spareParts:"",
 hoursWorked:null,
 machineRunning:true,
 jobFinished:true,
+unfinishedReasonCategory:"",
 unfinishedReason:""
 
 }
@@ -461,7 +513,7 @@ this.showMachineDetailModal = true
 closeMachineDetailModal(){
 this.showMachineDetailModal = false
 
-}
+},
 
 }
 

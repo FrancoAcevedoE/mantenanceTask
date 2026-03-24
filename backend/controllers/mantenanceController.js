@@ -15,6 +15,20 @@ const normalizeSector = (value = "") =>
         .replace(/\s+/g, " ")
         .toLowerCase()
 
+const ALLOWED_UNFINISHED_REASONS = [
+"Tiempo de parada insuficiente.",
+"Falta de personal.",
+"Falta de repuestos (en el acto)",
+"Falta de repuestos (Mas de una semana).",
+"Falta de presupuesto.",
+"Otros"
+]
+
+const normalizeUnfinishedReason = (value = "") =>
+    String(value)
+        .trim()
+        .replace(/\s+/g, " ")
+
 const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/
 
 const formatMonth = (date) => {
@@ -83,6 +97,34 @@ export const newMaintenanceController = async (req,res)=>{
 
         if(data.machineRunning && !data.jobFinished){
             status = "pending"
+        }
+
+        const requiresUnfinishedReason = status === "pending" || status === "stopped"
+        const normalizedUnfinishedReason = normalizeUnfinishedReason(data.unfinishedReason)
+        const unfinishedReasonCategory = normalizeUnfinishedReason(data.unfinishedReasonCategory)
+
+        if (requiresUnfinishedReason) {
+            if (!ALLOWED_UNFINISHED_REASONS.includes(unfinishedReasonCategory)) {
+                return res.status(400).json({
+                    message: "Debes seleccionar un motivo valido para tarea no terminada"
+                })
+            }
+
+            if (unfinishedReasonCategory === "Otros") {
+                if (!normalizedUnfinishedReason) {
+                    return res.status(400).json({
+                        message: "Debes detallar el motivo cuando seleccionas 'Otros'"
+                    })
+                }
+                data.unfinishedReason = normalizedUnfinishedReason
+            } else {
+                data.unfinishedReason = unfinishedReasonCategory
+            }
+
+            data.unfinishedReasonCategory = unfinishedReasonCategory
+        } else {
+            data.unfinishedReason = ""
+            data.unfinishedReasonCategory = ""
         }
 
         const maintenance = new Maintenance({
@@ -346,6 +388,74 @@ sector: formatSectorLabel(item._id),
 count: item.count
 }))
 
+const unfinishedReasonBreakdownRaw = await Maintenance.aggregate([
+{
+$match: {
+...periodFilter,
+unfinishedReason: { $nin: [null, ""] }
+}
+},
+{
+$addFields: {
+unfinishedReasonKey: {
+$cond: [
+{ $and: [
+{ $ne: ["$unfinishedReasonCategory", null] },
+{ $ne: ["$unfinishedReasonCategory", ""] }
+] },
+"$unfinishedReasonCategory",
+"$unfinishedReason"
+]
+}
+}
+},
+{
+$group: {
+_id: "$unfinishedReasonKey",
+count: { $sum: 1 }
+}
+},
+{
+$sort: { count: -1 }
+}
+])
+
+const unfinishedReasonBreakdown = unfinishedReasonBreakdownRaw.map(item => ({
+reason: item._id || "sin motivo",
+count: item.count
+}))
+
+const unfinishedOtherDetailsRaw = await Maintenance.aggregate([
+{
+$match: {
+...periodFilter,
+unfinishedReasonCategory: "Otros",
+unfinishedReason: { $nin: [null, "", "Otros"] }
+}
+},
+{
+$group: {
+_id: "$unfinishedReason",
+count: { $sum: 1 }
+}
+},
+{
+$sort: { count: -1 }
+},
+{
+$limit: 5
+}
+])
+
+const unfinishedOtherDetailsTop = unfinishedOtherDetailsRaw.map(item => ({
+detail: item._id,
+count: item.count
+}))
+
+const unfinishedWithReasonTotal = unfinishedReasonBreakdown.reduce((accumulator, item) => {
+return accumulator + item.count
+}, 0)
+
 const allMachines = await Machine.find()
 .select("name sector")
 .sort({ sector: 1, name: 1 })
@@ -409,6 +519,11 @@ statusBreakdown,
 operarioBreakdown,
 sectorBreakdown,
 dailySeries
+},
+unfinishedReasonSummary: {
+totalWithReason: unfinishedWithReasonTotal,
+reasons: unfinishedReasonBreakdown,
+otherDetailsTop: unfinishedOtherDetailsTop
 },
 machineStatusOverview,
 period: {

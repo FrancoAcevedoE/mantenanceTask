@@ -134,6 +134,26 @@
 <p v-else class="empty-state">No hay máquinas registradas todavía.</p>
 </section>
 
+<section class="unfinished-reasons-section">
+<h2>Tareas no terminadas registradas</h2>
+<p class="unfinished-total">Total con motivo cargado: {{ unfinishedReasonSummary.totalWithReason }}</p>
+
+<div v-if="unfinishedReasonSummary.reasons.length" class="unfinished-reasons-grid">
+<article v-for="item in unfinishedReasonSummary.reasons" :key="item.reason" class="unfinished-reason-card">
+<h3>{{ formatUnfinishedReason(item.reason) }}</h3>
+<p>{{ item.count }} tareas</p>
+<ul v-if="item.reason === 'Otros' && unfinishedReasonSummary.otherDetailsTop.length" class="unfinished-other-list">
+<li v-for="detail in unfinishedReasonSummary.otherDetailsTop" :key="detail.detail">
+<span>{{ detail.detail }}</span>
+<strong>{{ detail.count }}</strong>
+</li>
+</ul>
+</article>
+</div>
+
+<p v-else class="empty-state">No hay tareas con motivo de no finalización en este periodo.</p>
+</section>
+
 <section class="recent-section">
 <h2>Últimos mantenimientos</h2>
 
@@ -318,6 +338,16 @@ this.formatOperarioName(item.clientId)
 && item.machine.toLowerCase().includes(machineQuery)
 && item.status.includes(statusQuery)
 )
+
+},
+
+unfinishedReasonSummary() {
+const summary = this.stats.unfinishedReasonSummary || {}
+return {
+totalWithReason: Number(summary.totalWithReason) || 0,
+reasons: Array.isArray(summary.reasons) ? summary.reasons : [],
+otherDetailsTop: Array.isArray(summary.otherDetailsTop) ? summary.otherDetailsTop : []
+}
 
 }
 
@@ -568,6 +598,14 @@ if (status === "pending") return "Pendiente"
 if (status === "stopped") return "Máquina parada"
 
 return status || "-"
+
+},
+
+formatUnfinishedReason(reason) {
+
+if (!reason) return "Sin motivo"
+
+return reason.charAt(0).toUpperCase() + reason.slice(1)
 
 },
 
@@ -968,6 +1006,78 @@ background: #c62828;
 margin: 0.8rem 0 0;
 font-weight: 700;
 color: #364152;
+}
+
+.unfinished-reasons-section {
+margin-top: 1.5rem;
+}
+
+.unfinished-reasons-section h2 {
+margin: 0 0 0.55rem;
+text-align: center;
+color: #333;
+font-size: 1.35rem;
+}
+
+.unfinished-total {
+margin: 0 0 0.95rem;
+text-align: center;
+color: #4b4b4b;
+font-weight: 600;
+}
+
+.unfinished-reasons-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 0.85rem;
+}
+
+.unfinished-reason-card {
+background: #fff;
+border: 1px solid #e4e7eb;
+border-radius: 12px;
+padding: 0.85rem;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
+}
+
+.unfinished-reason-card h3 {
+margin: 0 0 0.45rem;
+font-size: 1rem;
+color: #243447;
+}
+
+.unfinished-reason-card p {
+margin: 0;
+font-weight: 700;
+color: #364152;
+}
+
+.unfinished-other-list {
+margin: 0.65rem 0 0;
+padding: 0;
+list-style: none;
+border-top: 1px solid #e8ecf1;
+padding-top: 0.55rem;
+}
+
+.unfinished-other-list li {
+display: grid;
+grid-template-columns: 1fr auto;
+gap: 0.5rem;
+align-items: center;
+font-size: 0.86rem;
+color: #4a5568;
+margin-bottom: 0.35rem;
+}
+
+.unfinished-other-list li span {
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+
+.unfinished-other-list li strong {
+color: #243447;
 }
 
 .recent-section {
