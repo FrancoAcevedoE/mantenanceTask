@@ -199,6 +199,7 @@ export const historyController = async (req, res) => {
         const history = await Maintenance.find()
             .populate("clientId", "name role company")
             .populate("additionalWorkers", "name role company")
+            .sort({ createdAt: -1 })
 
         res.json(history)
 
