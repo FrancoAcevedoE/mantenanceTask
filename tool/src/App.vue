@@ -149,22 +149,23 @@ nav a.router-link-active {
   }
 
   nav {
-    width: calc(100% - 0.6rem);
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    padding: 0.3rem 0.45rem;
+    width: fit-content;
+    max-width: calc(100% - 0.6rem);
+    flex-wrap: nowrap;
+    gap: 0.32rem;
+    padding: 0.28rem 0.32rem;
     border-radius: 0 0 16px 16px;
   }
 
   nav a,
   .nav-button {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
   }
 
   nav a i,
   .nav-button i {
-    font-size: 1.45rem;
+    font-size: 1.3rem;
   }
 }
 </style>
