@@ -187,7 +187,7 @@ ref="recentBottomScroll"
 <div class="recent-fixed-horizontal-scroll-inner" ref="recentBottomScrollInner"></div>
 </div>
 
-<p v-else class="empty-state">No hay mantenimientos cargados todavía.</p>
+<p v-if="!filteredRecentMaintenances.length" class="empty-state">No hay mantenimientos cargados todavía.</p>
 </section>
 
 </div>
