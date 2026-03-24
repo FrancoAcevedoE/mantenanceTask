@@ -427,6 +427,8 @@ Authorization: `Bearer ${token}`
 
 async loadDashboard() {
 
+try {
+
 if (!this.periodStart || !this.periodEnd) {
 this.setDefaultPeriod()
 }
@@ -465,6 +467,30 @@ this.$nextTick(() => {
 this.renderCharts()
 this.updateRecentBottomScrollbar()
 })
+
+} catch (error) {
+
+if (error.response?.status === 401 || error.response?.status === 403) {
+localStorage.removeItem("token")
+localStorage.removeItem("user")
+
+await Swal.fire({
+icon: "warning",
+title: "Sesion vencida",
+text: "Tu sesion expiro. Volve a iniciar sesion para cargar el dashboard."
+})
+
+this.$router.push("/logUser")
+return
+}
+
+await Swal.fire({
+icon: "error",
+title: "Error",
+text: "No se pudo cargar el dashboard"
+})
+
+}
 
 },
 
