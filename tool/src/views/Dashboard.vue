@@ -171,8 +171,8 @@ Limpiar filtros
 </button>
 </div>
 
-<div v-if="filteredRecentMaintenances.length" class="recent-table-wrapper">
-<table class="recent-table">
+<div v-if="filteredRecentMaintenances.length" class="recent-table-wrapper" ref="recentTableWrapper" @scroll="onRecentTableScroll">
+<table class="recent-table" ref="recentTable">
 <thead>
 <tr>
 <th>Operario</th>
@@ -198,7 +198,16 @@ Limpiar filtros
 </table>
 </div>
 
-<p v-else class="empty-state">No hay mantenimientos cargados todavía.</p>
+<div
+v-show="showRecentBottomScrollbar && filteredRecentMaintenances.length"
+class="recent-fixed-horizontal-scroll"
+ref="recentBottomScroll"
+@scroll="onRecentBottomScroll"
+>
+<div class="recent-fixed-horizontal-scroll-inner" ref="recentBottomScrollInner"></div>
+</div>
+
+<p v-if="!filteredRecentMaintenances.length" class="empty-state">No hay mantenimientos cargados todavía.</p>
 </section>
 
 </div>
@@ -272,6 +281,10 @@ typeChartInstance: null,
 sectorChartInstance: null,
 
 dailyChartInstance: null,
+
+syncingRecentScroll: false,
+
+showRecentBottomScrollbar: false,
 
 backgroundImage
 
@@ -366,6 +379,8 @@ document.body.style.backgroundAttachment = 'fixed'
 this.setDefaultPeriod()
 await this.loadDashboard()
 
+window.addEventListener("resize", this.updateRecentBottomScrollbar)
+
 if (this.$route.query.reason === "role" && this.$route.query.denied) {
 const deniedPath = String(this.$route.query.denied)
 await Swal.fire({
@@ -391,6 +406,8 @@ document.body.style.backgroundRepeat = ''
 document.body.style.backgroundAttachment = ''
 
 this.destroyCharts()
+
+window.removeEventListener("resize", this.updateRecentBottomScrollbar)
 
 },
 
@@ -446,6 +463,7 @@ this.periodEnd = res.data.period.endMonth
 
 this.$nextTick(() => {
 this.renderCharts()
+this.updateRecentBottomScrollbar()
 })
 
 },
@@ -690,11 +708,62 @@ this.setDefaultPeriod()
 await this.loadDashboard()
 },
 
+updateRecentBottomScrollbar() {
+
+const recentTableWrapper = this.$refs.recentTableWrapper
+const recentTable = this.$refs.recentTable
+const recentBottomScrollInner = this.$refs.recentBottomScrollInner
+
+if (!recentTableWrapper || !recentTable || !recentBottomScrollInner) {
+this.showRecentBottomScrollbar = false
+return
+}
+
+const fullWidth = recentTable.scrollWidth
+recentBottomScrollInner.style.width = `${fullWidth}px`
+this.showRecentBottomScrollbar = fullWidth > recentTableWrapper.clientWidth
+
+},
+
+onRecentTableScroll() {
+
+if (this.syncingRecentScroll) return
+
+const recentTableWrapper = this.$refs.recentTableWrapper
+const recentBottomScroll = this.$refs.recentBottomScroll
+
+if (!recentTableWrapper || !recentBottomScroll) return
+
+this.syncingRecentScroll = true
+recentBottomScroll.scrollLeft = recentTableWrapper.scrollLeft
+this.syncingRecentScroll = false
+
+},
+
+onRecentBottomScroll() {
+
+if (this.syncingRecentScroll) return
+
+const recentTableWrapper = this.$refs.recentTableWrapper
+const recentBottomScroll = this.$refs.recentBottomScroll
+
+if (!recentTableWrapper || !recentBottomScroll) return
+
+this.syncingRecentScroll = true
+recentTableWrapper.scrollLeft = recentBottomScroll.scrollLeft
+this.syncingRecentScroll = false
+
+},
+
 clearRecentFilters() {
 
 this.searchOperario = ""
 this.searchMachine = ""
 this.searchStatus = ""
+
+this.$nextTick(() => {
+this.updateRecentBottomScrollbar()
+})
 
 }
 
@@ -720,11 +789,10 @@ padding: 1rem;
 }
 
 .container{
-width: 100%;
-max-width: 980px;
+width: min(96vw, 1500px);
 margin: 0 auto;
 background: rgba(255, 255, 255, 0.94);
-padding: 2rem;
+padding: 1.9rem;
 border-radius: 12px;
 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
 }
@@ -1150,11 +1218,18 @@ background: #8f8f8f;
 background: #fff;
 border-radius: 10px;
 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
-overflow: hidden;
+overflow-x: auto;
+overflow-y: hidden;
+scrollbar-width: none;
+}
+
+.recent-table-wrapper::-webkit-scrollbar {
+height: 0;
 }
 
 .recent-table {
 width: 100%;
+min-width: 820px;
 border-collapse: collapse;
 }
 
@@ -1175,6 +1250,29 @@ color: #333;
 border-bottom: none;
 }
 
+.recent-fixed-horizontal-scroll {
+position: sticky;
+left: 0;
+bottom: 0;
+width: 100%;
+height: 14px;
+overflow-x: auto;
+overflow-y: hidden;
+background: rgba(255, 255, 255, 0.95);
+border: 1px solid #d5d5d5;
+border-radius: 999px;
+z-index: 1200;
+margin-top: 0.35rem;
+}
+
+.recent-fixed-horizontal-scroll-inner {
+height: 1px;
+}
+
+.recent-fixed-horizontal-scroll::-webkit-scrollbar {
+height: 10px;
+}
+
 .recent-operario {
 font-weight: 700;
 color: #2f2f2f;
@@ -1184,6 +1282,27 @@ color: #2f2f2f;
 margin: 0;
 text-align: center;
 color: #666;
+}
+
+@media (max-width: 1400px) {
+.container {
+width: min(97vw, 1320px);
+padding: 1.7rem;
+}
+}
+
+@media (max-width: 1200px) {
+.container {
+width: min(98vw, 1120px);
+padding: 1.45rem;
+}
+}
+
+@media (max-width: 992px) {
+.container {
+width: 100%;
+padding: 1.15rem;
+}
 }
 
 @media (max-width: 768px) {
@@ -1218,6 +1337,12 @@ font-size: 1.6rem;
 
 .recent-table-wrapper {
 overflow-x: auto;
+overflow-y: hidden;
+}
+
+.recent-fixed-horizontal-scroll {
+width: 100%;
+bottom: 0;
 }
 }
 
