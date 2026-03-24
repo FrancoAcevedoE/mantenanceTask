@@ -212,7 +212,6 @@ const operarios = await Maintenance.distinct("clientId", periodFilter)
 const recentMaintenances = await Maintenance.find(periodFilter)
 .populate("clientId", "name role")
 .sort({ createdAt: -1 })
-.limit(5)
 
 const pending = await Maintenance.countDocuments({
 ...periodFilter,
