@@ -25,10 +25,31 @@
             </select>
 
             <input type="date" v-model="filterDate" />
+
+            <button
+                type="button"
+                class="compact-toggle"
+                @click="toggleCompactMode"
+            >
+                {{ compactMode ? "Vista normal" : "Vista compacta" }}
+            </button>
         </div>
 
-        <div class="table-wrapper">
-        <table>
+        <div class="table-wrapper" :class="{ 'compact-mode': compactMode }" ref="tableWrapper" @scroll="onTableScroll">
+        <table class="history-table" ref="historyTable">
+            <colgroup>
+                <col class="col-operario" />
+                <col class="col-fecha" />
+                <col class="col-hora" />
+                <col class="col-sector" />
+                <col class="col-maquina" />
+                <col class="col-parte" />
+                <col class="col-descripcion" />
+                <col class="col-horas" />
+                <col class="col-estado" />
+                <col class="col-motivo" />
+                <col class="col-accion" />
+            </colgroup>
             <thead>
                 <tr>
                     <th>Operario</th>
@@ -53,7 +74,9 @@
                     <td>{{ item.sector }}</td>
                     <td>{{ item.machine }}</td>
                     <td>{{ item.machinePart }}</td>
-                    <td>{{ truncateText(item.workDescription, 55) }}</td>
+                    <td class="description-cell">
+                        <span class="description-preview">{{ item.workDescription || '-' }}</span>
+                    </td>
                     <td>{{ item.hoursWorked }}</td>
                     <td>
                         <span v-if="item.status === 'finished'">
@@ -71,8 +94,8 @@
                         {{ item.unfinishedReason || "-" }}
                     </td>
 
-                    <td>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <td class="action-cell">
+                        <div class="action-buttons">
                             <button @click="openDetailModal(item)" style="background: #1e88e5;">
                                 Detalles
                             </button>
@@ -84,6 +107,15 @@
                 </tr>
             </tbody>
         </table>
+        </div>
+
+        <div
+            v-show="showBottomScrollbar"
+            class="fixed-horizontal-scroll"
+            ref="bottomScroll"
+            @scroll="onBottomScroll"
+        >
+            <div class="fixed-horizontal-scroll-inner" ref="bottomScrollInner"></div>
         </div>
 
         <div v-if="showDetailModal" class="modal">
@@ -168,6 +200,12 @@ export default {
 
             extraHours: 0,
 
+            syncingHorizontalScroll: false,
+
+            showBottomScrollbar: false,
+
+            compactMode: false,
+
             backgroundImage
 
         }
@@ -183,6 +221,19 @@ export default {
 
         await this.loadHistory()
 
+        const savedCompactMode = localStorage.getItem("historyCompactMode")
+        if (savedCompactMode !== null) {
+            this.compactMode = savedCompactMode === "true"
+        } else {
+            this.compactMode = window.innerWidth <= 1366
+        }
+
+        this.$nextTick(() => {
+            this.updateBottomScrollbar()
+        })
+
+        window.addEventListener("resize", this.updateBottomScrollbar)
+
     },
 
     beforeUnmount() {
@@ -192,6 +243,8 @@ export default {
         document.body.style.backgroundPosition = ''
         document.body.style.backgroundRepeat = ''
         document.body.style.backgroundAttachment = ''
+
+        window.removeEventListener("resize", this.updateBottomScrollbar)
 
     },
 
@@ -276,6 +329,60 @@ export default {
 
                 }, [])
 
+            this.$nextTick(() => {
+                this.updateBottomScrollbar()
+            })
+
+        },
+
+        updateBottomScrollbar() {
+            const tableWrapper = this.$refs.tableWrapper
+            const historyTable = this.$refs.historyTable
+            const bottomScrollInner = this.$refs.bottomScrollInner
+
+            if (!tableWrapper || !historyTable || !bottomScrollInner) {
+                this.showBottomScrollbar = false
+                return
+            }
+
+            const fullWidth = historyTable.scrollWidth
+            bottomScrollInner.style.width = `${fullWidth}px`
+            this.showBottomScrollbar = fullWidth > tableWrapper.clientWidth
+        },
+
+        onTableScroll() {
+            if (this.syncingHorizontalScroll) return
+
+            const tableWrapper = this.$refs.tableWrapper
+            const bottomScroll = this.$refs.bottomScroll
+
+            if (!tableWrapper || !bottomScroll) return
+
+            this.syncingHorizontalScroll = true
+            bottomScroll.scrollLeft = tableWrapper.scrollLeft
+            this.syncingHorizontalScroll = false
+        },
+
+        onBottomScroll() {
+            if (this.syncingHorizontalScroll) return
+
+            const tableWrapper = this.$refs.tableWrapper
+            const bottomScroll = this.$refs.bottomScroll
+
+            if (!tableWrapper || !bottomScroll) return
+
+            this.syncingHorizontalScroll = true
+            tableWrapper.scrollLeft = bottomScroll.scrollLeft
+            this.syncingHorizontalScroll = false
+        },
+
+        toggleCompactMode() {
+            this.compactMode = !this.compactMode
+            localStorage.setItem("historyCompactMode", String(this.compactMode))
+
+            this.$nextTick(() => {
+                this.updateBottomScrollbar()
+            })
         },
 
         getRowClass(status) {
@@ -316,13 +423,6 @@ export default {
             if (status === "pending") return "Pendiente"
             if (status === "stopped") return "Máquina parada"
             return status || "-"
-        },
-
-        truncateText(value, maxLength = 55) {
-            if (!value) return "-"
-            const text = String(value)
-            if (text.length <= maxLength) return text
-            return `${text.slice(0, maxLength)}...`
         },
 
         openDetailModal(item) {
@@ -417,6 +517,15 @@ h1 {
     flex-wrap: wrap;
 }
 
+.compact-toggle {
+    background: #4b5563;
+    white-space: nowrap;
+}
+
+.compact-toggle:hover {
+    background: #374151;
+}
+
 .filters input,
 .filters select {
     padding: 10px;
@@ -441,6 +550,39 @@ table {
     border-collapse: collapse;
 }
 
+.history-table {
+    table-layout: fixed;
+    min-width: 1610px;
+}
+
+.history-table col.col-operario { width: 220px; }
+.history-table col.col-fecha { width: 110px; }
+.history-table col.col-hora { width: 95px; }
+.history-table col.col-sector { width: 140px; }
+.history-table col.col-maquina { width: 170px; }
+.history-table col.col-parte { width: 170px; }
+.history-table col.col-descripcion { width: 280px; }
+.history-table col.col-horas { width: 90px; }
+.history-table col.col-estado { width: 150px; }
+.history-table col.col-motivo { width: 230px; }
+.history-table col.col-accion { width: 155px; }
+
+.compact-mode .history-table {
+    min-width: 1380px;
+}
+
+.compact-mode .history-table col.col-operario { width: 190px; }
+.compact-mode .history-table col.col-fecha { width: 95px; }
+.compact-mode .history-table col.col-hora { width: 80px; }
+.compact-mode .history-table col.col-sector { width: 120px; }
+.compact-mode .history-table col.col-maquina { width: 140px; }
+.compact-mode .history-table col.col-parte { width: 140px; }
+.compact-mode .history-table col.col-descripcion { width: 220px; }
+.compact-mode .history-table col.col-horas { width: 75px; }
+.compact-mode .history-table col.col-estado { width: 130px; }
+.compact-mode .history-table col.col-motivo { width: 170px; }
+.compact-mode .history-table col.col-accion { width: 130px; }
+
 .table-wrapper {
     width: 100%;
     overflow-x: auto;
@@ -456,11 +598,83 @@ td {
     border-bottom: 1px solid #e8e8e8;
     text-align: left;
     color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.compact-mode th,
+.compact-mode td {
+    padding: 8px 8px;
+    font-size: 0.88rem;
 }
 
 th {
     background: #efefef;
     color: #333;
+}
+
+.description-cell {
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+}
+
+.compact-mode .description-cell {
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+}
+
+.description-preview {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fixed-horizontal-scroll {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 10px;
+    width: min(1180px, calc(100vw - 2rem));
+    height: 14px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #d5d5d5;
+    border-radius: 999px;
+    z-index: 1200;
+}
+
+.fixed-horizontal-scroll-inner {
+    height: 1px;
+}
+
+.action-cell {
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+
+.action-buttons button {
+    white-space: nowrap;
+}
+
+.compact-mode .action-buttons {
+    gap: 0.35rem;
+}
+
+.compact-mode .action-buttons button {
+    padding: 8px 10px;
+    font-size: 0.82rem;
 }
 
 .yellow {
@@ -548,6 +762,11 @@ button:hover {
 
     .table-wrapper {
         overflow-x: auto;
+    }
+
+    .fixed-horizontal-scroll {
+        width: calc(100vw - 1.25rem);
+        bottom: 6px;
     }
 }
 </style>
