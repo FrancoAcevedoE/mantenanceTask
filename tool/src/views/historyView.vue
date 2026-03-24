@@ -586,10 +586,10 @@ table {
 .table-wrapper {
     width: 100%;
     overflow-x: auto;
+    overflow-y: hidden;
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
-    overflow: hidden;
 }
 
 th,
@@ -635,11 +635,10 @@ th {
 }
 
 .fixed-horizontal-scroll {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 10px;
-    width: min(1180px, calc(100vw - 2rem));
+    position: sticky;
+    left: 0;
+    bottom: 0;
+    width: 100%;
     height: 14px;
     overflow-x: auto;
     overflow-y: hidden;
@@ -647,6 +646,7 @@ th {
     border: 1px solid #d5d5d5;
     border-radius: 999px;
     z-index: 1200;
+    margin-top: 0.35rem;
 }
 
 .fixed-horizontal-scroll-inner {
@@ -762,11 +762,12 @@ button:hover {
 
     .table-wrapper {
         overflow-x: auto;
+        overflow-y: hidden;
     }
 
     .fixed-horizontal-scroll {
-        width: calc(100vw - 1.25rem);
-        bottom: 6px;
+        width: 100%;
+        bottom: 0;
     }
 }
 </style>
