@@ -8,8 +8,30 @@
 <section class="period-section">
 <h2>Periodo de gráficos</h2>
 <div class="period-toolbar">
-<input type="month" v-model="periodStart" />
-<input type="month" v-model="periodEnd" />
+<div class="period-select-group">
+<select v-model="periodStartMonth" @change="onPeriodSelectorsChange">
+<option v-for="month in monthOptions" :key="`start-${month.value}`" :value="month.value">
+{{ month.label }}
+</option>
+</select>
+<select v-model="periodStartYear" @change="onPeriodSelectorsChange">
+<option v-for="year in yearOptions" :key="`start-year-${year}`" :value="year">
+{{ year }}
+</option>
+</select>
+</div>
+<div class="period-select-group">
+<select v-model="periodEndMonth" @change="onPeriodSelectorsChange">
+<option v-for="month in monthOptions" :key="`end-${month.value}`" :value="month.value">
+{{ month.label }}
+</option>
+</select>
+<select v-model="periodEndYear" @change="onPeriodSelectorsChange">
+<option v-for="year in yearOptions" :key="`end-year-${year}`" :value="year">
+{{ year }}
+</option>
+</select>
+</div>
 <button type="button" class="period-button" @click="applyPeriodFilter">
 <span class="label-full">Aplicar periodo</span>
 <span class="label-compact">Aplicar</span>
@@ -274,6 +296,29 @@ periodStart:"",
 
 periodEnd:"",
 
+periodStartMonth: "01",
+
+periodStartYear: "2024",
+
+periodEndMonth: "01",
+
+periodEndYear: "2024",
+
+monthOptions: [
+{ value: "01", label: "Enero" },
+{ value: "02", label: "Febrero" },
+{ value: "03", label: "Marzo" },
+{ value: "04", label: "Abril" },
+{ value: "05", label: "Mayo" },
+{ value: "06", label: "Junio" },
+{ value: "07", label: "Julio" },
+{ value: "08", label: "Agosto" },
+{ value: "09", label: "Septiembre" },
+{ value: "10", label: "Octubre" },
+{ value: "11", label: "Noviembre" },
+{ value: "12", label: "Diciembre" }
+],
+
 statusChartInstance: null,
 
 typeChartInstance: null,
@@ -364,6 +409,16 @@ reasons: Array.isArray(summary.reasons) ? summary.reasons : [],
 otherDetailsTop: Array.isArray(summary.otherDetailsTop) ? summary.otherDetailsTop : []
 }
 
+},
+
+yearOptions() {
+const currentYear = new Date().getFullYear()
+const years = []
+for (let year = currentYear - 6; year <= currentYear + 2; year += 1) {
+years.push(String(year))
+}
+return years
+
 }
 
 },
@@ -377,6 +432,7 @@ document.body.style.backgroundRepeat = 'no-repeat'
 document.body.style.backgroundAttachment = 'fixed'
 
 this.setDefaultPeriod()
+this.syncPeriodSelectorsFromPeriod()
 await this.loadDashboard()
 
 window.addEventListener("resize", this.updateRecentBottomScrollbar)
@@ -462,6 +518,8 @@ this.periodStart = res.data.period.startMonth
 if (res.data?.period?.endMonth) {
 this.periodEnd = res.data.period.endMonth
 }
+
+this.syncPeriodSelectorsFromPeriod()
 
 this.$nextTick(() => {
 this.renderCharts()
@@ -717,6 +775,31 @@ const now = new Date()
 const start = new Date(now.getFullYear(), now.getMonth() - 11, 1)
 this.periodStart = this.toMonthValue(start)
 this.periodEnd = this.toMonthValue(now)
+this.syncPeriodSelectorsFromPeriod()
+},
+
+syncPeriodSelectorsFromPeriod() {
+const [startYear = "", startMonth = ""] = String(this.periodStart || "").split("-")
+const [endYear = "", endMonth = ""] = String(this.periodEnd || "").split("-")
+
+if (startYear && startMonth) {
+this.periodStartYear = startYear
+this.periodStartMonth = startMonth
+}
+
+if (endYear && endMonth) {
+this.periodEndYear = endYear
+this.periodEndMonth = endMonth
+}
+},
+
+onPeriodSelectorsChange() {
+if (!this.periodStartYear || !this.periodStartMonth || !this.periodEndYear || !this.periodEndMonth) {
+return
+}
+
+this.periodStart = `${this.periodStartYear}-${this.periodStartMonth}`
+this.periodEnd = `${this.periodEndYear}-${this.periodEndMonth}`
 },
 
 toMonthValue(date) {
@@ -829,7 +912,6 @@ background: #f7fbff;
 border: 1px solid #dce9f7;
 border-radius: 12px;
 padding: 0.9rem;
-overflow: hidden;
 }
 
 .period-section h2 {
@@ -861,8 +943,27 @@ border-radius: 2rem;
 background: #fff;
 }
 
+.period-toolbar select {
+width: 100%;
+min-width: 0;
+max-width: 100%;
+box-sizing: border-box;
+padding: 10px 12px;
+border: 1px solid #ccc;
+border-radius: 2rem;
+background: #fff;
+}
+
+.period-select-group {
+display: grid;
+grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+gap: 0.5rem;
+}
+
 .period-toolbar input:hover,
-.period-toolbar input:focus {
+.period-toolbar input:focus,
+.period-toolbar select:hover,
+.period-toolbar select:focus {
 outline: none;
 background: #f0f0f0;
 transition: 0.2s;
@@ -1351,10 +1452,15 @@ grid-template-columns: 1fr;
 }
 
 .period-toolbar input,
+.period-toolbar select,
 .period-button {
 width: 100%;
 max-width: 100%;
 box-sizing: border-box;
+}
+
+.period-select-group {
+grid-template-columns: 1fr 1fr;
 }
 
 .period-label {
