@@ -11,18 +11,6 @@ const clientSchema = new mongoose.Schema({
         type:String
     },
 
-    phone:{
-        type:String
-    },
-
-    email:{
-        type:String
-    },
-
-    address:{
-        type:String
-    },
-
     createdAt:{
         type:Date,
         default:Date.now

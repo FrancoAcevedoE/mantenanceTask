@@ -564,7 +564,7 @@ table {
 .history-table col.col-horas { width: 90px; }
 .history-table col.col-estado { width: 150px; }
 .history-table col.col-motivo { width: 230px; }
-.history-table col.col-accion { width: 155px; }
+.history-table col.col-accion { width: 220px; }
 
 .compact-mode .history-table {
     min-width: 1380px;
@@ -580,7 +580,7 @@ table {
 .compact-mode .history-table col.col-horas { width: 75px; }
 .compact-mode .history-table col.col-estado { width: 130px; }
 .compact-mode .history-table col.col-motivo { width: 170px; }
-.compact-mode .history-table col.col-accion { width: 130px; }
+.compact-mode .history-table col.col-accion { width: 190px; }
 
 .table-wrapper {
     width: 100%;
@@ -666,6 +666,9 @@ th {
 
 .action-cell {
     text-align: center;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
 }
 
 .action-buttons {
