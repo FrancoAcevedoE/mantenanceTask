@@ -829,6 +829,7 @@ background: #f7fbff;
 border: 1px solid #dce9f7;
 border-radius: 12px;
 padding: 0.9rem;
+overflow: hidden;
 }
 
 .period-section h2 {
@@ -858,13 +859,6 @@ padding: 10px 14px;
 border: 1px solid #ccc;
 border-radius: 2rem;
 background: #fff;
-}
-
-.period-toolbar input[type="month"] {
-min-width: 0;
-max-width: 100%;
-width: 100%;
-box-sizing: border-box;
 }
 
 .period-toolbar input:hover,
