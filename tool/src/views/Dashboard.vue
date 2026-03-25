@@ -829,6 +829,7 @@ background: #f7fbff;
 border: 1px solid #dce9f7;
 border-radius: 12px;
 padding: 0.9rem;
+overflow: hidden;
 }
 
 .period-section h2 {
@@ -851,10 +852,29 @@ min-width: 0;
 
 .period-toolbar input {
 width: 100%;
+min-width: 0;
+max-width: 100%;
+box-sizing: border-box;
 padding: 10px 14px;
 border: 1px solid #ccc;
 border-radius: 2rem;
 background: #fff;
+}
+
+.period-toolbar input[type="month"] {
+display: block;
+width: 100%;
+min-width: 0;
+max-width: 100%;
+box-sizing: border-box;
+}
+
+@supports (-webkit-touch-callout: none) {
+.period-toolbar input[type="month"] {
+appearance: none;
+-webkit-appearance: none;
+font-size: 16px;
+}
 }
 
 .period-toolbar input:hover,
@@ -1350,6 +1370,7 @@ grid-template-columns: 1fr;
 .period-button {
 width: 100%;
 max-width: 100%;
+box-sizing: border-box;
 }
 
 .period-label {
