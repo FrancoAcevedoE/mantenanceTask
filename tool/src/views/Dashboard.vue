@@ -851,10 +851,20 @@ min-width: 0;
 
 .period-toolbar input {
 width: 100%;
+min-width: 0;
+max-width: 100%;
+box-sizing: border-box;
 padding: 10px 14px;
 border: 1px solid #ccc;
 border-radius: 2rem;
 background: #fff;
+}
+
+.period-toolbar input[type="month"] {
+min-width: 0;
+max-width: 100%;
+width: 100%;
+box-sizing: border-box;
 }
 
 .period-toolbar input:hover,
@@ -1350,6 +1360,7 @@ grid-template-columns: 1fr;
 .period-button {
 width: 100%;
 max-width: 100%;
+box-sizing: border-box;
 }
 
 .period-label {
