@@ -1392,7 +1392,7 @@ overflow-y: hidden;
 background: rgba(255, 255, 255, 0.95);
 border: 1px solid #d5d5d5;
 border-radius: 999px;
-z-index: 1200;
+z-index: 900;
 margin-top: 0.35rem;
 }
 
@@ -1475,11 +1475,15 @@ font-size: 1.6rem;
 .recent-table-wrapper {
 overflow-x: auto;
 overflow-y: hidden;
+scrollbar-width: thin;
+}
+
+.recent-table-wrapper::-webkit-scrollbar {
+height: 4px;
 }
 
 .recent-fixed-horizontal-scroll {
-width: 100%;
-bottom: 0;
+display: none;
 }
 }
 
