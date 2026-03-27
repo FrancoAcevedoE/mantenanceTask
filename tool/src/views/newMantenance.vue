@@ -56,7 +56,7 @@
 </select>
 </div>
 
-<div v-if="availableAdditionalWorkers.length > 0 || additionalWorkersList.length > 0">
+<div v-if="isOperarioComplete && (availableAdditionalWorkers.length > 0 || additionalWorkersList.length > 0)">
     <label>Otros operarios</label>
     <div v-if="additionalWorkersList.length" class="workers-chips">
         <span v-for="worker in additionalWorkersList" :key="worker._id" class="worker-chip">
@@ -432,6 +432,26 @@ return
 
 if (!this.selectedMachine) {
 this.$notify.error("Selecciona una maquina del sector elegido")
+return
+}
+
+if (!String(this.form.machinePart || "").trim()) {
+this.$notify.error("Debes seleccionar una parte de maquina")
+return
+}
+
+if (!this.form.clientId) {
+this.$notify.error("Debes seleccionar un operario valido")
+return
+}
+
+if (!String(this.form.maintenanceType || "").trim()) {
+this.$notify.error("Debes seleccionar un tipo de mantenimiento")
+return
+}
+
+if (!String(this.form.workDescription || "").trim()) {
+this.$notify.error("Debes cargar la descripcion del trabajo realizado")
 return
 }
 
