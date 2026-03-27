@@ -6,7 +6,6 @@ const parseHorometro = (value) => {
   if (!Number.isFinite(parsed) || parsed < 0) return NaN
   return parsed
 }
-
 const normalizeSector = (value = "") =>
   String(value)
     .trim()
