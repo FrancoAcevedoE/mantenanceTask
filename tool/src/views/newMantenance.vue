@@ -50,7 +50,7 @@
 
 </select>
 
-<div v-if="availableAdditionalWorkers.length > 0 || additionalWorkersList.length > 0">
+<div v-if="form.clientId && (availableAdditionalWorkers.length > 0 || additionalWorkersList.length > 0)">
     <label>Otros operarios</label>
     <div v-if="additionalWorkersList.length" class="workers-chips">
         <span v-for="worker in additionalWorkersList" :key="worker._id" class="worker-chip">
@@ -216,7 +216,7 @@ showMachineDetailModal: false
 async mounted() {
     const currentUser = this.getStoredUser()
     this.currentUserRole = currentUser?.role || ""
-    this.currentUserId = currentUser?.id || ""
+    this.currentUserId = currentUser?.id || currentUser?._id || ""
     await this.loadOperarios()
     await this.loadMachines()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
@@ -301,13 +301,14 @@ this.authConfig()
 )
 
 const currentUser = this.getStoredUser()
+const currentUserId = currentUser?.id || currentUser?._id || ""
 const operarios = response.data || []
 
 this.allOperarios = operarios
 
 if (currentUser?.role === "operario") {
-this.operarios = operarios.filter(operario => operario._id === currentUser.id)
-this.form.clientId = this.operarios[0]?._id || ""
+this.operarios = operarios.filter(operario => operario._id === currentUserId)
+this.form.clientId = this.operarios[0]?._id || currentUserId
 } else {
 this.operarios = operarios
 }
@@ -390,6 +391,11 @@ this.$notify.error("Selecciona una maquina del sector elegido")
 return
 }
 
+if (!this.form.clientId) {
+this.$notify.error("Debes seleccionar un operario valido")
+return
+}
+
 if ((this.form.jobFinished === false || this.form.machineRunning === false) && !this.form.unfinishedReasonCategory) {
 this.$notify.error("Debes seleccionar un motivo por el que no se termino")
 return
@@ -425,7 +431,7 @@ this.resetForm()
 
 }catch(error){
 
-this.$notify.error("Error al guardar mantenimiento")
+this.$notify.notifyApiError(error, "Error al guardar mantenimiento")
 
 }
 
