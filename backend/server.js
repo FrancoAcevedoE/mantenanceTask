@@ -10,6 +10,7 @@ import clientRoutes from './routes/clientRoutes.js'
 import maintenanceRoutes from "./routes/mantenanceRoutes.js"
 import machineRoutes from "./routes/machineRoutes.js"
 import User from "./models/userModels.js"
+import { startCronNotifications } from "./services/cronScheduler.js"
 
 const DEFAULT_ADMIN = {
   name: "Franco Acevedo",
@@ -83,6 +84,7 @@ mongoose.connect(mongoURI)
 .then(async()=>{
   console.log("Mongo conectado")
   await ensureDefaultAdmin()
+  startCronNotifications()
 })
 .catch(err=>console.log(err))
 

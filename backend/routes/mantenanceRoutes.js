@@ -6,7 +6,8 @@ import {
     finishMaintenance,
     historyController,
     newMaintenanceController,
-    dashboardController
+    dashboardController,
+    notifyTestController
 } from "../controllers/mantenanceController.js"
 
 const router = express.Router()
@@ -36,6 +37,13 @@ router.get(
     verifyToken,
     checkRole("admin","supervisor", "operario"),
     dashboardController
+)
+
+router.post(
+    "/notify-test",
+    verifyToken,
+    checkRole("admin"),
+    notifyTestController
 )
 
 

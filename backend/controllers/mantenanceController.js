@@ -1,6 +1,10 @@
 import User from "../models/userModels.js"
 import Maintenance from "../models/mantenanceModels.js"
 import Machine from "../models/machineModels.js"
+import {
+    getMaintenanceNotificationSummary,
+    sendMaintenanceSummaryNotification
+} from "../services/notificationService.js"
 
 const formatSectorLabel = (value = "") =>
     value
@@ -561,5 +565,23 @@ message:"Error cargando dashboard"
 
 }
 
+}
+
+export const notifyTestController = async (req, res) => {
+    try {
+        const summary = await getMaintenanceNotificationSummary()
+
+        await sendMaintenanceSummaryNotification("Prueba manual")
+
+        res.json({
+            ok: true,
+            message: "Notificacion de prueba enviada",
+            summary
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al enviar notificacion de prueba"
+        })
+    }
 }
 
