@@ -113,7 +113,7 @@ export default {
       }
       catch(err){
         this.error = null
-        this.$toast.error(err.response?.data?.message || "Usuario o contraseña incorrectos")
+        this.$notify.notifyApiError(err, "Usuario o contraseña incorrectos")
 
       }
 

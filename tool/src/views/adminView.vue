@@ -5,7 +5,6 @@
         <h2 class="title">Panel de Admin</h2>
 
         <input type="text" id="name" v-model="user.name" placeholder="Nombre"/>
-
         <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" placeholder="Documento"/>
 
         <label for="password">Contraseña</label>
@@ -110,7 +109,7 @@ export default {
         const response = await axios.get(`${API_BASE_URL}/users`, this.authConfig())
         this.users = response.data
       } catch (error) {
-        this.$toast.error("No se pudo cargar la lista de usuarios")
+        this.$notify.error("No se pudo cargar la lista de usuarios")
       }
     },
     async createUser() {
@@ -121,12 +120,12 @@ export default {
         this.user.password = String(this.user.password).replace(/\D/g, "").slice(0, 4)
 
         if (!/^\d{8}$/.test(this.user.dni)) {
-          this.$toast.error("El documento debe tener exactamente 8 digitos numericos")
+          this.$notify.error("El documento debe tener exactamente 8 digitos numericos")
           return
         }
 
         if (!/^\d{4}$/.test(this.user.password)) {
-          this.$toast.error("La contrasena debe tener exactamente 4 digitos numericos")
+          this.$notify.error("La contrasena debe tener exactamente 4 digitos numericos")
           return
         }
 
@@ -151,7 +150,7 @@ export default {
         this.resetForm()
         await this.loadUsers()
       } catch (error) {
-        this.$toast.error(error.response?.data?.message || "No se pudo crear el usuario")
+        this.$notify.notifyApiError(error, "No se pudo crear el usuario")
       }
     },
     editUser(createdUser) {
@@ -170,10 +169,10 @@ export default {
       try {
         await axios.delete(`${API_BASE_URL}/users/${userId}`, this.authConfig())
         this.message = "Usuario eliminado correctamente"
-        this.$toast.success("Usuario eliminado correctamente")
+        this.$notify.success("Usuario eliminado correctamente")
         await this.loadUsers()
       } catch (error) {
-        this.$toast.error(error.response?.data?.message || "No se pudo eliminar el usuario")
+        this.$notify.notifyApiError(error, "No se pudo eliminar el usuario")
       }
     },
     resetForm() {

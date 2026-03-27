@@ -314,7 +314,7 @@ this.operarios = operarios
 
 }catch(error){
 
-    this.$toast.error("Error al cargar operarios")
+    this.$notify.error("Error al cargar operarios")
 
 }
 
@@ -335,7 +335,7 @@ this.sectors = [...new Set(this.machines.map(machine => machine.sector).filter(B
 
 }catch(error){
 
-    this.$toast.error("Error al cargar maquinas")
+    this.$notify.error("Error al cargar maquinas")
 
 }
 
@@ -376,29 +376,29 @@ async saveMaintenance(){
 try{
 
 if (!Number.isFinite(this.form.hoursWorked) || this.form.hoursWorked <= 0) {
-this.$toast.error("Las horas trabajadas deben ser un numero mayor a 0")
+this.$notify.error("Las horas trabajadas deben ser un numero mayor a 0")
 return
 }
 
 if (!this.form.sector) {
-this.$toast.error("Primero selecciona un sector")
+this.$notify.error("Primero selecciona un sector")
 return
 }
 
 if (!this.selectedMachine) {
-this.$toast.error("Selecciona una maquina del sector elegido")
+this.$notify.error("Selecciona una maquina del sector elegido")
 return
 }
 
 if ((this.form.jobFinished === false || this.form.machineRunning === false) && !this.form.unfinishedReasonCategory) {
-this.$toast.error("Debes seleccionar un motivo por el que no se termino")
+this.$notify.error("Debes seleccionar un motivo por el que no se termino")
 return
 }
 
 if ((this.form.jobFinished === false || this.form.machineRunning === false)
 && this.form.unfinishedReasonCategory === "Otros"
 && !String(this.form.unfinishedReason || "").trim()) {
-this.$toast.error("Debes detallar el motivo cuando seleccionas 'Otros'")
+this.$notify.error("Debes detallar el motivo cuando seleccionas 'Otros'")
 return
 }
 
@@ -419,13 +419,13 @@ this.authConfig()
 
 )
 
-this.$toast.success("Mantenimiento registrado")
+this.$notify.success("Mantenimiento registrado")
 
 this.resetForm()
 
 }catch(error){
 
-this.$toast.error("Error al guardar mantenimiento")
+this.$notify.error("Error al guardar mantenimiento")
 
 }
 

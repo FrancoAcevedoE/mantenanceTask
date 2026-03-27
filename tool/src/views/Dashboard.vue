@@ -438,7 +438,7 @@ window.addEventListener("resize", this.updateRecentBottomScrollbar)
 
 if (this.$route.query.reason === "role" && this.$route.query.denied) {
 const deniedPath = String(this.$route.query.denied)
-this.$toast.warning(`No tenes permisos para acceder a ${deniedPath}`)
+this.$notify.warning(`No tenes permisos para acceder a ${deniedPath}`)
 
 this.$router.replace({
 path: this.$route.path,
@@ -485,7 +485,7 @@ this.setDefaultPeriod()
 }
 
 if (this.periodStart > this.periodEnd) {
-this.$toast.error("El mes de inicio no puede ser mayor al mes de fin")
+this.$notify.error("El mes de inicio no puede ser mayor al mes de fin")
 return
 }
 
@@ -523,13 +523,13 @@ if (error.response?.status === 401 || error.response?.status === 403) {
 localStorage.removeItem("token")
 localStorage.removeItem("user")
 
-this.$toast.warning("Tu sesion expiro. Volve a iniciar sesion para cargar el dashboard.")
+this.$notify.warning("Tu sesion expiro. Volve a iniciar sesion para cargar el dashboard.")
 
 this.$router.push("/logUser")
 return
 }
 
-this.$toast.error("No se pudo cargar el dashboard")
+this.$notify.error("No se pudo cargar el dashboard")
 
 }
 

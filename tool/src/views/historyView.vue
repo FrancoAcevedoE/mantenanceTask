@@ -449,7 +449,7 @@ export default {
         async finishMaintenance() {
 
             if (!Number.isFinite(this.extraHours) || this.extraHours <= 0) {
-                this.$toast.error("Las horas adicionales deben ser un numero mayor a 0")
+                this.$notify.error("Las horas adicionales deben ser un numero mayor a 0")
                 return
             }
 

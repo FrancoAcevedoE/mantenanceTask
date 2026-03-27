@@ -59,3 +59,23 @@ b {
     background-color: #f0f0f0;
     padding: 20px;
 }
+
+.app-toast {
+    border-left: 4px solid transparent;
+    color: #ffffff;
+}
+
+.app-toast--success {
+    background: #0f766e;
+    border-left-color: #5eead4;
+}
+
+.app-toast--error {
+    background: #9f1239;
+    border-left-color: #fda4af;
+}
+
+.app-toast--warning {
+    background: #9a3412;
+    border-left-color: #fdba74;
+}

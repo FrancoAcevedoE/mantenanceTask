@@ -174,7 +174,7 @@ export default {
           .filter(Boolean)
 
         if (!this.form.sector || !this.form.name || !filteredParts.length) {
-          this.$toast.error("Por favor completa los campos obligatorios")
+          this.$notify.error("Por favor completa los campos obligatorios")
           return
         }
 
@@ -190,12 +190,12 @@ export default {
           : axios.post(`${API_BASE_URL}/machines`, payload, this.authConfig())
 
         await request
-        this.$toast.success(isEditing ? "Maquina actualizada correctamente" : "Maquina creada correctamente")
+        this.$notify.success(isEditing ? "Maquina actualizada correctamente" : "Maquina creada correctamente")
         this.resetForm()
         await this.loadMachines()
       } catch (error) {
         console.error("Error al guardar máquina:", error)
-        this.$toast.error("Error al guardar la maquina: " + (error.response?.data?.error || error.message))
+        this.$notify.notifyApiError(error, "Error al guardar la maquina")
       }
     },
     async loadMachines() {
@@ -281,10 +281,10 @@ export default {
       if (!isConfirmed) return
       try {
         await axios.delete(`${API_BASE_URL}/machines/${machineId}`, this.authConfig())
-        this.$toast.success("Maquina eliminada correctamente")
+        this.$notify.success("Maquina eliminada correctamente")
         await this.loadMachines()
       } catch (error) {
-        this.$toast.error(error.response?.data?.error || "No se pudo eliminar la maquina")
+        this.$notify.notifyApiError(error, "No se pudo eliminar la maquina")
       }
     },
     cancel() {
