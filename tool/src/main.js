@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import Toast from 'vue-toastification'
+import { useToast } from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 import './assets/style.css'
 import { createNotifier } from './utils/notifications'
@@ -24,6 +25,6 @@ const toastOptions = {
 app.use(createPinia())
 app.use(router)
 app.use(Toast, toastOptions)
-app.config.globalProperties.$notify = createNotifier(app.config.globalProperties.$toast)
+app.config.globalProperties.$notify = createNotifier(useToast())
 
 app.mount('#app')
