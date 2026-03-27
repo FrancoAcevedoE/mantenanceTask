@@ -453,20 +453,25 @@ export default {
                 return
             }
 
-            await axios.put(
+            try {
+                await axios.put(
 
-                `${API_BASE_URL}/maintenance/finish/${this.selectedId}`,
+                    `${API_BASE_URL}/maintenance/finish/${this.selectedId}`,
 
-                {
-                    hoursWorked: this.extraHours
-                },
-                this.authConfig()
+                    {
+                        hoursWorked: this.extraHours
+                    },
+                    this.authConfig()
 
-            )
+                )
 
-            this.closeFinishModal()
+                this.closeFinishModal()
+                this.$notify.success("Trabajo terminado correctamente")
 
-            this.loadHistory()
+                await this.loadHistory()
+            } catch (error) {
+                this.$notify.notifyApiError(error, "No se pudo terminar el trabajo")
+            }
 
         }
 
