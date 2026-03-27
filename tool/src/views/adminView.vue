@@ -63,6 +63,21 @@
             </button>
           </div>
         </div>
+
+        <div class="danger-zone">
+          <h3>Zona de riesgo</h3>
+          <p>
+            Esta accion elimina todos los registros del historial y las metricas del dashboard.
+          </p>
+          <button
+            type="button"
+            class="danger-zone-button"
+            :disabled="isPurging"
+            @click="purgeMaintenanceData"
+          >
+            {{ isPurging ? 'Limpiando...' : 'Limpiar historial y dashboard' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -87,6 +102,7 @@ export default {
       message: "",
       editingUserId: null,
       showCreateForm: false,
+      isPurging: false,
       backgroundImage: backgroundImage
     }
   },
@@ -173,6 +189,39 @@ export default {
         await this.loadUsers()
       } catch (error) {
         this.$notify.notifyApiError(error, "No se pudo eliminar el usuario")
+      }
+    },
+    async purgeMaintenanceData() {
+      if (this.isPurging) {
+        return
+      }
+
+      const confirmed = window.confirm(
+        "Esta seguro de limpiar todo el historial y dashboard? Esta accion no se puede deshacer."
+      )
+
+      if (!confirmed) {
+        return
+      }
+
+      const confirmationKeyword = window.prompt(
+        "Para confirmar definitivamente, escribi BORRAR"
+      )
+
+      if (confirmationKeyword !== "BORRAR") {
+        this.$notify.error("Operacion cancelada: palabra clave incorrecta")
+        return
+      }
+
+      this.isPurging = true
+
+      try {
+        await axios.delete(`${API_BASE_URL}/maintenance/purge-all`, this.authConfig())
+        this.$notify.success("Historial y dashboard limpiados correctamente")
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo limpiar historial y dashboard")
+      } finally {
+        this.isPurging = false
       }
     },
     resetForm() {
@@ -306,6 +355,39 @@ button:hover {
 .users-panel {
   align-items: stretch;
   text-align: left;
+}
+
+.danger-zone {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid #f5b7b1;
+  background: #fff5f5;
+}
+
+.danger-zone h3 {
+  margin: 0;
+  color: #8a1c1c;
+}
+
+.danger-zone p {
+  margin: 0.5rem 0 0;
+  color: #6d3d3d;
+}
+
+.danger-zone-button {
+  margin-top: 0.75rem;
+  width: 100%;
+  background: #c0392b;
+}
+
+.danger-zone-button:hover {
+  background: #a93226;
+}
+
+.danger-zone-button:disabled {
+  background: #dca29c;
+  cursor: not-allowed;
 }
 
 .panel-header {

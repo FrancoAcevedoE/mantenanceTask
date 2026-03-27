@@ -5,6 +5,7 @@ import { checkRole } from "../middlewares/roleMiddleware.js"
 import {
     clearNotificationReadsController,
     clearNotificationHistoryReadsController,
+    purgeMaintenanceDataController,
     finishMaintenance,
     historyController,
     markNotificationsReadController,
@@ -92,6 +93,13 @@ router.post(
     verifyToken,
     checkRole("admin"),
     notifyTestController
+)
+
+router.delete(
+    "/purge-all",
+    verifyToken,
+    checkRole("admin"),
+    purgeMaintenanceDataController
 )
 
 

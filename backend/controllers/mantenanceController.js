@@ -855,3 +855,32 @@ export const notifyTestController = async (req, res) => {
     }
 }
 
+export const purgeMaintenanceDataController = async (req, res) => {
+    try {
+        const [maintenanceResult, notificationResult] = await Promise.all([
+            Maintenance.deleteMany({}),
+            NotificationLog.deleteMany({}),
+            User.updateMany(
+                {},
+                {
+                    $set: {
+                        notificationReadIds: [],
+                        notificationHistoryReadIds: []
+                    }
+                }
+            )
+        ])
+
+        res.json({
+            ok: true,
+            message: "Historial y metricas reiniciadas",
+            deletedMaintenances: maintenanceResult.deletedCount || 0,
+            deletedNotificationLogs: notificationResult.deletedCount || 0
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al limpiar historial y dashboard"
+        })
+    }
+}
+
