@@ -22,7 +22,8 @@ const toastOptions = {
 	pauseOnFocusLoss: true,
 	pauseOnHover: true,
 	draggable: true,
-	newestOnTop: true
+	newestOnTop: true,
+	hideProgressBar: true
 }
 
 app.use(createPinia())

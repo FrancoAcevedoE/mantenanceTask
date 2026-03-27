@@ -120,6 +120,32 @@ export const newMaintenanceController = async (req,res)=>{
             sector: normalizeSector(req.body?.sector)
         }
 
+        const normalizedMachinePart = String(data.machinePart || "").trim()
+        const normalizedMaintenanceType = String(data.maintenanceType || "").trim()
+        const normalizedWorkDescription = String(data.workDescription || "").trim()
+
+        if (!normalizedMachinePart) {
+            return res.status(400).json({
+                message: "Debes seleccionar una parte de maquina"
+            })
+        }
+
+        if (!normalizedMaintenanceType) {
+            return res.status(400).json({
+                message: "Debes seleccionar un tipo de mantenimiento"
+            })
+        }
+
+        if (!normalizedWorkDescription) {
+            return res.status(400).json({
+                message: "Debes cargar la descripcion del trabajo realizado"
+            })
+        }
+
+        data.machinePart = normalizedMachinePart
+        data.maintenanceType = normalizedMaintenanceType
+        data.workDescription = normalizedWorkDescription
+
         if (!data.clientId || !mongoose.Types.ObjectId.isValid(String(data.clientId))) {
             return res.status(400).json({
                 message: "Debes seleccionar un operario valido"
@@ -147,6 +173,10 @@ export const newMaintenanceController = async (req,res)=>{
         const additionalWorkerIds = Array.isArray(data.additionalWorkers) ? data.additionalWorkers : []
 
         for (const workerId of additionalWorkerIds) {
+            if (!mongoose.Types.ObjectId.isValid(String(workerId))) {
+                return res.status(400).json({ message: "Operario adicional no válido" })
+            }
+
             const worker = await User.findById(workerId)
             if (!worker || worker.role !== "operario") {
                 return res.status(400).json({ message: "Operario adicional no válido" })
@@ -864,6 +894,35 @@ export const notifyTestController = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             message: "Error al enviar notificacion de prueba"
+        })
+    }
+}
+
+export const purgeMaintenanceDataController = async (req, res) => {
+    try {
+        const [maintenanceResult, notificationResult] = await Promise.all([
+            Maintenance.deleteMany({}),
+            NotificationLog.deleteMany({}),
+            User.updateMany(
+                {},
+                {
+                    $set: {
+                        notificationReadIds: [],
+                        notificationHistoryReadIds: []
+                    }
+                }
+            )
+        ])
+
+        res.json({
+            ok: true,
+            message: "Historial y metricas reiniciadas",
+            deletedMaintenances: maintenanceResult.deletedCount || 0,
+            deletedNotificationLogs: notificationResult.deletedCount || 0
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al limpiar historial y dashboard"
         })
     }
 }
