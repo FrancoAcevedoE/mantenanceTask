@@ -1,5 +1,10 @@
 import User from "../models/userModels.js"
 import jwt from "jsonwebtoken"
+import {
+    getPushPublicConfig,
+    removeUserPushSubscription,
+    saveUserPushSubscription
+} from "../services/pushService.js"
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey"
 
@@ -72,6 +77,44 @@ export const getUsers = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             message: "Error al obtener usuarios"
+        })
+    }
+}
+
+export const getPushPublicKey = async (req, res) => {
+    const pushConfig = getPushPublicConfig()
+
+    res.json({
+        ok: true,
+        ...pushConfig
+    })
+}
+
+export const subscribeToPush = async (req, res) => {
+    try {
+        const savedSubscription = await saveUserPushSubscription(req.user.id, req.body.subscription)
+
+        res.json({
+            ok: true,
+            subscription: savedSubscription
+        })
+    } catch (error) {
+        res.status(400).json({
+            message: error.message || "No se pudo guardar la suscripcion push"
+        })
+    }
+}
+
+export const unsubscribeFromPush = async (req, res) => {
+    try {
+        await removeUserPushSubscription(req.user.id, req.body.endpoint)
+
+        res.json({
+            ok: true
+        })
+    } catch (error) {
+        res.status(400).json({
+            message: error.message || "No se pudo quitar la suscripcion push"
         })
     }
 }

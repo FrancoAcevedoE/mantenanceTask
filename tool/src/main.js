@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { registerSW } from 'virtual:pwa-register'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import Toast from 'vue-toastification'
 import { useToast } from 'vue-toastification'
@@ -9,6 +10,8 @@ import { createNotifier } from './utils/notifications'
 
 import App from './App.vue'
 import router from './router'
+
+registerSW({ immediate: true })
 
 const app = createApp(App)
 

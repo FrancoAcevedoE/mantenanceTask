@@ -5,6 +5,7 @@ import logUser from '@/views/logUser.vue'
 import adminView from '@/views/adminView.vue'
 import newMachine from '@/views/newMachine.vue'
 import Dashboard from '@/views/Dashboard.vue'
+import NotificationHistory from '@/views/NotificationHistory.vue'
 
 const getStoredUser = () => {
   try {
@@ -41,6 +42,9 @@ const router = createRouter({
     },
     {
       path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true }
+    },
+    {
+      path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true }
     }
     
   ]

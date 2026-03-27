@@ -1,8 +1,11 @@
 import User from "../models/userModels.js"
 import Maintenance from "../models/mantenanceModels.js"
 import Machine from "../models/machineModels.js"
+import NotificationLog from "../models/notificationLogModel.js"
 import {
+    getMaintenanceNotificationsFeed,
     getMaintenanceNotificationSummary,
+    sendMaintenanceStatusAlert,
     sendMaintenanceSummaryNotification
 } from "../services/notificationService.js"
 
@@ -34,6 +37,56 @@ const normalizeUnfinishedReason = (value = "") =>
         .replace(/\s+/g, " ")
 
 const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/
+const MAX_NOTIFICATION_READ_IDS = 300
+const MAX_NOTIFICATION_HISTORY_READ_IDS = 1200
+
+const normalizeNotificationReadIds = (rawIds) => {
+    if (!Array.isArray(rawIds)) {
+        return []
+    }
+
+    const uniqueIds = new Set()
+
+    for (const rawId of rawIds) {
+        const normalizedId = String(rawId || "").trim()
+
+        if (!normalizedId) {
+            continue
+        }
+
+        uniqueIds.add(normalizedId)
+
+        if (uniqueIds.size >= MAX_NOTIFICATION_READ_IDS) {
+            break
+        }
+    }
+
+    return [...uniqueIds]
+}
+
+const normalizeNotificationHistoryReadIds = (rawIds) => {
+    if (!Array.isArray(rawIds)) {
+        return []
+    }
+
+    const uniqueIds = new Set()
+
+    for (const rawId of rawIds) {
+        const normalizedId = String(rawId || "").trim()
+
+        if (!normalizedId) {
+            continue
+        }
+
+        uniqueIds.add(normalizedId)
+
+        if (uniqueIds.size >= MAX_NOTIFICATION_HISTORY_READ_IDS) {
+            break
+        }
+    }
+
+    return [...uniqueIds]
+}
 
 const formatMonth = (date) => {
     const year = date.getFullYear()
@@ -139,6 +192,7 @@ export const newMaintenanceController = async (req,res)=>{
         })
 
         await maintenance.save()
+        sendMaintenanceStatusAlert(maintenance).catch(() => {})
 
         res.json(maintenance)
 
@@ -565,6 +619,222 @@ message:"Error cargando dashboard"
 
 }
 
+}
+
+export const notificationsController = async (req, res) => {
+
+    try {
+
+        const notificationsFeed = await getMaintenanceNotificationsFeed()
+        const user = await User.findById(req.user.id).select("notificationReadIds")
+        const persistedReadIds = normalizeNotificationReadIds(user?.notificationReadIds)
+        const activeNotificationIds = new Set((notificationsFeed.items || []).map(item => String(item.id || "").trim()))
+        const activeReadIds = persistedReadIds.filter(itemId => activeNotificationIds.has(itemId))
+
+        if (user && JSON.stringify(activeReadIds) !== JSON.stringify(persistedReadIds)) {
+            user.notificationReadIds = activeReadIds
+            await user.save()
+        }
+
+        res.json({
+            ok: true,
+            ...notificationsFeed,
+            readIds: activeReadIds
+        })
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Error al obtener notificaciones"
+        })
+
+    }
+
+}
+
+export const markNotificationsReadController = async (req, res) => {
+    try {
+        const incomingReadIds = normalizeNotificationReadIds(req.body?.ids)
+
+        if (!incomingReadIds.length) {
+            return res.status(400).json({
+                message: "Debes enviar al menos un id de notificacion"
+            })
+        }
+
+        await User.updateOne(
+            { _id: req.user.id },
+            {
+                $addToSet: {
+                    notificationReadIds: {
+                        $each: incomingReadIds
+                    }
+                }
+            }
+        )
+
+        res.json({
+            ok: true,
+            readIds: incomingReadIds
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al marcar notificaciones como leidas"
+        })
+    }
+}
+
+export const clearNotificationReadsController = async (req, res) => {
+    try {
+        await User.updateOne(
+            { _id: req.user.id },
+            {
+                $set: {
+                    notificationReadIds: []
+                }
+            }
+        )
+
+        res.json({
+            ok: true
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al limpiar notificaciones leidas"
+        })
+    }
+}
+
+export const notificationsHistoryController = async (req, res) => {
+    try {
+        const readFilter = String(req.query.read || "all").trim().toLowerCase()
+        const fromDateRaw = String(req.query.from || "").trim()
+        const toDateRaw = String(req.query.to || "").trim()
+
+        const query = {}
+
+        if (fromDateRaw || toDateRaw) {
+            query.createdAt = {}
+
+            if (fromDateRaw) {
+                const fromDate = new Date(`${fromDateRaw}T00:00:00.000Z`)
+                if (!Number.isNaN(fromDate.valueOf())) {
+                    query.createdAt.$gte = fromDate
+                }
+            }
+
+            if (toDateRaw) {
+                const toDate = new Date(`${toDateRaw}T23:59:59.999Z`)
+                if (!Number.isNaN(toDate.valueOf())) {
+                    query.createdAt.$lte = toDate
+                }
+            }
+
+            if (!query.createdAt.$gte && !query.createdAt.$lte) {
+                delete query.createdAt
+            }
+        }
+
+        const [logs, user] = await Promise.all([
+            NotificationLog.find(query)
+                .sort({ createdAt: -1 })
+                .limit(500)
+                .lean(),
+            User.findById(req.user.id).select("notificationHistoryReadIds")
+        ])
+
+        const readIds = normalizeNotificationHistoryReadIds(user?.notificationHistoryReadIds)
+        const readSet = new Set(readIds)
+
+        let items = logs.map(log => ({
+            id: String(log._id),
+            title: log.title,
+            body: log.body,
+            type: log.type,
+            severity: log.severity,
+            source: log.source,
+            machine: log.machine,
+            sector: log.sector,
+            metadata: log.metadata,
+            createdAt: log.createdAt,
+            read: readSet.has(String(log._id))
+        }))
+
+        if (readFilter === "read") {
+            items = items.filter(item => item.read)
+        }
+
+        if (readFilter === "unread") {
+            items = items.filter(item => !item.read)
+        }
+
+        res.json({
+            ok: true,
+            items,
+            summary: {
+                total: items.length,
+                read: items.filter(item => item.read).length,
+                unread: items.filter(item => !item.read).length
+            }
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al obtener historial de notificaciones"
+        })
+    }
+}
+
+export const markNotificationHistoryReadController = async (req, res) => {
+    try {
+        const incomingReadIds = normalizeNotificationHistoryReadIds(req.body?.ids)
+
+        if (!incomingReadIds.length) {
+            return res.status(400).json({
+                message: "Debes enviar al menos un id de notificacion"
+            })
+        }
+
+        await User.updateOne(
+            { _id: req.user.id },
+            {
+                $addToSet: {
+                    notificationHistoryReadIds: {
+                        $each: incomingReadIds
+                    }
+                }
+            }
+        )
+
+        res.json({
+            ok: true,
+            readIds: incomingReadIds
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al marcar historial como leido"
+        })
+    }
+}
+
+export const clearNotificationHistoryReadsController = async (req, res) => {
+    try {
+        await User.updateOne(
+            { _id: req.user.id },
+            {
+                $set: {
+                    notificationHistoryReadIds: []
+                }
+            }
+        )
+
+        res.json({
+            ok: true
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al limpiar historial leido"
+        })
+    }
 }
 
 export const notifyTestController = async (req, res) => {

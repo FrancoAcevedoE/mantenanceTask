@@ -1,5 +1,15 @@
 import express from "express"
-import { createUser, deleteUser, getOperarios, getUsers, login, updateUser } from "../controllers/userController.js"
+import {
+    createUser,
+    deleteUser,
+    getOperarios,
+    getPushPublicKey,
+    getUsers,
+    login,
+    subscribeToPush,
+    unsubscribeFromPush,
+    updateUser
+} from "../controllers/userController.js"
 import { verifyToken } from "../middlewares/authMiddleware.js"
 import { checkRole } from "../middlewares/roleMiddleware.js"
 
@@ -12,6 +22,27 @@ router.get(
     verifyToken,
     checkRole("admin", "supervisor", "operario"),
     getOperarios
+)
+
+router.get(
+    "/push/public-key",
+    verifyToken,
+    checkRole("admin", "supervisor", "operario"),
+    getPushPublicKey
+)
+
+router.post(
+    "/push/subscribe",
+    verifyToken,
+    checkRole("admin", "supervisor", "operario"),
+    subscribeToPush
+)
+
+router.delete(
+    "/push/subscribe",
+    verifyToken,
+    checkRole("admin", "supervisor", "operario"),
+    unsubscribeFromPush
 )
 
 router.get(

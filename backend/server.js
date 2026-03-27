@@ -2,9 +2,13 @@ import express from "express"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 import cors from "cors"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 // esto levanta el servidor e importa las todas las rutas
 
-dotenv.config() 
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+dotenv.config({ path: resolve(__dirname, ".env") })
 import userRoutes from "./routes/userRoutes.js"
 import clientRoutes from './routes/clientRoutes.js'
 import maintenanceRoutes from "./routes/mantenanceRoutes.js"

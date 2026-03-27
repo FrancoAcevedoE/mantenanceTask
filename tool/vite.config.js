@@ -10,7 +10,11 @@ export default defineConfig({
     vue(),
     vueDevTools(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
+      injectRegister: false,
       useCredentials: true,
       includeAssets: ['tool.svg', 'favicon.ico', 'pwa-192.png', 'pwa-512.png'],
       manifest: {
@@ -44,6 +48,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module'
       }
     })
   ],

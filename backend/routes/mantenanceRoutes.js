@@ -3,10 +3,16 @@ import { verifyToken } from "../middlewares/authMiddleware.js"
 import { checkRole } from "../middlewares/roleMiddleware.js"
 
 import {
+    clearNotificationReadsController,
+    clearNotificationHistoryReadsController,
     finishMaintenance,
     historyController,
+    markNotificationsReadController,
+    markNotificationHistoryReadController,
     newMaintenanceController,
     dashboardController,
+    notificationsHistoryController,
+    notificationsController,
     notifyTestController
 } from "../controllers/mantenanceController.js"
 
@@ -37,6 +43,48 @@ router.get(
     verifyToken,
     checkRole("admin","supervisor", "operario"),
     dashboardController
+)
+
+router.get(
+    "/notifications",
+    verifyToken,
+    checkRole("admin","supervisor", "operario"),
+    notificationsController
+)
+
+router.post(
+    "/notifications/read",
+    verifyToken,
+    checkRole("admin","supervisor", "operario"),
+    markNotificationsReadController
+)
+
+router.delete(
+    "/notifications/read",
+    verifyToken,
+    checkRole("admin","supervisor", "operario"),
+    clearNotificationReadsController
+)
+
+router.get(
+    "/notifications/history",
+    verifyToken,
+    checkRole("admin","supervisor", "operario"),
+    notificationsHistoryController
+)
+
+router.post(
+    "/notifications/history/read",
+    verifyToken,
+    checkRole("admin","supervisor", "operario"),
+    markNotificationHistoryReadController
+)
+
+router.delete(
+    "/notifications/history/read",
+    verifyToken,
+    checkRole("admin","supervisor", "operario"),
+    clearNotificationHistoryReadsController
 )
 
 router.post(

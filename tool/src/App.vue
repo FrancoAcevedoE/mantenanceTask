@@ -1,9 +1,12 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import NotificationBell from '@/components/NotificationBell.vue'
+import { useNotificationsStore } from '@/stores/notifications'
 
 const route = useRoute()
 const router = useRouter()
+const notificationsStore = useNotificationsStore()
 
 const getStoredUser = () => {
   try {
@@ -31,11 +34,35 @@ const canViewNew = computed(() => ['admin', 'operario'].includes(currentUser.val
 const logout = async () => {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
+  notificationsStore.reset()
   await router.push('/logUser')
 }
+
+const syncNotifications = async () => {
+  if (showNav.value) {
+    await notificationsStore.initialize()
+    return
+  }
+
+  notificationsStore.reset()
+}
+
+onMounted(() => {
+  syncNotifications().catch(() => {})
+})
+
+watch(() => route.fullPath, () => {
+  syncNotifications().catch(() => {})
+})
+
+onBeforeUnmount(() => {
+  notificationsStore.stop()
+})
 </script>
 
 <template>
+  <NotificationBell v-if="showNav" />
+
   <nav v-if="showNav">
     <button type="button" class="nav-button" @click="logout">
       <i class="bi bi-box-arrow-right"></i>
@@ -43,6 +70,7 @@ const logout = async () => {
     <router-link v-if="isAdmin" to="/adminView"><i class="bi bi-person-plus-fill"></i></router-link>
       <router-link v-if="canViewNewMachine" to="/newMachine"><i class="bi bi-building-add"></i></router-link>
     <router-link v-if="canViewNew" to="/new"><i class="bi bi-wrench-adjustable-circle"></i></router-link>
+    <router-link to="/notifications-history"><i class="bi bi-bell"></i></router-link>
     <router-link to="/history"><i class="bi bi-clock-history"></i></router-link>
     <router-link to="/dashboard"><i class="bi bi-bar-chart-fill"></i></router-link>
   </nav>
