@@ -72,7 +72,6 @@
 <script>
 import backgroundImage from '@/assets/fondogeneral.png'
 import axios from 'axios'
-import Swal from 'sweetalert2'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
 
@@ -111,11 +110,7 @@ export default {
         const response = await axios.get(`${API_BASE_URL}/users`, this.authConfig())
         this.users = response.data
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "No se pudo cargar la lista de usuarios"
-        })
+        this.$toast.error("No se pudo cargar la lista de usuarios")
       }
     },
     async createUser() {
@@ -126,20 +121,12 @@ export default {
         this.user.password = String(this.user.password).replace(/\D/g, "").slice(0, 4)
 
         if (!/^\d{8}$/.test(this.user.dni)) {
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "El documento debe tener exactamente 8 digitos numericos"
-          })
+          this.$toast.error("El documento debe tener exactamente 8 digitos numericos")
           return
         }
 
         if (!/^\d{4}$/.test(this.user.password)) {
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "La contrasena debe tener exactamente 4 digitos numericos"
-          })
+          this.$toast.error("La contrasena debe tener exactamente 4 digitos numericos")
           return
         }
 
@@ -164,11 +151,7 @@ export default {
         this.resetForm()
         await this.loadUsers()
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.response?.data?.message || "No se pudo crear el usuario"
-        })
+        this.$toast.error(error.response?.data?.message || "No se pudo crear el usuario")
       }
     },
     editUser(createdUser) {
@@ -187,13 +170,10 @@ export default {
       try {
         await axios.delete(`${API_BASE_URL}/users/${userId}`, this.authConfig())
         this.message = "Usuario eliminado correctamente"
+        this.$toast.success("Usuario eliminado correctamente")
         await this.loadUsers()
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.response?.data?.message || "No se pudo eliminar el usuario"
-        })
+        this.$toast.error(error.response?.data?.message || "No se pudo eliminar el usuario")
       }
     },
     resetForm() {

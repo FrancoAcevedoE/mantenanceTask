@@ -241,7 +241,6 @@ ref="recentBottomScroll"
 <script>
 
 import axios from "axios"
-import Swal from "sweetalert2"
 import {
 Chart,
 ArcElement,
@@ -439,11 +438,7 @@ window.addEventListener("resize", this.updateRecentBottomScrollbar)
 
 if (this.$route.query.reason === "role" && this.$route.query.denied) {
 const deniedPath = String(this.$route.query.denied)
-await Swal.fire({
-icon: "warning",
-title: "Acceso denegado",
-text: `No tenes permisos para acceder a ${deniedPath}`
-})
+this.$toast.warning(`No tenes permisos para acceder a ${deniedPath}`)
 
 this.$router.replace({
 path: this.$route.path,
@@ -490,11 +485,7 @@ this.setDefaultPeriod()
 }
 
 if (this.periodStart > this.periodEnd) {
-await Swal.fire({
-icon: "error",
-title: "Periodo inválido",
-text: "El mes de inicio no puede ser mayor al mes de fin"
-})
+this.$toast.error("El mes de inicio no puede ser mayor al mes de fin")
 return
 }
 
@@ -532,21 +523,13 @@ if (error.response?.status === 401 || error.response?.status === 403) {
 localStorage.removeItem("token")
 localStorage.removeItem("user")
 
-await Swal.fire({
-icon: "warning",
-title: "Sesion vencida",
-text: "Tu sesion expiro. Volve a iniciar sesion para cargar el dashboard."
-})
+this.$toast.warning("Tu sesion expiro. Volve a iniciar sesion para cargar el dashboard.")
 
 this.$router.push("/logUser")
 return
 }
 
-await Swal.fire({
-icon: "error",
-title: "Error",
-text: "No se pudo cargar el dashboard"
-})
+this.$toast.error("No se pudo cargar el dashboard")
 
 }
 

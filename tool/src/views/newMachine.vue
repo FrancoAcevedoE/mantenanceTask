@@ -101,7 +101,6 @@
 <script>
 import backgroundImage from '@/assets/fondogeneral.png'
 import axios from 'axios'
-import Swal from 'sweetalert2'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
 
@@ -175,11 +174,7 @@ export default {
           .filter(Boolean)
 
         if (!this.form.sector || !this.form.name || !filteredParts.length) {
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "Por favor completa los campos obligatorios"
-          })
+          this.$toast.error("Por favor completa los campos obligatorios")
           return
         }
 
@@ -195,20 +190,12 @@ export default {
           : axios.post(`${API_BASE_URL}/machines`, payload, this.authConfig())
 
         await request
-        Swal.fire({
-          icon: "success",
-          title: "Listo",
-          text: isEditing ? "Maquina actualizada correctamente" : "Maquina creada correctamente"
-        })
+        this.$toast.success(isEditing ? "Maquina actualizada correctamente" : "Maquina creada correctamente")
         this.resetForm()
         await this.loadMachines()
       } catch (error) {
         console.error("Error al guardar máquina:", error)
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Error al guardar la maquina: " + (error.response?.data?.error || error.message)
-        })
+        this.$toast.error("Error al guardar la maquina: " + (error.response?.data?.error || error.message))
       }
     },
     async loadMachines() {
@@ -290,25 +277,14 @@ export default {
       this.selectedMachine = null
     },
     async deleteMachine(machineId) {
-      const confirm = await Swal.fire({
-        icon: "warning",
-        title: "¿Eliminar máquina?",
-        text: "Esta acción no se puede deshacer.",
-        showCancelButton: true,
-        confirmButtonText: "Eliminar",
-        cancelButtonText: "Cancelar",
-        confirmButtonColor: "#dc2626"
-      })
-      if (!confirm.isConfirmed) return
+      const isConfirmed = window.confirm("¿Eliminar maquina? Esta accion no se puede deshacer.")
+      if (!isConfirmed) return
       try {
         await axios.delete(`${API_BASE_URL}/machines/${machineId}`, this.authConfig())
+        this.$toast.success("Maquina eliminada correctamente")
         await this.loadMachines()
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.response?.data?.error || "No se pudo eliminar la máquina"
-        })
+        this.$toast.error(error.response?.data?.error || "No se pudo eliminar la maquina")
       }
     },
     cancel() {

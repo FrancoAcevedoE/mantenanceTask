@@ -64,7 +64,6 @@
 
 <script>
 import axios from "axios"
-import Swal from "sweetalert2"
 import backgroundImage from '@/assets/fondo.jpg'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
@@ -114,11 +113,7 @@ export default {
       }
       catch(err){
         this.error = null
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: err.response?.data?.message || "Usuario o contraseña incorrectos"
-        })
+        this.$toast.error(err.response?.data?.message || "Usuario o contraseña incorrectos")
 
       }
 

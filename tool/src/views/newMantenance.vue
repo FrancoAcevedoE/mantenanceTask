@@ -161,7 +161,6 @@ Cancelar
 <script>
 
 import axios from "axios"
-import Swal from "sweetalert2"
 
 import backgroundImage from '@/assets/fondogeneral.png'
 
@@ -315,11 +314,7 @@ this.operarios = operarios
 
 }catch(error){
 
-        Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "Error al cargar operarios"
-        })
+    this.$toast.error("Error al cargar operarios")
 
 }
 
@@ -340,11 +335,7 @@ this.sectors = [...new Set(this.machines.map(machine => machine.sector).filter(B
 
 }catch(error){
 
-        Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "Error al cargar maquinas"
-        })
+    this.$toast.error("Error al cargar maquinas")
 
 }
 
@@ -385,49 +376,29 @@ async saveMaintenance(){
 try{
 
 if (!Number.isFinite(this.form.hoursWorked) || this.form.hoursWorked <= 0) {
-Swal.fire({
-icon: "error",
-title: "Error",
-text: "Las horas trabajadas deben ser un numero mayor a 0"
-})
+this.$toast.error("Las horas trabajadas deben ser un numero mayor a 0")
 return
 }
 
 if (!this.form.sector) {
-Swal.fire({
-icon: "error",
-title: "Error",
-text: "Primero seleccioná un sector"
-})
+this.$toast.error("Primero selecciona un sector")
 return
 }
 
 if (!this.selectedMachine) {
-Swal.fire({
-icon: "error",
-title: "Error",
-text: "Seleccioná una máquina del sector elegido"
-})
+this.$toast.error("Selecciona una maquina del sector elegido")
 return
 }
 
 if ((this.form.jobFinished === false || this.form.machineRunning === false) && !this.form.unfinishedReasonCategory) {
-Swal.fire({
-icon: "error",
-title: "Error",
-text: "Debes seleccionar un motivo por el que no se terminó"
-})
+this.$toast.error("Debes seleccionar un motivo por el que no se termino")
 return
 }
 
 if ((this.form.jobFinished === false || this.form.machineRunning === false)
 && this.form.unfinishedReasonCategory === "Otros"
 && !String(this.form.unfinishedReason || "").trim()) {
-Swal.fire({
-icon: "error",
-title: "Error",
-text: "Debes detallar el motivo cuando seleccionás 'Otros'"
-})
+this.$toast.error("Debes detallar el motivo cuando seleccionas 'Otros'")
 return
 }
 
@@ -448,21 +419,13 @@ this.authConfig()
 
 )
 
-Swal.fire({
-icon: "success",
-title: "Listo",
-text: "Mantenimiento registrado"
-})
+this.$toast.success("Mantenimiento registrado")
 
 this.resetForm()
 
 }catch(error){
 
-Swal.fire({
-icon: "error",
-title: "Error",
-text: "Error al guardar mantenimiento"
-})
+this.$toast.error("Error al guardar mantenimiento")
 
 }
 
