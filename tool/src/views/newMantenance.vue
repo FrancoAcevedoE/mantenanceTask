@@ -79,6 +79,7 @@
 <label>Tipo de mantenimiento</label>
 <select v-model="form.maintenanceType">
 
+<option value="">Seleccionar tipo</option>
 <option value="preventivo">Preventivo</option>
 <option value="mejora">Mejora</option>
 <option value="puesta en marcha">Puesta en marcha</option>
@@ -203,7 +204,7 @@ sector:"",
 machine:"",
 machinePart:"",
 clientId:"",
-maintenanceType:"mejora",
+maintenanceType:"",
 workDescription:"",
 spareParts:"",
 hoursWorked:null,
@@ -492,7 +493,7 @@ sector:"",
 machine:"",
 machinePart:"",
 clientId:this.currentUserRole === "operario" ? this.currentUserId : "",
-maintenanceType:"mejora",
+maintenanceType:"",
 workDescription:"",
 spareParts:"",
 hoursWorked:null,
