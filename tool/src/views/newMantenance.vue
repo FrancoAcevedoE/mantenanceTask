@@ -256,28 +256,28 @@ computed: {
         return Boolean(this.form.sector)
     },
     isMachineComplete() {
-        return Boolean(this.selectedMachine)
+        return this.isSectorComplete && Boolean(this.selectedMachine)
     },
     isMachinePartComplete() {
-        return Boolean(this.form.machinePart)
+        return this.isMachineComplete && Boolean(this.form.machinePart)
     },
     isOperarioComplete() {
-        return Boolean(this.form.clientId)
+        return this.isMachinePartComplete && Boolean(this.form.clientId)
     },
     isMaintenanceTypeComplete() {
-        return Boolean(this.form.maintenanceType)
+        return this.isOperarioComplete && Boolean(this.form.maintenanceType)
     },
     isWorkDescriptionComplete() {
-        return Boolean(String(this.form.workDescription || "").trim())
+        return this.isMaintenanceTypeComplete && Boolean(String(this.form.workDescription || "").trim())
     },
     isHoursWorkedComplete() {
-        return Number.isFinite(this.form.hoursWorked) && this.form.hoursWorked > 0
+        return this.isWorkDescriptionComplete && Number.isFinite(this.form.hoursWorked) && this.form.hoursWorked > 0
     },
     isMachineRunningAnswered() {
-        return this.form.machineRunning === true || this.form.machineRunning === false
+        return this.isHoursWorkedComplete && (this.form.machineRunning === true || this.form.machineRunning === false)
     },
     isJobFinishedAnswered() {
-        return this.form.jobFinished === true || this.form.jobFinished === false
+        return this.isMachineRunningAnswered && (this.form.jobFinished === true || this.form.jobFinished === false)
     },
     availableAdditionalWorkers() {
         const usedIds = new Set([
