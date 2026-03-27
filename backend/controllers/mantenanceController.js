@@ -2,6 +2,7 @@ import User from "../models/userModels.js"
 import Maintenance from "../models/mantenanceModels.js"
 import Machine from "../models/machineModels.js"
 import NotificationLog from "../models/notificationLogModel.js"
+import mongoose from "mongoose"
 import {
     getMaintenanceNotificationsFeed,
     getMaintenanceNotificationSummary,
@@ -119,6 +120,12 @@ export const newMaintenanceController = async (req,res)=>{
             sector: normalizeSector(req.body?.sector)
         }
 
+        if (!data.clientId || !mongoose.Types.ObjectId.isValid(String(data.clientId))) {
+            return res.status(400).json({
+                message: "Debes seleccionar un operario valido"
+            })
+        }
+
         const normalizedHoursWorked = Number(data.hoursWorked)
 
         if (!Number.isFinite(normalizedHoursWorked) || normalizedHoursWorked <= 0) {
@@ -140,6 +147,10 @@ export const newMaintenanceController = async (req,res)=>{
         const additionalWorkerIds = Array.isArray(data.additionalWorkers) ? data.additionalWorkers : []
 
         for (const workerId of additionalWorkerIds) {
+            if (!mongoose.Types.ObjectId.isValid(String(workerId))) {
+                return res.status(400).json({ message: "Operario adicional no válido" })
+            }
+
             const worker = await User.findById(workerId)
             if (!worker || worker.role !== "operario") {
                 return res.status(400).json({ message: "Operario adicional no válido" })
@@ -197,6 +208,12 @@ export const newMaintenanceController = async (req,res)=>{
         res.json(maintenance)
 
     }catch(error){
+
+        if (error?.name === "CastError") {
+            return res.status(400).json({
+                message: "Datos invalidos para registrar mantenimiento"
+            })
+        }
 
         res.status(500).json({
             message:"Error al registrar mantenimiento"

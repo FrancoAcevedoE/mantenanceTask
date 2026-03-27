@@ -233,7 +233,7 @@ showMachineDetailModal: false
 async mounted() {
     const currentUser = this.getStoredUser()
     this.currentUserRole = currentUser?.role || ""
-    this.currentUserId = currentUser?.id || ""
+    this.currentUserId = currentUser?.id || currentUser?._id || ""
     await this.loadOperarios()
     await this.loadMachines()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`;
@@ -345,13 +345,14 @@ this.authConfig()
 )
 
 const currentUser = this.getStoredUser()
+const currentUserId = currentUser?.id || currentUser?._id || ""
 const operarios = response.data || []
 
 this.allOperarios = operarios
 
 if (currentUser?.role === "operario") {
-this.operarios = operarios.filter(operario => operario._id === currentUser.id)
-this.form.clientId = this.operarios[0]?._id || ""
+this.operarios = operarios.filter(operario => operario._id === currentUserId)
+this.form.clientId = this.operarios[0]?._id || currentUserId
 } else {
 this.operarios = operarios
 }
@@ -431,6 +432,11 @@ return
 
 if (!this.selectedMachine) {
 this.$notify.error("Selecciona una maquina del sector elegido")
+return
+}
+
+if (!this.form.clientId) {
+this.$notify.error("Debes seleccionar un operario valido")
 return
 }
 
