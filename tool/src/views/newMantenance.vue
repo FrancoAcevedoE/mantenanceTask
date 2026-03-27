@@ -14,6 +14,7 @@
     </option>
 </select>
 
+<div v-if="isSectorComplete" class="step-block">
 <label>Máquina</label>
 <div style="display: flex; gap: 0.5rem; align-items: center;">
         <select v-model="form.machine" required style="flex: 1;" @change="onMachineChange" :disabled="!form.sector">
@@ -31,7 +32,9 @@
         Ver detalle
   </button>
 </div>
+</div>
 
+<div v-if="isMachineComplete" class="step-block">
 <label>Parte de máquina</label>
 <select v-model="form.machinePart" required :disabled="!form.machine">
     <option value="">Seleccionar parte</option>
@@ -39,7 +42,9 @@
         {{ part }}
     </option>
 </select>
+</div>
 
+<div v-if="isMachinePartComplete" class="step-block">
 <label>Operario</label>
 <select v-model="form.clientId" required :disabled="currentUserRole === 'operario'">
 
@@ -49,8 +54,9 @@
 </option>
 
 </select>
+</div>
 
-<div v-if="availableAdditionalWorkers.length > 0 || additionalWorkersList.length > 0">
+<div v-if="isOperarioComplete && (availableAdditionalWorkers.length > 0 || additionalWorkersList.length > 0)" class="step-block">
     <label>Otros operarios</label>
     <div v-if="additionalWorkersList.length" class="workers-chips">
         <span v-for="worker in additionalWorkersList" :key="worker._id" class="worker-chip">
@@ -69,6 +75,7 @@
     </div>
 </div>
 
+<div v-if="isOperarioComplete" class="step-block">
 <label>Tipo de mantenimiento</label>
 <select v-model="form.maintenanceType">
 
@@ -78,35 +85,44 @@
 <option value="arreglo">Arreglo</option>
 
 </select>
+</div>
 
+<div v-if="isMaintenanceTypeComplete" class="step-block">
 <label>Descripción del trabajo realizado</label>
 <textarea v-model="form.workDescription"></textarea>
+</div>
 
+<div v-if="isWorkDescriptionComplete" class="step-block">
 <label>Repuestos utilizados</label>
 <textarea v-model="form.spareParts"></textarea>
 
 <label>Horas trabajadas</label>
 <input type="number" min="0.5" step="0.5" v-model.number="form.hoursWorked">
+</div>
 
+<div v-if="isHoursWorkedComplete" class="step-block">
 <label>¿La máquina sigue funcionando?</label>
 
 <select v-model="form.machineRunning">
-
+<option disabled :value="null">Seleccionar</option>
 <option :value="true">SI</option>
 <option :value="false">NO</option>
 
 </select>
+</div>
 
+<div v-if="isMachineRunningAnswered" class="step-block">
 <label>¿El trabajo se terminó?</label>
 
 <select v-model="form.jobFinished">
-
+<option disabled :value="null">Seleccionar</option>
 <option :value="true">SI</option>
 <option :value="false">NO</option>
 
 </select>
+</div>
 
-<div v-if="form.jobFinished === false || form.machineRunning === false">
+<div v-if="isJobFinishedAnswered && (form.jobFinished === false || form.machineRunning === false)" class="step-block">
 
 <label>Motivo por el que no se terminó</label>
 <select v-model="form.unfinishedReasonCategory" @change="onUnfinishedReasonCategoryChange">
@@ -123,7 +139,7 @@
 
 </div>
 
-<div class="button-group">
+<div v-if="isJobFinishedAnswered" class="button-group step-block">
 <button type="submit">
 
 Guardar mantenimiento
@@ -191,8 +207,8 @@ maintenanceType:"mejora",
 workDescription:"",
 spareParts:"",
 hoursWorked:null,
-machineRunning:true,
-jobFinished:true,
+machineRunning:null,
+jobFinished:null,
 unfinishedReasonCategory:"",
 unfinishedReason:""
 
@@ -235,6 +251,33 @@ beforeUnmount() {
 },
 
 computed: {
+    isSectorComplete() {
+        return Boolean(this.form.sector)
+    },
+    isMachineComplete() {
+        return Boolean(this.selectedMachine)
+    },
+    isMachinePartComplete() {
+        return Boolean(this.form.machinePart)
+    },
+    isOperarioComplete() {
+        return Boolean(this.form.clientId)
+    },
+    isMaintenanceTypeComplete() {
+        return Boolean(this.form.maintenanceType)
+    },
+    isWorkDescriptionComplete() {
+        return Boolean(String(this.form.workDescription || "").trim())
+    },
+    isHoursWorkedComplete() {
+        return Number.isFinite(this.form.hoursWorked) && this.form.hoursWorked > 0
+    },
+    isMachineRunningAnswered() {
+        return this.form.machineRunning === true || this.form.machineRunning === false
+    },
+    isJobFinishedAnswered() {
+        return this.form.jobFinished === true || this.form.jobFinished === false
+    },
     availableAdditionalWorkers() {
         const usedIds = new Set([
             this.form.clientId,
@@ -395,6 +438,16 @@ this.$notify.error("Debes seleccionar un motivo por el que no se termino")
 return
 }
 
+if (this.form.machineRunning !== true && this.form.machineRunning !== false) {
+this.$notify.error("Debes indicar si la maquina sigue funcionando")
+return
+}
+
+if (this.form.jobFinished !== true && this.form.jobFinished !== false) {
+this.$notify.error("Debes indicar si el trabajo se termino")
+return
+}
+
 if ((this.form.jobFinished === false || this.form.machineRunning === false)
 && this.form.unfinishedReasonCategory === "Otros"
 && !String(this.form.unfinishedReason || "").trim()) {
@@ -443,8 +496,8 @@ maintenanceType:"mejora",
 workDescription:"",
 spareParts:"",
 hoursWorked:null,
-machineRunning:true,
-jobFinished:true,
+machineRunning:null,
+jobFinished:null,
 unfinishedReasonCategory:"",
 unfinishedReason:""
 
@@ -579,6 +632,28 @@ button {
     display: grid;
     gap: 0.75rem;
     margin-top: 1rem;
+}
+
+.step-block {
+    animation: stepReveal 240ms ease-out;
+    transform-origin: top center;
+}
+
+@keyframes stepReveal {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .step-block {
+        animation: none;
+    }
 }
 
 .button-group button {
