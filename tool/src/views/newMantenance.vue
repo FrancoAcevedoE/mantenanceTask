@@ -435,8 +435,23 @@ this.$notify.error("Selecciona una maquina del sector elegido")
 return
 }
 
+if (!String(this.form.machinePart || "").trim()) {
+this.$notify.error("Debes seleccionar una parte de maquina")
+return
+}
+
 if (!this.form.clientId) {
 this.$notify.error("Debes seleccionar un operario valido")
+return
+}
+
+if (!String(this.form.maintenanceType || "").trim()) {
+this.$notify.error("Debes seleccionar un tipo de mantenimiento")
+return
+}
+
+if (!String(this.form.workDescription || "").trim()) {
+this.$notify.error("Debes cargar la descripcion del trabajo realizado")
 return
 }
 
@@ -485,7 +500,7 @@ this.resetForm()
 
 }catch(error){
 
-this.$notify.error("Error al guardar mantenimiento")
+this.$notify.notifyApiError(error, "Error al guardar mantenimiento")
 
 }
 

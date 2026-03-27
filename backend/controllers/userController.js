@@ -121,11 +121,7 @@ export const unsubscribeFromPush = async (req, res) => {
 
 export const getOperarios = async (req, res) => {
     try {
-        const operarioFilter = req.user?.role === "operario"
-            ? { role: "operario", _id: req.user.id }
-            : { role: "operario" }
-
-        const operarios = await User.find(operarioFilter)
+        const operarios = await User.find({ role: "operario" })
             .select("name dni role")
             .sort({ name: 1 })
 

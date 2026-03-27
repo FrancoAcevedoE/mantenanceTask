@@ -120,6 +120,32 @@ export const newMaintenanceController = async (req,res)=>{
             sector: normalizeSector(req.body?.sector)
         }
 
+        const normalizedMachinePart = String(data.machinePart || "").trim()
+        const normalizedMaintenanceType = String(data.maintenanceType || "").trim()
+        const normalizedWorkDescription = String(data.workDescription || "").trim()
+
+        if (!normalizedMachinePart) {
+            return res.status(400).json({
+                message: "Debes seleccionar una parte de maquina"
+            })
+        }
+
+        if (!normalizedMaintenanceType) {
+            return res.status(400).json({
+                message: "Debes seleccionar un tipo de mantenimiento"
+            })
+        }
+
+        if (!normalizedWorkDescription) {
+            return res.status(400).json({
+                message: "Debes cargar la descripcion del trabajo realizado"
+            })
+        }
+
+        data.machinePart = normalizedMachinePart
+        data.maintenanceType = normalizedMaintenanceType
+        data.workDescription = normalizedWorkDescription
+
         if (!data.clientId || !mongoose.Types.ObjectId.isValid(String(data.clientId))) {
             return res.status(400).json({
                 message: "Debes seleccionar un operario valido"
@@ -208,6 +234,12 @@ export const newMaintenanceController = async (req,res)=>{
         res.json(maintenance)
 
     }catch(error){
+
+        if (error?.name === "ValidationError") {
+            return res.status(400).json({
+                message: "Datos invalidos para registrar mantenimiento"
+            })
+        }
 
         if (error?.name === "CastError") {
             return res.status(400).json({
