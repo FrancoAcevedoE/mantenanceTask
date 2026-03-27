@@ -56,7 +56,7 @@
 </select>
 </div>
 
-<div v-if="isOperarioComplete && (availableAdditionalWorkers.length > 0 || additionalWorkersList.length > 0)">
+<div v-if="isOperarioComplete" class="step-block">
     <label>Otros operarios</label>
     <div v-if="additionalWorkersList.length" class="workers-chips">
         <span v-for="worker in additionalWorkersList" :key="worker._id" class="worker-chip">
@@ -73,6 +73,7 @@
         </select>
         <button type="button" @click="addWorker" :disabled="!selectedAdditionalWorker" class="add-worker-btn">Agregar</button>
     </div>
+    <p v-else class="additional-workers-empty">No hay otros operarios disponibles para agregar.</p>
 </div>
 
 <div v-if="isOperarioComplete" class="step-block">
@@ -774,6 +775,12 @@ button:hover {
 .add-worker-btn:disabled {
     background: #b2dfdb;
     cursor: not-allowed;
+}
+
+.additional-workers-empty {
+    margin: 0.5rem 0 0;
+    color: #666;
+    font-size: 0.9rem;
 }
 
 /* Responsive */

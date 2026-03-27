@@ -120,6 +120,10 @@ export const newMaintenanceController = async (req,res)=>{
             sector: normalizeSector(req.body?.sector)
         }
 
+        const effectiveClientId = req.user?.role === "operario"
+            ? req.user.id
+            : data.clientId
+
         const normalizedMachinePart = String(data.machinePart || "").trim()
         const normalizedMaintenanceType = String(data.maintenanceType || "").trim()
         const normalizedWorkDescription = String(data.workDescription || "").trim()
@@ -146,11 +150,13 @@ export const newMaintenanceController = async (req,res)=>{
         data.maintenanceType = normalizedMaintenanceType
         data.workDescription = normalizedWorkDescription
 
-        if (!data.clientId || !mongoose.Types.ObjectId.isValid(String(data.clientId))) {
+        if (!effectiveClientId || !mongoose.Types.ObjectId.isValid(String(effectiveClientId))) {
             return res.status(400).json({
                 message: "Debes seleccionar un operario valido"
             })
         }
+
+        data.clientId = String(effectiveClientId)
 
         const normalizedHoursWorked = Number(data.hoursWorked)
 
