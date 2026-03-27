@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 
 const UNFINISHED_REASON_CATEGORIES = [
+    "",
     "Tiempo de parada insuficiente.",
     "Falta de personal.",
     "Falta de repuestos (en el acto)",

@@ -145,7 +145,6 @@ export const newMaintenanceController = async (req,res)=>{
                 message: "Debes cargar la descripcion del trabajo realizado"
             })
         }
-
         data.machinePart = normalizedMachinePart
         data.maintenanceType = normalizedMaintenanceType
         data.workDescription = normalizedWorkDescription
@@ -175,7 +174,7 @@ export const newMaintenanceController = async (req,res)=>{
                 message:"Operario no encontrado"
             })
         }
-
+console.log('paso 1')
         const additionalWorkerIds = Array.isArray(data.additionalWorkers) ? data.additionalWorkers : []
 
         for (const workerId of additionalWorkerIds) {
@@ -194,6 +193,7 @@ export const newMaintenanceController = async (req,res)=>{
         if(!data.machineRunning){
             status = "stopped"
         }
+console.log('paso 2')
 
         if(data.machineRunning && !data.jobFinished){
             status = "pending"
@@ -226,6 +226,7 @@ export const newMaintenanceController = async (req,res)=>{
             data.unfinishedReason = ""
             data.unfinishedReasonCategory = ""
         }
+console.log('paso 3')
 
         const maintenance = new Maintenance({
             ...data,
@@ -233,14 +234,16 @@ export const newMaintenanceController = async (req,res)=>{
             reportedBy: req.user.id,
             status
         })
+console.log('paso 4')
 
+        console.log(maintenance)
         await maintenance.save()
         sendMaintenanceStatusAlert(maintenance).catch(() => {})
 
         res.json(maintenance)
 
     }catch(error){
-
+        console.error("Error en newMaintenanceController:", error);
         if (error?.name === "CastError" || error?.name === "ValidationError") {
             return res.status(400).json({
                 message: "Datos invalidos para registrar mantenimiento"
