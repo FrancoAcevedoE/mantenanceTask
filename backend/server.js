@@ -112,10 +112,11 @@ app.get("/api/health", (req, res) => {
   })
 })
 
-const PORT = process.env.PORT || 3000
+const PORT = Number(process.env.PORT) || 3000
+const HOST = process.env.HOST || "0.0.0.0"
 
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`)
+app.listen(PORT, HOST, () => {
+  console.log(`Servidor corriendo en ${HOST}:${PORT}`)
 })
 
 
