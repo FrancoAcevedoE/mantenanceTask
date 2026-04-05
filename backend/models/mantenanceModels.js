@@ -84,6 +84,25 @@ const maintenanceSchema = new mongoose.Schema({
         required: true
     },
 
+    clientSnapshot:{
+        userId:{
+            type:String,
+            default:""
+        },
+        name:{
+            type:String,
+            default:""
+        },
+        dni:{
+            type:Number,
+            default:null
+        },
+        role:{
+            type:String,
+            default:""
+        }
+    },
+
     photo:{
         type:String
     },
@@ -104,6 +123,25 @@ const maintenanceSchema = new mongoose.Schema({
     additionalWorkers:[{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
+    }],
+
+    additionalWorkersSnapshots:[{
+        userId:{
+            type:String,
+            default:""
+        },
+        name:{
+            type:String,
+            default:""
+        },
+        dni:{
+            type:Number,
+            default:null
+        },
+        role:{
+            type:String,
+            default:""
+        }
     }]
 
 })
