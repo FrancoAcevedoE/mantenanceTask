@@ -2,6 +2,8 @@ import express from "express"
 import {
     createUser,
     deleteUser,
+    downloadAuditLogController,
+    listAuditLogController,
     getOperarios,
     getPushPublicKey,
     getUsers,
@@ -50,6 +52,20 @@ router.get(
     verifyToken,
     checkRole("admin"),
     getUsers
+)
+
+router.get(
+    "/audit-log/download",
+    verifyToken,
+    checkRole("admin"),
+    downloadAuditLogController
+)
+
+router.get(
+    "/audit-log",
+    verifyToken,
+    checkRole("admin"),
+    listAuditLogController
 )
 
 router.post(

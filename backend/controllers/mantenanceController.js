@@ -9,6 +9,7 @@ import {
     sendMaintenanceStatusAlert,
     sendMaintenanceSummaryNotification
 } from "../services/notificationService.js"
+import { registerAuditEvent } from "../services/auditService.js"
 
 const formatSectorLabel = (value = "") =>
     value
@@ -95,6 +96,13 @@ const formatMonth = (date) => {
     return `${year}-${month}`
 }
 
+const toUserSnapshot = (userDoc) => ({
+    userId: userDoc?._id ? String(userDoc._id) : "",
+    name: String(userDoc?.name || "").trim(),
+    dni: Number.isFinite(Number(userDoc?.dni)) ? Number(userDoc?.dni) : null,
+    role: String(userDoc?.role || "").trim()
+})
+
 const getMonthStart = (monthValue) => {
     if (!MONTH_REGEX.test(monthValue)) return null
     const [yearRaw, monthRaw] = monthValue.split("-")
@@ -176,6 +184,7 @@ export const newMaintenanceController = async (req,res)=>{
         }
 console.log('paso 1')
         const additionalWorkerIds = Array.isArray(data.additionalWorkers) ? data.additionalWorkers : []
+        const additionalWorkersSnapshots = []
 
         for (const workerId of additionalWorkerIds) {
             if (!mongoose.Types.ObjectId.isValid(String(workerId))) {
@@ -186,6 +195,8 @@ console.log('paso 1')
             if (!worker || worker.role !== "operario") {
                 return res.status(400).json({ message: "Operario adicional no válido" })
             }
+
+            additionalWorkersSnapshots.push(toUserSnapshot(worker))
         }
 
         let status = "finished"
@@ -231,6 +242,8 @@ console.log('paso 3')
         const maintenance = new Maintenance({
             ...data,
             additionalWorkers: additionalWorkerIds,
+            clientSnapshot: toUserSnapshot(client),
+            additionalWorkersSnapshots,
             reportedBy: req.user.id,
             status
         })
@@ -239,6 +252,28 @@ console.log('paso 4')
         console.log(maintenance)
         await maintenance.save()
         sendMaintenanceStatusAlert(maintenance).catch(() => {})
+
+        await registerAuditEvent({
+            req,
+            action: "MAINTENANCE_CREATED",
+            entityType: "maintenance",
+            entityId: maintenance._id,
+            description: `Se creo trabajo de mantenimiento en ${maintenance.machine}`,
+            metadata: {
+                maintenance: {
+                    id: String(maintenance._id),
+                    machine: maintenance.machine,
+                    sector: maintenance.sector,
+                    status: maintenance.status,
+                    maintenanceType: maintenance.maintenanceType
+                },
+                assignedOperario: {
+                    id: String(client._id),
+                    name: client.name,
+                    dni: client.dni
+                }
+            }
+        })
 
         res.json(maintenance)
 
@@ -287,6 +322,23 @@ export const finishMaintenance = async (req,res)=>{
 
         await maintenance.save()
 
+        await registerAuditEvent({
+            req,
+            action: "MAINTENANCE_FINISHED",
+            entityType: "maintenance",
+            entityId: maintenance._id,
+            description: `Se finalizo mantenimiento en ${maintenance.machine}`,
+            metadata: {
+                maintenance: {
+                    id: String(maintenance._id),
+                    machine: maintenance.machine,
+                    status: maintenance.status,
+                    hoursWorked: maintenance.hoursWorked
+                },
+                additionalHours
+            }
+        })
+
         res.json(maintenance)
 
     }catch(error){
@@ -306,10 +358,44 @@ export const historyController = async (req, res) => {
 
     try {
 
-        const history = await Maintenance.find()
+        const historyRaw = await Maintenance.find()
             .populate("clientId", "name role company")
             .populate("additionalWorkers", "name role company")
             .sort({ createdAt: -1 })
+            .lean()
+
+        const history = historyRaw.map((item) => {
+            const hasClientPopulated = item.clientId && typeof item.clientId === "object"
+            const fallbackClient = item.clientSnapshot?.name
+                ? {
+                    _id: item.clientSnapshot.userId || null,
+                    name: item.clientSnapshot.name,
+                    role: item.clientSnapshot.role || "operario"
+                }
+                : null
+
+            const hydratedAdditionalWorkers = Array.isArray(item.additionalWorkers)
+                ? item.additionalWorkers.filter(Boolean)
+                : []
+
+            const additionalWorkers = hydratedAdditionalWorkers.length
+                ? hydratedAdditionalWorkers
+                : (Array.isArray(item.additionalWorkersSnapshots)
+                    ? item.additionalWorkersSnapshots
+                        .filter(snapshot => snapshot && snapshot.name)
+                        .map(snapshot => ({
+                            _id: snapshot.userId || null,
+                            name: snapshot.name,
+                            role: snapshot.role || "operario"
+                        }))
+                    : [])
+
+            return {
+                ...item,
+                clientId: hasClientPopulated ? item.clientId : fallbackClient,
+                additionalWorkers
+            }
+        })
 
         res.json(history)
 
@@ -922,6 +1008,18 @@ export const purgeMaintenanceDataController = async (req, res) => {
                 }
             )
         ])
+
+        await registerAuditEvent({
+            req,
+            action: "MAINTENANCE_DATA_PURGED",
+            entityType: "maintenance",
+            entityId: "bulk",
+            description: "Se purgo historial de mantenimiento y notificaciones",
+            metadata: {
+                deletedMaintenances: maintenanceResult.deletedCount || 0,
+                deletedNotificationLogs: notificationResult.deletedCount || 0
+            }
+        })
 
         res.json({
             ok: true,

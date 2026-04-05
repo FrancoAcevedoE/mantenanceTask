@@ -5,6 +5,8 @@ import {
     removeUserPushSubscription,
     saveUserPushSubscription
 } from "../services/pushService.js"
+import AuditLog from "../models/auditLogModel.js"
+import { buildAuditCsv, registerAuditEvent } from "../services/auditService.js"
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey"
 
@@ -175,6 +177,22 @@ export const createUser = async (req, res) => {
             role: role || "operario"
         })
 
+        await registerAuditEvent({
+            req,
+            action: "USER_CREATED",
+            entityType: "user",
+            entityId: user._id,
+            description: `Se creo el usuario ${user.name}`,
+            metadata: {
+                createdUser: {
+                    id: String(user._id),
+                    name: user.name,
+                    dni: user.dni,
+                    role: user.role
+                }
+            }
+        })
+
         res.status(201).json({
             message: "Usuario creado correctamente",
             user: {
@@ -246,6 +264,10 @@ export const updateUser = async (req, res) => {
             updateData.password = Number(passwordRaw)
         }
 
+        const previousUser = await User.findById(req.params.id)
+            .select("name dni role")
+            .lean()
+
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
             updateData,
@@ -257,6 +279,24 @@ export const updateUser = async (req, res) => {
                 message: "Usuario no encontrado"
             })
         }
+
+        await registerAuditEvent({
+            req,
+            action: "USER_UPDATED",
+            entityType: "user",
+            entityId: updatedUser._id,
+            description: `Se actualizo el usuario ${updatedUser.name}`,
+            metadata: {
+                before: previousUser || {},
+                changes: updateData,
+                after: {
+                    id: String(updatedUser._id),
+                    name: updatedUser.name,
+                    dni: updatedUser.dni,
+                    role: updatedUser.role
+                }
+            }
+        })
 
         res.json({
             message: "Usuario actualizado correctamente",
@@ -285,12 +325,159 @@ export const deleteUser = async (req, res) => {
             })
         }
 
+        await registerAuditEvent({
+            req,
+            action: "USER_DELETED",
+            entityType: "user",
+            entityId: user._id,
+            description: `Se elimino el usuario ${user.name}`,
+            metadata: {
+                deletedUser: {
+                    id: String(user._id),
+                    name: user.name,
+                    dni: user.dni,
+                    role: user.role
+                }
+            }
+        })
+
         res.json({
             message: "Usuario eliminado correctamente"
         })
     } catch (error) {
         res.status(500).json({
             message: "Error al eliminar usuario"
+        })
+    }
+}
+
+export const downloadAuditLogController = async (req, res) => {
+    try {
+        const fromRaw = String(req.query.from || "").trim()
+        const toRaw = String(req.query.to || "").trim()
+        const query = {}
+
+        if (fromRaw || toRaw) {
+            query.createdAt = {}
+
+            if (fromRaw) {
+                const fromDate = new Date(`${fromRaw}T00:00:00.000Z`)
+                if (!Number.isNaN(fromDate.valueOf())) {
+                    query.createdAt.$gte = fromDate
+                }
+            }
+
+            if (toRaw) {
+                const toDate = new Date(`${toRaw}T23:59:59.999Z`)
+                if (!Number.isNaN(toDate.valueOf())) {
+                    query.createdAt.$lte = toDate
+                }
+            }
+
+            if (!query.createdAt.$gte && !query.createdAt.$lte) {
+                delete query.createdAt
+            }
+        }
+
+        const items = await AuditLog.find(query)
+            .sort({ createdAt: -1 })
+            .lean()
+
+        const csv = buildAuditCsv(items)
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+
+        res.setHeader("Content-Type", "text/csv; charset=utf-8")
+        res.setHeader("Content-Disposition", `attachment; filename=auditoria-${timestamp}.csv`)
+        res.status(200).send(csv)
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al descargar log de auditoria"
+        })
+    }
+}
+
+export const listAuditLogController = async (req, res) => {
+    try {
+        const fromRaw = String(req.query.from || "").trim()
+        const toRaw = String(req.query.to || "").trim()
+        const actionRaw = String(req.query.action || "").trim()
+        const entityTypeRaw = String(req.query.entityType || "").trim()
+        const actorIdRaw = String(req.query.actorId || "").trim()
+
+        const page = Math.max(1, Number.parseInt(String(req.query.page || "1"), 10) || 1)
+        const limit = Math.min(200, Math.max(1, Number.parseInt(String(req.query.limit || "20"), 10) || 20))
+
+        const query = {}
+
+        if (fromRaw || toRaw) {
+            query.createdAt = {}
+
+            if (fromRaw) {
+                const fromDate = new Date(`${fromRaw}T00:00:00.000Z`)
+                if (!Number.isNaN(fromDate.valueOf())) {
+                    query.createdAt.$gte = fromDate
+                }
+            }
+
+            if (toRaw) {
+                const toDate = new Date(`${toRaw}T23:59:59.999Z`)
+                if (!Number.isNaN(toDate.valueOf())) {
+                    query.createdAt.$lte = toDate
+                }
+            }
+
+            if (!query.createdAt.$gte && !query.createdAt.$lte) {
+                delete query.createdAt
+            }
+        }
+
+        if (actionRaw) {
+            query.action = actionRaw
+        }
+
+        if (entityTypeRaw) {
+            query.entityType = entityTypeRaw
+        }
+
+        if (actorIdRaw) {
+            query["actor.userId"] = actorIdRaw
+        }
+
+        const skip = (page - 1) * limit
+
+        const [total, items] = await Promise.all([
+            AuditLog.countDocuments(query),
+            AuditLog.find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean()
+        ])
+
+        const totalPages = total > 0 ? Math.ceil(total / limit) : 0
+
+        res.json({
+            ok: true,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            },
+            filters: {
+                from: fromRaw || null,
+                to: toRaw || null,
+                action: actionRaw || null,
+                entityType: entityTypeRaw || null,
+                actorId: actorIdRaw || null
+            },
+            items
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al obtener log de auditoria"
         })
     }
 }

@@ -1,4 +1,5 @@
 import Machine from "../models/machineModels.js"
+import { registerAuditEvent } from "../services/auditService.js"
 
 const parseHorometro = (value) => {
   if (value === undefined || value === null || value === "") return null
@@ -53,6 +54,22 @@ export const newMachineController = async (req, res) => {
     })
 
     await machine.save()
+
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_CREATED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se creo la maquina ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name,
+          sector: machine.sector
+        }
+      }
+    })
+
     res.status(201).json({ message: "Máquina creada correctamente", machine })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -124,6 +141,22 @@ export const updateMachineController = async (req, res) => {
 
     await machine.save()
 
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_UPDATED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se actualizo la maquina ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name,
+          sector: machine.sector
+        },
+        changeType: "full-update"
+      }
+    })
+
     res.status(200).json({ message: "Máquina actualizada", machine })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -149,6 +182,21 @@ export const updateHorometroController = async (req, res) => {
     machine.horometro = normalizedHorometro
     await machine.save()
 
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_HOROMETRO_UPDATED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se actualizo el horometro de ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name
+        },
+        horometro: machine.horometro
+      }
+    })
+
     res.status(200).json({ message: "Horómetro actualizado", machine })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -168,6 +216,20 @@ export const updateInstructionsController = async (req, res) => {
     if (!machine) {
       return res.status(404).json({ error: "Máquina no encontrada" })
     }
+
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_INSTRUCTIONS_UPDATED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se actualizaron instrucciones de ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name
+        }
+      }
+    })
 
     res.status(200).json({ message: "Instrucciones actualizadas", machine })
   } catch (error) {
@@ -197,6 +259,21 @@ export const updateMachinePartsController = async (req, res) => {
       return res.status(404).json({ error: "Máquina no encontrada" })
     }
 
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_PARTS_UPDATED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se actualizaron partes de ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name
+        },
+        machineParts: machine.machineParts
+      }
+    })
+
     res.status(200).json({ message: "Partes de máquina actualizadas", machine })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -222,6 +299,21 @@ export const updateSectorController = async (req, res) => {
       return res.status(404).json({ error: "Máquina no encontrada" })
     }
 
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_SECTOR_UPDATED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se actualizo sector de ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name,
+          sector: machine.sector
+        }
+      }
+    })
+
     res.status(200).json({ message: "Sector actualizado", machine })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -241,6 +333,20 @@ export const updateNameController = async (req, res) => {
     if (!machine) {
       return res.status(404).json({ error: "Máquina no encontrada" })
     }
+
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_NAME_UPDATED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se actualizo nombre de maquina a ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name
+        }
+      }
+    })
 
     res.status(200).json({ message: "Nombre actualizado", machine })
   } catch (error) {
@@ -305,6 +411,23 @@ export const modifyMachineController = async (req, res) => {
 
     await machine.save()
 
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_UPDATED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se actualizo la maquina ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name,
+          sector: machine.sector
+        },
+        changeType: "partial-update",
+        fields: Object.keys(updates)
+      }
+    })
+
     res.status(200).json({ message: "Máquina actualizada", machine })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -319,6 +442,21 @@ export const deleteMachineController = async (req, res) => {
     if (!machine) {
       return res.status(404).json({ error: "Máquina no encontrada" })
     }
+
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_DELETED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se elimino la maquina ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name,
+          sector: machine.sector
+        }
+      }
+    })
 
     res.status(200).json({ message: "Máquina eliminada" })
   } catch (error) {
