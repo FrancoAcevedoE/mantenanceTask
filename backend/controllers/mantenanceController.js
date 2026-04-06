@@ -175,7 +175,7 @@ export const newMaintenanceController = async (req,res)=>{
 
         data.hoursWorked = normalizedHoursWorked
 
-        const client = await User.findById(data.clientId)
+        const client = await User.findOne({ _id: data.clientId, isDeleted: { $ne: true } })
 
         if(!client || client.role !== "operario"){
             return res.status(404).json({
@@ -191,7 +191,7 @@ console.log('paso 1')
                 return res.status(400).json({ message: "Operario adicional no válido" })
             }
 
-            const worker = await User.findById(workerId)
+            const worker = await User.findOne({ _id: workerId, isDeleted: { $ne: true } })
             if (!worker || worker.role !== "operario") {
                 return res.status(400).json({ message: "Operario adicional no válido" })
             }
@@ -672,7 +672,7 @@ const unfinishedWithReasonTotal = unfinishedReasonBreakdown.reduce((accumulator,
 return accumulator + item.count
 }, 0)
 
-const allMachines = await Machine.find()
+const allMachines = await Machine.find({ isDeleted: { $ne: true } })
 .select("name sector")
 .sort({ sector: 1, name: 1 })
 

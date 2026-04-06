@@ -2,12 +2,14 @@ import express from "express"
 import {
     createUser,
     deleteUser,
+    deleteUserPermanent,
     downloadAuditLogController,
     listAuditLogController,
     getOperarios,
     getPushPublicKey,
     getUsers,
     login,
+    restoreUser,
     subscribeToPush,
     unsubscribeFromPush,
     updateUser
@@ -80,6 +82,20 @@ router.patch(
     verifyToken,
     checkRole("admin"),
     updateUser
+)
+
+router.delete(
+    "/:id/permanent",
+    verifyToken,
+    checkRole("admin"),
+    deleteUserPermanent
+)
+
+router.patch(
+    "/:id/restore",
+    verifyToken,
+    checkRole("admin"),
+    restoreUser
 )
 
 router.delete(

@@ -7,7 +7,7 @@ const WEBHOOK_URL = String(process.env.NOTIFICATION_WEBHOOK_URL || "").trim()
 const NOTIFICATION_ITEM_LIMIT = 8
 
 const getCurrentStoppedMachines = async () => {
-  const allMachines = await Machine.find().select("name").lean()
+  const allMachines = await Machine.find({ isDeleted: { $ne: true } }).select("name").lean()
 
   if (!allMachines.length) {
     return 0
@@ -44,7 +44,7 @@ const getCurrentStoppedMachines = async () => {
 }
 
 const getStoppedMachinesDetail = async () => {
-  const allMachines = await Machine.find().select("name sector").lean()
+  const allMachines = await Machine.find({ isDeleted: { $ne: true } }).select("name sector").lean()
 
   if (!allMachines.length) {
     return []

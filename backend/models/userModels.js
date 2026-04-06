@@ -17,6 +17,21 @@ enum:["admin","operario","supervisor"],
 default:"operario"
 },
 
+isDeleted:{
+type:Boolean,
+default:false
+},
+
+deletedAt:{
+type:Date,
+default:null
+},
+
+deletedBy:{
+type:String,
+default:""
+},
+
 pushSubscriptions:[{
 endpoint:{
 type:String,

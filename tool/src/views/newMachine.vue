@@ -59,9 +59,44 @@
                     <div class="machine-actions">
                       <button type="button" class="history-button" @click="openMachineModal(machine)">Detalles</button>
                       <button type="button" class="edit-button" @click="modifyMachine(machine._id)">Modificar</button>
-                      <button type="button" class="danger-button" @click="deleteMachine(machine._id)">Eliminar</button>
+                      <button type="button" class="danger-button" @click="deleteMachine(machine._id)">Ocultar</button>
                     </div>
                     </div>
+                </div>
+
+                <div v-if="deletedMachines.length" class="deleted-machines-zone">
+                  <h3>Máquinas ocultas</h3>
+                  <p class="deleted-machines-copy">
+                    No se muestran en nuevas cargas. Podés eliminarlas definitivamente para limpieza final.
+                  </p>
+
+                  <div class="machines-list">
+                    <div v-for="machine in deletedMachines" :key="`deleted-${machine._id}`" class="machine-item deleted-machine-item">
+                      <div class="machine-info">
+                        <strong>{{ machine.name }}</strong>
+                        <span>Sector: {{ machine.sector }}</span>
+                        <span>Horómetro: {{ machine.horometro }}h</span>
+                      </div>
+
+                      <div class="machine-actions">
+                        <button
+                          type="button"
+                          class="restore-button"
+                          @click="restoreMachine(machine._id)"
+                        >
+                          Restaurar
+                        </button>
+
+                        <button
+                          type="button"
+                          class="danger-button hard-delete-button"
+                          @click="deleteMachinePermanent(machine._id)"
+                        >
+                          Borrar definitivamente
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
             </div>
 
@@ -116,6 +151,7 @@ export default {
       },
       newPart: "",
       machines: [],
+      deletedMachines: [],
       editingMachineId: null,
       backgroundImage: backgroundImage,
       showMachineModal: false,
@@ -200,9 +236,21 @@ export default {
     },
     async loadMachines() {
       try {
-        const response = await axios.get(`${API_BASE_URL}/machines`, this.authConfig())
-        this.machines = response.data
-        this.availableSectors = [...new Set(response.data.map(m => m.sector).filter(Boolean))].sort()
+        const response = await axios.get(`${API_BASE_URL}/machines`, {
+          ...this.authConfig(),
+          params: {
+            includeDeleted: true
+          }
+        })
+
+        const allMachines = Array.isArray(response.data) ? response.data : []
+        this.machines = allMachines.filter(machine => !machine.isDeleted)
+        this.deletedMachines = allMachines.filter(machine => machine.isDeleted)
+        this.availableSectors = [...new Set(this.machines.map(m => m.sector).filter(Boolean))].sort()
+
+        if (this.sectorFilter && !this.availableSectors.includes(this.sectorFilter)) {
+          this.sectorFilter = ""
+        }
       } catch (error) {
         console.error("Error al cargar máquinas:", error)
       }
@@ -277,14 +325,35 @@ export default {
       this.selectedMachine = null
     },
     async deleteMachine(machineId) {
-      const isConfirmed = window.confirm("¿Eliminar maquina? Esta accion no se puede deshacer.")
+      const isConfirmed = window.confirm("Ocultar maquina? No aparecera en formularios ni dashboard de maquinas activas.")
       if (!isConfirmed) return
       try {
         await axios.delete(`${API_BASE_URL}/machines/${machineId}`, this.authConfig())
-        this.$notify.success("Maquina eliminada correctamente")
+        this.$notify.success("Maquina ocultada correctamente")
         await this.loadMachines()
       } catch (error) {
         this.$notify.notifyApiError(error, "No se pudo eliminar la maquina")
+      }
+    },
+    async deleteMachinePermanent(machineId) {
+      const isConfirmed = window.confirm("Eliminar definitivamente maquina? Esta accion no se puede deshacer.")
+      if (!isConfirmed) return
+
+      try {
+        await axios.delete(`${API_BASE_URL}/machines/${machineId}/permanent`, this.authConfig())
+        this.$notify.success("Maquina eliminada definitivamente")
+        await this.loadMachines()
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo eliminar definitivamente la maquina")
+      }
+    },
+    async restoreMachine(machineId) {
+      try {
+        await axios.patch(`${API_BASE_URL}/machines/${machineId}/restore`, {}, this.authConfig())
+        this.$notify.success("Maquina restaurada correctamente")
+        await this.loadMachines()
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo restaurar la maquina")
       }
     },
     cancel() {
@@ -551,6 +620,43 @@ button:hover {
 
 .danger-button:hover {
   background: #b91c1c;
+}
+
+.deleted-machines-zone {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #d6c7a8;
+}
+
+.deleted-machines-zone h3 {
+  margin: 0;
+  color: #7d4f00;
+}
+
+.deleted-machines-copy {
+  margin: 0.4rem 0 0.75rem;
+  color: #6f5a37;
+}
+
+.deleted-machine-item {
+  background: #fffdf8;
+  border: 1px solid #f3e2ba;
+}
+
+.hard-delete-button {
+  background: #7f1d1d;
+}
+
+.hard-delete-button:hover {
+  background: #631616;
+}
+
+.restore-button {
+  background: #1f7a4c;
+}
+
+.restore-button:hover {
+  background: #16613b;
 }
 
 /* Responsive */

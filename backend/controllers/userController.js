@@ -34,7 +34,8 @@ export const login = async (req, res) => {
 
         const user = await User.findOne({
             dni: dniNumber,
-            password: passwordNumber
+            password: passwordNumber,
+            isDeleted: { $ne: true }
         })
 
         if (!user) {
@@ -71,8 +72,11 @@ export const login = async (req, res) => {
 
 export const getUsers = async (req, res) => {
     try {
-        const users = await User.find()
-            .select("name dni role")
+        const includeDeleted = String(req.query.includeDeleted || "").trim().toLowerCase() === "true"
+        const query = includeDeleted ? {} : { isDeleted: { $ne: true } }
+
+        const users = await User.find(query)
+            .select("name dni role isDeleted deletedAt")
             .sort({ name: 1 })
 
         res.json(users)
@@ -123,7 +127,7 @@ export const unsubscribeFromPush = async (req, res) => {
 
 export const getOperarios = async (req, res) => {
     try {
-        const operarios = await User.find({ role: "operario" })
+        const operarios = await User.find({ role: "operario", isDeleted: { $ne: true } })
             .select("name dni role")
             .sort({ name: 1 })
 
@@ -317,6 +321,58 @@ export const deleteUser = async (req, res) => {
             })
         }
 
+        const user = await User.findOneAndUpdate(
+            { _id: req.params.id, isDeleted: { $ne: true } },
+            {
+                $set: {
+                    isDeleted: true,
+                    deletedAt: new Date(),
+                    deletedBy: String(req.user?.id || "")
+                }
+            },
+            { new: true }
+        )
+
+        if (!user) {
+            return res.status(404).json({
+                message: "Usuario no encontrado"
+            })
+        }
+
+        await registerAuditEvent({
+            req,
+            action: "USER_SOFT_DELETED",
+            entityType: "user",
+            entityId: user._id,
+            description: `Se oculto el usuario ${user.name}`,
+            metadata: {
+                softDeletedUser: {
+                    id: String(user._id),
+                    name: user.name,
+                    dni: user.dni,
+                    role: user.role
+                }
+            }
+        })
+
+        res.json({
+            message: "Usuario ocultado correctamente"
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al eliminar usuario"
+        })
+    }
+}
+
+export const deleteUserPermanent = async (req, res) => {
+    try {
+        if (req.params.id === req.user.id) {
+            return res.status(400).json({
+                message: "No puedes eliminar definitivamente tu propio usuario"
+            })
+        }
+
         const user = await User.findByIdAndDelete(req.params.id)
 
         if (!user) {
@@ -327,12 +383,67 @@ export const deleteUser = async (req, res) => {
 
         await registerAuditEvent({
             req,
-            action: "USER_DELETED",
+            action: "USER_HARD_DELETED",
             entityType: "user",
             entityId: user._id,
-            description: `Se elimino el usuario ${user.name}`,
+            description: `Se elimino definitivamente el usuario ${user.name}`,
             metadata: {
-                deletedUser: {
+                hardDeletedUser: {
+                    id: String(user._id),
+                    name: user.name,
+                    dni: user.dni,
+                    role: user.role,
+                    wasSoftDeleted: Boolean(user.isDeleted)
+                }
+            }
+        })
+
+        res.json({
+            message: "Usuario eliminado definitivamente"
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al eliminar definitivamente el usuario"
+        })
+    }
+}
+
+export const restoreUser = async (req, res) => {
+    try {
+        const userToRestore = await User.findById(req.params.id)
+
+        if (!userToRestore) {
+            return res.status(404).json({
+                message: "Usuario no encontrado"
+            })
+        }
+
+        if (!userToRestore.isDeleted) {
+            return res.status(400).json({
+                message: "El usuario ya esta activo"
+            })
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            {
+                $set: {
+                    isDeleted: false,
+                    deletedAt: null,
+                    deletedBy: ""
+                }
+            },
+            { new: true }
+        )
+
+        await registerAuditEvent({
+            req,
+            action: "USER_RESTORED",
+            entityType: "user",
+            entityId: user._id,
+            description: `Se restauro el usuario ${user.name}`,
+            metadata: {
+                restoredUser: {
                     id: String(user._id),
                     name: user.name,
                     dni: user.dni,
@@ -342,11 +453,11 @@ export const deleteUser = async (req, res) => {
         })
 
         res.json({
-            message: "Usuario eliminado correctamente"
+            message: "Usuario restaurado correctamente"
         })
     } catch (error) {
         res.status(500).json({
-            message: "Error al eliminar usuario"
+            message: "Error al restaurar usuario"
         })
     }
 }

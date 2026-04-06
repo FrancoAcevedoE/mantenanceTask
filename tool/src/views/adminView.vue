@@ -59,8 +59,41 @@
               class="danger-button"
               @click="deleteUser(createdUser._id)"
             >
-              Eliminar
+              Ocultar
             </button>
+          </div>
+        </div>
+
+        <div v-if="deletedUsers.length" class="deleted-zone">
+          <h3>Usuarios ocultos</h3>
+          <p>
+            Estos usuarios no aparecen en formularios ni login. Desde aca podes eliminarlos definitivamente.
+          </p>
+
+          <div class="users-list">
+            <div v-for="deletedUser in deletedUsers" :key="deletedUser._id" class="user-item deleted-item">
+              <div class="user-info">
+                <strong>{{ deletedUser.name }}</strong>
+                <span>Documento: {{ deletedUser.dni }}</span>
+                <span>Rol: {{ deletedUser.role }}</span>
+              </div>
+
+              <button
+                type="button"
+                class="restore-button"
+                @click="restoreUser(deletedUser._id)"
+              >
+                Restaurar
+              </button>
+
+              <button
+                type="button"
+                class="danger-button hard-delete-button"
+                @click="deleteUserPermanent(deletedUser._id)"
+              >
+                Borrar definitivamente
+              </button>
+            </div>
           </div>
         </div>
 
@@ -146,6 +179,7 @@ export default {
         role: "operario"
       },
       users: [],
+      deletedUsers: [],
       message: "",
       editingUserId: null,
       showCreateForm: false,
@@ -174,8 +208,16 @@ export default {
     },
     async loadUsers() {
       try {
-        const response = await axios.get(`${API_BASE_URL}/users`, this.authConfig())
-        this.users = response.data
+        const response = await axios.get(`${API_BASE_URL}/users`, {
+          ...this.authConfig(),
+          params: {
+            includeDeleted: true
+          }
+        })
+
+        const allUsers = Array.isArray(response.data) ? response.data : []
+        this.users = allUsers.filter(item => !item.isDeleted)
+        this.deletedUsers = allUsers.filter(item => item.isDeleted)
       } catch (error) {
         this.$notify.error("No se pudo cargar la lista de usuarios")
       }
@@ -236,11 +278,37 @@ export default {
     async deleteUser(userId) {
       try {
         await axios.delete(`${API_BASE_URL}/users/${userId}`, this.authConfig())
-        this.message = "Usuario eliminado correctamente"
-        this.$notify.success("Usuario eliminado correctamente")
+        this.message = "Usuario ocultado correctamente"
+        this.$notify.success("Usuario ocultado correctamente")
         await this.loadUsers()
       } catch (error) {
         this.$notify.notifyApiError(error, "No se pudo eliminar el usuario")
+      }
+    },
+    async deleteUserPermanent(userId) {
+      const confirmed = window.confirm(
+        "Eliminar definitivamente este usuario? Esta accion no se puede deshacer."
+      )
+
+      if (!confirmed) {
+        return
+      }
+
+      try {
+        await axios.delete(`${API_BASE_URL}/users/${userId}/permanent`, this.authConfig())
+        this.$notify.success("Usuario eliminado definitivamente")
+        await this.loadUsers()
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo eliminar definitivamente el usuario")
+      }
+    },
+    async restoreUser(userId) {
+      try {
+        await axios.patch(`${API_BASE_URL}/users/${userId}/restore`, {}, this.authConfig())
+        this.$notify.success("Usuario restaurado correctamente")
+        await this.loadUsers()
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo restaurar el usuario")
       }
     },
     async purgeMaintenanceData() {
@@ -732,6 +800,46 @@ button:hover {
 .empty-state {
   color: #4b4b4b;
   text-align: center;
+}
+
+.deleted-zone {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid #f0d6ab;
+  background: #fff8eb;
+}
+
+.deleted-zone h3 {
+  margin: 0;
+  color: #7d4f00;
+}
+
+.deleted-zone p {
+  margin: 0.5rem 0 0.75rem;
+  color: #6f5a37;
+}
+
+.deleted-item {
+  background: #fffdf8;
+  border: 1px solid #f3e2ba;
+}
+
+.hard-delete-button {
+  background: #7f1d1d;
+}
+
+.hard-delete-button:hover {
+  background: #631616;
+}
+
+.restore-button {
+  margin: 0;
+  background: #1f7a4c;
+}
+
+.restore-button:hover {
+  background: #16613b;
 }
 
 /* Responsive */

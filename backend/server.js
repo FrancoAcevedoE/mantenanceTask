@@ -24,10 +24,21 @@ const DEFAULT_ADMIN = {
 }
 
 const ensureDefaultAdmin = async () => {
-  const existingAdmin = await User.findOne({ dni: DEFAULT_ADMIN.dni })
+  const existingAdmin = await User.findOne({ dni: DEFAULT_ADMIN.dni, isDeleted: { $ne: true } })
 
   if (!existingAdmin) {
-    await User.create(DEFAULT_ADMIN)
+    await User.findOneAndUpdate(
+      { dni: DEFAULT_ADMIN.dni },
+      {
+        $set: {
+          ...DEFAULT_ADMIN,
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: ""
+        }
+      },
+      { upsert: true, setDefaultsOnInsert: true }
+    )
     console.log("Admin inicial creado")
   }
 }

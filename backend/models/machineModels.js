@@ -37,6 +37,18 @@ const machineSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
+  deletedBy: {
+    type: String,
+    default: ""
+  },
   createdAt: {
     type: Date,
     default: Date.now

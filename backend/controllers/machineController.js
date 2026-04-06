@@ -77,7 +77,11 @@ export const newMachineController = async (req, res) => {
 
 export const getAllMachinesController = async (req, res) => {
   try {
-    const machines = await Machine.find()
+    const includeDeleted = String(req.query.includeDeleted || "").trim().toLowerCase() === "true"
+    const canIncludeDeleted = includeDeleted && req.user?.role === "admin"
+    const query = canIncludeDeleted ? {} : { isDeleted: { $ne: true } }
+
+    const machines = await Machine.find(query)
     res.status(200).json(machines)
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -87,7 +91,7 @@ export const getAllMachinesController = async (req, res) => {
 export const getMachineByIdController = async (req, res) => {
   try {
     const { id } = req.params
-    const machine = await Machine.findById(id)
+    const machine = await Machine.findOne({ _id: id, isDeleted: { $ne: true } })
     
     if (!machine) {
       return res.status(404).json({ error: "Máquina no encontrada" })
@@ -122,7 +126,7 @@ export const updateMachineController = async (req, res) => {
       return res.status(400).json({ error: "El horómetro debe ser un número mayor o igual a 0" })
     }
 
-    const machine = await Machine.findById(id)
+    const machine = await Machine.findOne({ _id: id, isDeleted: { $ne: true } })
 
     if (!machine) {
       return res.status(404).json({ error: "Máquina no encontrada" })
@@ -171,7 +175,7 @@ export const updateHorometroController = async (req, res) => {
       return res.status(400).json({ error: "El horómetro debe ser un número mayor o igual a 0" })
     }
 
-    const machine = await Machine.findById(id)
+    const machine = await Machine.findOne({ _id: id, isDeleted: { $ne: true } })
 
     if (!machine) {
       return res.status(404).json({ error: "Máquina no encontrada" })
@@ -206,8 +210,8 @@ export const updateInstructionsController = async (req, res) => {
     const { id } = req.params
     const { instructions } = req.body
 
-    const machine = await Machine.findByIdAndUpdate(
-      id,
+    const machine = await Machine.findOneAndUpdate(
+      { _id: id, isDeleted: { $ne: true } },
       { instructions },
       { new: true }
     )
@@ -248,8 +252,8 @@ export const updateMachinePartsController = async (req, res) => {
       return res.status(400).json({ error: "Debes cargar al menos una parte de maquina" })
     }
 
-    const machine = await Machine.findByIdAndUpdate(
-      id,
+    const machine = await Machine.findOneAndUpdate(
+      { _id: id, isDeleted: { $ne: true } },
       { machineParts: normalizedMachineParts },
       { new: true }
     )
@@ -288,8 +292,8 @@ export const updateSectorController = async (req, res) => {
       return res.status(400).json({ error: "El sector es obligatorio" })
     }
 
-    const machine = await Machine.findByIdAndUpdate(
-      id,
+    const machine = await Machine.findOneAndUpdate(
+      { _id: id, isDeleted: { $ne: true } },
       { sector: normalizedSector },
       { new: true }
     )
@@ -323,8 +327,8 @@ export const updateNameController = async (req, res) => {
     const { id } = req.params
     const { name } = req.body
 
-    const machine = await Machine.findByIdAndUpdate(
-      id,
+    const machine = await Machine.findOneAndUpdate(
+      { _id: id, isDeleted: { $ne: true } },
       { name },
       { new: true }
     )
@@ -375,7 +379,7 @@ export const modifyMachineController = async (req, res) => {
       updates.horometro = normalizedHorometro
     }
 
-    const machine = await Machine.findById(id)
+    const machine = await Machine.findOne({ _id: id, isDeleted: { $ne: true } })
 
     if (!machine) {
       return res.status(404).json({ error: "Máquina no encontrada" })
@@ -436,7 +440,17 @@ export const modifyMachineController = async (req, res) => {
 export const deleteMachineController = async (req, res) => {
   try {
     const { id } = req.params
-    const machine = await Machine.findByIdAndDelete(id)
+    const machine = await Machine.findOneAndUpdate(
+      { _id: id, isDeleted: { $ne: true } },
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: String(req.user?.id || "")
+        }
+      },
+      { new: true }
+    )
 
     if (!machine) {
       return res.status(404).json({ error: "Máquina no encontrada" })
@@ -444,10 +458,10 @@ export const deleteMachineController = async (req, res) => {
 
     await registerAuditEvent({
       req,
-      action: "MACHINE_DELETED",
+      action: "MACHINE_SOFT_DELETED",
       entityType: "machine",
       entityId: machine._id,
-      description: `Se elimino la maquina ${machine.name}`,
+      description: `Se oculto la maquina ${machine.name}`,
       metadata: {
         machine: {
           id: String(machine._id),
@@ -457,7 +471,84 @@ export const deleteMachineController = async (req, res) => {
       }
     })
 
-    res.status(200).json({ message: "Máquina eliminada" })
+    res.status(200).json({ message: "Máquina ocultada" })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+export const deleteMachinePermanentController = async (req, res) => {
+  try {
+    const { id } = req.params
+    const machine = await Machine.findByIdAndDelete(id)
+
+    if (!machine) {
+      return res.status(404).json({ error: "Máquina no encontrada" })
+    }
+
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_HARD_DELETED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se elimino definitivamente la maquina ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name,
+          sector: machine.sector
+        },
+        wasSoftDeleted: Boolean(machine.isDeleted)
+      }
+    })
+
+    res.status(200).json({ message: "Máquina eliminada definitivamente" })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+export const restoreMachineController = async (req, res) => {
+  try {
+    const { id } = req.params
+    const machineToRestore = await Machine.findById(id)
+
+    if (!machineToRestore) {
+      return res.status(404).json({ error: "Máquina no encontrada" })
+    }
+
+    if (!machineToRestore.isDeleted) {
+      return res.status(400).json({ error: "La máquina ya está activa" })
+    }
+
+    const machine = await Machine.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: ""
+        }
+      },
+      { new: true }
+    )
+
+    await registerAuditEvent({
+      req,
+      action: "MACHINE_RESTORED",
+      entityType: "machine",
+      entityId: machine._id,
+      description: `Se restauro la maquina ${machine.name}`,
+      metadata: {
+        machine: {
+          id: String(machine._id),
+          name: machine.name,
+          sector: machine.sector
+        }
+      }
+    })
+
+    res.status(200).json({ message: "Máquina restaurada correctamente" })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }

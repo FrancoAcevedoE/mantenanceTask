@@ -124,7 +124,7 @@ export const sendPushNotificationToAllUsers = async (payload = {}) => {
     }
   }
 
-  const users = await User.find({ "pushSubscriptions.0": { $exists: true } }).select("pushSubscriptions")
+  const users = await User.find({ isDeleted: { $ne: true }, "pushSubscriptions.0": { $exists: true } }).select("pushSubscriptions")
   const normalizedPayload = buildPushPayload(payload)
   let sent = 0
   let failed = 0

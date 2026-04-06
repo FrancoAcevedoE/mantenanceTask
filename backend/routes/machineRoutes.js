@@ -10,7 +10,9 @@ import {
   updateMachinePartsController,
   updateSectorController,
   updateNameController,
-  deleteMachineController
+  deleteMachineController,
+  deleteMachinePermanentController,
+  restoreMachineController
 } from "../controllers/machineController.js"
 import { verifyToken } from "../middlewares/authMiddleware.js"
 import { checkRole } from "../middlewares/roleMiddleware.js"
@@ -38,6 +40,8 @@ router.patch("/:id/sector", verifyToken, checkRole("admin"), updateSectorControl
 router.patch("/:id/name", verifyToken, checkRole("admin"), updateNameController)
 
 // DELETE machine
+router.delete("/:id/permanent", verifyToken, checkRole("admin"), deleteMachinePermanentController)
 router.delete("/:id", verifyToken, checkRole("admin"), deleteMachineController)
+router.patch("/:id/restore", verifyToken, checkRole("admin"), restoreMachineController)
 
 export default router
