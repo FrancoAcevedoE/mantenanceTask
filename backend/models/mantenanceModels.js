@@ -64,7 +64,18 @@ const maintenanceSchema = new mongoose.Schema({
 
     maintenanceType:{
         type:String,
-        enum:["preventivo","correctivo","mejora","puesta en marcha","arreglo"],
+        enum:[
+            "preventivo",
+            "correctivo",
+            "mejora",
+            "puesta en marcha",
+            "arreglo",
+            "Preventivo predictivo",
+            "Preventivo de mejora continua",
+            "Preventivo de correctivo",
+            "Arreglo",
+            "Puesta en marcha (maquina parada)"
+        ],
         required:true
     },
 

@@ -77,6 +77,53 @@
           >
             {{ isPurging ? 'Limpiando...' : 'Limpiar historial y dashboard' }}
           </button>
+
+          <div class="audit-tools">
+            <h4>Log descargable</h4>
+            <p>
+              Genera un bloque tipo bloc de notas con toda la auditoria del sistema y exportalo.
+            </p>
+
+            <div class="audit-tools-actions">
+              <button
+                type="button"
+                class="audit-button"
+                :disabled="isLoadingAuditLog"
+                @click="generateAuditNotepad"
+              >
+                {{ isLoadingAuditLog ? 'Generando log...' : 'Generar bloque de notas' }}
+              </button>
+
+              <button
+                type="button"
+                class="audit-button secondary"
+                :disabled="!auditLogText"
+                @click="downloadAuditTxt"
+              >
+                Descargar log TXT
+              </button>
+
+              <button
+                type="button"
+                class="audit-button secondary"
+                :disabled="isExportingExcel"
+                @click="exportAuditToExcelCsv"
+              >
+                {{ isExportingExcel ? 'Exportando...' : 'Transpilar todo a Excel (.csv)' }}
+              </button>
+            </div>
+
+            <textarea
+              v-model="auditLogText"
+              class="audit-notepad"
+              readonly
+              placeholder="El log se mostrara aca cuando lo generes."
+            ></textarea>
+
+            <small v-if="auditLogGeneratedAt" class="audit-meta">
+              Ultima generacion: {{ formatAuditGeneratedAt(auditLogGeneratedAt) }} | Eventos: {{ auditLogCount }}
+            </small>
+          </div>
         </div>
       </div>
     </div>
@@ -103,6 +150,11 @@ export default {
       editingUserId: null,
       showCreateForm: false,
       isPurging: false,
+      isLoadingAuditLog: false,
+      isExportingExcel: false,
+      auditLogText: "",
+      auditLogCount: 0,
+      auditLogGeneratedAt: null,
       backgroundImage: backgroundImage
     }
   },
@@ -222,6 +274,164 @@ export default {
         this.$notify.notifyApiError(error, "No se pudo limpiar historial y dashboard")
       } finally {
         this.isPurging = false
+      }
+    },
+    formatAuditGeneratedAt(value) {
+      const date = new Date(value)
+      if (Number.isNaN(date.valueOf())) {
+        return "-"
+      }
+
+      return date.toLocaleString("es-AR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      })
+    },
+    stringifyMetadata(metadata) {
+      try {
+        return JSON.stringify(metadata || {}, null, 2)
+      } catch {
+        return "{}"
+      }
+    },
+    formatAuditEntry(entry) {
+      const createdAt = entry?.createdAt
+        ? this.formatAuditGeneratedAt(entry.createdAt)
+        : "-"
+
+      const actor = entry?.actor || {}
+      const actorName = actor.name || "Sin nombre"
+      const actorRole = actor.role || "-"
+      const actorDni = actor.dni || "-"
+
+      return [
+        "========================================",
+        `Fecha: ${createdAt}`,
+        `Accion: ${entry?.action || "-"}`,
+        `Entidad: ${entry?.entityType || "-"}`,
+        `ID Entidad: ${entry?.entityId || "-"}`,
+        `Descripcion: ${entry?.description || "-"}`,
+        `Actor: ${actorName} | Rol: ${actorRole} | DNI: ${actorDni}`,
+        "Metadata:",
+        this.stringifyMetadata(entry?.metadata),
+        ""
+      ].join("\n")
+    },
+    async fetchAllAuditLogs() {
+      const allItems = []
+      let page = 1
+      let hasNext = true
+
+      while (hasNext) {
+        const response = await axios.get(`${API_BASE_URL}/users/audit-log`, {
+          ...this.authConfig(),
+          params: {
+            page,
+            limit: 200
+          }
+        })
+
+        const items = Array.isArray(response.data?.items) ? response.data.items : []
+        allItems.push(...items)
+
+        const totalPages = Number(response.data?.pagination?.totalPages || 0)
+        hasNext = totalPages > 0 && page < totalPages
+        page += 1
+      }
+
+      return allItems
+    },
+    buildAuditLogNotepad(entries) {
+      if (!entries.length) {
+        return "No hay eventos de auditoria para mostrar."
+      }
+
+      const header = [
+        "LOG DE AUDITORIA - MANTENANCE TASK",
+        `Generado: ${this.formatAuditGeneratedAt(new Date())}`,
+        `Cantidad de eventos: ${entries.length}`,
+        ""
+      ].join("\n")
+
+      const body = entries.map(entry => this.formatAuditEntry(entry)).join("\n")
+      return `${header}${body}`
+    },
+    downloadFile(content, fileName, mimeType) {
+      const blob = new Blob([content], { type: mimeType })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    },
+    async generateAuditNotepad() {
+      if (this.isLoadingAuditLog) {
+        return
+      }
+
+      this.isLoadingAuditLog = true
+
+      try {
+        const entries = await this.fetchAllAuditLogs()
+        this.auditLogText = this.buildAuditLogNotepad(entries)
+        this.auditLogCount = entries.length
+        this.auditLogGeneratedAt = new Date().toISOString()
+        this.$notify.success("Log de auditoria generado")
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo generar el log de auditoria")
+      } finally {
+        this.isLoadingAuditLog = false
+      }
+    },
+    downloadAuditTxt() {
+      if (!this.auditLogText) {
+        this.$notify.error("Primero genera el bloque de notas")
+        return
+      }
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+      this.downloadFile(this.auditLogText, `log-auditoria-${timestamp}.txt`, "text/plain;charset=utf-8")
+      this.$notify.success("Log TXT descargado")
+    },
+    async exportAuditToExcelCsv() {
+      if (this.isExportingExcel) {
+        return
+      }
+
+      this.isExportingExcel = true
+
+      try {
+        const response = await axios.get(`${API_BASE_URL}/users/audit-log/download`, {
+          ...this.authConfig(),
+          responseType: "blob"
+        })
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+        const fileName = `log-auditoria-excel-${timestamp}.csv`
+        const blob = new Blob([response.data], { type: "text/csv;charset=utf-8" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+
+        link.href = url
+        link.download = fileName
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+
+        this.$notify.success("Exportacion a Excel (.csv) completada")
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo exportar el log a Excel")
+      } finally {
+        this.isExportingExcel = false
       }
     },
     resetForm() {
@@ -388,6 +598,68 @@ button:hover {
 .danger-zone-button:disabled {
   background: #dca29c;
   cursor: not-allowed;
+}
+
+.audit-tools {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #f0cccc;
+}
+
+.audit-tools h4 {
+  margin: 0;
+  color: #6f1d1d;
+}
+
+.audit-tools p {
+  margin: 0.4rem 0 0.7rem;
+}
+
+.audit-tools-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.audit-button {
+  width: 100%;
+  background: #7f4f24;
+}
+
+.audit-button:hover {
+  background: #6b3f1c;
+}
+
+.audit-button.secondary {
+  background: #5f6f7a;
+}
+
+.audit-button.secondary:hover {
+  background: #4e5d67;
+}
+
+.audit-button:disabled {
+  background: #b9b9b9;
+  cursor: not-allowed;
+}
+
+.audit-notepad {
+  margin-top: 0.7rem;
+  width: 100%;
+  min-height: 200px;
+  border: 1px solid #d8d8d8;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #222;
+  padding: 0.8rem;
+  line-height: 1.35;
+  font-family: "Courier New", monospace;
+  resize: vertical;
+}
+
+.audit-meta {
+  display: block;
+  margin-top: 0.5rem;
+  color: #704c4c;
 }
 
 .panel-header {

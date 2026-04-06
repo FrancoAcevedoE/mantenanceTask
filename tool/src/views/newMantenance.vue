@@ -81,10 +81,11 @@
 <select v-model="form.maintenanceType">
 
 <option value="">Seleccionar tipo</option>
-<option value="preventivo">Preventivo</option>
-<option value="mejora">Mejora</option>
-<option value="puesta en marcha">Puesta en marcha</option>
-<option value="arreglo">Arreglo</option>
+<option value="Preventivo predictivo">Preventivo predictivo</option>
+<option value="Preventivo de mejora continua">Preventivo de mejora continua</option>
+<option value="Preventivo de correctivo">Preventivo de correctivo</option>
+<option value="Arreglo">Arreglo</option>
+<option value="Puesta en marcha (maquina parada)">Puesta en marcha (maquina parada)</option>
 
 </select>
 </div>
