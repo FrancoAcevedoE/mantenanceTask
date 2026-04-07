@@ -73,6 +73,7 @@ onBeforeUnmount(() => {
       <router-link v-if="canViewNewMachine" to="/newMachine"><i class="bi bi-building-add"></i></router-link>
     <router-link v-if="canViewNew" to="/new"><i class="bi bi-wrench-adjustable-circle"></i></router-link>
       <router-link v-if="canViewStock" to="/stock/insumos"><i class="bi bi-box-seam"></i></router-link>
+      <router-link v-if="canViewStock" to="/stock/compras"><i class="bi bi-cart-check"></i></router-link>
       <router-link v-if="canManageStock" to="/stock/movimientos"><i class="bi bi-arrow-left-right"></i></router-link>
     <router-link to="/notifications-history"><i class="bi bi-bell"></i></router-link>
     <router-link to="/history"><i class="bi bi-clock-history"></i></router-link>

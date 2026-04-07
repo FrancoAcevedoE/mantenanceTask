@@ -2,59 +2,66 @@
   <div class="page-container">
     <div class="stock-layout">
       <section class="panel-card">
-        <h2>Insumos de materia prima</h2>
+        <details class="collapsible" :open="openedPanel === 'supply'" @toggle="handlePanelToggle('supply', $event)">
+          <summary>Insumos de materia prima</summary>
 
-        <form class="form-grid" @submit.prevent="createSupply">
-          <input v-model="form.name" type="text" placeholder="Nombre del insumo" required />
-          <select v-model="form.materialType">
-            <option value="madera">Madera</option>
-          </select>
-          <input v-model="form.size" type="text" placeholder="Tamaño / medida" />
-          <input v-model.number="form.areaM2PerPlate" type="number" min="0" step="0.01" placeholder="m2 por placa" />
-          <input v-model.number="form.platesPerPallet" type="number" min="1" step="1" placeholder="Placas por pallet" />
-          <input v-model.number="form.stockPlates" type="number" min="0" step="1" placeholder="Stock inicial en placas" />
-          <textarea v-model="form.notes" placeholder="Observaciones (opcional)"></textarea>
-          <button type="submit">Agregar insumo</button>
-        </form>
+          <form class="form-grid collapsible-body" @submit.prevent="createSupply">
+            <input v-model="form.name" type="text" placeholder="Nombre del insumo" required />
+            <select v-model="form.materialType">
+              <option value="madera">Madera</option>
+            </select>
+            <input v-model="form.size" type="text" placeholder="Tamaño / medida" />
+            <input v-model.number="form.areaM2PerPlate" type="number" min="0" step="0.01" placeholder="m2 por placa" />
+            <input v-model.number="form.platesPerPallet" type="number" min="1" step="1" placeholder="Placas por pallet" />
+            <input v-model.number="form.stockPlates" type="number" min="0" step="1" placeholder="Stock inicial en placas" />
+            <textarea v-model="form.notes" placeholder="Observaciones (opcional)"></textarea>
+            <button type="submit">Agregar insumo</button>
+          </form>
+        </details>
       </section>
 
       <section class="panel-card">
-        <h2>Importar / Exportar</h2>
-        <p class="helper-text">Podés subir el Excel del stock y también descargar una plantilla con insumos y movimientos.</p>
+        <details class="collapsible" :open="openedPanel === 'import'" @toggle="handlePanelToggle('import', $event)">
+          <summary>Importar / Exportar</summary>
 
-        <p v-if="lastSync.lastImportAt" class="sync-meta">
-          Ultima sincronizacion: {{ formatDate(lastSync.lastImportAt) }} | Archivo: {{ lastSync.lastFileName || '-' }} | Modo: {{ lastSync.lastMode === 'accumulate' ? 'Acumular' : 'Sobrescribir' }}
-        </p>
+          <div class="collapsible-body">
+            <p class="helper-text">Podés subir el Excel del stock y también descargar una plantilla con insumos y movimientos.</p>
 
-        <div class="import-actions">
-          <input type="file" accept=".xlsx,.xlsm,.xls" @change="onFileSelected" />
-          <select v-model="importMode">
-            <option value="overwrite">Sobrescribir stock por archivo</option>
-            <option value="accumulate">Acumular sobre stock actual</option>
-          </select>
-          <button type="button" :disabled="!selectedFile || isImporting" @click="importExcel">
-            {{ isImporting ? 'Sincronizando...' : 'Sincronizar stock desde Excel' }}
-          </button>
-          <button type="button" class="secondary" :disabled="isExporting" @click="exportExcel">
-            {{ isExporting ? 'Exportando...' : 'Descargar Excel de stock' }}
-          </button>
-        </div>
+            <p v-if="lastSync.lastImportAt" class="sync-meta">
+              Ultima sincronizacion: {{ formatDate(lastSync.lastImportAt) }} | Archivo: {{ lastSync.lastFileName || '-' }} | Modo: {{ lastSync.lastMode === 'accumulate' ? 'Acumular' : 'Sobrescribir' }}
+            </p>
 
-        <div v-if="importSummary" class="import-summary-box">
-          <strong>Resultado:</strong>
-          <span>
-            Modo {{ importSummary.mode === 'accumulate' ? 'Acumular' : 'Sobrescribir' }} | creados {{ importSummary.created }} | actualizados {{ importSummary.updated }} | omitidos {{ importSummary.skipped }}
-          </span>
+            <div class="import-actions">
+              <input type="file" accept=".xlsx,.xlsm,.xls" @change="onFileSelected" />
+              <select v-model="importMode">
+                <option value="overwrite">Sobrescribir stock por archivo</option>
+                <option value="accumulate">Acumular sobre stock actual</option>
+              </select>
+              <button type="button" :disabled="!selectedFile || isImporting" @click="importExcel">
+                {{ isImporting ? 'Sincronizando...' : 'Sincronizar stock desde Excel' }}
+              </button>
+              <button type="button" class="secondary" :disabled="isExporting" @click="exportExcel">
+                {{ isExporting ? 'Exportando...' : 'Descargar Excel de stock' }}
+              </button>
+            </div>
 
-          <div v-if="importReport.length" class="report-download-actions">
-            <button type="button" class="secondary" @click="downloadDiffReportCsv">
-              Descargar reporte CSV
-            </button>
-            <button type="button" class="secondary" @click="downloadDiffReportXlsx">
-              Descargar reporte XLSX
-            </button>
+            <div v-if="importSummary" class="import-summary-box">
+              <strong>Resultado:</strong>
+              <span>
+                Modo {{ importSummary.mode === 'accumulate' ? 'Acumular' : 'Sobrescribir' }} | creados {{ importSummary.created }} | actualizados {{ importSummary.updated }} | omitidos {{ importSummary.skipped }}
+              </span>
+
+              <div v-if="importReport.length" class="report-download-actions">
+                <button type="button" class="secondary" @click="downloadDiffReportCsv">
+                  Descargar reporte CSV
+                </button>
+                <button type="button" class="secondary" @click="downloadDiffReportXlsx">
+                  Descargar reporte XLSX
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        </details>
       </section>
 
       <section v-if="importReport.length" class="panel-card panel-wide">
@@ -146,6 +153,7 @@ export default {
       importMode: "overwrite",
       importSummary: null,
       importReport: [],
+      openedPanel: "supply",
       lastSync: {
         lastImportAt: null,
         lastFileName: "",
@@ -222,6 +230,17 @@ export default {
     onFileSelected(event) {
       const [file] = event.target.files || []
       this.selectedFile = file || null
+    },
+    handlePanelToggle(panelName, event) {
+      const isOpen = Boolean(event?.target?.open)
+      if (isOpen) {
+        this.openedPanel = panelName
+        return
+      }
+
+      if (this.openedPanel === panelName) {
+        this.openedPanel = ""
+      }
     },
     async importExcel() {
       if (!this.selectedFile || this.isImporting) {
@@ -418,6 +437,25 @@ export default {
 
 .panel-wide {
   grid-column: 1 / -1;
+}
+
+.collapsible {
+  border: 1px solid #dce3e6;
+  border-radius: 10px;
+  padding: 0.4rem 0.65rem;
+  background: #f8fbfc;
+}
+
+.collapsible summary {
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2e4450;
+  user-select: none;
+}
+
+.collapsible-body {
+  margin-top: 0.65rem;
 }
 
 .form-grid {

@@ -1,12 +1,15 @@
 import XLSX from "xlsx"
+import mongoose from "mongoose"
 import RawMaterial from "../models/rawMaterialModel.js"
 import StockMovement from "../models/stockMovementModel.js"
 import StockSyncState from "../models/stockSyncStateModel.js"
+import StockPurchaseRecord from "../models/stockPurchaseRecordModel.js"
 import User from "../models/userModels.js"
 import { registerAuditEvent } from "../services/auditService.js"
 
 const MAX_IMPORT_ROWS = 5000
 const STOCK_SYNC_SCOPE = "raw-material"
+const STOCK_PURCHASE_SYNC_SCOPE = "raw-material-purchases"
 
 const FIELD_ALIASES = {
   name: [
@@ -15,6 +18,7 @@ const FIELD_ALIASES = {
     "material",
     "madera",
     "producto",
+    "materia_prima_importada",
     "descripcion",
     "descripcion_material",
     "descripcion_del_producto",
@@ -110,6 +114,29 @@ const FIELD_ALIASES = {
     "obs",
     "comentarios",
     "detalle"
+  ],
+  code: [
+    "codigo",
+    "cod",
+    "id_producto"
+  ],
+  supplier: [
+    "proveedor",
+    "supplier"
+  ],
+  quality: [
+    "calidad",
+    "grade"
+  ],
+  ingress: [
+    "ing_",
+    "ing",
+    "ingreso",
+    "ingresos"
+  ],
+  balance: [
+    "saldo",
+    "balance"
   ]
 }
 
@@ -182,6 +209,8 @@ const normalizeSheetRows = (sheet) => {
   const headerRowIndex = detectHeaderRowIndex(matrixRows)
   const headerRow = Array.isArray(matrixRows[headerRowIndex]) ? matrixRows[headerRowIndex] : []
 
+  const duplicatedHeaderCounter = new Map()
+
   const headerKeys = headerRow.map((cell, columnIndex) => {
     const normalized = normalizeHeader(cell)
 
@@ -193,7 +222,15 @@ const normalizeSheetRows = (sheet) => {
       return null
     }
 
-    return normalized || `col_${columnIndex + 1}`
+    const baseKey = normalized || `col_${columnIndex + 1}`
+    const count = (duplicatedHeaderCounter.get(baseKey) || 0) + 1
+    duplicatedHeaderCounter.set(baseKey, count)
+
+    if (count === 1) {
+      return baseKey
+    }
+
+    return `${baseKey}__${count}`
   })
 
   const rows = matrixRows
@@ -254,8 +291,48 @@ const pickValue = (row, candidates = []) => {
     if (Object.prototype.hasOwnProperty.call(row, key) && row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") {
       return row[key]
     }
+
+    const prefixedKey = `${key}__`
+    const duplicatedMatch = Object.keys(row).find(currentKey => currentKey.startsWith(prefixedKey) && String(row[currentKey] || "").trim() !== "")
+
+    if (duplicatedMatch) {
+      return row[duplicatedMatch]
+    }
   }
   return ""
+}
+
+const collectValues = (row, candidates = []) => {
+  const values = []
+
+  for (const key of candidates) {
+    if (Object.prototype.hasOwnProperty.call(row, key) && String(row[key] || "").trim() !== "") {
+      values.push(row[key])
+    }
+
+    const prefixedKey = `${key}__`
+    for (const currentKey of Object.keys(row)) {
+      if (currentKey.startsWith(prefixedKey) && String(row[currentKey] || "").trim() !== "") {
+        values.push(row[currentKey])
+      }
+    }
+  }
+
+  return values
+}
+
+const sumValuesByCandidates = (row, candidates = []) => {
+  const values = collectValues(row, candidates)
+  let total = 0
+
+  for (const value of values) {
+    const parsed = parseNonNegativeNumber(value, NaN)
+    if (Number.isFinite(parsed)) {
+      total += parsed
+    }
+  }
+
+  return total
 }
 
 const getFieldValue = (row, fieldName) => {
@@ -978,6 +1055,383 @@ export const exportRawMaterialsExcelController = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Error al exportar stock"
+    })
+  }
+}
+
+const toPurchaseResponse = (item) => ({
+  _id: item._id,
+  batchId: item.batchId,
+  sourceFileName: item.sourceFileName,
+  importMode: item.importMode,
+  applyStock: Boolean(item.applyStock),
+  rowNumber: item.rowNumber,
+  code: item.code,
+  supplier: item.supplier,
+  product: item.product,
+  quality: item.quality,
+  size: item.size,
+  thicknessMm: Number(item.thicknessMm || 0),
+  widthM: Number(item.widthM || 0),
+  lengthM: Number(item.lengthM || 0),
+  m2PerPlate: Number(item.m2PerPlate || 0),
+  platesPerPallet: Number(item.platesPerPallet || 1),
+  palletCount: Number(item.palletCount || 0),
+  platesCount: Number(item.platesCount || 0),
+  totalM2: Number(item.totalM2 || 0),
+  rawMaterialId: item.rawMaterialId || null,
+  stockBeforePlates: Number(item.stockBeforePlates || 0),
+  stockAfterPlates: Number(item.stockAfterPlates || 0),
+  createdAt: item.createdAt
+})
+
+export const getPurchasesSyncStatusController = async (req, res) => {
+  try {
+    const state = await StockSyncState.findOne({ scope: STOCK_PURCHASE_SYNC_SCOPE }).lean()
+
+    res.json({
+      ok: true,
+      sync: buildSyncPayload(state)
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al obtener estado de sincronizacion de compras"
+    })
+  }
+}
+
+export const listPurchaseRecordsController = async (req, res) => {
+  try {
+    const limit = Math.min(1000, Math.max(1, Number.parseInt(String(req.query.limit || "300"), 10) || 300))
+    const month = normalizeText(req.query.month || "")
+    const query = {}
+
+    if (/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+      const start = new Date(`${month}-01T00:00:00.000Z`)
+      const end = new Date(start)
+      end.setUTCMonth(end.getUTCMonth() + 1)
+
+      query.createdAt = {
+        $gte: start,
+        $lt: end
+      }
+    }
+
+    const items = await StockPurchaseRecord.find(query)
+      .sort({ createdAt: -1, rowNumber: -1 })
+      .limit(limit)
+      .lean()
+
+    res.json({
+      ok: true,
+      items: items.map(toPurchaseResponse)
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al obtener compras importadas"
+    })
+  }
+}
+
+export const importPurchasesExcelController = async (req, res) => {
+  try {
+    if (!req.file?.buffer) {
+      return res.status(400).json({
+        message: "Debes adjuntar un archivo Excel"
+      })
+    }
+
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" })
+    const firstSheetName = workbook.SheetNames[0]
+
+    if (!firstSheetName) {
+      return res.status(400).json({
+        message: "El archivo no contiene hojas"
+      })
+    }
+
+    const sheet = workbook.Sheets[firstSheetName]
+    const { rows, detectedHeaders, headerRowIndex } = normalizeSheetRows(sheet)
+
+    if (!rows.length) {
+      return res.status(400).json({
+        message: "El archivo no contiene filas de datos"
+      })
+    }
+
+    const limitedRows = rows.slice(0, MAX_IMPORT_ROWS)
+    const importMode = normalizeImportMode(req.body?.mode || "accumulate")
+    const applyStock = String(req.body?.applyStock ?? "true").trim().toLowerCase() !== "false"
+
+    const actor = await getActorInfo(req)
+    const batchId = String(new mongoose.Types.ObjectId())
+
+    let created = 0
+    let updated = 0
+    let skipped = 0
+    const rowErrors = []
+    const report = []
+
+    for (let rowIndex = 0; rowIndex < limitedRows.length; rowIndex += 1) {
+      const row = limitedRows[rowIndex]
+
+      try {
+        const code = normalizeText(getFieldValue(row, "code"))
+        const supplier = normalizeText(getFieldValue(row, "supplier"))
+        const product = normalizeText(getFieldValue(row, "name"))
+        const quality = normalizeText(getFieldValue(row, "quality"))
+
+        if (!product) {
+          skipped += 1
+          continue
+        }
+
+        const size = buildSizeFromDimensions(row)
+        const thicknessMm = parseNonNegativeNumber(getFieldValue(row, "thickness"), 0)
+        const widthM = parseNonNegativeNumber(getFieldValue(row, "width"), 0)
+        const lengthM = parseNonNegativeNumber(getFieldValue(row, "length"), 0)
+        const m2PerPlate = inferAreaM2PerPlate(row)
+        const platesPerPallet = Math.max(1, parseNonNegativeNumber(getFieldValue(row, "platesPerPallet"), 1))
+        const palletCount = parseNonNegativeNumber(getFieldValue(row, "stockPallets"), 0)
+        const directPlates = parseNonNegativeNumber(getFieldValue(row, "stockPlates"), NaN)
+        const ingressTotal = sumValuesByCandidates(row, FIELD_ALIASES.ingress)
+        const balanceTotal = sumValuesByCandidates(row, FIELD_ALIASES.balance)
+        const m2Totals = parseNonNegativeNumber(getFieldValue(row, "stockM2"), NaN)
+
+        if ([thicknessMm, widthM, lengthM, m2PerPlate, platesPerPallet, palletCount].some(Number.isNaN)) {
+          skipped += 1
+          continue
+        }
+
+        let platesCount = 0
+
+        if (Number.isFinite(ingressTotal) && ingressTotal > 0) {
+          platesCount = ingressTotal
+        } else if (Number.isFinite(directPlates)) {
+          platesCount = directPlates
+        } else if (Number.isFinite(balanceTotal) && balanceTotal > 0) {
+          platesCount = balanceTotal
+        } else if (Number.isFinite(m2Totals) && m2Totals > 0 && m2PerPlate > 0) {
+          platesCount = m2Totals / m2PerPlate
+        } else {
+          platesCount = palletCount * platesPerPallet
+        }
+
+        platesCount = Math.max(0, Math.round(platesCount * 100) / 100)
+        const totalM2 = Number.isFinite(m2Totals)
+          ? m2Totals
+          : Math.round(platesCount * m2PerPlate * 100) / 100
+
+        const itemQuery = {
+          name: product,
+          materialType: "madera",
+          size
+        }
+
+        let item = await RawMaterial.findOne(itemQuery)
+        const beforeStockPlates = Number(item?.stockPlates || 0)
+        let afterStockPlates = beforeStockPlates
+        let action = "updated"
+
+        if (!item) {
+          item = new RawMaterial({
+            ...itemQuery,
+            areaM2PerPlate: Number(m2PerPlate || 0),
+            platesPerPallet,
+            stockPlates: 0,
+            notes: quality || ""
+          })
+          action = "created"
+          created += 1
+        } else {
+          updated += 1
+        }
+
+        item.isDeleted = false
+        item.deletedAt = null
+        item.deletedBy = ""
+        item.areaM2PerPlate = Number(m2PerPlate || item.areaM2PerPlate || 0)
+        item.platesPerPallet = platesPerPallet
+
+        if (applyStock) {
+          afterStockPlates = importMode === "accumulate"
+            ? beforeStockPlates + platesCount
+            : platesCount
+          item.stockPlates = Math.max(0, Math.round(afterStockPlates * 100) / 100)
+        }
+
+        item.updatedAt = new Date()
+        await item.save()
+
+        if (applyStock && importMode === "accumulate" && platesCount > 0) {
+          const platesFromPallets = Math.min(platesCount, palletCount * platesPerPallet)
+          const extraPlates = Math.max(0, platesCount - platesFromPallets)
+
+          await StockMovement.create({
+            itemId: item._id,
+            movementType: "in",
+            pallets: palletCount,
+            plates: extraPlates,
+            deltaPlates: platesCount,
+            stockAfterPlates: item.stockPlates,
+            reason: `Importacion compras: ${req.file.originalname}`,
+            performedBy: actor
+          })
+        }
+
+        await StockPurchaseRecord.create({
+          batchId,
+          sourceFileName: req.file.originalname,
+          importMode,
+          applyStock,
+          rowNumber: headerRowIndex + 2 + rowIndex,
+          code,
+          supplier,
+          product,
+          quality,
+          size,
+          thicknessMm: Number(thicknessMm || 0),
+          widthM: Number(widthM || 0),
+          lengthM: Number(lengthM || 0),
+          m2PerPlate: Number(m2PerPlate || 0),
+          platesPerPallet,
+          palletCount: Number(palletCount || 0),
+          platesCount,
+          totalM2,
+          rawMaterialId: item._id,
+          stockBeforePlates: beforeStockPlates,
+          stockAfterPlates: item.stockPlates
+        })
+
+        report.push({
+          rowNumber: headerRowIndex + 2 + rowIndex,
+          key: `${product} | ${size || "sin tamaño"}`,
+          supplier,
+          code,
+          action,
+          mode: importMode,
+          applyStock,
+          beforeStockPlates,
+          importedStockPlates: platesCount,
+          afterStockPlates: item.stockPlates,
+          totalM2
+        })
+      } catch (rowError) {
+        skipped += 1
+
+        if (rowErrors.length < 10) {
+          rowErrors.push({
+            rowNumber: headerRowIndex + 2 + rowIndex,
+            message: rowError?.message || "Error desconocido en fila"
+          })
+        }
+      }
+    }
+
+    const summary = {
+      mode: importMode,
+      applyStock,
+      created,
+      updated,
+      skipped,
+      totalRows: limitedRows.length,
+      headerRowNumber: headerRowIndex + 1,
+      detectedHeaders,
+      rowErrors,
+      batchId
+    }
+
+    await registerAuditEvent({
+      req,
+      action: "STOCK_PURCHASES_IMPORT_EXCEL",
+      entityType: "raw-material-purchases",
+      entityId: batchId,
+      description: "Se importo planilla de compras mensuales",
+      metadata: {
+        summary,
+        sourceFile: req.file.originalname
+      }
+    })
+
+    const syncState = await StockSyncState.findOneAndUpdate(
+      { scope: STOCK_PURCHASE_SYNC_SCOPE },
+      {
+        $set: {
+          scope: STOCK_PURCHASE_SYNC_SCOPE,
+          lastImportAt: new Date(),
+          lastFileName: req.file.originalname,
+          lastMode: importMode,
+          lastSummary: summary,
+          updatedAt: new Date()
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+
+    res.json({
+      ok: true,
+      message: "Importacion de compras completada",
+      summary,
+      report,
+      sync: buildSyncPayload(syncState)
+    })
+  } catch (error) {
+    console.error("Error importando compras desde Excel", {
+      message: error?.message,
+      stack: error?.stack
+    })
+
+    res.status(500).json({
+      message: "Error al importar compras",
+      detail: error?.message || "Error desconocido"
+    })
+  }
+}
+
+export const exportPurchaseRecordsExcelController = async (req, res) => {
+  try {
+    const items = await StockPurchaseRecord.find()
+      .sort({ createdAt: -1, rowNumber: -1 })
+      .limit(5000)
+      .lean()
+
+    const rows = items.map(item => ({
+      fecha: item.createdAt ? new Date(item.createdAt).toISOString() : "",
+      lote: item.batchId,
+      archivo: item.sourceFileName,
+      modo: item.importMode,
+      aplica_stock: item.applyStock ? "si" : "no",
+      fila: item.rowNumber,
+      codigo: item.code,
+      proveedor: item.supplier,
+      producto: item.product,
+      calidad: item.quality,
+      tamano: item.size,
+      espesor_mm: item.thicknessMm,
+      ancho_m: item.widthM,
+      largo_m: item.lengthM,
+      m2_x_placa: item.m2PerPlate,
+      hojas_x_pallet: item.platesPerPallet,
+      cant_pallet: item.palletCount,
+      cant_placas: item.platesCount,
+      m2_totales: item.totalM2,
+      stock_antes: item.stockBeforePlates,
+      stock_despues: item.stockAfterPlates
+    }))
+
+    const workbook = XLSX.utils.book_new()
+    const sheet = XLSX.utils.json_to_sheet(rows)
+    XLSX.utils.book_append_sheet(workbook, sheet, "Compras")
+
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" })
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    res.setHeader("Content-Disposition", `attachment; filename=compras-mensuales-${timestamp}.xlsx`)
+    res.status(200).send(buffer)
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al exportar compras"
     })
   }
 }

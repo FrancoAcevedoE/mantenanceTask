@@ -5,9 +5,13 @@ import { checkRole } from "../middlewares/roleMiddleware.js"
 import {
   createRawMaterialController,
   exportRawMaterialsExcelController,
+  exportPurchaseRecordsExcelController,
   getStockSyncStatusController,
+  getPurchasesSyncStatusController,
   importRawMaterialsExcelController,
+  importPurchasesExcelController,
   listRawMaterialsController,
+  listPurchaseRecordsController,
   listStockMovementsController,
   registerStockMovementController,
   updateRawMaterialController
@@ -26,6 +30,35 @@ router.get(
   verifyToken,
   checkRole("admin", "supervisor", "operario"),
   getStockSyncStatusController
+)
+
+router.get(
+  "/purchases/sync/status",
+  verifyToken,
+  checkRole("admin", "supervisor", "operario"),
+  getPurchasesSyncStatusController
+)
+
+router.get(
+  "/purchases",
+  verifyToken,
+  checkRole("admin", "supervisor", "operario"),
+  listPurchaseRecordsController
+)
+
+router.post(
+  "/import/purchases-excel",
+  verifyToken,
+  checkRole("admin", "supervisor"),
+  upload.single("file"),
+  importPurchasesExcelController
+)
+
+router.get(
+  "/purchases/export/excel",
+  verifyToken,
+  checkRole("admin", "supervisor", "operario"),
+  exportPurchaseRecordsExcelController
 )
 
 router.get(
