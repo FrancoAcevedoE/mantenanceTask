@@ -494,7 +494,9 @@ const operariosAttended = uniqueOperarioIds.size
 
 const recentMaintenances = await Maintenance.find(periodFilter)
 .populate("clientId", "name role")
+.select("clientId machine machinePart sector status createdAt")
 .sort({ createdAt: -1 })
+.lean()
 
 const pending = await Maintenance.countDocuments({
 ...periodFilter,

@@ -81,7 +81,7 @@ export const getAllMachinesController = async (req, res) => {
     const canIncludeDeleted = includeDeleted && req.user?.role === "admin"
     const query = canIncludeDeleted ? {} : { isDeleted: { $ne: true } }
 
-    const machines = await Machine.find(query)
+    const machines = await Machine.find(query).lean()
     res.status(200).json(machines)
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -91,7 +91,7 @@ export const getAllMachinesController = async (req, res) => {
 export const getMachineByIdController = async (req, res) => {
   try {
     const { id } = req.params
-    const machine = await Machine.findOne({ _id: id, isDeleted: { $ne: true } })
+    const machine = await Machine.findOne({ _id: id, isDeleted: { $ne: true } }).lean()
     
     if (!machine) {
       return res.status(404).json({ error: "Máquina no encontrada" })

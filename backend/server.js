@@ -13,6 +13,7 @@ import userRoutes from "./routes/userRoutes.js"
 import clientRoutes from './routes/clientRoutes.js'
 import maintenanceRoutes from "./routes/mantenanceRoutes.js"
 import machineRoutes from "./routes/machineRoutes.js"
+import stockRoutes from "./routes/stockRoutes.js"
 import User from "./models/userModels.js"
 import { startCronNotifications } from "./services/cronScheduler.js"
 
@@ -107,6 +108,7 @@ app.use("/api/clients", clientRoutes)
 app.use("/api/users", userRoutes)
 app.use("/api/maintenance", maintenanceRoutes)
 app.use("/api/machines", machineRoutes)
+app.use("/api/stock", stockRoutes)
 
 app.get("/api/health", (req, res) => {
   const mongoStateMap = {

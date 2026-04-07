@@ -37,6 +37,8 @@ export const login = async (req, res) => {
             password: passwordNumber,
             isDeleted: { $ne: true }
         })
+            .select("_id name dni role")
+            .lean()
 
         if (!user) {
             return res.status(401).json({
@@ -78,6 +80,7 @@ export const getUsers = async (req, res) => {
         const users = await User.find(query)
             .select("name dni role isDeleted deletedAt")
             .sort({ name: 1 })
+            .lean()
 
         res.json(users)
     } catch (error) {
@@ -130,6 +133,7 @@ export const getOperarios = async (req, res) => {
         const operarios = await User.find({ role: "operario", isDeleted: { $ne: true } })
             .select("name dni role")
             .sort({ name: 1 })
+            .lean()
 
         res.json(operarios)
     } catch (error) {
@@ -166,7 +170,7 @@ export const createUser = async (req, res) => {
         const dni = Number(dniRaw)
         const password = Number(passwordRaw)
 
-        const existingUser = await User.findOne({ dni })
+        const existingUser = await User.findOne({ dni }).select("_id").lean()
 
         if (existingUser) {
             return res.status(409).json({
@@ -248,7 +252,7 @@ export const updateUser = async (req, res) => {
             }
 
             const dni = Number(dniRaw)
-            const existingUser = await User.findOne({ dni, _id: { $ne: req.params.id } })
+            const existingUser = await User.findOne({ dni, _id: { $ne: req.params.id } }).select("_id").lean()
 
             if (existingUser) {
                 return res.status(409).json({

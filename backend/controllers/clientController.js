@@ -20,7 +20,7 @@ export const createClient = async (req,res)=>{
 
 export const getClients = async (req,res)=>{
 
-    const clients = await Client.find()
+    const clients = await Client.find().lean()
 
     res.json(clients)
 
@@ -28,7 +28,7 @@ export const getClients = async (req,res)=>{
 
 export const getClientById = async (req,res)=>{
 
-    const client = await Client.findById(req.params.id)
+    const client = await Client.findById(req.params.id).lean()
 
     res.json(client)
 

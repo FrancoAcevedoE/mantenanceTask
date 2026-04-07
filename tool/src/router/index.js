@@ -6,6 +6,8 @@ import adminView from '@/views/adminView.vue'
 import newMachine from '@/views/newMachine.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import NotificationHistory from '@/views/NotificationHistory.vue'
+import stockSupplies from '@/views/stockSupplies.vue'
+import stockMovements from '@/views/stockMovements.vue'
 
 const getStoredUser = () => {
   try {
@@ -45,6 +47,12 @@ const router = createRouter({
     },
     {
       path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/insumos', name: 'StockSupplies', component: stockSupplies, meta: { requiresAuth: true, roles: ['admin', 'supervisor', 'operario'] }
+    },
+    {
+      path: '/stock/movimientos', name: 'StockMovements', component: stockMovements, meta: { requiresAuth: true, roles: ['admin', 'supervisor'] }
     }
     
   ]
