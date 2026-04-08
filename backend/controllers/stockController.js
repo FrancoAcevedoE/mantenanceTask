@@ -400,6 +400,7 @@ const toResponseItem = (item) => {
     name: item.name,
     materialType: item.materialType,
     size: item.size,
+    supplier: item.supplier || "",
     areaM2PerPlate,
     platesPerPallet,
     stockPlates,
@@ -507,6 +508,7 @@ export const createRawMaterialController = async (req, res) => {
     const name = normalizeText(req.body?.name)
     const materialType = normalizeText(req.body?.materialType || "madera").toLowerCase()
     const size = normalizeText(req.body?.size)
+    const supplier = normalizeText(req.body?.supplier)
     const notes = normalizeText(req.body?.notes)
 
     if (!name) {
@@ -529,6 +531,7 @@ export const createRawMaterialController = async (req, res) => {
       name,
       materialType,
       size,
+      supplier,
       isDeleted: { $ne: true }
     })
 
@@ -542,6 +545,7 @@ export const createRawMaterialController = async (req, res) => {
       name,
       materialType,
       size,
+      supplier,
       areaM2PerPlate,
       platesPerPallet,
       stockPlates,
@@ -600,6 +604,10 @@ export const updateRawMaterialController = async (req, res) => {
 
     if (req.body?.size !== undefined) {
       item.size = normalizeText(req.body.size)
+    }
+
+    if (req.body?.supplier !== undefined) {
+      item.supplier = normalizeText(req.body.supplier)
     }
 
     if (req.body?.notes !== undefined) {
@@ -664,7 +672,7 @@ export const listStockMovementsController = async (req, res) => {
     const limit = Math.min(200, Math.max(1, Number.parseInt(String(req.query.limit || "80"), 10) || 80))
 
     const movements = await StockMovement.find()
-      .populate("itemId", "name materialType size platesPerPallet areaM2PerPlate")
+      .populate("itemId", "name materialType size supplier platesPerPallet areaM2PerPlate")
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean()
@@ -687,6 +695,7 @@ export const listStockMovementsController = async (req, res) => {
               name: item.itemId.name,
               materialType: item.itemId.materialType,
               size: item.itemId.size,
+              supplier: item.itemId.supplier || "",
               platesPerPallet: item.itemId.platesPerPallet,
               areaM2PerPlate: item.itemId.areaM2PerPlate
             }
@@ -845,6 +854,7 @@ export const importRawMaterialsExcelController = async (req, res) => {
         const name = normalizeText(getFieldValue(row, "name"))
         const materialType = normalizeText(getFieldValue(row, "materialType")) || "madera"
         const size = buildSizeFromDimensions(row)
+        const supplier = normalizeText(getFieldValue(row, "supplier"))
 
         if (!name) {
           skipped += 1
@@ -876,13 +886,27 @@ export const importRawMaterialsExcelController = async (req, res) => {
 
         stockPlates = Math.max(0, Math.round(stockPlates))
 
-        const query = {
+        const baseQuery = {
           name,
           materialType: materialType.toLowerCase(),
           size
         }
 
-        const existing = await RawMaterial.findOne(query)
+        const query = supplier
+          ? { ...baseQuery, supplier }
+          : baseQuery
+
+        let existing = await RawMaterial.findOne(query)
+
+        if (!existing && supplier) {
+          existing = await RawMaterial.findOne({
+            ...baseQuery,
+            $or: [
+              { supplier: { $exists: false } },
+              { supplier: "" }
+            ]
+          })
+        }
 
         if (!existing) {
           const nextStockPlates = Math.max(0, Math.round(Number(stockPlates || 0)))
@@ -916,6 +940,9 @@ export const importRawMaterialsExcelController = async (req, res) => {
           existing.isDeleted = false
           existing.deletedAt = null
           existing.deletedBy = ""
+          if (supplier) {
+            existing.supplier = supplier
+          }
           existing.areaM2PerPlate = Number(areaM2PerPlate || 0)
           existing.platesPerPallet = normalizedPlatesPerPallet
           existing.stockPlates = Math.max(0, Math.round(nextStockPlates))
@@ -1035,6 +1062,7 @@ export const exportRawMaterialsExcelController = async (req, res) => {
       const parsed = toResponseItem(item)
       return {
         nombre: parsed.name,
+        proveedor: parsed.supplier,
         tipo: parsed.materialType,
         tamano: parsed.size,
         m2_por_placa: parsed.areaM2PerPlate,

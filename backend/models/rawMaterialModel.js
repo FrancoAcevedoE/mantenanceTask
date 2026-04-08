@@ -16,6 +16,11 @@ const rawMaterialSchema = new mongoose.Schema({
     default: "",
     trim: true
   },
+  supplier: {
+    type: String,
+    default: "",
+    trim: true
+  },
   areaM2PerPlate: {
     type: Number,
     default: 0,

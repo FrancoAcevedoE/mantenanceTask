@@ -15,7 +15,7 @@
           <select v-model="form.itemId" required>
             <option value="">Seleccionar insumo</option>
             <option v-for="item in filteredSupplies" :key="item._id" :value="item._id">
-              {{ item.name }} {{ item.size ? `(${item.size})` : '' }} - stock: {{ item.stockPlates }} placas
+              {{ item.name }} {{ item.size ? `(${item.size})` : '' }}{{ item.supplier ? ` - ${item.supplier}` : '' }} - stock: {{ item.stockPlates }} placas
             </option>
           </select>
 
@@ -67,7 +67,10 @@
               <template v-for="item in filteredMovements" :key="item._id">
                 <tr>
                   <td>{{ formatDate(item.createdAt) }}</td>
-                  <td>{{ item.item?.name || '-' }} {{ item.item?.size ? `(${item.item.size})` : '' }}</td>
+                  <td>
+                    {{ item.item?.name || '-' }} {{ item.item?.size ? `(${item.item.size})` : '' }}
+                    <span v-if="item.item?.supplier" class="supplier-inline">- {{ item.item.supplier }}</span>
+                  </td>
                   <td>{{ item.movementType === 'in' ? 'Carga' : 'Descarga' }}</td>
                   <td>{{ item.plates }}</td>
                   <td class="details-cell">
@@ -89,7 +92,43 @@
                       <p><strong>Delta placas:</strong> {{ item.deltaPlates }}</p>
                       <p><strong>Stock resultante:</strong> {{ item.stockAfterPlates }}</p>
                       <p><strong>Usuario:</strong> {{ item.performedBy?.name || '-' }}</p>
-                      <p><strong>Motivo:</strong> {{ item.reason || '-' }}</p>
+                      <p v-if="item.item?.supplier"><strong>Proveedor:</strong> {{ item.item.supplier }}</p>
+                      <p v-if="sanitizeMovementReason(item.reason)"><strong>Motivo:</strong> {{ sanitizeMovementReason(item.reason) }}</p>
+                    </div>
+
+                    <div v-if="getMovementSupplierEvaluation(item)" class="supplier-evaluation-box">
+                      <div class="supplier-evaluation-header">
+                        <strong>Evaluacion de proveedor</strong>
+                        <span class="supplier-name">{{ getMovementSupplierEvaluation(item).provider }}</span>
+                      </div>
+
+                      <div class="supplier-evaluation-grid">
+                        <p><strong>Materia prima:</strong> {{ getMovementSupplierEvaluation(item).materiaPrima }}</p>
+                        <p>
+                          <strong>Calificacion:</strong>
+                          <span class="calif-badge" :class="`calif-${String(getMovementSupplierEvaluation(item).calificacionFinal).toLowerCase()}`">
+                            {{ getMovementSupplierEvaluation(item).calificacionFinal }}
+                          </span>
+                        </p>
+                        <p><strong>Puntaje:</strong> {{ getMovementSupplierEvaluation(item).puntaje }}</p>
+                        <p><strong>Total:</strong> {{ getMovementSupplierEvaluation(item).total }}</p>
+                      </div>
+
+                      <div class="score-legend">
+                        <span class="score-chip score-1">1 Bueno</span>
+                        <span class="score-chip score-2">2 Regular</span>
+                        <span class="score-chip score-3">3 Mal</span>
+                      </div>
+
+                      <div class="supplier-evaluation-grid criteria-grid">
+                        <p><strong>Precios:</strong> <span class="score-chip" :class="scoreClass(getMovementSupplierEvaluation(item).precios)">{{ getMovementSupplierEvaluation(item).precios }}</span></p>
+                        <p><strong>Condiciones:</strong> <span class="score-chip" :class="scoreClass(getMovementSupplierEvaluation(item).condiciones)">{{ getMovementSupplierEvaluation(item).condiciones }}</span></p>
+                        <p><strong>Logistica:</strong> <span class="score-chip" :class="scoreClass(getMovementSupplierEvaluation(item).logistica)">{{ getMovementSupplierEvaluation(item).logistica }}</span></p>
+                        <p><strong>Calidad prod.:</strong> <span class="score-chip" :class="scoreClass(getMovementSupplierEvaluation(item).calidadProducto)">{{ getMovementSupplierEvaluation(item).calidadProducto }}</span></p>
+                        <p><strong>No conform.:</strong> <span class="score-chip" :class="scoreClass(getMovementSupplierEvaluation(item).calidadNoConformidades)">{{ getMovementSupplierEvaluation(item).calidadNoConformidades }}</span></p>
+                        <p><strong>Medio ambiente:</strong> <span class="score-chip" :class="scoreClass(getMovementSupplierEvaluation(item).medioAmbiente)">{{ getMovementSupplierEvaluation(item).medioAmbiente }}</span></p>
+                        <p><strong>Cond. especiales:</strong> <span class="score-chip" :class="scoreClass(getMovementSupplierEvaluation(item).condicionesEspeciales)">{{ getMovementSupplierEvaluation(item).condicionesEspeciales }}</span></p>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -120,6 +159,70 @@ export default {
         itemId: "",
         movementType: "in",
         plates: 0,
+      },
+      supplierEvaluations: {
+        VILLA_GUILLERMINA: {
+          provider: "Villa Guillermina",
+          materiaPrima: "Sustrato para pisos",
+          precios: "2",
+          condiciones: "1",
+          logistica: "1",
+          calidadProducto: "2",
+          calidadNoConformidades: "2",
+          medioAmbiente: "2",
+          condicionesEspeciales: "2",
+          total: "12",
+          puntaje: "24",
+          calificacionFinal: "A"
+        },
+        CUYOPLACAS: {
+          provider: "Cuyoplacas",
+          materiaPrima: "MDP/Aglomerado",
+          precios: "2",
+          condiciones: "2",
+          logistica: "1",
+          calidadProducto: "1",
+          calidadNoConformidades: "1",
+          medioAmbiente: "2",
+          condicionesEspeciales: "2",
+          total: "11",
+          puntaje: "22",
+          calificacionFinal: "A"
+        },
+        FAPLAC: {
+          provider: "Faplac",
+          materiaPrima: "MDP/Aglomerado",
+          precios: "1",
+          condiciones: "3",
+          logistica: "1",
+          calidadProducto: "1",
+          calidadNoConformidades: "1",
+          medioAmbiente: "1",
+          condicionesEspeciales: "2",
+          total: "10",
+          puntaje: "20",
+          calificacionFinal: "A"
+        },
+        FIPLASTO: {
+          provider: "Fiplasto",
+          materiaPrima: "Chapadur",
+          precios: "2",
+          condiciones: "2",
+          logistica: "1",
+          calidadProducto: "2",
+          calidadNoConformidades: "2",
+          medioAmbiente: "2",
+          condicionesEspeciales: "1",
+          total: "12",
+          puntaje: "12",
+          calificacionFinal: "B"
+        }
+      },
+      movementProviderMatchers: {
+        VILLA_GUILLERMINA: ["VILLA GUILLERMINA", "SUSTRATO PARA PISOS"],
+        CUYOPLACAS: ["CUYOPLACAS"],
+        FAPLAC: ["FAPLAC"],
+        FIPLASTO: ["FIPLASTO", "CHAPADUR"]
       },
       backgroundImage
     }
@@ -205,6 +308,48 @@ export default {
     },
     toggleDetails(id) {
       this.openedDetailId = this.openedDetailId === id ? "" : id
+    },
+    normalizeLookupText(value) {
+      return String(value || "")
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+    },
+    sanitizeMovementReason(reason) {
+      const text = String(reason || "").trim()
+      if (!text) return ""
+      if (/^importacion compras\s*:/i.test(text)) {
+        return ""
+      }
+      return text
+    },
+    getMovementSupplierEvaluation(item) {
+      const supplierKey = this.normalizeLookupText(item?.item?.supplier || "")
+
+      if (supplierKey) {
+        const directMatch = this.supplierEvaluations[supplierKey.replace(/\s+/g, "_")]
+        if (directMatch) {
+          return directMatch
+        }
+      }
+
+      const haystack = this.normalizeLookupText(`${item?.item?.name || ""} ${item?.item?.size || ""}`)
+
+      for (const [providerKey, matchers] of Object.entries(this.movementProviderMatchers)) {
+        if (matchers.some((matcher) => haystack.includes(this.normalizeLookupText(matcher)))) {
+          return this.supplierEvaluations[providerKey] || null
+        }
+      }
+
+      return null
+    },
+    scoreClass(value) {
+      const numeric = Number(value)
+      if (numeric === 1) return "score-1"
+      if (numeric === 2) return "score-2"
+      if (numeric === 3) return "score-3"
+      return "score-na"
     },
     normalizeMaterialType(value) {
       const raw = String(value || "").trim().toLowerCase()
@@ -340,6 +485,11 @@ button.secondary {
   text-align: center;
 }
 
+.supplier-inline {
+  color: #365061;
+  font-weight: 600;
+}
+
 .details-button {
   width: 32px;
   height: 32px;
@@ -365,6 +515,106 @@ button.secondary {
 .details-inline p {
   margin: 0;
   white-space: normal;
+}
+
+.supplier-evaluation-box {
+  margin-top: 0.8rem;
+  padding: 0.8rem;
+  border-radius: 10px;
+  background: #eef5fb;
+  border: 1px solid #d8e6f3;
+}
+
+.supplier-evaluation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.supplier-name {
+  font-weight: 700;
+  color: #244a68;
+}
+
+.supplier-evaluation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.45rem 0.8rem;
+}
+
+.supplier-evaluation-grid p {
+  margin: 0;
+  white-space: normal;
+}
+
+.criteria-grid {
+  margin-top: 0.55rem;
+}
+
+.score-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0;
+}
+
+.score-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.score-1 {
+  background: #d8f5df;
+  color: #1b5e20;
+}
+
+.score-2 {
+  background: #fff4d6;
+  color: #8a6d00;
+}
+
+.score-3 {
+  background: #ffe1e1;
+  color: #a30000;
+}
+
+.score-na {
+  background: #eceff1;
+  color: #607d8b;
+}
+
+.calif-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.calif-a {
+  background: #d8f5df;
+  color: #1b5e20;
+}
+
+.calif-b {
+  background: #fff4d6;
+  color: #8a6d00;
+}
+
+.calif-c {
+  background: #ffe1e1;
+  color: #a30000;
 }
 
 table {
