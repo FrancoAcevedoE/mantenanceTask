@@ -231,6 +231,11 @@ sectors:[],
 currentUserRole:"",
 currentUserId:"",
 isUpdatingHorometro:false,
+horometroConfirmState:{
+machineId:"",
+value:null,
+expiresAt:0
+},
 
 horometroForm:{
 machineId:"",
@@ -463,9 +468,20 @@ return
 
 const targetMachine = this.machines.find(machine => machine._id === this.horometroForm.machineId)
 const machineLabel = targetMachine?.name || "la maquina seleccionada"
-const confirmed = window.confirm(`¿Seguro que queres actualizar el horometro de ${machineLabel}?`)
+const confirmationWindowMs = 7000
+const now = Date.now()
+const sameOperation =
+this.horometroConfirmState.machineId === this.horometroForm.machineId &&
+this.horometroConfirmState.value === this.horometroForm.value &&
+this.horometroConfirmState.expiresAt > now
 
-if (!confirmed) {
+if (!sameOperation) {
+this.horometroConfirmState = {
+machineId: this.horometroForm.machineId,
+value: this.horometroForm.value,
+expiresAt: now + confirmationWindowMs
+}
+this.$notify.warning(`Confirmacion requerida: volve a presionar "Actualizar horometro" en los proximos ${Math.floor(confirmationWindowMs / 1000)}s para ${machineLabel} (${this.horometroForm.value}h).`)
 return
 }
 
@@ -481,7 +497,12 @@ this.authConfig()
 this.$notify.success("Horometro actualizado")
 await this.loadMachines()
 this.horometroForm.value = null
+this.horometroConfirmState = { machineId: "", value: null, expiresAt: 0 }
 } catch (error) {
+if (error?.response?.status === 403) {
+this.$notify.error("No tenes permiso para actualizar el horometro. Si deberias tener acceso, avisame y lo revisamos en backend.")
+return
+}
 this.$notify.notifyApiError(error, "No se pudo actualizar horometro")
 } finally {
 this.isUpdatingHorometro = false
