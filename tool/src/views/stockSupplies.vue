@@ -97,6 +97,51 @@
 
       <section class="panel-card panel-wide">
         <div class="list-header">
+          <h2>Placas</h2>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Codigo</th>
+                <th>Proveedor</th>
+                <th>Producto</th>
+                <th>Espesor (mm)</th>
+                <th>Ancho (mm)</th>
+                <th>Largo (mm)</th>
+                <th>Calidad</th>
+                <th>Cant. placas stock</th>
+                <th>M2 totales stock</th>
+                <th>Detalles</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, index) in placasDataWithEvaluation" :key="`${item.codigo}-${index}`">
+                <td class="code">{{ item.codigo }}</td>
+                <td>{{ item.proveedor }}</td>
+                <td>{{ item.producto }}</td>
+                <td>{{ item.espesorMm }}</td>
+                <td>{{ item.anchoMm }}</td>
+                <td>{{ item.largoMm }}</td>
+                <td>{{ item.calidad }}</td>
+                <td class="quantity">
+                  <span :class="{ 'low-stock': item.cantidadStock === 0 }">{{ item.cantidadStock }}</span>
+                </td>
+                <td>{{ item.m2TotalesStock }}</td>
+                <td>
+                  <button type="button" class="details-btn" @click="openSupplierDetails(item.proveedor)">
+                    Ver detalles
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel-card panel-wide">
+        <div class="list-header">
           <h2>Top Box - Herrajes</h2>
         </div>
 
@@ -111,7 +156,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in topBoxData" :key="item.cod">
+              <tr v-for="(item, index) in topBoxData" :key="`${item.cod}-${index}`">
                 <td>{{ item.herraje }}</td>
                 <td>{{ item.funcion }}</td>
                 <td class="code">{{ item.cod }}</td>
@@ -126,6 +171,63 @@
           </table>
         </div>
       </section>
+
+      <div v-if="isSupplierModalOpen" class="modal-backdrop" @click.self="closeSupplierDetails">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3>Evaluacion de proveedor: {{ selectedSupplier }}</h3>
+            <button type="button" class="close-btn" @click="closeSupplierDetails">X</button>
+          </div>
+
+          <div class="modal-content">
+            <p><strong>Materia prima:</strong> {{ selectedEvaluation.materiaPrima }}</p>
+            <p><strong>Calificacion inicial/flexibilidad:</strong> {{ selectedEvaluation.calificacionInicial }} / {{ selectedEvaluation.calificacionFinal }}</p>
+            <p><strong>Total:</strong> {{ selectedEvaluation.total }} | <strong>Puntaje:</strong> {{ selectedEvaluation.puntaje }}</p>
+
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Criterio</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Comercial - precios</td>
+                  <td>{{ selectedEvaluation.precios }}</td>
+                </tr>
+                <tr>
+                  <td>Comercial - condiciones</td>
+                  <td>{{ selectedEvaluation.condiciones }}</td>
+                </tr>
+                <tr>
+                  <td>Logistica</td>
+                  <td>{{ selectedEvaluation.logistica }}</td>
+                </tr>
+                <tr>
+                  <td>Calidad - producto</td>
+                  <td>{{ selectedEvaluation.calidadProducto }}</td>
+                </tr>
+                <tr>
+                  <td>Calidad - no conformidades</td>
+                  <td>{{ selectedEvaluation.calidadNoConformidades }}</td>
+                </tr>
+                <tr>
+                  <td>Medio ambiente</td>
+                  <td>{{ selectedEvaluation.medioAmbiente }}</td>
+                </tr>
+                <tr>
+                  <td>Condiciones especiales</td>
+                  <td>{{ selectedEvaluation.condicionesEspeciales }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p class="evaluation-note">Escala del excel: 1 = Bueno, 2 = Regular, 3 = Mal.</p>
+            <p><strong>Observaciones:</strong> {{ selectedEvaluation.observaciones }}</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -161,6 +263,153 @@ export default {
         platesPerPallet: 1,
         stockPlates: 0,
         notes: ""
+      },
+      placasData: [
+        {
+          codigo: "P-001",
+          proveedor: "Villa Guillermina",
+          producto: "MDF",
+          espesorMm: 18,
+          anchoMm: 1830,
+          largoMm: 2600,
+          calidad: "A",
+          cantidadStock: 42,
+          m2TotalesStock: 199.84
+        },
+        {
+          codigo: "P-002",
+          proveedor: "Cuyoplacas",
+          producto: "Aglomerado",
+          espesorMm: 18,
+          anchoMm: 1830,
+          largoMm: 2600,
+          calidad: "A",
+          cantidadStock: 27,
+          m2TotalesStock: 128.47
+        },
+        {
+          codigo: "P-003",
+          proveedor: "Sadepan",
+          producto: "Aglomerado",
+          espesorMm: 15,
+          anchoMm: 1830,
+          largoMm: 2600,
+          calidad: "B",
+          cantidadStock: 18,
+          m2TotalesStock: 85.64
+        },
+        {
+          codigo: "P-004",
+          proveedor: "Faplac",
+          producto: "Aglomerado",
+          espesorMm: 18,
+          anchoMm: 1830,
+          largoMm: 2600,
+          calidad: "A",
+          cantidadStock: 14,
+          m2TotalesStock: 66.61
+        },
+        {
+          codigo: "P-005",
+          proveedor: "Trupan",
+          producto: "MDF",
+          espesorMm: 9,
+          anchoMm: 1830,
+          largoMm: 2600,
+          calidad: "A",
+          cantidadStock: 31,
+          m2TotalesStock: 147.50
+        },
+        {
+          codigo: "P-006",
+          proveedor: "Fiplasto",
+          producto: "Chapadur",
+          espesorMm: 3,
+          anchoMm: 1220,
+          largoMm: 2440,
+          calidad: "B",
+          cantidadStock: 0,
+          m2TotalesStock: 0
+        }
+      ],
+      supplierEvaluations: {
+        "VILLA GUILLERMINA": {
+          materiaPrima: "Sustrato para pisos",
+          precios: "2",
+          condiciones: "1",
+          logistica: "1",
+          calidadProducto: "2",
+          calidadNoConformidades: "2",
+          medioAmbiente: "2",
+          condicionesEspeciales: "2",
+          total: "12",
+          puntaje: "24",
+          calificacionInicial: "B",
+          calificacionFinal: "A",
+          observaciones: "Datos extraidos de Hoja1 (noviembre 2023)."
+        },
+        CUYOPLACAS: {
+          materiaPrima: "MDP/Aglomerado",
+          precios: "2",
+          condiciones: "2",
+          logistica: "1",
+          calidadProducto: "1",
+          calidadNoConformidades: "1",
+          medioAmbiente: "2",
+          condicionesEspeciales: "2",
+          total: "11",
+          puntaje: "22",
+          calificacionInicial: "B",
+          calificacionFinal: "A",
+          observaciones: "Datos extraidos de Hoja1 (noviembre 2023)."
+        },
+        FAPLAC: {
+          materiaPrima: "MDP/Aglomerado",
+          precios: "1",
+          condiciones: "3",
+          logistica: "1",
+          calidadProducto: "1",
+          calidadNoConformidades: "1",
+          medioAmbiente: "1",
+          condicionesEspeciales: "2",
+          total: "10",
+          puntaje: "20",
+          calificacionInicial: "B",
+          calificacionFinal: "A",
+          observaciones: "Datos extraidos de Hoja1 (noviembre 2023)."
+        },
+        FIPLASTO: {
+          materiaPrima: "Chapadur",
+          precios: "2",
+          condiciones: "2",
+          logistica: "1",
+          calidadProducto: "2",
+          calidadNoConformidades: "2",
+          medioAmbiente: "2",
+          condicionesEspeciales: "1",
+          total: "12",
+          puntaje: "12",
+          calificacionInicial: "B",
+          calificacionFinal: "B",
+          observaciones: "Datos extraidos de Hoja1 (noviembre 2023)."
+        }
+      },
+      isSupplierModalOpen: false,
+      selectedSupplier: "",
+      selectedEvaluation: {
+        materiaPrima: "Sin datos",
+        precios: "-",
+        condiciones: "-",
+        logistica: "-",
+        calidadProducto: "-",
+        calidadNoConformidades: "-",
+        medioAmbiente: "-",
+        condicionesEspeciales: "-",
+        total: "-",
+        puntaje: "-",
+        calificacionInicial: "-",
+        calificacionFinal: "-",
+        observaciones: "Sin datos"
       },
       topBoxData: [
         { herraje: "SOPORTE PLACA 13-15mm", funcion: "SOPORTE KOMPAK", cod: "T-01A", cantidad: 25 },
@@ -202,7 +451,14 @@ export default {
       backgroundImage
     }
   },
-  computed: {},
+  computed: {
+    placasDataWithEvaluation() {
+      return this.placasData.filter((item) => {
+        const providerKey = this.normalizeProviderKey(item.proveedor)
+        return Boolean(this.supplierEvaluations[providerKey])
+      })
+    }
+  },
   methods: {
     authConfig() {
       const token = localStorage.getItem("token")
@@ -412,6 +668,38 @@ export default {
         minute: "2-digit",
         second: "2-digit"
       })
+    },
+    normalizeProviderKey(providerName) {
+      return String(providerName || "")
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+    },
+    openSupplierDetails(providerName) {
+      const fallback = {
+        materiaPrima: "Sin datos",
+        precios: "-",
+        condiciones: "-",
+        logistica: "-",
+        calidadProducto: "-",
+        calidadNoConformidades: "-",
+        medioAmbiente: "-",
+        condicionesEspeciales: "-",
+        total: "-",
+        puntaje: "-",
+        calificacionInicial: "-",
+        calificacionFinal: "-",
+        observaciones: "Proveedor sin evaluacion en el excel 2023."
+      }
+
+      const providerKey = this.normalizeProviderKey(providerName)
+      this.selectedSupplier = providerName
+      this.selectedEvaluation = this.supplierEvaluations[providerKey] || fallback
+      this.isSupplierModalOpen = true
+    },
+    closeSupplierDetails() {
+      this.isSupplierModalOpen = false
     }
   },
   async mounted() {
@@ -587,5 +875,67 @@ td {
 .quantity .stock-unknown {
   color: #9e9e9e;
   font-style: italic;
+}
+
+.details-btn {
+  width: auto;
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  background: #2c5aa0;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+.modal-card {
+  width: min(680px, 92vw);
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+}
+
+.modal-content p {
+  margin: 0.35rem 0;
+  white-space: normal;
+}
+
+.evaluation-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.evaluation-table th,
+.evaluation-table td {
+  border-bottom: 1px solid #e7e7e7;
+  padding: 0.4rem;
+  white-space: normal;
+}
+
+.evaluation-note {
+  color: #455a64;
+  font-size: 0.9rem;
+}
+
+.close-btn {
+  width: auto;
+  padding: 0.3rem 0.6rem;
+  background: #6c757d;
 }
 </style>
