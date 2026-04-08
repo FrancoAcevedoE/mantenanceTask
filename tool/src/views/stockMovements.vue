@@ -4,22 +4,39 @@
       <section class="panel-card">
         <h2>Carga y descarga de stock</h2>
 
+        <div class="form-grid filter-block">
+          <label for="materialTypeFilter">Filtro</label>
+          <select id="materialTypeFilter" v-model="selectedMaterialType" disabled>
+            <option value="placas">PLACAS</option>
+          </select>
+        </div>
+
         <form class="form-grid" @submit.prevent="registerMovement">
           <select v-model="form.itemId" required>
             <option value="">Seleccionar insumo</option>
-            <option v-for="item in supplies" :key="item._id" :value="item._id">
+            <option v-for="item in filteredSupplies" :key="item._id" :value="item._id">
               {{ item.name }} {{ item.size ? `(${item.size})` : '' }} - stock: {{ item.stockPlates }} placas
             </option>
           </select>
 
-          <select v-model="form.movementType" required>
-            <option value="in">Carga (+)</option>
-            <option value="out">Descarga (-)</option>
-          </select>
+          <div class="movement-type-buttons">
+            <button
+              type="button"
+              :class="['type-button', { active: form.movementType === 'in' }]"
+              @click="form.movementType = 'in'"
+            >
+              Carga +
+            </button>
+            <button
+              type="button"
+              :class="['type-button', { active: form.movementType === 'out' }]"
+              @click="form.movementType = 'out'"
+            >
+              Descarga -
+            </button>
+          </div>
 
-          <input v-model.number="form.pallets" type="number" min="0" step="1" placeholder="Pallets" />
-          <input v-model.number="form.plates" type="number" min="0" step="1" placeholder="Placas" />
-          <textarea v-model="form.reason" placeholder="Motivo / referencia"></textarea>
+          <input v-model.number="form.plates" type="number" min="1" step="1" placeholder="Cantidad de placas" />
 
           <button type="submit" :disabled="isSaving">
             {{ isSaving ? 'Guardando...' : 'Guardar movimiento' }}
@@ -33,7 +50,7 @@
           <button type="button" class="secondary" @click="loadData">Actualizar</button>
         </div>
 
-        <p v-if="!movements.length" class="empty-state">Sin movimientos registrados.</p>
+        <p v-if="!filteredMovements.length" class="empty-state">Sin movimientos registrados para el filtro actual.</p>
 
         <div v-else class="table-wrap">
           <table>
@@ -42,26 +59,41 @@
                 <th>Fecha</th>
                 <th>Insumo</th>
                 <th>Tipo</th>
-                <th>Pallets</th>
                 <th>Placas</th>
-                <th>Delta placas</th>
-                <th>Stock resultante</th>
-                <th>Usuario</th>
-                <th>Motivo</th>
+                <th>Detalles</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in movements" :key="item._id">
-                <td>{{ formatDate(item.createdAt) }}</td>
-                <td>{{ item.item?.name || '-' }} {{ item.item?.size ? `(${item.item.size})` : '' }}</td>
-                <td>{{ item.movementType === 'in' ? 'Carga' : 'Descarga' }}</td>
-                <td>{{ item.pallets }}</td>
-                <td>{{ item.plates }}</td>
-                <td>{{ item.deltaPlates }}</td>
-                <td>{{ item.stockAfterPlates }}</td>
-                <td>{{ item.performedBy?.name || '-' }}</td>
-                <td>{{ item.reason || '-' }}</td>
-              </tr>
+              <template v-for="item in filteredMovements" :key="item._id">
+                <tr>
+                  <td>{{ formatDate(item.createdAt) }}</td>
+                  <td>{{ item.item?.name || '-' }} {{ item.item?.size ? `(${item.item.size})` : '' }}</td>
+                  <td>{{ item.movementType === 'in' ? 'Carga' : 'Descarga' }}</td>
+                  <td>{{ item.plates }}</td>
+                  <td class="details-cell">
+                    <button
+                      type="button"
+                      class="details-button"
+                      :aria-expanded="openedDetailId === item._id"
+                      @click="toggleDetails(item._id)"
+                    >
+                      !
+                    </button>
+                  </td>
+                </tr>
+
+                <tr v-if="openedDetailId === item._id" class="details-row">
+                  <td colspan="5">
+                    <div class="details-inline">
+                      <p><strong>Pallets:</strong> {{ item.pallets }}</p>
+                      <p><strong>Delta placas:</strong> {{ item.deltaPlates }}</p>
+                      <p><strong>Stock resultante:</strong> {{ item.stockAfterPlates }}</p>
+                      <p><strong>Usuario:</strong> {{ item.performedBy?.name || '-' }}</p>
+                      <p><strong>Motivo:</strong> {{ item.reason || '-' }}</p>
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -81,15 +113,50 @@ export default {
     return {
       supplies: [],
       movements: [],
+      selectedMaterialType: "placas",
       isSaving: false,
+      openedDetailId: "",
       form: {
         itemId: "",
         movementType: "in",
-        pallets: 0,
         plates: 0,
-        reason: ""
       },
       backgroundImage
+    }
+  },
+  computed: {
+    categorizedSupplies() {
+      return this.supplies.map(item => ({
+        ...item,
+        materialCategory: this.normalizeMaterialType(item.materialType)
+      }))
+    },
+    categorizedMovements() {
+      return this.movements.map(item => ({
+        ...item,
+        materialCategory: this.normalizeMaterialType(item.item?.materialType)
+      }))
+    },
+    filteredSupplies() {
+      return this.categorizedSupplies.filter(item => item.materialCategory === "placas")
+    },
+    filteredMovements() {
+      return this.categorizedMovements.filter(item => item.materialCategory === "placas")
+    }
+  },
+  watch: {
+    selectedMaterialType() {
+      const existsInFiltered = this.filteredSupplies.some(item => item._id === this.form.itemId)
+      if (!existsInFiltered) {
+        this.form.itemId = ""
+      }
+
+      if (this.openedDetailId) {
+        const existsInHistory = this.filteredMovements.some(item => item._id === this.openedDetailId)
+        if (!existsInHistory) {
+          this.openedDetailId = ""
+        }
+      }
     }
   },
   methods: {
@@ -110,6 +177,7 @@ export default {
 
         this.supplies = Array.isArray(suppliesResponse.data) ? suppliesResponse.data : []
         this.movements = Array.isArray(movementsResponse.data?.items) ? movementsResponse.data.items : []
+
       } catch (error) {
         this.$notify.notifyApiError(error, "No se pudo cargar el módulo de stock")
       }
@@ -126,9 +194,7 @@ export default {
         this.form = {
           itemId: "",
           movementType: "in",
-          pallets: 0,
           plates: 0,
-          reason: ""
         }
         await this.loadData()
       } catch (error) {
@@ -136,6 +202,21 @@ export default {
       } finally {
         this.isSaving = false
       }
+    },
+    toggleDetails(id) {
+      this.openedDetailId = this.openedDetailId === id ? "" : id
+    },
+    normalizeMaterialType(value) {
+      const raw = String(value || "").trim().toLowerCase()
+      if (!raw) return "otros"
+      if (raw.includes("madera")) return "placas"
+      return "otros"
+    },
+    formatMaterialType(value) {
+      const text = String(value || "").trim()
+      if (!text) return "-"
+      if (text.toLowerCase() === "madera") return "PLACAS"
+      return text.charAt(0).toUpperCase() + text.slice(1)
     },
     formatDate(value) {
       const date = new Date(value)
@@ -196,6 +277,15 @@ export default {
   gap: 0.6rem;
 }
 
+.filter-block {
+  margin-bottom: 0.7rem;
+}
+
+.filter-block label {
+  font-size: 0.92rem;
+  color: #344955;
+}
+
 input,
 select,
 textarea,
@@ -219,6 +309,22 @@ button.secondary {
   background: #49627a;
 }
 
+.movement-type-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.type-button {
+  background: #d9e4ea;
+  color: #234;
+}
+
+.type-button.active {
+  background: #2f6f8f;
+  color: #fff;
+}
+
 .header-row {
   display: flex;
   align-items: center;
@@ -228,6 +334,37 @@ button.secondary {
 
 .table-wrap {
   overflow: auto;
+}
+
+.details-cell {
+  text-align: center;
+}
+
+.details-button {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  padding: 0;
+  font-weight: 700;
+  background: #f59f00;
+  color: #1f2933;
+}
+
+.details-row td {
+  background: #f7fafc;
+}
+
+.details-inline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.45rem 0.8rem;
+  padding: 0.4rem 0.1rem;
+}
+
+.details-inline p {
+  margin: 0;
+  white-space: normal;
 }
 
 table {

@@ -88,6 +88,7 @@ const FIELD_ALIASES = {
   ],
   stockPlates: [
     "stock_placas",
+    "cantidad_de_placas_stock",
     "placas",
     "cantidad_placas",
     "stock_unidades",
@@ -440,6 +441,27 @@ const normalizeImportMode = (rawMode = "") => {
   return "overwrite"
 }
 
+const pickSheetName = (workbook, preferredNames = []) => {
+  const sheetNames = Array.isArray(workbook?.SheetNames) ? workbook.SheetNames : []
+
+  if (!sheetNames.length) {
+    return ""
+  }
+
+  const preferredSet = new Set(preferredNames.map(name => normalizeHeader(name)))
+  const preferredMatch = sheetNames.find(name => preferredSet.has(normalizeHeader(name)))
+
+  if (preferredMatch) {
+    return preferredMatch
+  }
+
+  if (sheetNames[2]) {
+    return sheetNames[2]
+  }
+
+  return sheetNames[0]
+}
+
 const buildSyncPayload = (state) => ({
   lastImportAt: state?.lastImportAt || null,
   lastFileName: String(state?.lastFileName || ""),
@@ -790,7 +812,7 @@ export const importRawMaterialsExcelController = async (req, res) => {
     }
 
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" })
-    const firstSheetName = workbook.SheetNames[0]
+    const firstSheetName = pickSheetName(workbook, ["stock actual", "stock_actual"])
 
     if (!firstSheetName) {
       return res.status(400).json({
@@ -852,7 +874,7 @@ export const importRawMaterialsExcelController = async (req, res) => {
           stockPlates = stockPallets * normalizedPlatesPerPallet
         }
 
-        stockPlates = Math.max(0, Math.round(stockPlates * 100) / 100)
+        stockPlates = Math.max(0, Math.round(stockPlates))
 
         const query = {
           name,
@@ -863,7 +885,7 @@ export const importRawMaterialsExcelController = async (req, res) => {
         const existing = await RawMaterial.findOne(query)
 
         if (!existing) {
-          const nextStockPlates = Number(stockPlates || 0)
+          const nextStockPlates = Math.max(0, Math.round(Number(stockPlates || 0)))
 
           await RawMaterial.create({
             ...query,
@@ -896,7 +918,7 @@ export const importRawMaterialsExcelController = async (req, res) => {
           existing.deletedBy = ""
           existing.areaM2PerPlate = Number(areaM2PerPlate || 0)
           existing.platesPerPallet = normalizedPlatesPerPallet
-          existing.stockPlates = Math.max(0, Math.round(nextStockPlates * 100) / 100)
+          existing.stockPlates = Math.max(0, Math.round(nextStockPlates))
           existing.notes = notes || existing.notes
           existing.updatedAt = new Date()
           await existing.save()
