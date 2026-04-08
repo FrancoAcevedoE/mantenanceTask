@@ -8,7 +8,6 @@ import Dashboard from '@/views/Dashboard.vue'
 import NotificationHistory from '@/views/NotificationHistory.vue'
 import stockSupplies from '@/views/stockSupplies.vue'
 import stockMovements from '@/views/stockMovements.vue'
-import stockPurchases from '@/views/stockPurchases.vue'
 
 const getStoredUser = () => {
   try {
@@ -54,9 +53,6 @@ const router = createRouter({
     },
     {
       path: '/stock/movimientos', name: 'StockMovements', component: stockMovements, meta: { requiresAuth: true, roles: ['admin', 'supervisor'] }
-    },
-    {
-      path: '/stock/compras', name: 'StockPurchases', component: stockPurchases, meta: { requiresAuth: true, roles: ['admin', 'supervisor', 'operario'] }
     }
     
   ]

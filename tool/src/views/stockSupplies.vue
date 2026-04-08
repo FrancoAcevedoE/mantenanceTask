@@ -97,36 +97,30 @@
 
       <section class="panel-card panel-wide">
         <div class="list-header">
-          <h2>Listado de insumos</h2>
-          <input v-model="search" type="text" placeholder="Buscar por nombre o tamaño" />
+          <h2>Top Box - Herrajes</h2>
         </div>
 
-        <p v-if="!filteredSupplies.length" class="empty-state">No hay insumos cargados.</p>
-
-        <div v-else class="table-wrap">
+        <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Insumo</th>
-                <th>Tipo</th>
-                <th>Tamaño</th>
-                <th>m2 por placa</th>
-                <th>Placas por pallet</th>
-                <th>Stock placas</th>
-                <th>Pallets equiv.</th>
-                <th>Stock total m2</th>
+                <th>Herraje</th>
+                <th>Función</th>
+                <th>Código</th>
+                <th>Cantidad</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in filteredSupplies" :key="item._id">
-                <td>{{ item.name }}</td>
-                <td>{{ item.materialType }}</td>
-                <td>{{ item.size || '-' }}</td>
-                <td>{{ item.areaM2PerPlate }}</td>
-                <td>{{ item.platesPerPallet }}</td>
-                <td>{{ item.stockPlates }}</td>
-                <td>{{ item.stockPalletsEquivalent }}</td>
-                <td>{{ item.stockTotalM2 }}</td>
+              <tr v-for="item in topBoxData" :key="item.cod">
+                <td>{{ item.herraje }}</td>
+                <td>{{ item.funcion }}</td>
+                <td class="code">{{ item.cod }}</td>
+                <td class="quantity">
+                  <span v-if="item.cantidad !== null" :class="{ 'low-stock': item.cantidad === 0 }">
+                    {{ item.cantidad }}
+                  </span>
+                  <span v-else class="stock-unknown">—</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -146,7 +140,6 @@ export default {
   data() {
     return {
       supplies: [],
-      search: "",
       selectedFile: null,
       isImporting: false,
       isExporting: false,
@@ -169,21 +162,47 @@ export default {
         stockPlates: 0,
         notes: ""
       },
+      topBoxData: [
+        { herraje: "SOPORTE PLACA 13-15mm", funcion: "SOPORTE KOMPAK", cod: "T-01A", cantidad: 25 },
+        { herraje: "BISAGRA SELF CLOSING", funcion: "DERECHA", cod: "E-BT-1", cantidad: null },
+        { herraje: "BISAGRA SELF CLOSING", funcion: "IZQUIERDA", cod: "E-BT-2", cantidad: null },
+        { herraje: "ZÓCALOS (600x10mm)", funcion: "ZÓCALO", cod: "T-022", cantidad: 0 },
+        { herraje: "PERFIL INOX 1\" (50x10mm)", funcion: "TRAVESAÑO", cod: "T-023", cantidad: 0 },
+        { herraje: "TORN CAB FRESADA MX19", funcion: "FRENTE HP 15 MM", cod: "E-008-2", cantidad: 8 },
+        { herraje: "PERFIL DE ALUMINIO", funcion: "SUJECCIÓN KOMPAK", cod: "E-001", cantidad: null },
+        { herraje: "SOPORTE PLACA 10mm", funcion: "SUJECCIÓN KOMPAK", cod: "T-005", cantidad: null },
+        { herraje: "TAPA PVC SUPERIOR DERECHA", funcion: "PARA PERFIL", cod: "E-002-1", cantidad: null },
+        { herraje: "TAPA PVC SUPERIOR IZQUIERDA", funcion: "PARA PERFIL", cod: "E-002-2", cantidad: null },
+        { herraje: "ZAPATA FUNCIÓN DE ALUMINIO", funcion: "PARA BASE DE PERFIL", cod: "T-003", cantidad: null },
+        { herraje: "CERRADURA-PASADOR LIBRE/OCUPADO", funcion: "PARA PUERTA", cod: "E-009", cantidad: 4 },
+        { herraje: "TORNILLO DEL PARKER AX1/8\"", funcion: "PARA TAPA LIBRE OCUPADO Y CERR0JO", cod: "E-B1-1", cantidad: 10 },
+        { herraje: "TACO FISCHER MR8x10", funcion: "PARA ZAPATA", cod: "E-004", cantidad: null },
+        { herraje: "TORNILLO CAB FRESADA MAX12", funcion: "PARA LATERAL XP", cod: "E-008-1", cantidad: null },
+        { herraje: "TORNILLO CAB FRESADA MAX15", funcion: "HP P50 13 MM", cod: "E-008-3", cantidad: null },
+        { herraje: "TORNILLO CAB BOTÓN INOX MAX10", funcion: "PARA KOMPAK Y CENEFA", cod: "E-B1-2", cantidad: 42 },
+        { herraje: "TORNILLO CAB BOTÓN INOX MAX16", funcion: "PARA ZÓCALO Y TRAVESAÑO", cod: "E-B1-3", cantidad: 0 },
+        { herraje: "TORNILLO CAB BOTÓN INOX MAX19", funcion: "PARA BISAGRA, ZÓCALO Y TRAVESAÑO", cod: "E-B1-5", cantidad: 8 },
+        { herraje: "TORNILLO CAB BOTÓN INOX MAX30", funcion: "PARA KOMPAK Y CENEFA", cod: "E-B1-4", cantidad: 10 },
+        { herraje: "TUERCA REMACHE M6", funcion: "PARA KOMPAK", cod: "T-012", cantidad: 56 },
+        { herraje: "TORNILLO FIX MADERA Nº 8 X 2 1/2", funcion: "PARA PARED", cod: "E-B13", cantidad: 20 },
+        { herraje: "TARUGO PARED Nº 8", funcion: "PARA PARED", cod: "E-B14", cantidad: 20 },
+        { herraje: "TORN AUTOPERF 8X1/2\"", funcion: "PARA BISAGRA Y TUERCA", cod: "E-B14", cantidad: null },
+        { herraje: "TORNILLO AUTOPERF 8X1", funcion: "PARA PERFIL LATERAL Y GRAPAS", cod: "E-B1-1", cantidad: null },
+        { herraje: "TORNILLO AUTOPERF 8X1/2", funcion: "PARA PERFIL LATERAL GRAPAS", cod: "E-B1-2", cantidad: null },
+        { herraje: "BURLETE GOMA PERFIL T5", funcion: "PARA PUERTA", cod: "E-020", cantidad: null },
+        { herraje: "TORNILLO TEL PARKER AX1\"", funcion: "PARA \"C\" INGRESO PESTILLO", cod: "E-B10-2", cantidad: 10 },
+        { herraje: "TORNILLO D TEL PARKER AX1/4\"", funcion: "PARA CERRADURA", cod: "E-B10-3", cantidad: 18 },
+        { herraje: "SUPLEMENTO KOMPAK", funcion: "PARA ANCHO APERTURA ESPECIAL", cod: "T-019", cantidad: null },
+        { herraje: "TAPA CERROJO PERFIL", funcion: "PARA INGRESO PESTILLO (PERFIL)", cod: "T-018", cantidad: null },
+        { herraje: "FARFAIAS", funcion: "PARA DURLOCK", cod: "E-001", cantidad: null },
+        { herraje: "BISAGRA DOBLE APERTURA", funcion: "BIDIRECCIONAL", cod: "E-022", cantidad: 4 },
+        { herraje: "PRISIONEROS 4x8", funcion: "TODO MODELO", cod: "E-005", cantidad: 26 },
+        { herraje: "PRISIONEROS 6X6", funcion: "TODO MODELO", cod: "E-006", cantidad: null }
+      ],
       backgroundImage
     }
   },
-  computed: {
-    filteredSupplies() {
-      const term = this.search.trim().toLowerCase()
-      if (!term) return this.supplies
-
-      return this.supplies.filter((item) => {
-        const byName = String(item.name || "").toLowerCase().includes(term)
-        const bySize = String(item.size || "").toLowerCase().includes(term)
-        return byName || bySize
-      })
-    }
-  },
+  computed: {},
   methods: {
     authConfig() {
       const token = localStorage.getItem("token")
@@ -545,5 +564,28 @@ td {
 
 .empty-state {
   color: #666;
+}
+
+.code {
+  font-family: monospace;
+  font-weight: 600;
+  color: #2c5aa0;
+}
+
+.quantity {
+  text-align: center;
+  font-weight: 600;
+}
+
+.quantity .low-stock {
+  color: #d32f2f;
+  background: #ffebee;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+.quantity .stock-unknown {
+  color: #9e9e9e;
+  font-style: italic;
 }
 </style>
