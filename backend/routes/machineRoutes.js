@@ -34,6 +34,7 @@ router.put("/:id", verifyToken, checkRole("admin"), updateMachineController)
 // PATCH update machine fields
 router.patch("/:id", verifyToken, checkRole("admin"), modifyMachineController)
 router.patch("/:id/horometro", verifyToken, checkRole("admin"), updateHorometroController)
+router.patch("/:id/horometro", verifyToken, checkRole("admin", "operario"), updateHorometroController)
 router.patch("/:id/instructions", verifyToken, checkRole("admin"), updateInstructionsController)
 router.patch("/:id/machine-parts", verifyToken, checkRole("admin"), updateMachinePartsController)
 router.patch("/:id/sector", verifyToken, checkRole("admin"), updateSectorController)

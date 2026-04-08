@@ -4,6 +4,37 @@
     <div class="box">
         <h2>Nuevo trabajo</h2>
 
+        <details class="horometro-panel step-block">
+            <summary>Actualizar horometro</summary>
+            <div class="horometro-body">
+                <label>Maquina</label>
+                <select v-model="horometroForm.machineId">
+                    <option value="">Seleccionar maquina</option>
+                    <option v-for="machine in machines" :key="machine._id" :value="machine._id">
+                        {{ machine.sector ? `${machine.sector} - ${machine.name}` : machine.name }}
+                    </option>
+                </select>
+
+                <label>Nuevo horometro</label>
+                <input type="number" min="0" step="1" v-model.number="horometroForm.value">
+
+                <button type="button" :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro" @click="updateHorometroFromPanel">
+                    {{ isUpdatingHorometro ? 'Actualizando...' : 'Actualizar horometro' }}
+                </button>
+
+                <div v-if="selectedHorometroMachine" class="horometro-history">
+                    <p><strong>Horometro actual:</strong> {{ selectedHorometroMachine.horometro ?? 0 }}h</p>
+                    <p><strong>Historial</strong></p>
+                    <ul v-if="orderedHorometroHistory.length" class="horometro-list">
+                        <li v-for="entry in orderedHorometroHistory" :key="`${entry.recordedAt}-${entry.value}`">
+                            {{ formatDate(entry.recordedAt) }} - {{ entry.value }}h
+                        </li>
+                    </ul>
+                    <p v-else>No hay historial registrado.</p>
+                </div>
+            </div>
+        </details>
+
         <form @submit.prevent="saveMaintenance">
 
 <label>Sector</label>
@@ -199,6 +230,12 @@ machines:[],
 sectors:[],
 currentUserRole:"",
 currentUserId:"",
+isUpdatingHorometro:false,
+
+horometroForm:{
+machineId:"",
+value:null
+},
 
 form:{
 
@@ -306,7 +343,19 @@ computed: {
         }
 
         return parts ? [parts] : []
-  }
+  },
+    selectedHorometroMachine() {
+        if (!this.horometroForm.machineId) return null
+        return this.machines.find(machine => machine._id === this.horometroForm.machineId) || null
+    },
+    orderedHorometroHistory() {
+        if (!this.selectedHorometroMachine) return []
+        const history = Array.isArray(this.selectedHorometroMachine.horometroHistory)
+            ? this.selectedHorometroMachine.horometroHistory
+            : []
+
+        return [...history].sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt))
+    }
 },
 
 methods:{
@@ -397,6 +446,46 @@ return
 
 this.form.machinePart = ""
 
+},
+
+async updateHorometroFromPanel() {
+if (this.isUpdatingHorometro) return
+
+if (!this.horometroForm.machineId) {
+this.$notify.error("Selecciona una maquina")
+return
+}
+
+if (!Number.isFinite(this.horometroForm.value) || this.horometroForm.value < 0) {
+this.$notify.error("El horometro debe ser un numero mayor o igual a 0")
+return
+}
+
+const targetMachine = this.machines.find(machine => machine._id === this.horometroForm.machineId)
+const machineLabel = targetMachine?.name || "la maquina seleccionada"
+const confirmed = window.confirm(`¿Seguro que queres actualizar el horometro de ${machineLabel}?`)
+
+if (!confirmed) {
+return
+}
+
+this.isUpdatingHorometro = true
+
+try {
+await axios.patch(
+`${API_BASE_URL}/machines/${this.horometroForm.machineId}/horometro`,
+{ horometro: this.horometroForm.value },
+this.authConfig()
+)
+
+this.$notify.success("Horometro actualizado")
+await this.loadMachines()
+this.horometroForm.value = null
+} catch (error) {
+this.$notify.notifyApiError(error, "No se pudo actualizar horometro")
+} finally {
+this.isUpdatingHorometro = false
+}
 },
 
 onUnfinishedReasonCategoryChange() {
@@ -776,6 +865,40 @@ button:hover {
 .add-worker-btn:disabled {
     background: #b2dfdb;
     cursor: not-allowed;
+}
+
+.horometro-panel {
+    margin-bottom: 1rem;
+    text-align: left;
+    border: 1px solid #d8d8d8;
+    border-radius: 10px;
+    padding: 0.55rem 0.8rem;
+    background: #fafafa;
+}
+
+.horometro-panel summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #355062;
+}
+
+.horometro-body {
+    margin-top: 0.65rem;
+}
+
+.horometro-history {
+    margin-top: 0.75rem;
+    background: #f3f7fa;
+    border: 1px solid #dde7ee;
+    border-radius: 8px;
+    padding: 0.65rem;
+}
+
+.horometro-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    max-height: 170px;
+    overflow-y: auto;
 }
 
 .additional-workers-empty {
