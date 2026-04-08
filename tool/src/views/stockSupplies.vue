@@ -100,6 +100,15 @@
           <h2>Placas</h2>
         </div>
 
+        <div class="quick-legend">
+          <span class="calif-badge calif-a">A</span>
+          <span>Proveedor recomendado</span>
+          <span class="calif-badge calif-b">B</span>
+          <span>Seguimiento medio</span>
+          <span class="calif-badge calif-c">C</span>
+          <span>Solo casos excepcionales</span>
+        </div>
+
         <div class="table-wrap">
           <table>
             <thead>
@@ -113,6 +122,7 @@
                 <th>Calidad</th>
                 <th>Cant. placas stock</th>
                 <th>M2 totales stock</th>
+                <th>Estado proveedor</th>
                 <th>Detalles</th>
               </tr>
             </thead>
@@ -129,6 +139,16 @@
                   <span :class="{ 'low-stock': item.cantidadStock === 0 }">{{ item.cantidadStock }}</span>
                 </td>
                 <td>{{ item.m2TotalesStock }}</td>
+                <td>
+                  <div class="status-stack">
+                    <span class="calif-badge" :class="`calif-${String(getSupplierEvaluation(item.proveedor)?.calificacionFinal || '-').toLowerCase()}`">
+                      {{ getSupplierEvaluation(item.proveedor)?.calificacionFinal || '-' }}
+                    </span>
+                    <small>
+                      Puntaje {{ getSupplierEvaluation(item.proveedor)?.puntaje || '-' }}
+                    </small>
+                  </div>
+                </td>
                 <td>
                   <button type="button" class="details-btn" @click="openSupplierDetails(item.proveedor)">
                     Ver detalles
@@ -181,49 +201,74 @@
 
           <div class="modal-content">
             <p><strong>Materia prima:</strong> {{ selectedEvaluation.materiaPrima }}</p>
-            <p><strong>Calificacion inicial/flexibilidad:</strong> {{ selectedEvaluation.calificacionInicial }} / {{ selectedEvaluation.calificacionFinal }}</p>
+            <p>
+              <strong>Calificacion inicial/flexibilidad:</strong>
+              <span class="calif-badge" :class="`calif-${String(selectedEvaluation.calificacionInicial).toLowerCase()}`">
+                {{ selectedEvaluation.calificacionInicial }}
+              </span>
+              /
+              <span class="calif-badge" :class="`calif-${String(selectedEvaluation.calificacionFinal).toLowerCase()}`">
+                {{ selectedEvaluation.calificacionFinal }}
+              </span>
+            </p>
             <p><strong>Total:</strong> {{ selectedEvaluation.total }} | <strong>Puntaje:</strong> {{ selectedEvaluation.puntaje }}</p>
+
+            <div class="legend-box">
+              <strong>Referencia Excel:</strong>
+              <span class="score-chip score-1">1 = Bueno</span>
+              <span class="score-chip score-2">2 = Regular</span>
+              <span class="score-chip score-3">3 = Mal</span>
+              <span class="legend-note">En "Condiciones especiales" la escala es inversa.</span>
+            </div>
 
             <table class="evaluation-table">
               <thead>
                 <tr>
                   <th>Criterio</th>
                   <th>Valor</th>
+                  <th>Lectura</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Comercial - precios</td>
-                  <td>{{ selectedEvaluation.precios }}</td>
+                  <td><span class="score-chip" :class="scoreClass(selectedEvaluation.precios)">{{ selectedEvaluation.precios }}</span></td>
+                  <td>{{ scoreMeaning(selectedEvaluation.precios, false) }}</td>
                 </tr>
                 <tr>
                   <td>Comercial - condiciones</td>
-                  <td>{{ selectedEvaluation.condiciones }}</td>
+                  <td><span class="score-chip" :class="scoreClass(selectedEvaluation.condiciones)">{{ selectedEvaluation.condiciones }}</span></td>
+                  <td>{{ scoreMeaning(selectedEvaluation.condiciones, false) }}</td>
                 </tr>
                 <tr>
                   <td>Logistica</td>
-                  <td>{{ selectedEvaluation.logistica }}</td>
+                  <td><span class="score-chip" :class="scoreClass(selectedEvaluation.logistica)">{{ selectedEvaluation.logistica }}</span></td>
+                  <td>{{ scoreMeaning(selectedEvaluation.logistica, false) }}</td>
                 </tr>
                 <tr>
                   <td>Calidad - producto</td>
-                  <td>{{ selectedEvaluation.calidadProducto }}</td>
+                  <td><span class="score-chip" :class="scoreClass(selectedEvaluation.calidadProducto)">{{ selectedEvaluation.calidadProducto }}</span></td>
+                  <td>{{ scoreMeaning(selectedEvaluation.calidadProducto, false) }}</td>
                 </tr>
                 <tr>
                   <td>Calidad - no conformidades</td>
-                  <td>{{ selectedEvaluation.calidadNoConformidades }}</td>
+                  <td><span class="score-chip" :class="scoreClass(selectedEvaluation.calidadNoConformidades)">{{ selectedEvaluation.calidadNoConformidades }}</span></td>
+                  <td>{{ scoreMeaning(selectedEvaluation.calidadNoConformidades, false) }}</td>
                 </tr>
                 <tr>
                   <td>Medio ambiente</td>
-                  <td>{{ selectedEvaluation.medioAmbiente }}</td>
+                  <td><span class="score-chip" :class="scoreClass(selectedEvaluation.medioAmbiente)">{{ selectedEvaluation.medioAmbiente }}</span></td>
+                  <td>{{ scoreMeaning(selectedEvaluation.medioAmbiente, false) }}</td>
                 </tr>
                 <tr>
                   <td>Condiciones especiales</td>
-                  <td>{{ selectedEvaluation.condicionesEspeciales }}</td>
+                  <td><span class="score-chip" :class="scoreClass(selectedEvaluation.condicionesEspeciales)">{{ selectedEvaluation.condicionesEspeciales }}</span></td>
+                  <td>{{ scoreMeaning(selectedEvaluation.condicionesEspeciales, true) }}</td>
                 </tr>
               </tbody>
             </table>
 
-            <p class="evaluation-note">Escala del excel: 1 = Bueno, 2 = Regular, 3 = Mal.</p>
+            <p class="evaluation-note">Visual adaptado a la planilla para mantener coherencia de lectura.</p>
             <p><strong>Observaciones:</strong> {{ selectedEvaluation.observaciones }}</p>
           </div>
         </div>
@@ -676,6 +721,10 @@ export default {
         .replace(/[\u0300-\u036f]/g, "")
         .trim()
     },
+    getSupplierEvaluation(providerName) {
+      const providerKey = this.normalizeProviderKey(providerName)
+      return this.supplierEvaluations[providerKey] || null
+    },
     openSupplierDetails(providerName) {
       const fallback = {
         materiaPrima: "Sin datos",
@@ -693,10 +742,32 @@ export default {
         observaciones: "Proveedor sin evaluacion en el excel 2023."
       }
 
-      const providerKey = this.normalizeProviderKey(providerName)
       this.selectedSupplier = providerName
-      this.selectedEvaluation = this.supplierEvaluations[providerKey] || fallback
+      this.selectedEvaluation = this.getSupplierEvaluation(providerName) || fallback
       this.isSupplierModalOpen = true
+    },
+    scoreClass(value) {
+      const numeric = Number(value)
+      if (numeric === 1) return "score-1"
+      if (numeric === 2) return "score-2"
+      if (numeric === 3) return "score-3"
+      return "score-na"
+    },
+    scoreMeaning(value, isInverse = false) {
+      const numeric = Number(value)
+      if (![1, 2, 3].includes(numeric)) {
+        return "Sin referencia"
+      }
+
+      if (isInverse) {
+        if (numeric === 1) return "Menor flexibilidad"
+        if (numeric === 2) return "Flexibilidad media"
+        return "Mayor flexibilidad"
+      }
+
+      if (numeric === 1) return "Bueno"
+      if (numeric === 2) return "Regular"
+      return "Mal"
     },
     closeSupplierDetails() {
       this.isSupplierModalOpen = false
@@ -833,6 +904,16 @@ button.secondary {
   max-width: 300px;
 }
 
+.quick-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  color: #455a64;
+  font-size: 0.9rem;
+}
+
 .table-wrap {
   overflow: auto;
 }
@@ -886,6 +967,16 @@ td {
   font-size: 0.85rem;
 }
 
+.status-stack {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.status-stack small {
+  color: #51616f;
+  font-weight: 600;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -915,6 +1006,22 @@ td {
   white-space: normal;
 }
 
+.legend-box {
+  margin: 0.6rem 0;
+  padding: 0.55rem;
+  border-radius: 10px;
+  background: #f3f6fb;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.legend-note {
+  color: #5a6570;
+  font-size: 0.84rem;
+}
+
 .evaluation-table {
   width: 100%;
   border-collapse: collapse;
@@ -931,6 +1038,63 @@ td {
 .evaluation-note {
   color: #455a64;
   font-size: 0.9rem;
+}
+
+.score-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.score-1 {
+  background: #d8f5df;
+  color: #1b5e20;
+}
+
+.score-2 {
+  background: #fff4d6;
+  color: #8a6d00;
+}
+
+.score-3 {
+  background: #ffe1e1;
+  color: #a30000;
+}
+
+.score-na {
+  background: #eceff1;
+  color: #607d8b;
+}
+
+.calif-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.calif-a {
+  background: #d8f5df;
+  color: #1b5e20;
+}
+
+.calif-b {
+  background: #fff4d6;
+  color: #8a6d00;
+}
+
+.calif-c {
+  background: #ffe1e1;
+  color: #a30000;
 }
 
 .close-btn {
