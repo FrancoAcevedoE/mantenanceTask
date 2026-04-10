@@ -116,6 +116,7 @@
 <option value="Preventivo de mejora continua">Preventivo de mejora continua</option>
 <option value="Preventivo de correctivo">Preventivo de correctivo</option>
 <option value="Arreglo">Arreglo</option>
+<option value="fabricación">Fabricación</option>
 <option value="Puesta en marcha (maquina parada)">Puesta en marcha (maquina parada)</option>
 
 </select>
