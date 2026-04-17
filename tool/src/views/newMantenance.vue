@@ -66,13 +66,23 @@
 </div>
 
 <div v-if="isMachineComplete" class="step-block">
-<label>Parte de máquina</label>
-<select v-model="form.machinePart" required :disabled="!form.machine">
-    <option value="">Seleccionar parte</option>
-    <option v-for="part in selectedMachineParts" :key="part" :value="part">
+<label>Partes de máquina</label>
+<div v-if="form.machineParts.length" class="parts-chips">
+    <span v-for="part in form.machineParts" :key="part" class="part-chip">
         {{ part }}
-    </option>
-</select>
+        <button type="button" class="chip-remove" @click="removeMachinePart(part)">&#xD7;</button>
+    </span>
+</div>
+<div v-if="availableMachineParts.length" style="display:flex;gap:0.5rem;align-items:center;margin:8px 0;">
+    <select v-model="selectedAdditionalMachinePart" style="flex:1;margin:0;">
+        <option value="">Seleccionar parte</option>
+        <option v-for="part in availableMachineParts" :key="part" :value="part">
+            {{ part }}
+        </option>
+    </select>
+    <button type="button" @click="addMachinePart" :disabled="!selectedAdditionalMachinePart" class="add-part-btn">Agregar</button>
+</div>
+<p v-else class="additional-parts-empty">No hay otras partes disponibles para agregar.</p>
 </div>
 
 <div v-if="isMachinePartComplete" class="step-block">
@@ -117,6 +127,7 @@
 <option value="Preventivo de correctivo">Preventivo de correctivo</option>
 <option value="Arreglo">Arreglo</option>
 <option value="fabricación">Fabricación</option>
+<option value="Limpieza">Limpieza</option>
 <option value="Puesta en marcha (maquina parada)">Puesta en marcha (maquina parada)</option>
 
 </select>
@@ -227,6 +238,7 @@ operarios:[],
 allOperarios:[],
 additionalWorkersList:[],
 selectedAdditionalWorker:"",
+selectedAdditionalMachinePart:"",
 machines:[],
 sectors:[],
 currentUserRole:"",
@@ -247,7 +259,7 @@ form:{
 
 sector:"",
 machine:"",
-machinePart:"",
+machineParts:[],
 clientId:"",
 maintenanceType:"",
 workDescription:"",
@@ -304,7 +316,7 @@ computed: {
         return this.isSectorComplete && Boolean(this.selectedMachine)
     },
     isMachinePartComplete() {
-        return this.isMachineComplete && Boolean(this.form.machinePart)
+        return this.isMachineComplete && this.form.machineParts.length > 0
     },
     isOperarioComplete() {
         return this.isMachinePartComplete && Boolean(this.form.clientId)
@@ -330,6 +342,17 @@ computed: {
             ...this.additionalWorkersList.map(w => w._id)
         ])
         return this.allOperarios.filter(op => !usedIds.has(op._id))
+    },
+    availableAdditionalMachineParts() {
+        const usedParts = new Set([
+            ...this.form.machineParts,
+            ...this.additionalMachinePartsList
+        ])
+        return this.selectedMachineParts.filter(part => !usedParts.has(part))
+    },
+    availableMachineParts() {
+        const usedParts = new Set(this.form.machineParts)
+        return this.selectedMachineParts.filter(part => !usedParts.has(part))
     },
     filteredMachinesBySector() {
         if (!this.form.sector) return []
@@ -377,7 +400,9 @@ return null
 
 onSectorChange() {
 this.form.machine = ""
-this.form.machinePart = ""
+this.form.machineParts = []
+this.additionalMachinePartsList = []
+this.selectedAdditionalMachinePart = ""
 },
 
 authConfig(){
@@ -446,11 +471,15 @@ this.sectors = [...new Set(this.machines.map(machine => machine.sector).filter(B
 onMachineChange(){
 
 if(!this.selectedMachine){
-this.form.machinePart = ""
+this.form.machineParts = []
+this.additionalMachinePartsList = []
+this.selectedAdditionalMachinePart = ""
 return
 }
 
-this.form.machinePart = ""
+this.form.machineParts = []
+this.additionalMachinePartsList = []
+this.selectedAdditionalMachinePart = ""
 
 },
 
@@ -529,6 +558,22 @@ removeWorker(workerId){
 this.additionalWorkersList = this.additionalWorkersList.filter(w => w._id !== workerId)
 },
 
+addMachinePart(){
+if(!this.selectedAdditionalMachinePart) return
+if(!this.form.machineParts.includes(this.selectedAdditionalMachinePart)){
+    this.form.machineParts.push(this.selectedAdditionalMachinePart)
+}
+this.selectedAdditionalMachinePart = ""
+},
+
+removeMachinePart(part){
+this.form.machineParts = this.form.machineParts.filter(p => p !== part)
+},
+
+removeMachinePartFromMain(part){
+this.additionalMachinePartsList = this.additionalMachinePartsList.filter(p => p !== part)
+},
+
 async saveMaintenance(){
 
 try{
@@ -548,8 +593,8 @@ this.$notify.error("Selecciona una maquina del sector elegido")
 return
 }
 
-if (!String(this.form.machinePart || "").trim()) {
-this.$notify.error("Debes seleccionar una parte de maquina")
+if (this.form.machineParts.length === 0) {
+this.$notify.error("Debes seleccionar al menos una parte de maquina")
 return
 }
 
@@ -596,7 +641,8 @@ unfinishedReasonCategory: this.form.unfinishedReasonCategory,
 unfinishedReason: this.form.unfinishedReasonCategory === "Otros"
 ? String(this.form.unfinishedReason || "").trim()
 : this.form.unfinishedReasonCategory,
-additionalWorkers: this.additionalWorkersList.map(w => w._id)
+additionalWorkers: this.additionalWorkersList.map(w => w._id),
+machinePart: this.form.machineParts
 }
 
 await axios.post(
@@ -625,7 +671,7 @@ this.form = {
 
 sector:"",
 machine:"",
-machinePart:"",
+machineParts:[],
 clientId:this.currentUserRole === "operario" ? this.currentUserId : "",
 maintenanceType:"",
 workDescription:"",
@@ -640,6 +686,7 @@ unfinishedReason:""
 
 this.additionalWorkersList = []
 this.selectedAdditionalWorker = ""
+this.selectedAdditionalMachinePart = ""
 
 },
 
@@ -940,6 +987,55 @@ button:hover {
 }
 
 .additional-workers-empty {
+    margin: 0.5rem 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.parts-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.5rem 0;
+    justify-content: center;
+}
+
+.part-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+    border-radius: 2rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.88rem;
+}
+
+.part-chip.additional {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+}
+
+.add-part-btn {
+    width: auto;
+    padding: 0.5rem 1rem;
+    background: #00a878;
+    margin-top: 0;
+    white-space: nowrap;
+}
+
+.add-part-btn:hover {
+    background: #008f67;
+}
+
+.add-part-btn:disabled {
+    background: #b2dfdb;
+    cursor: not-allowed;
+}
+
+.additional-parts-empty {
     margin: 0.5rem 0 0;
     color: #666;
     font-size: 0.9rem;

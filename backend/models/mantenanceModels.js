@@ -23,8 +23,14 @@ const maintenanceSchema = new mongoose.Schema({
     },
 
     machinePart:{
-        type:String,
-        required:true
+        type:[String],
+        required:true,
+        validate: {
+            validator: function(v) {
+                return Array.isArray(v) && v.length > 0;
+            },
+            message: 'Debe seleccionar al menos una parte de máquina'
+        }
     },
 
     workDescription:{
@@ -65,15 +71,11 @@ const maintenanceSchema = new mongoose.Schema({
     maintenanceType:{
         type:String,
         enum:[
-            "preventivo",
-            "correctivo",
-            "mejora",
-            "puesta en marcha",
-            "arreglo",
             "Preventivo predictivo",
             "Preventivo de mejora continua",
             "Preventivo de correctivo",
             "Arreglo",
+            "Limpieza",
             "Puesta en marcha (maquina parada)"
         ],
         required:true

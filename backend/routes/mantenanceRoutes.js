@@ -14,7 +14,8 @@ import {
     dashboardController,
     notificationsHistoryController,
     notificationsController,
-    notifyTestController
+    notifyTestController,
+    deleteMaintenanceController
 } from "../controllers/mantenanceController.js"
 
 const router = express.Router()
@@ -37,6 +38,13 @@ router.put(
 verifyToken,
 checkRole("admin","operario"),
 finishMaintenance
+)
+
+router.delete(
+    "/:id",
+    verifyToken,
+    checkRole("admin"),
+    deleteMaintenanceController
 )
 
 router.get(

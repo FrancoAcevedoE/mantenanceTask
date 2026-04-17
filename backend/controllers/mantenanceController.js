@@ -132,13 +132,13 @@ export const newMaintenanceController = async (req,res)=>{
             ? req.user.id
             : data.clientId
 
-        const normalizedMachinePart = String(data.machinePart || "").trim()
-        const normalizedMaintenanceType = String(data.maintenanceType || "").trim()
-        const normalizedWorkDescription = String(data.workDescription || "").trim()
+        const normalizedMachineParts = Array.isArray(data.machinePart) 
+            ? data.machinePart.map(p => String(p || "").trim()).filter(p => p)
+            : [String(data.machinePart || "").trim()].filter(p => p)
 
-        if (!normalizedMachinePart) {
+        if (normalizedMachineParts.length === 0) {
             return res.status(400).json({
-                message: "Debes seleccionar una parte de maquina"
+                message: "Debes seleccionar al menos una parte de maquina"
             })
         }
 
@@ -153,7 +153,7 @@ export const newMaintenanceController = async (req,res)=>{
                 message: "Debes cargar la descripcion del trabajo realizado"
             })
         }
-        data.machinePart = normalizedMachinePart
+        data.machinePart = normalizedMachineParts
         data.maintenanceType = normalizedMaintenanceType
         data.workDescription = normalizedWorkDescription
 
@@ -247,9 +247,7 @@ console.log('paso 3')
             reportedBy: req.user.id,
             status
         })
-console.log('paso 4')
 
-        console.log(maintenance)
         await maintenance.save()
         sendMaintenanceStatusAlert(maintenance).catch(() => {})
 
@@ -989,6 +987,54 @@ export const notifyTestController = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             message: "Error al enviar notificacion de prueba"
+        })
+    }
+}
+
+export const deleteMaintenanceController = async (req, res) => {
+    try {
+        const { id } = req.params
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "ID de mantenimiento inválido"
+            })
+        }
+
+        const maintenance = await Maintenance.findById(id)
+        if (!maintenance) {
+            return res.status(404).json({
+                message: "Mantenimiento no encontrado"
+            })
+        }
+
+        await Maintenance.deleteOne({ _id: id })
+
+        await registerAuditEvent({
+            req,
+            action: "MAINTENANCE_DELETED",
+            entityType: "maintenance",
+            entityId: id,
+            description: `Se eliminó trabajo de mantenimiento en ${maintenance.machine}`,
+            metadata: {
+                maintenance: {
+                    id: String(maintenance._id),
+                    machine: maintenance.machine,
+                    sector: maintenance.sector,
+                    maintenanceType: maintenance.maintenanceType
+                }
+            }
+        })
+
+        res.json({
+            ok: true,
+            message: "Mantenimiento eliminado correctamente",
+            deletedId: id
+        })
+    } catch (error) {
+        console.error("Error en deleteMaintenanceController:", error)
+        res.status(500).json({
+            message: "Error al eliminar mantenimiento"
         })
     }
 }

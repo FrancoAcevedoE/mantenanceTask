@@ -73,7 +73,7 @@
                 <td>{{ formatTime(item.createdAt) }}</td>
                     <td>{{ item.sector }}</td>
                     <td>{{ item.machine }}</td>
-                    <td>{{ item.machinePart }}</td>
+                    <td>{{ Array.isArray(item.machinePart) ? item.machinePart.join(', ') : item.machinePart }}</td>
                     <td class="description-cell">
                         <span class="description-preview">{{ item.workDescription || '-' }}</span>
                     </td>
@@ -102,6 +102,9 @@
                             <button v-if="item.status !== 'finished'" @click="openFinishModal(item)" style="background: #2e7d32;">
                                 Terminar
                             </button>
+                            <button v-if="currentUserRole === 'admin'" @click="deleteMaintenanceRecord(item)" style="background: #c62828;">
+                                Eliminar
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -128,7 +131,7 @@
                     </p>
                     <p><strong>Sector:</strong> {{ selectedDetail?.sector }}</p>
                     <p><strong>Máquina:</strong> {{ selectedDetail?.machine }}</p>
-                    <p><strong>Parte:</strong> {{ selectedDetail?.machinePart }}</p>
+                    <p><strong>Partes:</strong> {{ Array.isArray(selectedDetail?.machinePart) ? selectedDetail.machinePart.join(', ') : selectedDetail?.machinePart }}</p>
                     <p><strong>Tipo de mantenimiento:</strong> {{ selectedDetail?.maintenanceType }}</p>
                     <p><strong>Horas trabajadas:</strong> {{ selectedDetail?.hoursWorked }}</p>
                     <p><strong>Estado:</strong> {{ formatStatus(selectedDetail?.status) }}</p>
@@ -206,6 +209,8 @@ export default {
 
             compactMode: false,
 
+            currentUserRole: "",
+
             backgroundImage
 
         }
@@ -218,6 +223,9 @@ export default {
         document.body.style.backgroundPosition = 'center'
         document.body.style.backgroundRepeat = 'no-repeat'
         document.body.style.backgroundAttachment = 'fixed'
+
+        const currentUser = this.getStoredUser()
+        this.currentUserRole = currentUser?.role || ""
 
         await this.loadHistory()
 
@@ -281,6 +289,15 @@ export default {
     },
 
     methods: {
+
+        getStoredUser() {
+            try {
+                const rawUser = localStorage.getItem("user")
+                return rawUser ? JSON.parse(rawUser) : null
+            } catch {
+                return null
+            }
+        },
 
         authConfig() {
             const token = localStorage.getItem("token")
@@ -473,6 +490,26 @@ export default {
                 this.$notify.notifyApiError(error, "No se pudo terminar el trabajo")
             }
 
+        },
+
+        async deleteMaintenanceRecord(item) {
+            const message = `¿Estás seguro de que deseas eliminar el registro de ${item.machine}? Esta acción no se puede deshacer.`
+            
+            if (!window.confirm(message)) {
+                return
+            }
+
+            try {
+                await axios.delete(
+                    `${API_BASE_URL}/maintenance/${item._id}`,
+                    this.authConfig()
+                )
+
+                this.$notify.success("Registro eliminado correctamente")
+                await this.loadHistory()
+            } catch (error) {
+                this.$notify.notifyApiError(error, "No se pudo eliminar el registro")
+            }
         }
 
     }
