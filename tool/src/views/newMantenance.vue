@@ -4,6 +4,37 @@
     <div class="box">
         <h2>Nuevo trabajo</h2>
 
+        <details class="horometro-panel step-block">
+            <summary>Actualizar horometro</summary>
+            <div class="horometro-body">
+                <label>Maquina</label>
+                <select v-model="horometroForm.machineId">
+                    <option value="">Seleccionar maquina</option>
+                    <option v-for="machine in machines" :key="machine._id" :value="machine._id">
+                        {{ machine.sector ? `${machine.sector} - ${machine.name}` : machine.name }}
+                    </option>
+                </select>
+
+                <label>Nuevo horometro</label>
+                <input type="number" min="0" step="1" v-model.number="horometroForm.value">
+
+                <button type="button" :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro" @click="updateHorometroFromPanel">
+                    {{ isUpdatingHorometro ? 'Actualizando...' : 'Actualizar horometro' }}
+                </button>
+
+                <div v-if="selectedHorometroMachine" class="horometro-history">
+                    <p><strong>Horometro actual:</strong> {{ selectedHorometroMachine.horometro ?? 0 }}h</p>
+                    <p><strong>Historial</strong></p>
+                    <ul v-if="orderedHorometroHistory.length" class="horometro-list">
+                        <li v-for="entry in orderedHorometroHistory" :key="`${entry.recordedAt}-${entry.value}`">
+                            {{ formatDate(entry.recordedAt) }} - {{ entry.value }}h
+                        </li>
+                    </ul>
+                    <p v-else>No hay historial registrado.</p>
+                </div>
+            </div>
+        </details>
+
         <form @submit.prevent="saveMaintenance">
 
 <label>Sector</label>
@@ -35,13 +66,23 @@
 </div>
 
 <div v-if="isMachineComplete" class="step-block">
-<label>Parte de máquina</label>
-<select v-model="form.machinePart" required :disabled="!form.machine">
-    <option value="">Seleccionar parte</option>
-    <option v-for="part in selectedMachineParts" :key="part" :value="part">
+<label>Partes de máquina</label>
+<div v-if="form.machineParts.length" class="parts-chips">
+    <span v-for="part in form.machineParts" :key="part" class="part-chip">
         {{ part }}
-    </option>
-</select>
+        <button type="button" class="chip-remove" @click="removeMachinePart(part)">&#xD7;</button>
+    </span>
+</div>
+<div v-if="availableMachineParts.length" style="display:flex;gap:0.5rem;align-items:center;margin:8px 0;">
+    <select v-model="selectedAdditionalMachinePart" style="flex:1;margin:0;">
+        <option value="">Seleccionar parte</option>
+        <option v-for="part in availableMachineParts" :key="part" :value="part">
+            {{ part }}
+        </option>
+    </select>
+    <button type="button" @click="addMachinePart" :disabled="!selectedAdditionalMachinePart" class="add-part-btn">Agregar</button>
+</div>
+<p v-else class="additional-parts-empty">No hay otras partes disponibles para agregar.</p>
 </div>
 
 <div v-if="isMachinePartComplete" class="step-block">
@@ -85,6 +126,8 @@
 <option value="Preventivo de mejora continua">Preventivo de mejora continua</option>
 <option value="Preventivo de correctivo">Preventivo de correctivo</option>
 <option value="Arreglo">Arreglo</option>
+<option value="fabricación">Fabricación</option>
+<option value="Limpieza">Limpieza</option>
 <option value="Puesta en marcha (maquina parada)">Puesta en marcha (maquina parada)</option>
 
 </select>
@@ -195,16 +238,28 @@ operarios:[],
 allOperarios:[],
 additionalWorkersList:[],
 selectedAdditionalWorker:"",
+selectedAdditionalMachinePart:"",
 machines:[],
 sectors:[],
 currentUserRole:"",
 currentUserId:"",
+isUpdatingHorometro:false,
+horometroConfirmState:{
+machineId:"",
+value:null,
+expiresAt:0
+},
+
+horometroForm:{
+machineId:"",
+value:null
+},
 
 form:{
 
 sector:"",
 machine:"",
-machinePart:"",
+machineParts:[],
 clientId:"",
 maintenanceType:"",
 workDescription:"",
@@ -261,7 +316,7 @@ computed: {
         return this.isSectorComplete && Boolean(this.selectedMachine)
     },
     isMachinePartComplete() {
-        return this.isMachineComplete && Boolean(this.form.machinePart)
+        return this.isMachineComplete && this.form.machineParts.length > 0
     },
     isOperarioComplete() {
         return this.isMachinePartComplete && Boolean(this.form.clientId)
@@ -288,6 +343,17 @@ computed: {
         ])
         return this.allOperarios.filter(op => !usedIds.has(op._id))
     },
+    availableAdditionalMachineParts() {
+        const usedParts = new Set([
+            ...this.form.machineParts,
+            ...this.additionalMachinePartsList
+        ])
+        return this.selectedMachineParts.filter(part => !usedParts.has(part))
+    },
+    availableMachineParts() {
+        const usedParts = new Set(this.form.machineParts)
+        return this.selectedMachineParts.filter(part => !usedParts.has(part))
+    },
     filteredMachinesBySector() {
         if (!this.form.sector) return []
         return this.machines.filter(machine => machine.sector === this.form.sector)
@@ -306,7 +372,19 @@ computed: {
         }
 
         return parts ? [parts] : []
-  }
+  },
+    selectedHorometroMachine() {
+        if (!this.horometroForm.machineId) return null
+        return this.machines.find(machine => machine._id === this.horometroForm.machineId) || null
+    },
+    orderedHorometroHistory() {
+        if (!this.selectedHorometroMachine) return []
+        const history = Array.isArray(this.selectedHorometroMachine.horometroHistory)
+            ? this.selectedHorometroMachine.horometroHistory
+            : []
+
+        return [...history].sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt))
+    }
 },
 
 methods:{
@@ -322,7 +400,9 @@ return null
 
 onSectorChange() {
 this.form.machine = ""
-this.form.machinePart = ""
+this.form.machineParts = []
+this.additionalMachinePartsList = []
+this.selectedAdditionalMachinePart = ""
 },
 
 authConfig(){
@@ -391,12 +471,72 @@ this.sectors = [...new Set(this.machines.map(machine => machine.sector).filter(B
 onMachineChange(){
 
 if(!this.selectedMachine){
-this.form.machinePart = ""
+this.form.machineParts = []
+this.additionalMachinePartsList = []
+this.selectedAdditionalMachinePart = ""
 return
 }
 
-this.form.machinePart = ""
+this.form.machineParts = []
+this.additionalMachinePartsList = []
+this.selectedAdditionalMachinePart = ""
 
+},
+
+async updateHorometroFromPanel() {
+if (this.isUpdatingHorometro) return
+
+if (!this.horometroForm.machineId) {
+this.$notify.error("Selecciona una maquina")
+return
+}
+
+if (!Number.isFinite(this.horometroForm.value) || this.horometroForm.value < 0) {
+this.$notify.error("El horometro debe ser un numero mayor o igual a 0")
+return
+}
+
+const targetMachine = this.machines.find(machine => machine._id === this.horometroForm.machineId)
+const machineLabel = targetMachine?.name || "la maquina seleccionada"
+const confirmationWindowMs = 7000
+const now = Date.now()
+const sameOperation =
+this.horometroConfirmState.machineId === this.horometroForm.machineId &&
+this.horometroConfirmState.value === this.horometroForm.value &&
+this.horometroConfirmState.expiresAt > now
+
+if (!sameOperation) {
+this.horometroConfirmState = {
+machineId: this.horometroForm.machineId,
+value: this.horometroForm.value,
+expiresAt: now + confirmationWindowMs
+}
+this.$notify.warning(`Confirmacion requerida: volve a presionar "Actualizar horometro" en los proximos ${Math.floor(confirmationWindowMs / 1000)}s para ${machineLabel} (${this.horometroForm.value}h).`)
+return
+}
+
+this.isUpdatingHorometro = true
+
+try {
+await axios.patch(
+`${API_BASE_URL}/machines/${this.horometroForm.machineId}/horometro`,
+{ horometro: this.horometroForm.value },
+this.authConfig()
+)
+
+this.$notify.success("Horometro actualizado")
+await this.loadMachines()
+this.horometroForm.value = null
+this.horometroConfirmState = { machineId: "", value: null, expiresAt: 0 }
+} catch (error) {
+if (error?.response?.status === 403) {
+this.$notify.error("No tenes permiso para actualizar el horometro. Si deberias tener acceso, avisame y lo revisamos en backend.")
+return
+}
+this.$notify.notifyApiError(error, "No se pudo actualizar horometro")
+} finally {
+this.isUpdatingHorometro = false
+}
 },
 
 onUnfinishedReasonCategoryChange() {
@@ -418,6 +558,22 @@ removeWorker(workerId){
 this.additionalWorkersList = this.additionalWorkersList.filter(w => w._id !== workerId)
 },
 
+addMachinePart(){
+if(!this.selectedAdditionalMachinePart) return
+if(!this.form.machineParts.includes(this.selectedAdditionalMachinePart)){
+    this.form.machineParts.push(this.selectedAdditionalMachinePart)
+}
+this.selectedAdditionalMachinePart = ""
+},
+
+removeMachinePart(part){
+this.form.machineParts = this.form.machineParts.filter(p => p !== part)
+},
+
+removeMachinePartFromMain(part){
+this.additionalMachinePartsList = this.additionalMachinePartsList.filter(p => p !== part)
+},
+
 async saveMaintenance(){
 
 try{
@@ -437,8 +593,8 @@ this.$notify.error("Selecciona una maquina del sector elegido")
 return
 }
 
-if (!String(this.form.machinePart || "").trim()) {
-this.$notify.error("Debes seleccionar una parte de maquina")
+if (this.form.machineParts.length === 0) {
+this.$notify.error("Debes seleccionar al menos una parte de maquina")
 return
 }
 
@@ -485,7 +641,8 @@ unfinishedReasonCategory: this.form.unfinishedReasonCategory,
 unfinishedReason: this.form.unfinishedReasonCategory === "Otros"
 ? String(this.form.unfinishedReason || "").trim()
 : this.form.unfinishedReasonCategory,
-additionalWorkers: this.additionalWorkersList.map(w => w._id)
+additionalWorkers: this.additionalWorkersList.map(w => w._id),
+machinePart: this.form.machineParts
 }
 
 await axios.post(
@@ -514,7 +671,7 @@ this.form = {
 
 sector:"",
 machine:"",
-machinePart:"",
+machineParts:[],
 clientId:this.currentUserRole === "operario" ? this.currentUserId : "",
 maintenanceType:"",
 workDescription:"",
@@ -529,6 +686,7 @@ unfinishedReason:""
 
 this.additionalWorkersList = []
 this.selectedAdditionalWorker = ""
+this.selectedAdditionalMachinePart = ""
 
 },
 
@@ -553,6 +711,22 @@ this.showMachineDetailModal = true
 closeMachineDetailModal(){
 this.showMachineDetailModal = false
 
+},
+
+formatDate(value) {
+const date = new Date(value)
+if (Number.isNaN(date.valueOf())) {
+return "-"
+}
+
+return date.toLocaleString("es-AR", {
+year: "numeric",
+month: "2-digit",
+day: "2-digit",
+hour: "2-digit",
+minute: "2-digit",
+second: "2-digit"
+})
 },
 
 }
@@ -778,7 +952,90 @@ button:hover {
     cursor: not-allowed;
 }
 
+.horometro-panel {
+    margin-bottom: 1rem;
+    text-align: left;
+    border: 1px solid #d8d8d8;
+    border-radius: 10px;
+    padding: 0.55rem 0.8rem;
+    background: #fafafa;
+}
+
+.horometro-panel summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #355062;
+}
+
+.horometro-body {
+    margin-top: 0.65rem;
+}
+
+.horometro-history {
+    margin-top: 0.75rem;
+    background: #f3f7fa;
+    border: 1px solid #dde7ee;
+    border-radius: 8px;
+    padding: 0.65rem;
+}
+
+.horometro-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    max-height: 170px;
+    overflow-y: auto;
+}
+
 .additional-workers-empty {
+    margin: 0.5rem 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.parts-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.5rem 0;
+    justify-content: center;
+}
+
+.part-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+    border-radius: 2rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.88rem;
+}
+
+.part-chip.additional {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+}
+
+.add-part-btn {
+    width: auto;
+    padding: 0.5rem 1rem;
+    background: #00a878;
+    margin-top: 0;
+    white-space: nowrap;
+}
+
+.add-part-btn:hover {
+    background: #008f67;
+}
+
+.add-part-btn:disabled {
+    background: #b2dfdb;
+    cursor: not-allowed;
+}
+
+.additional-parts-empty {
     margin: 0.5rem 0 0;
     color: #666;
     font-size: 0.9rem;
