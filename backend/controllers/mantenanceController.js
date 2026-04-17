@@ -142,6 +142,9 @@ export const newMaintenanceController = async (req,res)=>{
             })
         }
 
+        const normalizedMaintenanceType = String(data.maintenanceType || "").trim()
+        const normalizedWorkDescription = String(data.workDescription || "").trim()
+
         if (!normalizedMaintenanceType) {
             return res.status(400).json({
                 message: "Debes seleccionar un tipo de mantenimiento"
