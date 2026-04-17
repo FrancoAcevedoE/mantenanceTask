@@ -45,6 +45,21 @@
               </button>
             </div>
 
+            <div class="import-actions import-actions-secondary">
+              <div class="file-group">
+                <input type="file" accept=".xlsx,.xlsm,.xls" @change="onPlacasFileSelected" />
+                <button type="button" :disabled="!selectedPlacasFile || isImportingPlacas" @click="importPlacasExcel">
+                  {{ isImportingPlacas ? 'Importando placas...' : 'Importar placas desde Excel' }}
+                </button>
+              </div>
+              <div class="file-group">
+                <input type="file" accept=".xlsx,.xlsm,.xls" @change="onTopBoxFileSelected" />
+                <button type="button" :disabled="!selectedTopBoxFile || isImportingTopBox" @click="importTopBoxExcel">
+                  {{ isImportingTopBox ? 'Importando herrajes...' : 'Importar herrajes Top Box' }}
+                </button>
+              </div>
+            </div>
+
             <div v-if="importSummary" class="import-summary-box">
               <strong>Resultado:</strong>
               <span>
@@ -98,6 +113,15 @@
       <section class="panel-card panel-wide">
         <div class="list-header">
           <h2>Placas</h2>
+          <div class="data-controls">
+            <span class="data-indicator" v-if="placasData.length > 0">
+              <i class="bi bi-check-circle-fill"></i>
+              Datos cargados desde Excel
+            </span>
+            <button type="button" class="secondary small" v-if="placasData.length > 0" @click="clearPlacasData">
+              Limpiar datos
+            </button>
+          </div>
         </div>
 
         <div class="quick-legend">
@@ -163,6 +187,15 @@
       <section class="panel-card panel-wide">
         <div class="list-header">
           <h2>Top Box - Herrajes</h2>
+          <div class="data-controls">
+            <span class="data-indicator" v-if="topBoxData.length > 0">
+              <i class="bi bi-check-circle-fill"></i>
+              Datos cargados desde Excel
+            </span>
+            <button type="button" class="secondary small" v-if="topBoxData.length > 0" @click="clearTopBoxData">
+              Limpiar datos
+            </button>
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -288,7 +321,11 @@ export default {
     return {
       supplies: [],
       selectedFile: null,
+      selectedPlacasFile: null,
+      selectedTopBoxFile: null,
       isImporting: false,
+      isImportingPlacas: false,
+      isImportingTopBox: false,
       isExporting: false,
       importMode: "overwrite",
       importSummary: null,
@@ -529,6 +566,34 @@ export default {
         this.$notify.notifyApiError(error, "No se pudo obtener estado de sincronizacion")
       }
     },
+    loadPersistedData() {
+      try {
+        const placasData = localStorage.getItem("stockPlacasData")
+        if (placasData) {
+          this.placasData = JSON.parse(placasData)
+        }
+        const topBoxData = localStorage.getItem("stockTopBoxData")
+        if (topBoxData) {
+          this.topBoxData = JSON.parse(topBoxData)
+        }
+      } catch (error) {
+        console.warn("Error loading persisted stock data:", error)
+      }
+    },
+    persistPlacasData() {
+      try {
+        localStorage.setItem("stockPlacasData", JSON.stringify(this.placasData))
+      } catch (error) {
+        console.warn("Error persisting placas data:", error)
+      }
+    },
+    persistTopBoxData() {
+      try {
+        localStorage.setItem("stockTopBoxData", JSON.stringify(this.topBoxData))
+      } catch (error) {
+        console.warn("Error persisting top box data:", error)
+      }
+    },
     async createSupply() {
       try {
         await axios.post(`${API_BASE_URL}/stock/items`, this.form, this.authConfig())
@@ -592,6 +657,192 @@ export default {
         this.$notify.notifyApiError(error, "No se pudo importar el archivo")
       } finally {
         this.isImporting = false
+      }
+    },
+    normalizeSheetHeader(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+    },
+    parseNumber(value) {
+      const raw = String(value || "").trim().replace(/\s+/g, "").replace(/,/g, ".")
+      const numeric = Number(raw.replace(/[^0-9.-]/g, ""))
+      return Number.isFinite(numeric) ? numeric : null
+    },
+    buildHeaderIndex(headerRow) {
+      const index = {}
+      headerRow.forEach((cell, columnIndex) => {
+        const key = this.normalizeSheetHeader(cell)
+        if (key) {
+          index[key] = columnIndex
+        }
+      })
+      return index
+    },
+    getSheetValue(row, headerIndex, candidates = []) {
+      for (const candidate of candidates) {
+        const columnIndex = headerIndex[this.normalizeSheetHeader(candidate)]
+        if (columnIndex !== undefined) {
+          const value = row[columnIndex]
+          if (value !== undefined && value !== null && String(value).trim() !== "") {
+            return value
+          }
+        }
+      }
+      return ""
+    },
+    toMillimeters(value) {
+      const parsed = this.parseNumber(value)
+      if (!Number.isFinite(parsed)) {
+        return null
+      }
+      if (parsed > 1000) {
+        return Math.round(parsed)
+      }
+      if (parsed > 0) {
+        return Math.round(parsed * 1000)
+      }
+      return null
+    },
+    onPlacasFileSelected(event) {
+      const [file] = event.target.files || []
+      this.selectedPlacasFile = file || null
+    },
+    onTopBoxFileSelected(event) {
+      const [file] = event.target.files || []
+      this.selectedTopBoxFile = file || null
+    },
+    async importPlacasExcel() {
+      if (!this.selectedPlacasFile || this.isImportingPlacas) {
+        return
+      }
+
+      this.isImportingPlacas = true
+      try {
+        const XLSX = await import("xlsx")
+        const arrayBuffer = await this.selectedPlacasFile.arrayBuffer()
+        const workbook = XLSX.read(arrayBuffer, { type: "array" })
+        const sheetName = workbook.SheetNames.find((name) =>
+          this.normalizeSheetHeader(name).includes("stock_actual")
+        ) || workbook.SheetNames[0]
+        const sheet = workbook.Sheets[sheetName]
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" })
+
+        const headerRowIndex = rows.findIndex((row) => {
+          const normalized = row.map((cell) => this.normalizeSheetHeader(cell))
+          return normalized.includes("codigo") && normalized.includes("proveedor") && normalized.includes("producto")
+        })
+
+        if (headerRowIndex < 0) {
+          throw new Error("No se encontró la fila de cabecera de placas en el archivo")
+        }
+
+        const headerIndex = this.buildHeaderIndex(rows[headerRowIndex])
+        const dataRows = rows.slice(headerRowIndex + 1)
+          .filter((row) => row.some((cell) => String(cell || "").trim() !== ""))
+
+        const parsed = dataRows.map((row) => {
+          const codigo = String(this.getSheetValue(row, headerIndex, ["codigo", "cod"])).trim()
+          const proveedor = String(this.getSheetValue(row, headerIndex, ["proveedor"])).trim()
+          const producto = String(this.getSheetValue(row, headerIndex, ["producto"])).trim()
+          const espesorMm = this.toMillimeters(this.getSheetValue(row, headerIndex, ["espesor_mm", "espesor__mm", "espesor", "espesor_mm_"]))
+          const anchoMm = this.toMillimeters(this.getSheetValue(row, headerIndex, ["ancho_mm", "ancho", "ancho_m", "ancho_m_", "ancho_mm_"]))
+          const largoMm = this.toMillimeters(this.getSheetValue(row, headerIndex, ["largo_mm", "largo", "largo_m", "largo_m_", "length", "longitud"]))
+          const calidad = String(this.getSheetValue(row, headerIndex, ["calidad", "grade"])).trim()
+          const cantidadStock = Number.isFinite(this.parseNumber(this.getSheetValue(row, headerIndex, ["cant_placas_stock", "cant_placas", "cantidad_placas", "cantidad_stock"])))
+            ? Math.round(this.parseNumber(this.getSheetValue(row, headerIndex, ["cant_placas_stock", "cant_placas", "cantidad_placas", "cantidad_stock"])))
+            : 0
+          const m2TotalesStock = Number.isFinite(this.parseNumber(this.getSheetValue(row, headerIndex, ["m2_totales_stock", "m2_totales", "m2_totales_stock"])))
+            ? Number(this.parseNumber(this.getSheetValue(row, headerIndex, ["m2_totales_stock", "m2_totales", "m2_totales_stock"]))).toFixed(2)
+            : 0
+
+          return {
+            codigo,
+            proveedor,
+            producto,
+            espesorMm: espesorMm || 0,
+            anchoMm: anchoMm || 0,
+            largoMm: largoMm || 0,
+            calidad,
+            cantidadStock,
+            m2TotalesStock: Number(m2TotalesStock)
+          }
+        }).filter((item) => item.codigo && item.proveedor)
+
+        if (!parsed.length) {
+          throw new Error("El archivo de placas no contiene datos válidos")
+        }
+
+        this.placasData = parsed
+        this.selectedPlacasFile = null
+        this.persistPlacasData()
+        this.$notify.success("Datos de placas importados correctamente")
+      } catch (error) {
+        this.$notify.error(error?.message || "No se pudo importar el archivo de placas")
+      } finally {
+        this.isImportingPlacas = false
+      }
+    },
+    async importTopBoxExcel() {
+      if (!this.selectedTopBoxFile || this.isImportingTopBox) {
+        return
+      }
+
+      this.isImportingTopBox = true
+      try {
+        const XLSX = await import("xlsx")
+        const arrayBuffer = await this.selectedTopBoxFile.arrayBuffer()
+        const workbook = XLSX.read(arrayBuffer, { type: "array" })
+        const sheetName = workbook.SheetNames.find((name) =>
+          this.normalizeSheetHeader(name).includes("cargar") || this.normalizeSheetHeader(name).includes("top_box")
+        ) || workbook.SheetNames[0]
+        const sheet = workbook.Sheets[sheetName]
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" })
+
+        const headerRowIndex = rows.findIndex((row) => {
+          const normalized = row.map((cell) => this.normalizeSheetHeader(cell))
+          return normalized.includes("herrajes") && normalized.includes("funcion") && (normalized.includes("cod") || normalized.includes("codigo"))
+        })
+
+        if (headerRowIndex < 0) {
+          throw new Error("No se encontró la fila de cabecera de herrajes Top Box en el archivo")
+        }
+
+        const headerIndex = this.buildHeaderIndex(rows[headerRowIndex])
+        const dataRows = rows.slice(headerRowIndex + 1)
+          .filter((row) => row.some((cell) => String(cell || "").trim() !== ""))
+
+        const parsed = dataRows.map((row) => {
+          const herraje = String(this.getSheetValue(row, headerIndex, ["herrajes", "herraje"])).trim()
+          const funcion = String(this.getSheetValue(row, headerIndex, ["funcion", "función"])).trim()
+          const cod = String(this.getSheetValue(row, headerIndex, ["cod", "codigo", "cód"])).trim()
+          const cantidadRaw = this.getSheetValue(row, headerIndex, ["cantidad", "cant"])
+          const parsedCantidad = this.parseNumber(cantidadRaw)
+
+          return {
+            herraje,
+            funcion,
+            cod,
+            cantidad: Number.isFinite(parsedCantidad) ? Math.round(parsedCantidad) : null
+          }
+        }).filter((item) => item.herraje || item.cod)
+
+        if (!parsed.length) {
+          throw new Error("El archivo de Top Box no contiene datos válidos")
+        }
+
+        this.topBoxData = parsed
+        this.selectedTopBoxFile = null
+        this.persistTopBoxData()
+        this.$notify.success("Datos de herrajes Top Box importados correctamente")
+      } catch (error) {
+        this.$notify.error(error?.message || "No se pudo importar el archivo de herrajes")
+      } finally {
+        this.isImportingTopBox = false
       }
     },
     async exportExcel() {
@@ -699,6 +950,20 @@ export default {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
     },
+    clearPlacasData() {
+      if (confirm("¿Estás seguro de que quieres limpiar los datos de placas?")) {
+        this.placasData = []
+        localStorage.removeItem("stockPlacasData")
+        this.$notify.success("Datos de placas limpiados")
+      }
+    },
+    clearTopBoxData() {
+      if (confirm("¿Estás seguro de que quieres limpiar los datos de herrajes Top Box?")) {
+        this.topBoxData = []
+        localStorage.removeItem("stockTopBoxData")
+        this.$notify.success("Datos de herrajes limpiados")
+      }
+    },
     formatDate(value) {
       const date = new Date(value)
       if (Number.isNaN(date.valueOf())) {
@@ -776,6 +1041,7 @@ export default {
   async mounted() {
     await this.loadSupplies()
     await this.loadSyncStatus()
+    this.loadPersistedData()
     document.body.style.backgroundImage = `url(${this.backgroundImage})`
     document.body.style.backgroundSize = "cover"
     document.body.style.backgroundPosition = "center"
@@ -877,6 +1143,17 @@ button.secondary {
   gap: 0.55rem;
 }
 
+.import-actions-secondary {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.file-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
 .import-summary-box {
   margin-top: 0.6rem;
   border-radius: 10px;
@@ -898,6 +1175,30 @@ button.secondary {
   gap: 0.65rem;
   align-items: center;
   justify-content: space-between;
+}
+
+.data-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.data-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #2e7d32;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.data-indicator i {
+  color: #4caf50;
+}
+
+button.secondary.small {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
 }
 
 .list-header input {
