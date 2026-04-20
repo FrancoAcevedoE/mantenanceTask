@@ -75,6 +75,7 @@ const maintenanceSchema = new mongoose.Schema({
             "Preventivo de mejora continua",
             "Preventivo de correctivo",
             "Arreglo",
+            "fabricación",
             "Limpieza",
             "Puesta en marcha (maquina parada)"
         ],
