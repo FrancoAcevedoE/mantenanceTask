@@ -83,6 +83,7 @@ b {
 /* Navigation styles */
 nav a.router-link-active {
   transform: scale(1.18);
+  transition: box-shadow 0.15s ease; /* Remove transform transition for immediate scaling */
 }
 
 /* Mobile adjustments */
@@ -100,5 +101,6 @@ nav a.router-link-active {
 
   nav a.router-link-active {
     transform: scale(1.15);
+    transition: box-shadow 0.15s ease; /* Remove transform transition for immediate scaling */
   }
 }
