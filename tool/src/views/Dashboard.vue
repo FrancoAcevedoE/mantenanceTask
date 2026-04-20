@@ -210,7 +210,7 @@ Limpiar filtros
 <tr v-for="item in filteredRecentMaintenances" :key="item._id">
 <td class="recent-operario">{{ formatOperarioName(item.clientId) }}</td>
 <td>{{ item.machine }}</td>
-<td>{{ item.machinePart }}</td>
+<td>{{ Array.isArray(item.machinePart) ? item.machinePart.join(', ') : item.machinePart }}</td>
 <td>{{ item.sector }}</td>
 <td>{{ formatStatus(item.status) }}</td>
 <td>{{ formatDate(item.createdAt) }}</td>
@@ -345,19 +345,11 @@ green: 2
 }
 
 return [...(this.stats.machineStatusOverview || [])].sort((left, right) => {
-const priorityDifference = (statusPriority[left.indicator] ?? 99) - (statusPriority[right.indicator] ?? 99)
-
-if (priorityDifference !== 0) {
-return priorityDifference
+const nameDifference = String(left.name || "").localeCompare(String(right.name || ""), "es", { sensitivity: "base" })
+if (nameDifference !== 0) {
+return nameDifference
 }
-
-const sectorDifference = String(left.sector || "").localeCompare(String(right.sector || ""), "es")
-
-if (sectorDifference !== 0) {
-return sectorDifference
-}
-
-return String(left.name || "").localeCompare(String(right.name || ""), "es")
+return String(left.sector || "").localeCompare(String(right.sector || ""), "es", { sensitivity: "base" })
 })
 },
 
