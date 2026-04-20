@@ -163,6 +163,11 @@ nav a.router-link-active {
   background: rgba(235, 235, 235, 0.95);
 }
 
+nav a.router-link-active i {
+  transform: scale(1.18);
+  font-size: 1.95rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   body {
