@@ -131,6 +131,37 @@ const getPendingMaintenancesDetail = async () => {
   })
 }
 
+const formatShortDate = (value) => {
+  if (!value) return ""
+  return new Date(value).toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "2-digit"
+  })
+}
+
+const getLastWeekRange = () => {
+  const now = new Date()
+  const dayOfWeek = now.getDay()
+  const daysSinceMonday = (dayOfWeek + 6) % 7
+  const lastMonday = new Date(now)
+  lastMonday.setDate(now.getDate() - daysSinceMonday - 7)
+  lastMonday.setHours(0, 0, 0, 0)
+
+  const lastSunday = new Date(lastMonday)
+  lastSunday.setDate(lastMonday.getDate() + 6)
+  lastSunday.setHours(23, 59, 59, 999)
+
+  return { start: lastMonday, end: lastSunday }
+}
+
+const formatWeekRangeLabel = (start, end) => {
+  const formatDate = (date) => new Date(date).toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "2-digit"
+  })
+  return `${formatDate(start)} - ${formatDate(end)}`
+}
+
 export const getMaintenanceNotificationSummary = async () => {
   const [stoppedMachinesCount, pendingMaintenancesCount] = await Promise.all([
     getCurrentStoppedMachines(),
@@ -141,6 +172,90 @@ export const getMaintenanceNotificationSummary = async () => {
     stoppedMachinesCount,
     pendingMaintenancesCount
   }
+}
+
+export const getWeeklyCompletedMaintenances = async () => {
+  const { start, end } = getLastWeekRange()
+  const completedMaintenances = await Maintenance.find({
+    status: "finished",
+    createdAt: { $gte: start, $lte: end }
+  })
+    .select("machine sector clientSnapshot createdAt")
+    .sort({ createdAt: 1 })
+    .lean()
+
+  return { completedMaintenances, start, end }
+}
+
+export const sendDailyStoppedPendingNotification = async (title) => {
+  const feed = await getMaintenanceNotificationsFeed()
+  const stoppedItems = feed.items.filter(item => item.type === "stopped-machine")
+  const pendingItems = feed.items.filter(item => item.type === "pending-maintenance")
+  const stoppedCount = feed.summary.stoppedMachinesCount
+  const pendingCount = feed.summary.pendingMaintenancesCount
+
+  let body = `Reporte diario 7 AM:\n\n⚠ Máquinas detenidas: ${stoppedCount}\n⚠ Mantenimientos pendientes: ${pendingCount}`
+
+  const details = [...stoppedItems, ...pendingItems].slice(0, 5)
+
+  if (details.length) {
+    body += "\n\nDetalles:\n"
+    body += details
+      .map(item => {
+        const prefix = item.type === "stopped-machine" ? "Detenida" : "Pendiente"
+        const machineLabel = String(item.machine || "Sin máquina").trim()
+        const sectorLabel = item.sector ? ` (${item.sector})` : ""
+        return `• ${prefix}: ${machineLabel}${sectorLabel}`
+      })
+      .join("\n")
+
+    if (details.length < stoppedItems.length + pendingItems.length) {
+      body += `\n...y ${stoppedItems.length + pendingItems.length - details.length} más`
+    }
+  }
+
+  await sendNotificationMessage({
+    title,
+    body,
+    type: "daily-maintenance-status",
+    severity: "warning",
+    source: "cron",
+    pushTag: "daily-maintenance-status",
+    pushUrl: "/dashboard"
+  })
+}
+
+export const sendWeeklyCompletedMaintenanceNotification = async (title) => {
+  const { completedMaintenances, start, end } = await getWeeklyCompletedMaintenances()
+  const total = completedMaintenances.length
+  let body = `Resumen semanal completados (${formatWeekRangeLabel(start, end)}):\n\n`
+
+  if (!total) {
+    body += "No se registraron trabajos finalizados en la semana pasada."
+  } else {
+    body += `✅ Total completados: ${total}`
+    const items = completedMaintenances.slice(0, 6).map(item => {
+      const machineName = String(item.machine || "Sin máquina").trim()
+      const sectorLabel = item.sector ? ` - ${item.sector}` : ""
+      const operatorName = String(item.clientSnapshot?.name || "").trim()
+      const operatorLabel = operatorName ? ` - ${operatorName}` : ""
+      return `• ${machineName}${sectorLabel}${operatorLabel}`
+    })
+    body += `\n\n${items.join("\n")}`
+    if (total > 6) {
+      body += `\n...y ${total - 6} más`
+    }
+  }
+
+  await sendNotificationMessage({
+    title,
+    body,
+    type: "weekly-completion-summary",
+    severity: "info",
+    source: "cron",
+    pushTag: "weekly-completion-summary",
+    pushUrl: "/history"
+  })
 }
 
 export const getMaintenanceNotificationsFeed = async () => {

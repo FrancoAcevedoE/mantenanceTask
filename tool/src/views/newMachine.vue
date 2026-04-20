@@ -162,8 +162,10 @@ export default {
   },
   computed: {
     filteredMachines() {
-      if (!this.sectorFilter) return this.machines
-      return this.machines.filter(m => m.sector === this.sectorFilter)
+      const filtered = this.sectorFilter
+        ? this.machines.filter(m => m.sector === this.sectorFilter)
+        : this.machines
+      return filtered.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "es", { sensitivity: "base" }))
     },
     sortedHorometroHistory() {
       if (!this.selectedMachine?.horometroHistory?.length) return []
@@ -244,9 +246,13 @@ export default {
         })
 
         const allMachines = Array.isArray(response.data) ? response.data : []
-        this.machines = allMachines.filter(machine => !machine.isDeleted)
-        this.deletedMachines = allMachines.filter(machine => machine.isDeleted)
-        this.availableSectors = [...new Set(this.machines.map(m => m.sector).filter(Boolean))].sort()
+        this.machines = allMachines
+          .filter(machine => !machine.isDeleted)
+          .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "es", { sensitivity: "base" }))
+        this.deletedMachines = allMachines
+          .filter(machine => machine.isDeleted)
+          .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "es", { sensitivity: "base" }))
+        this.availableSectors = [...new Set(this.machines.map(m => m.sector).filter(Boolean))].sort((a, b) => String(a || "").localeCompare(String(b || ""), "es", { sensitivity: "base" }))
 
         if (this.sectorFilter && !this.availableSectors.includes(this.sectorFilter)) {
           this.sectorFilter = ""

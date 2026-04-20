@@ -356,7 +356,9 @@ computed: {
     },
     filteredMachinesBySector() {
         if (!this.form.sector) return []
-        return this.machines.filter(machine => machine.sector === this.form.sector)
+        return this.machines
+          .filter(machine => machine.sector === this.form.sector)
+          .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "es", { sensitivity: "base" }))
     },
   selectedMachine() {
         if (!this.form.sector || !this.form.machine) return null
@@ -456,9 +458,9 @@ const response = await axios.get(
 this.authConfig()
 )
 
-this.machines = response.data
-
-this.sectors = [...new Set(this.machines.map(machine => machine.sector).filter(Boolean))]
+const machines = Array.isArray(response.data) ? response.data : []
+this.machines = machines.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "es", { sensitivity: "base" }))
+this.sectors = [...new Set(this.machines.map(machine => machine.sector).filter(Boolean))].sort((a, b) => String(a || "").localeCompare(String(b || ""), "es", { sensitivity: "base" }))
 
 }catch(error){
 

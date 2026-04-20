@@ -81,7 +81,7 @@ export const getAllMachinesController = async (req, res) => {
     const canIncludeDeleted = includeDeleted && req.user?.role === "admin"
     const query = canIncludeDeleted ? {} : { isDeleted: { $ne: true } }
 
-    const machines = await Machine.find(query)
+    const machines = await Machine.find(query).sort({ sector: 1, name: 1 })
     res.status(200).json(machines)
   } catch (error) {
     res.status(500).json({ error: error.message })

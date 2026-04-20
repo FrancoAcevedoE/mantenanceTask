@@ -1,15 +1,26 @@
 import cron from "node-cron"
-import { sendMaintenanceSummaryNotification } from "./notificationService.js"
+import {
+  sendDailyStoppedPendingNotification,
+  sendWeeklyCompletedMaintenanceNotification
+} from "./notificationService.js"
 
 const TIMEZONE = process.env.NOTIFICATION_TIMEZONE || "America/Argentina/Buenos_Aires"
-const DAILY_CRON = process.env.DAILY_NOTIFICATION_CRON || "0 9 * * *"
+const DAILY_CRON = process.env.DAILY_NOTIFICATION_CRON || "0 7 * * *"
 const MONDAY_7AM_CRON = process.env.MONDAY_NOTIFICATION_CRON || "0 7 * * 1"
 
-const runSummaryJob = async (title) => {
+const runDailyJob = async (title) => {
   try {
-    await sendMaintenanceSummaryNotification(title)
+    await sendDailyStoppedPendingNotification(title)
   } catch (error) {
-    console.error("[CRON NOTIFICATION] Error ejecutando resumen:", error.message)
+    console.error("[CRON NOTIFICATION] Error ejecutando aviso diario:", error.message)
+  }
+}
+
+const runWeeklyJob = async (title) => {
+  try {
+    await sendWeeklyCompletedMaintenanceNotification(title)
+  } catch (error) {
+    console.error("[CRON NOTIFICATION] Error ejecutando resumen semanal:", error.message)
   }
 }
 
@@ -22,7 +33,7 @@ export const startCronNotifications = () => {
   cron.schedule(
     DAILY_CRON,
     () => {
-      runSummaryJob("Aviso diario")
+      runDailyJob("Aviso diario 7 AM")
     },
     { timezone: TIMEZONE }
   )
@@ -30,7 +41,7 @@ export const startCronNotifications = () => {
   cron.schedule(
     MONDAY_7AM_CRON,
     () => {
-      runSummaryJob("Lunes 7 AM")
+      runWeeklyJob("Resumen semanal de completados")
     },
     { timezone: TIMEZONE }
   )
@@ -38,6 +49,7 @@ export const startCronNotifications = () => {
   console.log(`[CRON NOTIFICATION] Activo. Diario: ${DAILY_CRON} | Lunes: ${MONDAY_7AM_CRON} | TZ: ${TIMEZONE}`)
 
   if (process.env.NOTIFICATION_RUN_ON_STARTUP === "true") {
-    runSummaryJob("Prueba inicio")
+    runDailyJob("Prueba inicio diario")
+    runWeeklyJob("Prueba inicio semanal")
   }
 }

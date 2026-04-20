@@ -386,26 +386,30 @@ const operarioQuery = this.searchOperario.toLowerCase().trim()
 const machineQuery = this.searchMachine.toLowerCase().trim()
 const statusQuery = this.searchStatus
 
-if (!operarioQuery && !machineQuery && !statusQuery) {
-return recentMaintenances
-}
-
-return recentMaintenances.filter(item =>
+const filtered = recentMaintenances.filter(item =>
 this.formatOperarioName(item.clientId)
 .toLowerCase()
 .includes(operarioQuery)
-&& item.machine.toLowerCase().includes(machineQuery)
+&& String(item.machine || "").toLowerCase().includes(machineQuery)
 && item.status.includes(statusQuery)
 )
+
+return filtered.slice().sort((a, b) => {
+const machineComparison = String(a.machine || "").localeCompare(String(b.machine || ""), "es", { sensitivity: "base" })
+if (machineComparison !== 0) return machineComparison
+return new Date(b.createdAt) - new Date(a.createdAt)
+})
 
 },
 
 unfinishedReasonSummary() {
 const summary = this.stats.unfinishedReasonSummary || {}
 return {
-totalWithReason: Number(summary.totalWithReason) || 0,
-reasons: Array.isArray(summary.reasons) ? summary.reasons : [],
-otherDetailsTop: Array.isArray(summary.otherDetailsTop) ? summary.otherDetailsTop : []
+    totalWithReason: Number(summary.totalWithReason) || 0,
+    reasons: Array.isArray(summary.reasons)
+      ? summary.reasons.slice().sort((a, b) => String(a.reason || "").localeCompare(String(b.reason || ""), "es", { sensitivity: "base" }))
+      : [],
+    otherDetailsTop: Array.isArray(summary.otherDetailsTop) ? summary.otherDetailsTop : []
 }
 
 },
@@ -570,6 +574,9 @@ const operarioData = chartData.operarioBreakdown || []
 const sectorData = chartData.sectorBreakdown || []
 const dailyData = chartData.dailySeries || []
 
+const sortedOperarioData = [...operarioData].sort((a, b) => String(a.operario || "").localeCompare(String(b.operario || ""), "es", { sensitivity: "base" }))
+const sortedSectorData = [...sectorData].sort((a, b) => String(a.sector || "").localeCompare(String(b.sector || ""), "es", { sensitivity: "base" }))
+
 if (this.$refs.statusChart) {
 this.statusChartInstance = new Chart(this.$refs.statusChart, {
 type: "doughnut",
@@ -596,10 +603,10 @@ if (this.$refs.typeChart) {
 this.typeChartInstance = new Chart(this.$refs.typeChart, {
 type: "bar",
 data: {
-labels: operarioData.map(item => this.formatType(item.operario)),
+labels: sortedOperarioData.map(item => this.formatType(item.operario)),
 datasets: [{
 label: "Cantidad",
-data: operarioData.map(item => item.count),
+data: sortedOperarioData.map(item => item.count),
 backgroundColor: "#1e88e5",
 borderRadius: 8
 }]
@@ -621,10 +628,10 @@ if (this.$refs.sectorChart) {
 this.sectorChartInstance = new Chart(this.$refs.sectorChart, {
 type: "bar",
 data: {
-labels: sectorData.map(item => item.sector),
+labels: sortedSectorData.map(item => item.sector),
 datasets: [{
 label: "Cantidad",
-data: sectorData.map(item => item.count),
+data: sortedSectorData.map(item => item.count),
 backgroundColor: "#6d4c41",
 borderRadius: 8
 }]
