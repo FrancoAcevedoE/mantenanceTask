@@ -84,3 +84,21 @@ b {
 nav a.router-link-active {
   transform: scale(1.18);
 }
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  nav a,
+  .nav-button {
+    width: 55px;
+    height: 55px;
+  }
+
+  nav a i,
+  .nav-button i {
+    font-size: 1.5rem;
+  }
+
+  nav a.router-link-active {
+    transform: scale(1.15);
+  }
+}
