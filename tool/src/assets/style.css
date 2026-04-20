@@ -79,3 +79,8 @@ b {
     background: #9a3412;
     border-left-color: #fdba74;
 }
+
+/* Navigation styles */
+nav a.router-link-active {
+  transform: scale(1.18);
+}
