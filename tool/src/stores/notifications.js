@@ -71,6 +71,13 @@ export const useNotificationsStore = defineStore('notifications', {
         return
       }
 
+      // No cargar notificaciones de mantenimiento para vendedores
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      if (user.role === 'vendedor') {
+        this.initialized = true
+        return
+      }
+
       if (!silent) {
         this.isLoading = true
       }

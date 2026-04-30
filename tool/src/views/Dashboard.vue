@@ -428,7 +428,16 @@ document.body.style.backgroundAttachment = 'fixed'
 
 this.setDefaultPeriod()
 this.syncPeriodSelectorsFromPeriod()
-await this.loadDashboard()
+
+// Solo cargar dashboard para admin, supervisor y operario
+const user = JSON.parse(localStorage.getItem('user') || '{}')
+if (['admin', 'supervisor', 'operario'].includes(user.role)) {
+  await this.loadDashboard()
+} else if (user.role === 'vendedor') {
+  // Redirigir vendedores a su vista
+  this.$router.push('/seller')
+  return
+}
 
 window.addEventListener("resize", this.updateRecentBottomScrollbar)
 
