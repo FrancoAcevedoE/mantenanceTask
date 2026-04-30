@@ -6,6 +6,7 @@ import adminView from '@/views/adminView.vue'
 import newMachine from '@/views/newMachine.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import NotificationHistory from '@/views/NotificationHistory.vue'
+import sellerView from '@/views/sellerView.vue'
 
 const getStoredUser = () => {
   try {
@@ -45,6 +46,9 @@ const router = createRouter({
     },
     {
       path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true }
+    },
+    {
+      path: '/seller', name: 'SellerView', component: sellerView, meta: { requiresAuth: true, roles: ['vendedor'] }
     }
     
   ]

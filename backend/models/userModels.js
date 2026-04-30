@@ -13,7 +13,7 @@ password:Number,
 
 role:{
 type:String,
-enum:["admin","operario","supervisor"],
+enum:["admin","operario","supervisor","vendedor"],
 default:"operario"
 },
 
