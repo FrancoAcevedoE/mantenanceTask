@@ -14,6 +14,7 @@
         <select id="role" v-model="user.role">
           <option value="operario">Operario</option>
           <option value="supervisor">Supervisor</option>
+          <option value="vendedor">Vendedor</option>
           <option value="admin">Admin</option>
         </select>
 
