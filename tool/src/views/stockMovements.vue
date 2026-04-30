@@ -5,17 +5,18 @@
         <h2>Carga y descarga de stock</h2>
 
         <div class="form-grid filter-block">
-          <label for="materialTypeFilter">Filtro</label>
-          <select id="materialTypeFilter" v-model="selectedMaterialType" disabled>
-            <option value="placas">PLACAS</option>
+          <label for="materialTypeFilter">Tipo de material</label>
+          <select id="materialTypeFilter" v-model="selectedMaterialType">
+            <option value="placas">Placas</option>
+            <option value="topbox">Top Box - Herrajes</option>
           </select>
         </div>
 
         <form class="form-grid" @submit.prevent="registerMovement">
           <select v-model="form.itemId" required>
-            <option value="">Seleccionar insumo</option>
-            <option v-for="item in filteredSupplies" :key="item._id" :value="item._id">
-              {{ item.name }} {{ item.size ? `(${item.size})` : '' }}{{ item.supplier ? ` - ${item.supplier}` : '' }} - stock: {{ item.stockPlates }} placas
+            <option value="">Seleccionar {{ selectedMaterialType === 'placas' ? 'placa' : 'artículo' }}</option>
+            <option v-for="item in availableItems" :key="item._id" :value="item._id">
+              {{ item.name }} {{ item.size ? `(${item.size})` : '' }}{{ item.supplier ? ` - ${item.supplier}` : '' }} - stock: {{ item.stockPlates }} {{ selectedMaterialType === 'placas' ? 'placas' : 'unidades' }}
             </option>
           </select>
 
@@ -36,7 +37,7 @@
             </button>
           </div>
 
-          <input v-model.number="form.plates" type="number" min="1" step="1" placeholder="Cantidad de placas" />
+          <input v-model.number="form.plates" type="number" min="1" step="1" :placeholder="`Cantidad de ${selectedMaterialType === 'placas' ? 'placas' : 'unidades'}`" />
 
           <button type="submit" :disabled="isSaving">
             {{ isSaving ? 'Guardando...' : 'Guardar movimiento' }}
@@ -153,6 +154,8 @@ export default {
       supplies: [],
       movements: [],
       selectedMaterialType: "placas",
+      placasData: [],
+      topBoxData: [],
       isSaving: false,
       openedDetailId: "",
       form: {
@@ -241,10 +244,45 @@ export default {
       }))
     },
     filteredSupplies() {
-      return this.categorizedSupplies.filter(item => item.materialCategory === "placas")
+      return this.categorizedSupplies.filter(item => item.materialCategory === this.selectedMaterialType)
     },
     filteredMovements() {
-      return this.categorizedMovements.filter(item => item.materialCategory === "placas")
+      return this.categorizedMovements.filter(item => item.materialCategory === this.selectedMaterialType)
+    },
+    availableItems() {
+      if (this.selectedMaterialType === "placas") {
+        // Para placas, combinar supplies con placasData
+        const supplyItems = this.filteredSupplies.map(item => ({
+          _id: item._id,
+          name: item.name,
+          size: item.size,
+          supplier: item.supplier,
+          stockPlates: item.stockPlates,
+          type: 'supply'
+        }))
+        
+        const placaItems = this.placasData.map((item, index) => ({
+          _id: `placa-${index}`,
+          name: `${item.producto} ${item.espesorMm}x${item.anchoMm}x${item.largoMm}`,
+          size: `${item.espesorMm}x${item.anchoMm}x${item.largoMm}`,
+          supplier: item.proveedor,
+          stockPlates: item.cantidadStock,
+          type: 'placa'
+        }))
+        
+        return [...supplyItems, ...placaItems]
+      } else if (this.selectedMaterialType === "topbox") {
+        // Para top box, usar topBoxData
+        return this.topBoxData.map((item, index) => ({
+          _id: `topbox-${index}`,
+          name: item.descripcion || item.producto || item.nombre,
+          size: item.medida || item.dimensiones || '',
+          supplier: item.proveedor || '',
+          stockPlates: item.stock || item.cantidad || 0,
+          type: 'topbox'
+        }))
+      }
+      return []
     }
   },
   watch: {
