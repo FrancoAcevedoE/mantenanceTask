@@ -8,6 +8,15 @@
             </button>
         </div>
 
+        <!-- Mensaje para vendedores -->
+        <div v-if="currentUserRole === 'vendedor'" class="seller-message">
+            <p>Como vendedor, tienes acceso al historial de cotizaciones.</p>
+            <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
+        </div>
+
+        <!-- Contenido del historial solo para otros roles -->
+        <div v-else>
+
         <div class="filters">
             <input v-model="searchMachine" placeholder="Buscar por máquina" />
             <select v-model="filterSector">
@@ -163,6 +172,8 @@
         </div>
     </div>
     </div>
+</div>
+
 </template>
 
 <script>
@@ -226,6 +237,11 @@ export default {
 
         const currentUser = this.getStoredUser()
         this.currentUserRole = currentUser?.role || ""
+
+        // No cargar historial de mantenimiento para vendedores
+        if (currentUser?.role === 'vendedor') {
+            return
+        }
 
         await this.loadHistory()
 
@@ -850,5 +866,33 @@ button:hover {
     .fixed-horizontal-scroll {
         display: none;
     }
+}
+
+.seller-message {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+.seller-message p {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.seller-message button {
+    padding: 0.75rem 1.5rem;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.seller-message button:hover {
+    background: #0056b3;
 }
 </style>

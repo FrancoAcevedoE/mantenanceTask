@@ -5,6 +5,15 @@
 
 <h1>Dashboard</h1>
 
+<!-- Mostrar mensaje para vendedores -->
+<div v-if="currentUser?.role === 'vendedor'" class="seller-message">
+  <p>Como vendedor, tienes acceso a la vista de cotizaciones.</p>
+  <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
+</div>
+
+<!-- Contenido del dashboard solo para admin, supervisor y operario -->
+<div v-else>
+
 <section class="period-section">
 <h2>Periodo de gráficos</h2>
 <div class="period-toolbar">
@@ -235,6 +244,7 @@ ref="recentBottomScroll"
 </div>
 
 </div>
+</div>
 
 </template>
 
@@ -283,7 +293,16 @@ data(){
 
 return{
 
-stats:{},
+stats:{
+  totalMaintenances: 0,
+  machinesRegistered: 0,
+  pending: 0,
+  stopped: 0,
+  operariosAttended: 0,
+  recentMaintenances: [],
+  machineStatusOverview: [],
+  unfinishedReasonSummary: { reasons: [], otherDetailsTop: [] }
+},
 
 searchOperario:"",
 
@@ -414,6 +433,10 @@ years.push(String(year))
 }
 return years
 
+},
+
+currentUser() {
+return JSON.parse(localStorage.getItem('user') || '{}')
 }
 
 },
@@ -433,11 +456,8 @@ this.syncPeriodSelectorsFromPeriod()
 const user = JSON.parse(localStorage.getItem('user') || '{}')
 if (['admin', 'supervisor', 'operario'].includes(user.role)) {
   await this.loadDashboard()
-} else if (user.role === 'vendedor') {
-  // Redirigir vendedores a su vista
-  this.$router.push('/seller')
-  return
 }
+// Para vendedores, no cargar datos de mantenimiento
 
 window.addEventListener("resize", this.updateRecentBottomScrollbar)
 
@@ -874,6 +894,34 @@ this.updateRecentBottomScrollbar()
 </script>
 
 <style>
+
+.seller-message {
+text-align: center;
+padding: 2rem;
+background: #f8f9fa;
+border-radius: 8px;
+margin: 2rem 0;
+}
+
+.seller-message p {
+font-size: 1.2rem;
+margin-bottom: 1rem;
+color: #495057;
+}
+
+.seller-message button {
+padding: 0.75rem 1.5rem;
+background: #007bff;
+color: white;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+font-size: 1rem;
+}
+
+.seller-message button:hover {
+background: #0056b3;
+}
 
 .page-container{
 background-image: url('@/assets/fondogeneral.png');
