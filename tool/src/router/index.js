@@ -39,13 +39,13 @@ const router = createRouter({
       path: '/new',name: 'New',component: newMantenance, meta: { requiresAuth: true, roles: ['admin', 'operario'] }
     },
     {
-      path: '/history', name: 'History', component: historyView, meta: { requiresAuth: true }
+      path: '/history', name: 'History', component: historyView, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }
     },
     {
       path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true }
     },
     {
-      path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true }
+      path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }
     },
     {
       path: '/seller', name: 'SellerView', component: sellerView, meta: { requiresAuth: true, roles: ['vendedor'] }

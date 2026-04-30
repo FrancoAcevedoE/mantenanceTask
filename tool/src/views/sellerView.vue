@@ -17,9 +17,10 @@
         <div v-else class="quotes-list">
           <div v-for="quote in quotes" :key="quote._id" class="quote-item">
             <div class="quote-header">
-              <strong>{{ quote.productId?.name || 'Producto eliminado' }}</strong> - {{ formatDate(quote.createdAt) }}
+              <strong>{{ quote.productId ? (quote.productId.name || 'Producto sin nombre') : 'Producto eliminado' }}</strong> - {{ formatDate(quote.createdAt) }}
             </div>
             <div class="quote-details">
+              <p v-if="quote.productId">Código: {{ quote.productId.code || 'N/A' }}</p>
               <p>Cantidad: {{ quote.quantityM2 }} m²</p>
               <p>Precio sin descuento: ${{ quote.totalPriceWithoutDiscount?.toFixed(2) || '0.00' }}</p>
               <p>Precio con descuento: ${{ quote.totalPriceWithDiscount?.toFixed(2) || '0.00' }}</p>
@@ -39,21 +40,27 @@
               {{ product.name }} - Código: {{ product.code }}
             </option>
           </select>
+          <p v-if="products.length === 0" class="no-products-message">
+            No hay productos disponibles. Contacte al administrador para agregar productos.
+          </p>
 
           <div v-if="selectedProduct" class="product-details">
             <img v-if="selectedProduct.image" :src="selectedProduct.image" alt="Producto" class="product-image">
-            <p><strong>Código:</strong> {{ selectedProduct.code }}</p>
-            <p><strong>Colores:</strong> {{ selectedProduct.colors?.join(', ') || 'No especificado' }}</p>
+            <p><strong>Código:</strong> {{ selectedProduct.code || 'No especificado' }}</p>
+            <p><strong>Colores:</strong> {{ selectedProduct.colors?.length ? selectedProduct.colors.join(', ') : 'No especificado' }}</p>
             <p><strong>Medidas:</strong> {{ selectedProduct.dimensions || 'No especificado' }}</p>
-            <p><strong>Espesores:</strong> {{ selectedProduct.thicknesses?.join(', ') || 'No especificado' }}</p>
+            <p><strong>Espesores:</strong> {{ selectedProduct.thicknesses?.length ? selectedProduct.thicknesses.join(', ') : 'No especificado' }}</p>
             <p><strong>Precio por m²:</strong> ${{ selectedProduct.pricePerM2 || 0 }}</p>
-            <p><strong>Descuentos:</strong></p>
-            <ul v-if="selectedProduct.discounts?.length">
-              <li v-for="discount in selectedProduct.discounts" :key="discount.quantity">
+            <p><strong>Descuentos por cantidad:</strong></p>
+            <ul v-if="selectedProduct.discounts && selectedProduct.discounts.length">
+              <li v-for="discount in selectedProduct.discounts" :key="discount._id || discount.quantity">
                 {{ discount.quantity }} m² o más: {{ discount.discountPercent }}% descuento
               </li>
             </ul>
-            <p v-else>No hay descuentos configurados</p>
+            <p v-else class="no-discounts">No hay descuentos configurados para este producto</p>
+          </div>
+          <div v-else class="no-product-selected">
+            <p>Seleccione un producto para ver los detalles</p>
           </div>
 
           <label>Cantidad en m²</label>
@@ -340,5 +347,27 @@ button:hover:not(:disabled) {
   text-align: center;
   color: #6c757d;
   font-style: italic;
+}
+
+.no-products-message {
+  color: #dc3545;
+  background: #f8d7da;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.no-discounts {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.no-product-selected {
+  color: #6c757d;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  text-align: center;
 }
 </style>
