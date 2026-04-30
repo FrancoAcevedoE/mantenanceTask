@@ -17,13 +17,13 @@
         <div v-else class="quotes-list">
           <div v-for="quote in quotes" :key="quote._id" class="quote-item">
             <div class="quote-header">
-              <strong>{{ quote.productId.name }}</strong> - {{ formatDate(quote.createdAt) }}
+              <strong>{{ quote.productId?.name || 'Producto eliminado' }}</strong> - {{ formatDate(quote.createdAt) }}
             </div>
             <div class="quote-details">
               <p>Cantidad: {{ quote.quantityM2 }} m²</p>
-              <p>Precio sin descuento: ${{ quote.totalPriceWithoutDiscount.toFixed(2) }}</p>
-              <p>Precio con descuento: ${{ quote.totalPriceWithDiscount.toFixed(2) }}</p>
-              <p>Descuento aplicado: {{ quote.discountApplied }}%</p>
+              <p>Precio sin descuento: ${{ quote.totalPriceWithoutDiscount?.toFixed(2) || '0.00' }}</p>
+              <p>Precio con descuento: ${{ quote.totalPriceWithDiscount?.toFixed(2) || '0.00' }}</p>
+              <p>Descuento aplicado: {{ quote.discountApplied || 0 }}%</p>
             </div>
           </div>
         </div>
@@ -43,16 +43,17 @@
           <div v-if="selectedProduct" class="product-details">
             <img v-if="selectedProduct.image" :src="selectedProduct.image" alt="Producto" class="product-image">
             <p><strong>Código:</strong> {{ selectedProduct.code }}</p>
-            <p><strong>Colores:</strong> {{ selectedProduct.colors.join(', ') }}</p>
-            <p><strong>Medidas:</strong> {{ selectedProduct.dimensions }}</p>
-            <p><strong>Espesores:</strong> {{ selectedProduct.thicknesses.join(', ') }}</p>
-            <p><strong>Precio por m²:</strong> ${{ selectedProduct.pricePerM2 }}</p>
+            <p><strong>Colores:</strong> {{ selectedProduct.colors?.join(', ') || 'No especificado' }}</p>
+            <p><strong>Medidas:</strong> {{ selectedProduct.dimensions || 'No especificado' }}</p>
+            <p><strong>Espesores:</strong> {{ selectedProduct.thicknesses?.join(', ') || 'No especificado' }}</p>
+            <p><strong>Precio por m²:</strong> ${{ selectedProduct.pricePerM2 || 0 }}</p>
             <p><strong>Descuentos:</strong></p>
-            <ul>
+            <ul v-if="selectedProduct.discounts?.length">
               <li v-for="discount in selectedProduct.discounts" :key="discount.quantity">
                 {{ discount.quantity }} m² o más: {{ discount.discountPercent }}% descuento
               </li>
             </ul>
+            <p v-else>No hay descuentos configurados</p>
           </div>
 
           <label>Cantidad en m²</label>
@@ -171,10 +172,12 @@ export default {
       if (!this.selectedProduct || !this.quoteForm.quantityM2) return basePrice
 
       let discountPercent = 0
-      for (const disc of this.selectedProduct.discounts.sort((a, b) => b.quantity - a.quantity)) {
-        if (this.quoteForm.quantityM2 >= disc.quantity) {
-          discountPercent = disc.discountPercent
-          break
+      if (this.selectedProduct.discounts && Array.isArray(this.selectedProduct.discounts)) {
+        for (const disc of this.selectedProduct.discounts.sort((a, b) => b.quantity - a.quantity)) {
+          if (this.quoteForm.quantityM2 >= disc.quantity) {
+            discountPercent = disc.discountPercent
+            break
+          }
         }
       }
       return basePrice * (1 - discountPercent / 100)
@@ -225,6 +228,7 @@ export default {
       }
     },
     formatDate(date) {
+      if (!date) return 'Fecha no disponible'
       return new Date(date).toLocaleDateString('es-ES')
     }
   }
