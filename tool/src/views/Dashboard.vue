@@ -251,6 +251,7 @@ ref="recentBottomScroll"
 <script>
 
 import axios from "axios"
+import { API_BASE_URL } from '@/utils/api'
 import {
 Chart,
 ArcElement,
@@ -269,8 +270,6 @@ DoughnutController
 import backgroundImage from '@/assets/fondogeneral.png'
 
 // import apiClient from "../services/apiClient"
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
 
 Chart.register(
 ArcElement,

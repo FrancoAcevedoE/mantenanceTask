@@ -117,6 +117,7 @@
 
 <script>
 import axios from 'axios'
+import { API_BASE_URL } from '@/utils/api'
 
 export default {
   name: 'SellerView',
@@ -151,7 +152,7 @@ export default {
   methods: {
     async loadQuotes() {
       try {
-        const response = await axios.get('/api/quotes')
+        const response = await axios.get(`${API_BASE_URL}/quotes`)
         this.quotes = response.data
       } catch (error) {
         console.error('Error loading quotes:', error)
@@ -160,7 +161,7 @@ export default {
     },
     async loadProducts() {
       try {
-        const response = await axios.get('/api/products')
+        const response = await axios.get(`${API_BASE_URL}/products`)
         this.products = response.data
       } catch (error) {
         console.error('Error loading products:', error)
@@ -192,7 +193,7 @@ export default {
     async createQuote() {
       this.isCreating = true
       try {
-        await axios.post('/api/quotes', this.quoteForm)
+        await axios.post(`${API_BASE_URL}/quotes`, this.quoteForm)
         this.$toast.success('Cotización creada exitosamente')
         this.quoteForm = { productId: '', quantityM2: null }
         this.selectedProduct = null
@@ -215,7 +216,7 @@ export default {
         delete productData.colorsText
         delete productData.thicknessesText
 
-        await axios.post('/api/products', productData)
+        await axios.post(`${API_BASE_URL}/products`, productData)
         this.$toast.success('Producto creado exitosamente')
         this.productForm = {
           name: '',

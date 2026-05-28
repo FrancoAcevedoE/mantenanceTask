@@ -6,8 +6,8 @@ import {
   subscribeToPush,
   unsubscribeFromPush
 } from '@/utils/pushNotifications'
+import { API_BASE_URL } from '@/utils/api'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 const POLL_INTERVAL_MS = 60000
 
 const buildSystemNotificationBody = (item) => {

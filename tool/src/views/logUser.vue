@@ -65,8 +65,8 @@
 <script>
 import axios from "axios"
 import backgroundImage from '@/assets/fondo.jpg'
+import { API_BASE_URL } from '@/utils/api'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
 const PWA_URL = import.meta.env.VITE_PWA_URL || "https://mantenance-task-francoacevedoes-projects.vercel.app/logUser"
 
 export default {
