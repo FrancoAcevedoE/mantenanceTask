@@ -103,17 +103,31 @@ onBeforeUnmount(() => {
         </button>
       </header>
 
-      <section class="notification-summary-grid">
-        <article class="notification-summary-card notification-summary-card--danger">
-          <strong>{{ summary.stoppedMachinesCount }}</strong>
-          <span>Máquinas detenidas</span>
-        </article>
-        <article class="notification-summary-card notification-summary-card--warning">
-          <strong>{{ summary.pendingMaintenancesCount }}</strong>
-          <span>Trabajos pendientes</span>
-        </article>
-      </section>
+   <section class="notification-summary-grid">
 
+  <article 
+    class="notification-summary-card notification-summary-card--danger"
+    @click="$router.push({ 
+      path: '/dashboard', 
+      query: { filter: 'stopped' } 
+    })"
+  >
+    <strong>{{ summary.stoppedMachinesCount }}</strong>
+    <span>Máquinas detenidas</span>
+  </article>
+
+  <article 
+    class="notification-summary-card notification-summary-card--warning"
+    @click="$router.push({ 
+      path: '/dashboard', 
+      query: { filter: 'pending' } 
+    })"
+  >
+    <strong>{{ summary.pendingMaintenancesCount }}</strong>
+    <span>Trabajos pendientes</span>
+  </article>
+
+</section>
       <button type="button" class="notification-history-button" @click="goToHistory">
         Ver historial completo
       </button>
@@ -276,6 +290,14 @@ onBeforeUnmount(() => {
   color: #075985;
   font-weight: 700;
   cursor: pointer;
+}
+.notification-summary-card {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.notification-summary-card:hover {
+  transform: scale(1.02);
 }
 
 .notification-text-button {

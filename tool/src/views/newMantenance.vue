@@ -1,225 +1,240 @@
 <template>
 
 <div class="page-container">
-    <div class="box">
-        <h2>Nuevo trabajo</h2>
 
-        <details class="horometro-panel step-block">
-            <summary>Actualizar horometro</summary>
-            <div class="horometro-body">
-                <label>Maquina</label>
-                <select v-model="horometroForm.machineId">
-                    <option value="">Seleccionar maquina</option>
-                    <option v-for="machine in machines" :key="machine._id" :value="machine._id">
-                        {{ machine.sector ? `${machine.sector} - ${machine.name}` : machine.name }}
+    <div class="box">
+
+        <!-- VISTA PRINCIPAL -->
+        <div class="action-selector">
+
+            <!-- HOROMETRO -->
+            <div
+                class="action-card"
+                @click="activePanel = activePanel === 'horometro' ? '' : 'horometro'"
+            >
+                <i class="bi bi-stopwatch"></i>
+                <h3>Actualizar horómetro</h3>
+            </div>
+
+            <!-- NUEVO TRABAJO -->
+            <div
+                class="action-card"
+                @click="activePanel = activePanel === 'trabajo' ? '' : 'trabajo'"
+            >
+                <i class="bi bi-clipboard-data"></i>
+                <h3>Nuevo Trabajo</h3>
+            </div>
+
+        </div>
+
+        <!-- PANEL HOROMETRO -->
+        <div
+            v-if="activePanel === 'horometro'"
+            class="panel-container step-block"
+        >
+
+            <details class="horometro-panel" open>
+
+                <summary>Actualizar horometro</summary>
+
+                <div class="horometro-body">
+
+                    <label>Maquina</label>
+
+                    <select v-model="horometroForm.machineId">
+
+                        <option value="">
+                            Seleccionar maquina
+                        </option>
+
+                        <option
+                            v-for="machine in machines"
+                            :key="machine._id"
+                            :value="machine._id"
+                        >
+                            {{
+                                machine.sector
+                                ? `${machine.sector} - ${machine.name}`
+                                : machine.name
+                            }}
+                        </option>
+
+                    </select>
+
+                    <label>Nuevo horometro</label>
+
+                    <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        v-model.number="horometroForm.value"
+                    >
+
+                    <button
+                        type="button"
+                        :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro"
+                        @click="updateHorometroFromPanel"
+                    >
+                        {{
+                            isUpdatingHorometro
+                            ? 'Actualizando...'
+                            : 'Actualizar horometro'
+                        }}
+                    </button>
+
+                    <div
+                        v-if="selectedHorometroMachine"
+                        class="horometro-history"
+                    >
+
+                        <p>
+                            <strong>Horometro actual:</strong>
+                            {{ selectedHorometroMachine.horometro ?? 0 }}h
+                        </p>
+
+                        <p>
+                            <strong>Historial</strong>
+                        </p>
+
+                        <ul
+                            v-if="orderedHorometroHistory.length"
+                            class="horometro-list"
+                        >
+
+                            <li
+                                v-for="entry in orderedHorometroHistory"
+                                :key="`${entry.recordedAt}-${entry.value}`"
+                            >
+                                {{ formatDate(entry.recordedAt) }}
+                                -
+                                {{ entry.value }}h
+                            </li>
+
+                        </ul>
+
+                        <p v-else>
+                            No hay historial registrado.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </details>
+
+        </div>
+
+        <!-- PANEL NUEVO TRABAJO -->
+        <div
+            v-if="activePanel === 'trabajo'"
+            class="panel-container step-block"
+        >
+
+            <h2>Nuevo trabajo</h2>
+
+            <form @submit.prevent="saveMaintenance">
+
+                <!-- ACA ARRANCA TU FORMULARIO ORIGINAL -->
+
+                <label>Sector</label>
+
+                <select
+                    v-model="form.sector"
+                    required
+                    @change="onSectorChange"
+                >
+
+                    <option value="">
+                        Seleccionar sector
                     </option>
+
+                    <option
+                        v-for="sector in sectors"
+                        :key="sector"
+                        :value="sector"
+                    >
+                        {{ sector }}
+                    </option>
+
                 </select>
 
-                <label>Nuevo horometro</label>
-                <input type="number" min="0" step="1" v-model.number="horometroForm.value">
+                <!-- TODO EL RESTO DEL FORMULARIO -->
+                <!-- DESDE -->
+                <!-- <div v-if="isSectorComplete" class="step-block"> -->
+                <!-- HASTA -->
+                <!-- EL FINAL DEL FORM -->
 
-                <button type="button" :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro" @click="updateHorometroFromPanel">
-                    {{ isUpdatingHorometro ? 'Actualizando...' : 'Actualizar horometro' }}
+            </form>
+
+        </div>
+
+        <!-- MODAL -->
+        <div v-if="showMachineDetailModal" class="modal">
+
+            <div class="modal-box modal-box-detail">
+
+                <h3>Detalle de máquina</h3>
+
+                <div style="text-align: left; line-height: 1.8;">
+
+                    <p>
+                        <strong>Sector:</strong>
+                        {{ selectedMachine?.sector || "-" }}
+                    </p>
+
+                    <p>
+                        <strong>Máquina:</strong>
+                        {{ selectedMachine?.name || "-" }}
+                    </p>
+
+                    <p>
+                        <strong>Horómetro:</strong>
+                        {{ selectedMachine?.horometro ?? 0 }}h
+                    </p>
+
+                    <p>
+                        <strong>Partes:</strong>
+                        {{
+                            selectedMachineParts.length
+                            ? selectedMachineParts.join(', ')
+                            : "-"
+                        }}
+                    </p>
+
+                    <p>
+                        <strong>Instrucciones/observaciones:</strong>
+                    </p>
+
+                    <p
+                        style="
+                            background: #f5f5f5;
+                            padding: 0.75rem;
+                            border-radius: 8px;
+                            white-space: pre-wrap;
+                        "
+                    >
+                        {{ selectedMachine?.instructions || "-" }}
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    @click="closeMachineDetailModal"
+                    style="margin-top: 1rem;"
+                >
+                    Cerrar
                 </button>
 
-                <div v-if="selectedHorometroMachine" class="horometro-history">
-                    <p><strong>Horometro actual:</strong> {{ selectedHorometroMachine.horometro ?? 0 }}h</p>
-                    <p><strong>Historial</strong></p>
-                    <ul v-if="orderedHorometroHistory.length" class="horometro-list">
-                        <li v-for="entry in orderedHorometroHistory" :key="`${entry.recordedAt}-${entry.value}`">
-                            {{ formatDate(entry.recordedAt) }} - {{ entry.value }}h
-                        </li>
-                    </ul>
-                    <p v-else>No hay historial registrado.</p>
-                </div>
             </div>
-        </details>
 
-        <form @submit.prevent="saveMaintenance">
-
-<label>Sector</label>
-<select v-model="form.sector" required @change="onSectorChange">
-    <option value="">Seleccionar sector</option>
-    <option v-for="sector in sectors" :key="sector" :value="sector">
-        {{ sector }}
-    </option>
-</select>
-
-<div v-if="isSectorComplete" class="step-block">
-<label>Máquina</label>
-<div style="display: flex; gap: 0.5rem; align-items: center;">
-        <select v-model="form.machine" required style="flex: 1;" @change="onMachineChange" :disabled="!form.sector">
-        <option value="">{{ form.sector ? 'Seleccionar máquina' : 'Primero seleccioná un sector' }}</option>
-        <option v-for="machine in filteredMachinesBySector" :key="machine._id" :value="machine.name">
-      {{ machine.name }}
-    </option>
-  </select>
-  <button 
-    v-if="form.machine && selectedMachine && selectedMachine.instructions"
-    type="button" 
-        @click="openMachineDetailModal"
-    style="padding: 0.5rem 1rem; background-color: #6b8e3a; color: white; border: none; border-radius: 5px; cursor: pointer;"
-  >
-        Ver detalle
-  </button>
-</div>
-</div>
-
-<div v-if="isMachineComplete" class="step-block">
-<label>Partes de máquina</label>
-<div v-if="form.machineParts.length" class="parts-chips">
-    <span v-for="part in form.machineParts" :key="part" class="part-chip">
-        {{ part }}
-        <button type="button" class="chip-remove" @click="removeMachinePart(part)">&#xD7;</button>
-    </span>
-</div>
-<div v-if="availableMachineParts.length" style="display:flex;gap:0.5rem;align-items:center;margin:8px 0;">
-    <select v-model="selectedAdditionalMachinePart" style="flex:1;margin:0;">
-        <option value="">Seleccionar parte</option>
-        <option v-for="part in availableMachineParts" :key="part" :value="part">
-            {{ part }}
-        </option>
-    </select>
-    <button type="button" @click="addMachinePart" :disabled="!selectedAdditionalMachinePart" class="add-part-btn">Agregar</button>
-</div>
-<p v-else class="additional-parts-empty">No hay otras partes disponibles para agregar.</p>
-</div>
-
-<div v-if="isMachinePartComplete" class="step-block">
-<label>Operario</label>
-<select v-model="form.clientId" required :disabled="currentUserRole === 'operario'">
-
-<option disabled value="">Seleccionar operario</option>
-<option v-for="operario in operarios" :key="operario._id" :value="operario._id">
-{{ operario.company ? `${operario.name} - ${operario.company}` : operario.name }}
-</option>
-
-</select>
-</div>
-
-<div v-if="isOperarioComplete" class="step-block">
-    <label>Otros operarios</label>
-    <div v-if="additionalWorkersList.length" class="workers-chips">
-        <span v-for="worker in additionalWorkersList" :key="worker._id" class="worker-chip">
-            {{ worker.company ? `${worker.name} - ${worker.company}` : worker.name }}
-            <button type="button" class="chip-remove" @click="removeWorker(worker._id)">&#xD7;</button>
-        </span>
-    </div>
-    <div v-if="availableAdditionalWorkers.length" style="display:flex;gap:0.5rem;align-items:center;margin:8px 0;">
-        <select v-model="selectedAdditionalWorker" style="flex:1;margin:0;">
-            <option value="">Seleccionar operario</option>
-            <option v-for="op in availableAdditionalWorkers" :key="op._id" :value="op._id">
-                {{ op.company ? `${op.name} - ${op.company}` : op.name }}
-            </option>
-        </select>
-        <button type="button" @click="addWorker" :disabled="!selectedAdditionalWorker" class="add-worker-btn">Agregar</button>
-    </div>
-    <p v-else class="additional-workers-empty">No hay otros operarios disponibles para agregar.</p>
-</div>
-
-<div v-if="isOperarioComplete" class="step-block">
-<label>Tipo de mantenimiento</label>
-<select v-model="form.maintenanceType">
-
-<option value="">Seleccionar tipo</option>
-<option value="Preventivo predictivo">Preventivo predictivo</option>
-<option value="Preventivo de mejora continua">Preventivo de mejora continua</option>
-<option value="Preventivo de correctivo">Preventivo de correctivo</option>
-<option value="Arreglo">Arreglo</option>
-<option value="fabricación">Fabricación</option>
-<option value="Limpieza">Limpieza</option>
-<option value="Puesta en marcha (maquina parada)">Puesta en marcha (maquina parada)</option>
-
-</select>
-</div>
-
-<div v-if="isMaintenanceTypeComplete" class="step-block">
-<label>Descripción del trabajo realizado</label>
-<textarea v-model="form.workDescription"></textarea>
-</div>
-
-<div v-if="isWorkDescriptionComplete" class="step-block">
-<label>Repuestos utilizados</label>
-<textarea v-model="form.spareParts"></textarea>
-
-<label>Horas trabajadas</label>
-<input type="number" min="0.5" step="0.5" v-model.number="form.hoursWorked">
-</div>
-
-<div v-if="isHoursWorkedComplete" class="step-block">
-<label>¿La máquina sigue funcionando?</label>
-
-<select v-model="form.machineRunning">
-<option disabled :value="null">Seleccionar</option>
-<option :value="true">SI</option>
-<option :value="false">NO</option>
-
-</select>
-</div>
-
-<div v-if="isMachineRunningAnswered" class="step-block">
-<label>¿El trabajo se terminó?</label>
-
-<select v-model="form.jobFinished">
-<option disabled :value="null">Seleccionar</option>
-<option :value="true">SI</option>
-<option :value="false">NO</option>
-
-</select>
-</div>
-
-<div v-if="isJobFinishedAnswered && (form.jobFinished === false || form.machineRunning === false)" class="step-block">
-
-<label>Motivo por el que no se terminó</label>
-<select v-model="form.unfinishedReasonCategory" @change="onUnfinishedReasonCategoryChange">
-<option value="">Seleccionar motivo</option>
-<option v-for="reason in unfinishedReasonOptions" :key="reason" :value="reason">
-{{ reason }}
-</option>
-</select>
-
-<div v-if="form.unfinishedReasonCategory === 'Otros'">
-<label>Detalle del motivo</label>
-<textarea v-model="form.unfinishedReason" placeholder="Escribí el motivo"></textarea>
-</div>
-
-</div>
-
-<div v-if="isJobFinishedAnswered" class="button-group step-block">
-<button type="submit">
-
-Guardar mantenimiento
-
-</button>
-
-<button type="button" class="secondary-button" @click="resetForm">
-
-Cancelar
-
-</button>
-</div>
-
-</form>
-
-<div v-if="showMachineDetailModal" class="modal">
-    <div class="modal-box modal-box-detail">
-        <h3>Detalle de máquina</h3>
-        <div style="text-align: left; line-height: 1.8;">
-            <p><strong>Sector:</strong> {{ selectedMachine?.sector || "-" }}</p>
-            <p><strong>Máquina:</strong> {{ selectedMachine?.name || "-" }}</p>
-            <p><strong>Horómetro:</strong> {{ selectedMachine?.horometro ?? 0 }}h</p>
-            <p><strong>Partes:</strong> {{ selectedMachineParts.length ? selectedMachineParts.join(', ') : "-" }}</p>
-            <p><strong>Instrucciones/observaciones:</strong></p>
-            <p style="background: #f5f5f5; padding: 0.75rem; border-radius: 8px; white-space: pre-wrap;">{{ selectedMachine?.instructions || "-" }}</p>
         </div>
-        <button type="button" @click="closeMachineDetailModal" style="margin-top: 1rem;">Cerrar</button>
+
     </div>
-</div>
-    </div>
+
 </div>
 
 </template>
-
 <script>
 
 import axios from "axios"
@@ -230,7 +245,7 @@ export default{
 data(){
 
 return{
-
+activePanel:"",
 operarios:[],
 allOperarios:[],
 additionalWorkersList:[],
@@ -729,24 +744,99 @@ second: "2-digit"
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 1rem;
+    align-items: flex-start;
+    padding: 2rem 1rem;
 }
+
+.action-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.action-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 18px;
+    padding: 2rem 1rem;
+    cursor: pointer;
+    transition: 0.25s;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+.action-card i {
+    font-size: 3rem;
+    color: rgb(69, 82, 28);
+    margin-bottom: 1rem;
+}
+
+.action-card h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+    text-align: center;
+}
+
+.panel-container {
+    margin-top: 1.5rem;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+
+    .action-selector {
+        grid-template-columns: 1fr;
+    }
+
+    .action-card {
+        padding: 1.5rem 1rem;
+    }
+
+}
+
 
 .box {
     width: 100%;
     max-width: 560px;
     padding: 2rem;
-    background: rgba(255, 255, 255, 0.94);
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(248,248,252,0.96) 0%,
+            rgba(69,82,28,0.12) 100%
+        );
+
+    backdrop-filter: blur(12px);
+
+    border-radius: 24px;
+
+    border: 1px solid rgba(255,255,255,0.4);
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,0.12);
+
     color: #000;
     text-align: center;
-}
 
+    transition: 0.3s ease;
+}
 .box:hover {
-    transition: 0.3s;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 16px 40px rgba(0,0,0,0.16);
 }
 
 h2 {

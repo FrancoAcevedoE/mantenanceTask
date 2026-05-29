@@ -448,7 +448,26 @@ const user = JSON.parse(localStorage.getItem('user') || '{}')
 if (['admin', 'supervisor', 'operario'].includes(user.role)) {
   await this.loadDashboard()
 }
-// Para vendedores, no cargar datos de mantenimiento
+// Aplicar filtro automatico desde notificaciones
+const filter = this.$route.query.filter
+
+if (filter === "pending") {
+  this.searchStatus = "pending"
+
+  this.$nextTick(() => {
+    document.querySelector(".recent-section")
+      ?.scrollIntoView({ behavior: "smooth" })
+  })
+}
+
+if (filter === "stopped") {
+  this.searchStatus = "stopped"
+
+  this.$nextTick(() => {
+    document.querySelector(".recent-section")
+      ?.scrollIntoView({ behavior: "smooth" })
+  })
+}
 
 window.addEventListener("resize", this.updateRecentBottomScrollbar)
 
