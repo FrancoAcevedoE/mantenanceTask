@@ -525,7 +525,7 @@ export default {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+align-items: center;
   padding: 1rem;
 }
 

@@ -290,7 +290,7 @@ export default {
   min-height: 100vh;
   padding: 1rem;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
 }
 
