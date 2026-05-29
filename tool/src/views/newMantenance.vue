@@ -2,7 +2,6 @@
 
 <div class="page-container">
 
-    <div class="box">
 
         <!-- VISTA PRINCIPAL -->
         <div class="action-selector">
@@ -229,8 +228,6 @@
             </div>
 
         </div>
-
-    </div>
 
 </div>
 
@@ -740,13 +737,59 @@ second: "2-digit"
 </script>
 
 <style scoped>
-.page-container {
-    min-height: 100vh;
+.panel-container {
+    width: 100%;
+    margin-top: 1.5rem;
+
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 2rem 1rem;
+    flex-direction: column;
+    align-items: center;
 }
+
+
+
+
+
+.page-container {
+    width: 100%;
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+
+    padding: 2rem;
+
+    background: transparent !important;
+
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* ELIMINA CUALQUIER MARCO FANTASMA */
+.page-container::before,
+.page-container::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* POR SI ALGUN PADRE AGREGA EL RECUADRO */
+:deep(.page-container),
+:deep(.content),
+:deep(.wrapper),
+:deep(.container) {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+
+
+
+
+
 
 .action-selector {
     display: grid;
@@ -787,9 +830,6 @@ second: "2-digit"
     text-align: center;
 }
 
-.panel-container {
-    margin-top: 1.5rem;
-}
 
 /* RESPONSIVE */
 
@@ -805,39 +845,6 @@ second: "2-digit"
 
 }
 
-
-.box {
-    width: 100%;
-    max-width: 560px;
-    padding: 2rem;
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(248,248,252,0.96) 0%,
-            rgba(69,82,28,0.12) 100%
-        );
-
-    backdrop-filter: blur(12px);
-
-    border-radius: 24px;
-
-    border: 1px solid rgba(255,255,255,0.4);
-
-    box-shadow:
-        0 10px 35px rgba(0,0,0,0.12);
-
-    color: #000;
-    text-align: center;
-
-    transition: 0.3s ease;
-}
-.box:hover {
-    transform: translateY(-2px);
-
-    box-shadow:
-        0 16px 40px rgba(0,0,0,0.16);
-}
 
 h2 {
     margin-top: 0;
@@ -859,6 +866,10 @@ label {
 
 form {
     width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 input[type="text"],

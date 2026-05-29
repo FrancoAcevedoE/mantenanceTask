@@ -294,6 +294,44 @@ export default {
   justify-content: center;
 }
 
+
+
+.page-container {
+    width: 100%;
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+
+    padding: 2rem;
+
+    background: transparent !important;
+
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* ELIMINA CUALQUIER MARCO FANTASMA */
+.page-container::before,
+.page-container::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* POR SI ALGUN PADRE AGREGA EL RECUADRO */
+:deep(.page-container),
+:deep(.content),
+:deep(.wrapper),
+:deep(.container) {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+
 .notification-history-card {
   width: min(1080px, 100%);
   margin-top: 5.4rem;

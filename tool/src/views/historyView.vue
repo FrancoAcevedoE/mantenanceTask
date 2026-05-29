@@ -522,13 +522,31 @@ export default {
 </script>
 
 <style>
+
 .page-container {
+    width: 100%;
     min-height: 100vh;
+
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 1rem;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 2rem;
+
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
+
+.page-container::before,
+.page-container::after {
+    display: none !important;
+    content: none !important;
+}
+
+
+
 
 .container {
     width: min(96vw, 1650px);

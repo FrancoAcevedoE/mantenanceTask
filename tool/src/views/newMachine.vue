@@ -1,137 +1,364 @@
 <template>
-    <div class="page-container">
-        <div class="machine-layout">
+  <div class="page-container">
 
-            <!-- Formulario -->
-            <div class="box">
-              <h2>{{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}</h2>
+    <div class="machine-layout">
 
-                <input type="text" v-model="form.sector" placeholder="Sector de la fábrica" />
+      <!-- =========================
+           NUEVA MAQUINA
+      ========================== -->
+      <div class="box">
 
-                <input type="text" v-model="form.name" placeholder="Máquina" />
+        <div
+          class="collapse-header"
+          @click="showNewMachineForm = !showNewMachineForm"
+        >
 
-                <label class="parts-label">Partes de la máquina</label>
-                <div class="parts-chips" v-if="form.machineParts.length">
-                  <span v-for="(part, index) in form.machineParts" :key="index" class="part-chip">
-                    {{ part }}
-                    <button type="button" class="chip-remove" @click="removePart(index)">×</button>
-                  </span>
-                </div>
-                <div class="part-input-row">
-                  <input
-                    type="text"
-                    v-model="newPart"
-                    placeholder="Nombre de la parte"
-                    @keyup.enter="addPart"
-                  />
-                  <button type="button" class="add-part-button" @click="addPart">+</button>
-                </div>
+          <div class="section-title">
+            <i class="bi bi-clipboard-plus"></i>
 
-                <input type="number" v-model.number="form.horometro" placeholder="Horómetro"/>
+            <h2>
+              {{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}
+            </h2>
+          </div>
 
-                <textarea v-model="form.instructions" placeholder="Instrucciones/observaciones de la máquina"></textarea>
-
-                <div class="button-group">
-                  <button @click="save">{{ editingMachineId ? 'Guardar cambios' : 'Guardar' }}</button>
-                  <button @click="cancel">{{ editingMachineId ? 'Cancelar edición' : 'Cancelar' }}</button>
-                </div>
-            </div>
-
-            <!-- Lista de máquinas -->
-            <div class="box machines-panel">
-                <h2>Máquinas cargadas</h2>
-
-                <select class="sector-select" v-model="sectorFilter">
-                  <option value="">Todas las máquinas</option>
-                  <option v-for="s in availableSectors" :key="s" :value="s">{{ s }}</option>
-                </select>
-
-                <p v-if="!machines.length" class="empty-state">No hay máquinas cargadas.</p>
-                <p v-else-if="sectorFilter && !filteredMachines.length" class="empty-state">No hay máquinas en este sector.</p>
-                <div v-else class="machines-list">
-                    <div v-for="machine in filteredMachines" :key="machine._id" class="machine-item">
-                        <div class="machine-info">
-                            <strong>{{ machine.name }}</strong>
-                            <span>Sector: {{ machine.sector }}</span>
-                            <span>Horómetro: {{ machine.horometro }}h</span>
-                            <span v-if="machine.machineParts?.length">Partes: {{ machine.machineParts.join(', ') }}</span>
-                    </div>
-                    <div class="machine-actions">
-                      <button type="button" class="history-button" @click="openMachineModal(machine)">Detalles</button>
-                      <button type="button" class="edit-button" @click="modifyMachine(machine._id)">Modificar</button>
-                      <button type="button" class="danger-button" @click="deleteMachine(machine._id)">Ocultar</button>
-                    </div>
-                    </div>
-                </div>
-
-                <div v-if="deletedMachines.length" class="deleted-machines-zone">
-                  <h3>Máquinas ocultas</h3>
-                  <p class="deleted-machines-copy">
-                    No se muestran en nuevas cargas. Podés eliminarlas definitivamente para limpieza final.
-                  </p>
-
-                  <div class="machines-list">
-                    <div v-for="machine in deletedMachines" :key="`deleted-${machine._id}`" class="machine-item deleted-machine-item">
-                      <div class="machine-info">
-                        <strong>{{ machine.name }}</strong>
-                        <span>Sector: {{ machine.sector }}</span>
-                        <span>Horómetro: {{ machine.horometro }}h</span>
-                      </div>
-
-                      <div class="machine-actions">
-                        <button
-                          type="button"
-                          class="restore-button"
-                          @click="restoreMachine(machine._id)"
-                        >
-                          Restaurar
-                        </button>
-
-                        <button
-                          type="button"
-                          class="danger-button hard-delete-button"
-                          @click="deleteMachinePermanent(machine._id)"
-                        >
-                          Borrar definitivamente
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-            </div>
+          <i
+            class="bi"
+            :class="showNewMachineForm ? 'bi-chevron-up' : 'bi-chevron-down'"
+          ></i>
 
         </div>
 
-        <!-- Modal detalles máquina -->
-        <div v-if="showMachineModal" class="modal">
-            <div class="modal-box modal-box-detail">
-                <h3>{{ selectedMachine?.name }}</h3>
-                <div style="text-align: left; line-height: 1.8;">
-                    <p><strong>Sector:</strong> {{ selectedMachine?.sector }}</p>
-                    <p><strong>Horómetro actual:</strong> {{ selectedMachine?.horometro }}h</p>
-                    <p v-if="selectedMachine?.machineParts?.length">
-                        <strong>Partes:</strong> {{ selectedMachine.machineParts.join(', ') }}
-                    </p>
-                    <template v-if="selectedMachine?.instructions">
-                        <p><strong>Instrucciones/observaciones:</strong></p>
-                        <p style="background: #f5f5f5; padding: 0.75rem; border-radius: 8px; white-space: pre-wrap;">{{ selectedMachine.instructions }}</p>
-                    </template>
-                    <template v-if="sortedHorometroHistory.length">
-                        <p><strong>Historial de horómetro:</strong></p>
-                        <div style="background: rgba(107,142,58,0.12); padding: 0.65rem 0.75rem; border-radius: 0.55rem; margin-bottom: 0.5rem;" v-html="machineHorometroSummary"></div>
-                        <ul style="text-align: left; padding-left: 1.2rem; margin: 0;">
-                            <li v-for="(item, i) in sortedHorometroHistory" :key="i" style="margin-bottom: 0.35rem;">
-                                <strong>{{ item.value }}h</strong> - {{ formatDate(item.recordedAt) }}
-                            </li>
-                        </ul>
-                    </template>
-                    <p v-else><em style="color: #888;">Sin historial de horómetro registrado.</em></p>
-                </div>
-                <button @click="closeMachineModal" style="margin-top: 1rem;">Cerrar</button>
-            </div>
+        <!-- CONTENIDO -->
+        <div v-if="showNewMachineForm">
+
+          <input
+            type="text"
+            v-model="form.sector"
+            placeholder="Sector de la fábrica"
+          />
+
+          <input
+            type="text"
+            v-model="form.name"
+            placeholder="Máquina"
+          />
+
+          <label class="parts-label">
+            Partes de la máquina
+          </label>
+
+          <div
+            class="parts-chips"
+            v-if="form.machineParts.length"
+          >
+            <span
+              v-for="(part, index) in form.machineParts"
+              :key="index"
+              class="part-chip"
+            >
+              {{ part }}
+
+              <button
+                type="button"
+                class="chip-remove"
+                @click="removePart(index)"
+              >
+                ×
+              </button>
+            </span>
+          </div>
+
+          <div class="part-input-row">
+
+            <input
+              type="text"
+              v-model="newPart"
+              placeholder="Nombre de la parte"
+              @keyup.enter="addPart"
+            />
+
+            <button
+              type="button"
+              class="add-part-button"
+              @click="addPart"
+            >
+              +
+            </button>
+
+          </div>
+
+          <input
+            type="number"
+            v-model.number="form.horometro"
+            placeholder="Horómetro"
+          />
+
+          <textarea
+            v-model="form.instructions"
+            placeholder="Instrucciones/observaciones de la máquina"
+          ></textarea>
+
+          <div class="button-group">
+
+            <button @click="save">
+              {{ editingMachineId ? 'Guardar cambios' : 'Guardar' }}
+            </button>
+
+            <button @click="cancel">
+              {{ editingMachineId ? 'Cancelar edición' : 'Cancelar' }}
+            </button>
+
+          </div>
+
         </div>
+      </div>
+
+      <!-- =========================
+           LISTA MAQUINAS
+      ========================== -->
+      <div class="box machines-panel">
+
+        <div
+          class="collapse-header"
+          @click="showMachinesPanel = !showMachinesPanel"
+        >
+
+          <div class="section-title">
+
+            <i class="bi bi-clipboard2-data"></i>
+
+            <h2>
+              Máquinas cargadas
+            </h2>
+
+          </div>
+
+          <i
+            class="bi"
+            :class="showMachinesPanel ? 'bi-chevron-up' : 'bi-chevron-down'"
+          ></i>
+
+        </div>
+
+        <!-- CONTENIDO -->
+        <div v-if="showMachinesPanel">
+
+          <select
+            class="sector-select"
+            v-model="sectorFilter"
+          >
+
+            <option value="">
+              Todas las máquinas
+            </option>
+
+            <option
+              v-for="s in availableSectors"
+              :key="s"
+              :value="s"
+            >
+              {{ s }}
+            </option>
+
+          </select>
+
+          <p
+            v-if="!machines.length"
+            class="empty-state"
+          >
+            No hay máquinas cargadas.
+          </p>
+
+          <p
+            v-else-if="sectorFilter && !filteredMachines.length"
+            class="empty-state"
+          >
+            No hay máquinas en este sector.
+          </p>
+
+          <div
+            v-else
+            class="machines-list"
+          >
+
+            <div
+              v-for="machine in filteredMachines"
+              :key="machine._id"
+              class="machine-item"
+            >
+
+              <div class="machine-info">
+
+                <strong>
+                  {{ machine.name }}
+                </strong>
+
+                <span>
+                  Sector: {{ machine.sector }}
+                </span>
+
+                <span>
+                  Horómetro: {{ machine.horometro }}h
+                </span>
+
+                <span v-if="machine.machineParts?.length">
+                  Partes: {{ machine.machineParts.join(', ') }}
+                </span>
+
+              </div>
+
+              <div class="machine-actions">
+
+                <button
+                  type="button"
+                  class="history-button"
+                  @click="openMachineModal(machine)"
+                >
+                  Detalles
+                </button>
+
+                <button
+                  type="button"
+                  class="edit-button"
+                  @click="modifyMachine(machine._id)"
+                >
+                  Modificar
+                </button>
+
+                <button
+                  type="button"
+                  class="danger-button"
+                  @click="deleteMachine(machine._id)"
+                >
+                  Ocultar
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
     </div>
+
+    <!-- =========================
+         MODAL DETALLES
+    ========================== -->
+    <div
+      v-if="showMachineModal"
+      class="modal"
+    >
+
+      <div class="modal-box modal-box-detail">
+
+        <h3>
+          {{ selectedMachine?.name }}
+        </h3>
+
+        <div style="text-align: left; line-height: 1.8;">
+
+          <p>
+            <strong>Sector:</strong>
+            {{ selectedMachine?.sector }}
+          </p>
+
+          <p>
+            <strong>Horómetro actual:</strong>
+            {{ selectedMachine?.horometro }}h
+          </p>
+
+          <p v-if="selectedMachine?.machineParts?.length">
+            <strong>Partes:</strong>
+            {{ selectedMachine.machineParts.join(', ') }}
+          </p>
+
+          <template v-if="selectedMachine?.instructions">
+
+            <p>
+              <strong>Instrucciones/observaciones:</strong>
+            </p>
+
+            <p
+              style="
+                background: #f5f5f5;
+                padding: 0.75rem;
+                border-radius: 8px;
+                white-space: pre-wrap;
+              "
+            >
+              {{ selectedMachine.instructions }}
+            </p>
+
+          </template>
+
+          <template v-if="sortedHorometroHistory.length">
+
+            <p>
+              <strong>Historial de horómetro:</strong>
+            </p>
+
+            <div
+              style="
+                background: rgba(107,142,58,0.12);
+                padding: 0.65rem 0.75rem;
+                border-radius: 0.55rem;
+                margin-bottom: 0.5rem;
+              "
+              v-html="machineHorometroSummary"
+            ></div>
+
+            <ul
+              style="
+                text-align: left;
+                padding-left: 1.2rem;
+                margin: 0;
+              "
+            >
+
+              <li
+                v-for="(item, i) in sortedHorometroHistory"
+                :key="i"
+                style="margin-bottom: 0.35rem;"
+              >
+
+                <strong>
+                  {{ item.value }}h
+                </strong>
+
+                -
+                {{ formatDate(item.recordedAt) }}
+
+              </li>
+
+            </ul>
+
+          </template>
+
+          <p v-else>
+            <em style="color: #888;">
+              Sin historial de horómetro registrado.
+            </em>
+          </p>
+
+        </div>
+
+        <button
+          @click="closeMachineModal"
+          style="margin-top: 1rem;"
+        >
+          Cerrar
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
 </template>
+
 
 <script>
 import axios from 'axios'
@@ -139,23 +366,29 @@ import { API_BASE_URL } from '@/utils/api'
 
 export default {
   data() {
-    return {
-      form: {
-        sector: "",
-        name: "",
-        machineParts: [],
-        horometro: null,
-        instructions: ""
-      },
-      newPart: "",
-      machines: [],
-      deletedMachines: [],
-      editingMachineId: null,
-      showMachineModal: false,
-      selectedMachine: null,
-      sectorFilter: "",
-      availableSectors: []
-    }
+  return {
+
+    showNewMachineForm: false,
+    showMachinesPanel: false,
+
+    form: {
+      sector: "",
+      name: "",
+      machineParts: [],
+      horometro: null,
+      instructions: ""
+    },
+
+    newPart: "",
+    machines: [],
+    deletedMachines: [],
+    editingMachineId: null,
+    showMachineModal: false,
+    selectedMachine: null,
+    sectorFilter: "",
+    availableSectors: []
+  }
+
   },
   computed: {
     filteredMachines() {
@@ -377,14 +610,27 @@ export default {
   }
 }
 </script>
-
 <style scoped>
 .page-container {
+  width: 100%;
   min-height: 100vh;
+
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 1rem;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 2rem;
+
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.page-container::before,
+.page-container::after {
+  display: none !important;
+  content: none !important;
 }
 
 .machine-layout {
@@ -395,30 +641,155 @@ export default {
   gap: 1.5rem;
   align-items: flex-start;
 }
+.collapse-header {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  cursor: pointer;
+
+  user-select: none;
+
+ width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
+
+  cursor: pointer;
+
+  user-select: none;
+
+  padding: 0.4rem 0;
+}
+
+
+
+.collapse-header .bi-chevron-up,
+.collapse-header .bi-chevron-down {
+  position: absolute;
+  right: 0;
+
+  font-size: 1rem;
+
+  color: #6b8e3a;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.section-title i {
+  font-size: 2rem;
+  color: #6b8e3a;
+
+  background: rgba(107, 142, 58, 0.12);
+
+  padding: 0.8rem;
+
+  border-radius: 1rem;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+/* =========================
+   BOXES PRINCIPALES
+========================= */
 
 .box {
-  width: 100%;
-  padding: 2rem;
   background: rgba(255, 255, 255, 0.94);
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
-  color: #000;
-  text-align: center;
+  backdrop-filter: blur(8px);
+
+  border-radius: 1.5rem;
+
+  padding: 1.6rem;
+
+  border: 1px solid rgba(255, 255, 255, 0.45);
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.08),
+    0 2px 10px rgba(0, 0, 0, 0.05);
+
+  transition: 0.25s ease;
 }
 
 .box:hover {
-  transition: 0.3s;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 14px 45px rgba(0, 0, 0, 0.12),
+    0 4px 14px rgba(0, 0, 0, 0.06);
 }
 
-h2 {
-    margin-top: 0;
-  text-align: center;
-  margin-bottom: 1rem;
-  color: #333;
-  font-size: 2rem;
-  letter-spacing: 0.04rem;
+/* =========================
+   HEADERS CON ICONOS
+========================= */
+
+.section-header {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 1rem;
+
+  margin-bottom: 1.5rem;
 }
+.section-title {
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.45rem;
+
+  width: 100%;
+}
+
+.section-title i {
+  font-size: 1.3rem;
+
+  color: #6b8e3a;
+
+  background: rgba(107, 142, 58, 0.12);
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 0.9rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 2px 8px rgba(107, 142, 58, 0.12);
+}
+
+.section-title h2 {
+  margin: 0;
+
+  font-size: 1rem;
+
+  color: #333;
+
+  text-align: center;
+
+  font-weight: 600;
+}
+
+/* =========================
+   FORMULARIOS
+========================= */
 
 .parts-label {
   display: block;
@@ -438,20 +809,29 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+
   background: #6b8e3a;
   color: #fff;
+
   border-radius: 2rem;
+
   padding: 4px 12px;
+
   font-size: 0.88rem;
 }
 
 .chip-remove {
   background: none;
   border: none;
+
   color: #fff;
+
   cursor: pointer;
+
   font-size: 1rem;
+
   padding: 0;
+
   line-height: 1;
   border-radius: 0;
 }
@@ -464,8 +844,11 @@ h2 {
 .part-input-row {
   display: grid;
   grid-template-columns: 1fr auto;
+
   gap: 0.5rem;
+
   align-items: center;
+
   margin-bottom: 0.5rem;
 }
 
@@ -474,48 +857,75 @@ h2 {
 }
 
 .add-part-button {
-  padding: 10px 18px;
+  padding: 10px 10px;
   font-size: 1.2rem;
-  line-height: 1;
+  line-height: 0;
 }
 
 input[type="text"],
 input[type="number"],
-textarea {
+textarea,
+.sector-select {
   display: block;
+
   width: 100%;
+
   margin: 10px 0;
-  padding: 10px;
-  border: 1px solid #ccc;
+
+  padding: 12px 14px;
+
+  border: 1px solid #d8d8d8;
+
   border-radius: 2rem;
+
   background: #fff;
+
   color: #000;
+
   font-size: 1rem;
+
   text-align: center;
+
+  transition: 0.2s;
 }
 
 textarea {
-    resize: vertical;
+  resize: vertical;
   min-height: 110px;
 }
 
 input:hover,
 input:focus,
 textarea:hover,
-textarea:focus {
+textarea:focus,
+.sector-select:hover,
+.sector-select:focus {
   outline: none;
-  background: #f0f0f0;
-  transition: 0.2s;
-  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
+
+  background: #f8f8f8;
+
+  box-shadow: 0 3px 10px rgba(189, 189, 189, 0.25);
+
+  border-color: #c9c9c9;
 }
 
+/* =========================
+   BOTONES
+========================= */
+
 button {
-  padding: 10px;
-    border: none;
+  padding: 10px 14px;
+
+  border: none;
   border-radius: 2rem;
+
   background: #a6a6a6;
-    color: #fff;
-    cursor: pointer;
+
+  color: #fff;
+
+  cursor: pointer;
+
+  transition: 0.2s;
 }
 
 button:hover {
@@ -524,10 +934,56 @@ button:hover {
 
 .button-group {
   width: 100%;
+
   display: grid;
+
   gap: 0.75rem;
-  margin-top: 0.5rem;
+
+  margin-top: 0.8rem;
 }
+
+.toggle-machines-button {
+  width: auto;
+
+  padding: 0.75rem 1rem;
+
+  background: #6b8e3a;
+
+  font-weight: 600;
+}
+
+.toggle-machines-button:hover {
+  background: #5a7d3a;
+}
+
+.close-machines-button {
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  background: #dc2626;
+
+  color: white;
+
+  font-size: 1.5rem;
+
+  line-height: 1;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-machines-button:hover {
+  background: #b91c1c;
+}
+
+/* =========================
+   PANEL MAQUINAS
+========================= */
 
 .machines-panel {
   text-align: left;
@@ -535,35 +991,51 @@ button:hover {
 
 .empty-state {
   color: #888;
+
   font-size: 0.95rem;
+
   text-align: center;
+
   margin-top: 1rem;
 }
 
 .machines-list {
   display: flex;
   flex-direction: column;
+
   gap: 0.75rem;
+
   margin-top: 0.5rem;
 }
 
 .machine-item {
   display: flex;
   flex-wrap: wrap;
+
   align-items: center;
   justify-content: space-between;
+
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: rgba(0,0,0,0.04);
-  border-radius: 0.5rem;
+
+  padding: 1rem;
+
+  background: rgba(0, 0, 0, 0.04);
+
+  border-radius: 1rem;
+
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .machine-info {
   display: flex;
   flex-direction: column;
+
   gap: 0.15rem;
+
   font-size: 0.9rem;
+
   min-width: 0;
+
   word-break: break-word;
 }
 
@@ -576,7 +1048,9 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+
   gap: 0.5rem;
+
   flex-shrink: 0;
 }
 
@@ -589,8 +1063,6 @@ button:hover {
 
 .history-button {
   background: #4b5563;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .history-button:hover {
@@ -599,8 +1071,6 @@ button:hover {
 
 .edit-button {
   background: #6b8e3a;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .edit-button:hover {
@@ -609,53 +1079,66 @@ button:hover {
 
 .danger-button {
   background: #dc2626;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .danger-button:hover {
   background: #b91c1c;
 }
 
-.deleted-machines-zone {
-  margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px dashed #d6c7a8;
+/* =========================
+   MODAL
+========================= */
+
+.modal {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
+  background: rgba(0, 0, 0, 0.3);
+
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  z-index: 1000;
 }
 
-.deleted-machines-zone h3 {
-  margin: 0;
-  color: #7d4f00;
+.modal-box {
+  background: white;
+
+  padding: 20px;
+
+  border-radius: 1rem;
+
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+
+  width: min(420px, 90vw);
 }
 
-.deleted-machines-copy {
-  margin: 0.4rem 0 0.75rem;
-  color: #6f5a37;
+.modal-box-detail {
+  width: min(700px, 92vw);
+
+  max-height: 85vh;
+
+  overflow-y: auto;
 }
 
-.deleted-machine-item {
-  background: #fffdf8;
-  border: 1px solid #f3e2ba;
+.modal-box h3 {
+  margin-top: 0;
+  color: #333;
 }
 
-.hard-delete-button {
-  background: #7f1d1d;
-}
+/* =========================
+   RESPONSIVE
+========================= */
 
-.hard-delete-button:hover {
-  background: #631616;
-}
-
-.restore-button {
-  background: #1f7a4c;
-}
-
-.restore-button:hover {
-  background: #16613b;
-}
-
-/* Responsive */
 @media (max-width: 768px) {
+
   .machine-layout {
     grid-template-columns: 1fr;
   }
@@ -664,8 +1147,23 @@ button:hover {
     padding: 1rem;
   }
 
-  h2 {
-    font-size: 1.6rem;
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-title {
+    justify-content: center;
+  }
+
+  .section-title h2 {
+    text-align: center;
+    font-size: 1.5rem;
+  }
+
+  .toggle-machines-button,
+  .close-machines-button {
+    align-self: center;
   }
 
   .button-group {
@@ -692,59 +1190,4 @@ button:hover {
     width: auto;
   }
 }
-
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-box {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
-  width: min(420px, 90vw);
-}
-
-.modal-box-detail {
-  width: min(700px, 92vw);
-  max-height: 85vh;
-  overflow-y: auto;
-}
-
-.modal-box h3 {
-  margin-top: 0;
-  color: #333;
-}
-
-.sector-select {
-  display: block;
-  width: 100%;
-  margin: 0 0 0.75rem;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 2rem;
-  background: #fff;
-  color: #000;
-  font-size: 1rem;
-  cursor: pointer;
-  text-align: center;
-}
-
-.sector-select:hover,
-.sector-select:focus {
-  outline: none;
-  background: #f0f0f0;
-  transition: 0.2s;
-  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
-}
-
 </style>
