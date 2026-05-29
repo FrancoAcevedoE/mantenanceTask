@@ -6,9 +6,20 @@ import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 // esto levanta el servidor e importa las todas las rutas
 
+console.log("[server] startup begin")
+
+process.on("uncaughtException", (error) => {
+  console.error("[server] uncaughtException:", error)
+})
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[server] unhandledRejection:", reason)
+})
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 dotenv.config({ path: resolve(__dirname, ".env") })
+console.log("[server] dotenv loaded")
 import userRoutes from "./routes/userRoutes.js"
 import clientRoutes from './routes/clientRoutes.js'
 import maintenanceRoutes from "./routes/mantenanceRoutes.js"
@@ -17,6 +28,7 @@ import productRoutes from "./routes/productRoutes.js"
 import quoteRoutes from "./routes/quoteRoutes.js"
 import User from "./models/userModels.js"
 import { startCronNotifications } from "./services/cronScheduler.js"
+console.log("[server] imported routes and models")
 
 const DEFAULT_ADMIN = {
   name: "Franco Acevedo",
@@ -130,6 +142,7 @@ app.get("/api/health", (req, res) => {
 const PORT = Number(process.env.PORT) || 3000
 const HOST = process.env.HOST || "0.0.0.0"
 
+console.log("[server] before app.listen")
 app.listen(PORT, HOST, () => {
   console.log(`Servidor corriendo en ${HOST}:${PORT}`)
 })

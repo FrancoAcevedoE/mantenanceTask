@@ -1,103 +1,102 @@
 <template>
-  <div class="notification-history-page">
-    <div class="notification-history-card">
-      <header class="notification-history-header">
-        <div>
-          <p>Historial de notificaciones</p>
-          <h1>Centro historico</h1>
-        </div>
-        <div class="notification-history-actions">
-          <button type="button" class="ghost-button" @click="markVisibleAsRead" :disabled="isLoading || !hasUnreadVisible">
-            Marcar visibles como leidas
-          </button>
-          <button type="button" class="ghost-button" @click="clearReadFilter" :disabled="isLoading">
-            Limpiar leidas
-          </button>
-        </div>
-      </header>
+  <div class="page-container">
+    <div class="container">
+      <div class="notification-history-card">
+        <header class="notification-history-header">
+          <div>
+            <p>Historial de notificaciones</p>
+            <h1>Centro historico</h1>
+          </div>
+          <div class="notification-history-actions">
+            <button type="button" class="ghost-button" @click="markVisibleAsRead" :disabled="isLoading || !hasUnreadVisible">
+              Marcar visibles como leidas
+            </button>
+            <button type="button" class="ghost-button" @click="clearReadFilter" :disabled="isLoading">
+              Limpiar leidas
+            </button>
+          </div>
+        </header>
 
-      <!-- Mensaje para vendedores -->
-      <div v-if="currentUser?.role === 'vendedor'" class="seller-message">
-        <p>Como vendedor, no tienes acceso al historial de notificaciones de mantenimiento.</p>
-        <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
+        <!-- Mensaje para vendedores -->
+        <div v-if="currentUser?.role === 'vendedor'" class="seller-message">
+          <p>Como vendedor, no tienes acceso al historial de notificaciones de mantenimiento.</p>
+          <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
+        </div>
+
+        <!-- Contenido del historial solo para otros roles -->
+        <div v-else>
+          <section class="notification-history-filters">
+            <select v-model="readFilter">
+              <option value="all">Todas</option>
+              <option value="unread">No leidas</option>
+              <option value="read">Leidas</option>
+            </select>
+
+            <input v-model="fromDate" type="date" />
+            <input v-model="toDate" type="date" />
+            <input v-model="searchText" type="text" placeholder="Buscar por titulo o detalle" />
+
+            <button type="button" @click="loadHistory" :disabled="isLoading">
+              Aplicar filtros
+            </button>
+          </section>
+
+          <section class="notification-history-summary">
+            <article>
+              <strong>{{ summary.total }}</strong>
+              <span>Total</span>
+            </article>
+            <article>
+              <strong>{{ summary.unread }}</strong>
+              <span>No leidas</span>
+            </article>
+            <article>
+              <strong>{{ summary.read }}</strong>
+              <span>Leidas</span>
+            </article>
+          </section>
+
+          <p v-if="isLoading" class="state-text">Cargando historial...</p>
+          <p v-else-if="!filteredItems.length" class="state-text">No hay notificaciones para los filtros seleccionados.</p>
+
+          <ul v-else class="history-list">
+            <li v-for="item in filteredItems" :key="item.id" :class="['history-item', item.read ? 'read' : 'unread']">
+              <div class="history-item-top">
+                <div>
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.body }}</p>
+                </div>
+                <span :class="['severity-badge', `severity-${item.severity || 'info'}`]">
+                  {{ formatSeverity(item.severity) }}
+                </span>
+              </div>
+
+              <div class="history-item-meta">
+                <span>{{ formatDate(item.createdAt) }}</span>
+                <span v-if="item.machine">{{ item.machine }}</span>
+                <span v-if="item.sector">{{ item.sector }}</span>
+                <span>{{ item.read ? 'Leida' : 'No leida' }}</span>
+              </div>
+
+              <button
+                v-if="!item.read"
+                type="button"
+                class="mark-read-button"
+                @click="markAsRead(item.id)"
+                :disabled="isLoading"
+              >
+                Marcar leida
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
-
-      <!-- Contenido del historial solo para otros roles -->
-      <div v-else>
-
-      <section class="notification-history-filters">
-        <select v-model="readFilter">
-          <option value="all">Todas</option>
-          <option value="unread">No leidas</option>
-          <option value="read">Leidas</option>
-        </select>
-
-        <input v-model="fromDate" type="date" />
-        <input v-model="toDate" type="date" />
-        <input v-model="searchText" type="text" placeholder="Buscar por titulo o detalle" />
-
-        <button type="button" @click="loadHistory" :disabled="isLoading">
-          Aplicar filtros
-        </button>
-      </section>
-
-      <section class="notification-history-summary">
-        <article>
-          <strong>{{ summary.total }}</strong>
-          <span>Total</span>
-        </article>
-        <article>
-          <strong>{{ summary.unread }}</strong>
-          <span>No leidas</span>
-        </article>
-        <article>
-          <strong>{{ summary.read }}</strong>
-          <span>Leidas</span>
-        </article>
-      </section>
-
-      <p v-if="isLoading" class="state-text">Cargando historial...</p>
-      <p v-else-if="!filteredItems.length" class="state-text">No hay notificaciones para los filtros seleccionados.</p>
-
-      <ul v-else class="history-list">
-        <li v-for="item in filteredItems" :key="item.id" :class="['history-item', item.read ? 'read' : 'unread']">
-          <div class="history-item-top">
-            <div>
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.body }}</p>
-            </div>
-            <span :class="['severity-badge', `severity-${item.severity || 'info'}`]">
-              {{ formatSeverity(item.severity) }}
-            </span>
-          </div>
-
-          <div class="history-item-meta">
-            <span>{{ formatDate(item.createdAt) }}</span>
-            <span v-if="item.machine">{{ item.machine }}</span>
-            <span v-if="item.sector">{{ item.sector }}</span>
-            <span>{{ item.read ? 'Leida' : 'No leida' }}</span>
-          </div>
-
-          <button
-            v-if="!item.read"
-            type="button"
-            class="mark-read-button"
-            @click="markAsRead(item.id)"
-            :disabled="isLoading"
-          >
-            Marcar leida
-          </button>
-        </li>
-      </ul>
     </div>
   </div>
-</div>
-
 </template>
 
 <script>
 import axios from 'axios'
-import backgroundImage from '@/assets/fondogeneral.png'
 import { API_BASE_URL } from '@/utils/api'
 
 export default {
@@ -113,8 +112,7 @@ export default {
       fromDate: '',
       toDate: '',
       searchText: '',
-      isLoading: false,
-      backgroundImage
+      isLoading: false
     }
   },
 
@@ -270,11 +268,7 @@ export default {
   },
 
   mounted() {
-    document.body.style.backgroundImage = `url(${this.backgroundImage})`
-    document.body.style.backgroundSize = 'cover'
-    document.body.style.backgroundPosition = 'center'
-    document.body.style.backgroundRepeat = 'no-repeat'
-    document.body.style.backgroundAttachment = 'fixed'
+    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
 
     // No cargar historial de notificaciones de mantenimiento para vendedores
     const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -286,11 +280,7 @@ export default {
   },
 
   beforeUnmount() {
-    document.body.style.backgroundImage = ''
-    document.body.style.backgroundSize = ''
-    document.body.style.backgroundPosition = ''
-    document.body.style.backgroundRepeat = ''
-    document.body.style.backgroundAttachment = ''
+    document.body.style.background = ''
   }
 }
 </script>
@@ -357,20 +347,20 @@ export default {
 
 .notification-history-filters input,
 .notification-history-filters select {
-  background: #f1f5f9;
+  background: #f1f0ed;
 }
 
 .notification-history-filters button,
 .mark-read-button {
-  background: #0369a1;
+  background: #6b8e3a;
   color: #fff;
   font-weight: 600;
   cursor: pointer;
 }
 
 .ghost-button {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: #f1f0ed;
+  color: #2d3d24;
   cursor: pointer;
 }
 
@@ -382,7 +372,7 @@ export default {
 }
 
 .notification-history-summary article {
-  background: #f8fafc;
+  background: #f9f7f2;
   border-radius: 14px;
   padding: 0.8rem;
   display: grid;
@@ -393,7 +383,7 @@ export default {
 }
 
 .state-text {
-  color: #475569;
+  color: #5a7d3a;
 }
 
 .history-list {
@@ -412,7 +402,7 @@ export default {
 }
 
 .history-item.unread {
-  border-left: 5px solid #0369a1;
+  border-left: 5px solid #6b8e3a;
 }
 
 .history-item.read {
@@ -432,7 +422,7 @@ export default {
 }
 
 .history-item-top p {
-  color: #334155;
+  color: #3a4a2f;
   margin-top: 0.2rem;
 }
 
@@ -441,7 +431,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  color: #64748b;
+  color: #7a8b73;
   font-size: 0.86rem;
 }
 
@@ -464,13 +454,13 @@ export default {
 }
 
 .severity-success {
-  background: #ccfbf1;
-  color: #115e59;
+  background: #e8f0df;
+  color: #5a7d3a;
 }
 
 .severity-info {
-  background: #dbeafe;
-  color: #1e3a8a;
+  background: #f1f5e8;
+  color: #6b8e3a;
 }
 
 .mark-read-button {
@@ -521,7 +511,7 @@ export default {
 
 .seller-message button {
   padding: 0.75rem 1.5rem;
-  background: #007bff;
+  background: #6b8e3a;
   color: white;
   border: none;
   border-radius: 4px;
@@ -530,6 +520,6 @@ export default {
 }
 
 .seller-message button:hover {
-  background: #0056b3;
+  background: #5a7d3a;
 }
 </style>

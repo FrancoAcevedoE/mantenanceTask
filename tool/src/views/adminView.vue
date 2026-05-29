@@ -165,7 +165,6 @@
 </template>
 
 <script>
-import backgroundImage from '@/assets/fondogeneral.png'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 
@@ -188,8 +187,7 @@ export default {
       isExportingExcel: false,
       auditLogText: "",
       auditLogCount: 0,
-      auditLogGeneratedAt: null,
-      backgroundImage: backgroundImage
+      auditLogGeneratedAt: null
     }
   },
   methods: {
@@ -514,18 +512,10 @@ export default {
   },
   mounted() {
     this.loadUsers()
-    document.body.style.backgroundImage = `url(${this.backgroundImage})`;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundRepeat = 'no-repeat';
-    document.body.style.backgroundAttachment = 'fixed';
+    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))';
   },
   beforeUnmount() {
-    document.body.style.backgroundImage = '';
-    document.body.style.backgroundSize = '';
-    document.body.style.backgroundPosition = '';
-    document.body.style.backgroundRepeat = '';
-    document.body.style.backgroundAttachment = '';
+    document.body.style.background = '';
   }
 }
 </script>
@@ -781,11 +771,11 @@ button:hover {
 
 .edit-button {
   margin: 0;
-  background: #0ea5a4;
+  background: #6b8e3a;
 }
 
 .edit-button:hover {
-  background: #0b8a89;
+  background: #5a7d3a;
 }
 
 .danger-button:hover {

@@ -181,8 +181,6 @@
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
 
-import backgroundImage from '@/assets/fondogeneral.png'
-
 export default {
 
     data() {
@@ -219,20 +217,14 @@ export default {
 
             compactMode: false,
 
-            currentUserRole: "",
-
-            backgroundImage
+            currentUserRole: ""
 
         }
 
     },
 
     async mounted() {
-        document.body.style.backgroundImage = `url(${this.backgroundImage})`
-        document.body.style.backgroundSize = 'cover'
-        document.body.style.backgroundPosition = 'center'
-        document.body.style.backgroundRepeat = 'no-repeat'
-        document.body.style.backgroundAttachment = 'fixed'
+        document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
 
         const currentUser = this.getStoredUser()
         this.currentUserRole = currentUser?.role || ""
@@ -261,11 +253,7 @@ export default {
 
     beforeUnmount() {
 
-        document.body.style.backgroundImage = ''
-        document.body.style.backgroundSize = ''
-        document.body.style.backgroundPosition = ''
-        document.body.style.backgroundRepeat = ''
-        document.body.style.backgroundAttachment = ''
+        document.body.style.background = ''
 
         window.removeEventListener("resize", this.updateBottomScrollbar)
 
@@ -883,7 +871,7 @@ button:hover {
 
 .seller-message button {
     padding: 0.75rem 1.5rem;
-    background: #007bff;
+    background: #6b8e3a;
     color: white;
     border: none;
     border-radius: 4px;
@@ -892,6 +880,6 @@ button:hover {
 }
 
 .seller-message button:hover {
-    background: #0056b3;
+    background: #5a7d3a;
 }
 </style>

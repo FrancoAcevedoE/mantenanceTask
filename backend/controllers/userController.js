@@ -63,6 +63,11 @@ export const login = async (req, res) => {
             }
         })
     } catch (error) {
+        console.error("[login] Error:", {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        })
         res.status(500).json({
             message: "Error al iniciar sesion",
             detail: error.message

@@ -87,17 +87,35 @@ onBeforeUnmount(() => {
 
 <style>
 /* global minimalist styling */
+html, body, #app {
+  min-height: 100vh;
+}
+
 body {
   margin: 0;
   padding: 0;
-  background:#ffffff;
-  /* background:#2E3D58; */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+  background: var(--color-bg, #ffffff);
+  color: var(--color-text, #21321A);
+  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main.app-content {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 4rem);
+  padding: 1rem;
+  background: transparent;
+}
+
 .app-content.with-nav {
-  padding-top: 4.8rem;
+  padding-top: 5.2rem;
 }
 
 nav {
@@ -117,6 +135,8 @@ nav {
   background: rgba(255, 255, 255, 0.96);
   border-radius: 0 0 18px 18px;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 nav::before {

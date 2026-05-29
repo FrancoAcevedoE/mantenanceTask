@@ -58,7 +58,7 @@
     v-if="form.machine && selectedMachine && selectedMachine.instructions"
     type="button" 
         @click="openMachineDetailModal"
-    style="padding: 0.5rem 1rem; background-color: #00a878; color: white; border: none; border-radius: 5px; cursor: pointer;"
+    style="padding: 0.5rem 1rem; background-color: #6b8e3a; color: white; border: none; border-radius: 5px; cursor: pointer;"
   >
         Ver detalle
   </button>
@@ -225,8 +225,6 @@ Cancelar
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
 
-import backgroundImage from '@/assets/fondogeneral.png'
-
 export default{
 
 data(){
@@ -278,8 +276,6 @@ unfinishedReasonOptions:[
 "Falta de presupuesto.",
 "Otros"
 ],
-backgroundImage: backgroundImage
-,
 showMachineDetailModal: false
 
 }
@@ -292,19 +288,11 @@ async mounted() {
     this.currentUserId = currentUser?.id || currentUser?._id || ""
     await this.loadOperarios()
     await this.loadMachines()
-    document.body.style.backgroundImage = `url(${this.backgroundImage})`;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundRepeat = 'no-repeat';
-    document.body.style.backgroundAttachment = 'fixed';
+    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))';
 },
 
 beforeUnmount() {
-    document.body.style.backgroundImage = '';
-    document.body.style.backgroundSize = '';
-    document.body.style.backgroundPosition = '';
-    document.body.style.backgroundRepeat = '';
-    document.body.style.backgroundAttachment = '';
+    document.body.style.background = '';
 },
 
 computed: {

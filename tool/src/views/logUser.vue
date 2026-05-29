@@ -64,7 +64,6 @@
 
 <script>
 import axios from "axios"
-import backgroundImage from '@/assets/fondo.jpg'
 import { API_BASE_URL } from '@/utils/api'
 
 const PWA_URL = import.meta.env.VITE_PWA_URL || "https://mantenance-task-francoacevedoes-projects.vercel.app/logUser"
@@ -76,7 +75,6 @@ export default {
       dni:"",
       password:"",
       error:null,
-      backgroundImage: backgroundImage,
       pwaUrl: PWA_URL,
       qrUrl: ""
     }
@@ -122,8 +120,6 @@ export default {
   },
 
   mounted() {
-    this.backgroundImage = backgroundImage
-
     let normalizedUrl = this.pwaUrl
     try {
       const parsed = new URL(this.pwaUrl)
@@ -135,19 +131,11 @@ export default {
     this.pwaUrl = normalizedUrl
     this.qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(this.pwaUrl)}`
 
-    document.body.style.backgroundImage = `url(${this.backgroundImage})`;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundRepeat = 'no-repeat';
-    document.body.style.backgroundAttachment = 'fixed';
+    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))';
   },
 
   beforeUnmount() {
-    document.body.style.backgroundImage = '';
-    document.body.style.backgroundSize = '';
-    document.body.style.backgroundPosition = '';
-    document.body.style.backgroundRepeat = '';
-    document.body.style.backgroundAttachment = '';
+    document.body.style.background = '';
   }
 
 }
@@ -176,12 +164,12 @@ export default {
 }
 
 .login-box{
-  background:white;
-  padding:40px;
-  border-radius:10px;
-  width:300px;
+  background: rgba(255,255,255,0.96);
+  padding: 2rem;
+  border-radius: 24px;
+  width: min(420px, 100%);
   margin-top: 1.25rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+  box-shadow: var(--shadow-soft, 0 10px 24px rgba(21,38,18,0.18));
 }
 .login-box:hover {
   transition: 0.3s;
@@ -214,14 +202,16 @@ input:hover {
 }
 
 button{
-  border-radius: 2rem;
-  padding:10px;
-  background:#a6a6a6;
-  color:white;
-  border:none;
-  cursor:pointer;
+  width: 100%;
+  max-width: 320px;
+  border-radius: 999px;
+  padding: 0.95rem 1.25rem;
+  background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+  color: white;
+  border: none;
+  cursor: pointer;
   display: block;
-  margin: 0 auto;
+  margin: 0.75rem auto 0;
 }
 
 .error{

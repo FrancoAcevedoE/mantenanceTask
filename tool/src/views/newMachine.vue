@@ -118,7 +118,7 @@
                     </template>
                     <template v-if="sortedHorometroHistory.length">
                         <p><strong>Historial de horómetro:</strong></p>
-                        <div style="background: rgba(14,165,164,0.12); padding: 0.65rem 0.75rem; border-radius: 0.55rem; margin-bottom: 0.5rem;" v-html="machineHorometroSummary"></div>
+                        <div style="background: rgba(107,142,58,0.12); padding: 0.65rem 0.75rem; border-radius: 0.55rem; margin-bottom: 0.5rem;" v-html="machineHorometroSummary"></div>
                         <ul style="text-align: left; padding-left: 1.2rem; margin: 0;">
                             <li v-for="(item, i) in sortedHorometroHistory" :key="i" style="margin-bottom: 0.35rem;">
                                 <strong>{{ item.value }}h</strong> - {{ formatDate(item.recordedAt) }}
@@ -134,7 +134,6 @@
 </template>
 
 <script>
-import backgroundImage from '@/assets/fondogeneral.png'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 
@@ -152,7 +151,6 @@ export default {
       machines: [],
       deletedMachines: [],
       editingMachineId: null,
-      backgroundImage: backgroundImage,
       showMachineModal: false,
       selectedMachine: null,
       sectorFilter: "",
@@ -372,18 +370,10 @@ export default {
   },
   mounted() {
     this.loadMachines()
-    document.body.style.backgroundImage = `url(${this.backgroundImage})`;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundRepeat = 'no-repeat';
-    document.body.style.backgroundAttachment = 'fixed';
+    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))';
   },
   beforeUnmount() {
-    document.body.style.backgroundImage = '';
-    document.body.style.backgroundSize = '';
-    document.body.style.backgroundPosition = '';
-    document.body.style.backgroundRepeat = '';
-    document.body.style.backgroundAttachment = '';
+    document.body.style.background = '';
   }
 }
 </script>
@@ -448,7 +438,7 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: #0369a1;
+  background: #6b8e3a;
   color: #fff;
   border-radius: 2rem;
   padding: 4px 12px;
@@ -579,7 +569,7 @@ button:hover {
 
 .machine-info strong {
   font-size: 1rem;
-  color: #1e3a5f;
+  color: #5a7d3a;
 }
 
 .machine-actions {
@@ -608,13 +598,13 @@ button:hover {
 }
 
 .edit-button {
-  background: #0ea5a4;
+  background: #6b8e3a;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .edit-button:hover {
-  background: #0b8a89;
+  background: #5a7d3a;
 }
 
 .danger-button {

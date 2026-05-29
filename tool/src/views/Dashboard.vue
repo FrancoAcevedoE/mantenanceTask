@@ -3,6 +3,8 @@
 <div class="page-container">
 <div class="container">
 
+<DesignPreview />
+
 <h1>Dashboard</h1>
 
 <!-- Mostrar mensaje para vendedores -->
@@ -267,7 +269,7 @@ Tooltip,
 Legend,
 DoughnutController
 } from "chart.js"
-import backgroundImage from '@/assets/fondogeneral.png'
+import DesignPreview from '@/components/DesignPreview.vue'
 
 // import apiClient from "../services/apiClient"
 
@@ -287,6 +289,9 @@ DoughnutController
 )
 
 export default{
+  components: {
+    DesignPreview
+  },
 
 data(){
 
@@ -346,30 +351,21 @@ dailyChartInstance: null,
 
 syncingRecentScroll: false,
 
-showRecentBottomScrollbar: false,
-
-backgroundImage
-
+    showRecentBottomScrollbar: false
 }
 },
 
-computed:{
+computed: {
 
-machineStatusOverview() {
-const statusPriority = {
-red: 0,
-yellow: 1,
-green: 2
-}
-
-return [...(this.stats.machineStatusOverview || [])].sort((left, right) => {
+  machineStatusOverview() {
+    return [...(this.stats.machineStatusOverview || [])].sort((left, right) => {
 const nameDifference = String(left.name || "").localeCompare(String(right.name || ""), "es", { sensitivity: "base" })
 if (nameDifference !== 0) {
 return nameDifference
 }
 return String(left.sector || "").localeCompare(String(right.sector || ""), "es", { sensitivity: "base" })
 })
-},
+  },
 
 machineStatusSummary() {
 const total = this.machineStatusOverview.length
@@ -442,11 +438,7 @@ return JSON.parse(localStorage.getItem('user') || '{}')
 
 async mounted(){
 
-document.body.style.backgroundImage = `url(${this.backgroundImage})`
-document.body.style.backgroundSize = 'cover'
-document.body.style.backgroundPosition = 'center'
-document.body.style.backgroundRepeat = 'no-repeat'
-document.body.style.backgroundAttachment = 'fixed'
+document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))';
 
 this.setDefaultPeriod()
 this.syncPeriodSelectorsFromPeriod()
@@ -474,11 +466,7 @@ query: {}
 
 beforeUnmount() {
 
-document.body.style.backgroundImage = ''
-document.body.style.backgroundSize = ''
-document.body.style.backgroundPosition = ''
-document.body.style.backgroundRepeat = ''
-document.body.style.backgroundAttachment = ''
+document.body.style.background = ''
 
 this.destroyCharts()
 
@@ -923,11 +911,7 @@ background: #0056b3;
 }
 
 .page-container{
-background-image: url('@/assets/fondogeneral.png');
-background-size: cover;
-background-position: center;
-background-repeat: no-repeat;
-background-attachment: fixed;
+background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28));
 min-height: 100vh;
 display: flex;
 justify-content: center;
