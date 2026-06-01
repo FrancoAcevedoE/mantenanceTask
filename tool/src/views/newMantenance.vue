@@ -192,53 +192,13 @@ import { API_BASE_URL } from '@/utils/api'
 export default {
   data() {
     return {
-
       activePanel: "",
 
       currentStep: 0,
 
-      steps: [
-        {
-          key: "sector",
-          validate: () => !!this.form.sector
-        },
-        {
-          key: "machine",
-          validate: () => !!this.form.machine
-        },
-        {
-          key: "parts",
-          validate: () => this.form.machineParts.length > 0
-        },
-        {
-          key: "operario",
-          validate: () => !!this.form.clientId
-        },
-        {
-          key: "type",
-          validate: () => !!this.form.maintenanceType
-        },
-        {
-          key: "description",
-          validate: () => !!String(this.form.workDescription || "").trim()
-        },
-        {
-          key: "hours",
-          validate: () =>
-            Number.isFinite(this.form.hoursWorked) &&
-            this.form.hoursWorked > 0
-        },
-        {
-          key: "status",
-          validate: () =>
-            this.form.machineRunning !== null &&
-            this.form.jobFinished !== null
-        }
-      ],
-
       form: {
         sector: "",
-        machine: "",
+        machine: "", // <- guarda _id ahora (IMPORTANTE FIX)
         machineParts: [],
         clientId: "",
         maintenanceType: "",
@@ -251,18 +211,38 @@ export default {
         unfinishedReason: ""
       },
 
+      horometroForm: {
+        machineId: "",
+        value: null
+      },
+
+      horometroConfirmState: {
+        machineId: "",
+        value: null,
+        expiresAt: 0
+      },
+
+      isUpdatingHorometro: false,
+
       machines: [],
       sectors: [],
       operarios: [],
       allOperarios: [],
-      additionalWorkersList: [],
 
-      selectedAdditionalWorker: "",
-      selectedAdditionalMachinePart: "",
+      additionalWorkersList: [],
       additionalMachinePartsList: [],
 
       showMachineDetailModal: false
     }
+  },
+
+  mounted() {
+    this.init()
+    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+  },
+
+  beforeUnmount() {
+    document.body.style.background = ''
   },
 
   computed: {
@@ -275,59 +255,166 @@ export default {
     selectedMachineParts() {
       if (!this.selectedMachine) return []
       const p = this.selectedMachine.machineParts
-      if (Array.isArray(p)) return p
-      if (typeof p === "string" && p.trim()) return [p]
-      return []
+      return Array.isArray(p) ? p : (p ? [p] : [])
     },
 
-    canContinue() {
-      return this.steps[this.currentStep]?.validate?.()
+    selectedHorometroMachine() {
+      return this.machines.find(m => m._id === this.horometroForm.machineId) || null
     },
 
-    isLastStep() {
-      return this.currentStep === this.steps.length - 1
+    orderedHorometroHistory() {
+      if (!this.selectedHorometroMachine) return []
+      const h = this.selectedHorometroMachine.horometroHistory || []
+      return [...h].sort((a,b) => new Date(b.recordedAt) - new Date(a.recordedAt))
+    }
+  },
+
+  watch: {
+    "form.machine"(val) {
+      if (!val) this.form.machineParts = []
     }
   },
 
   methods: {
 
-    // 🧭 CONTROL WIZARD (FIX CLAVE)
-    nextStep() {
+    // 🔥 INIT REAL (FIX PRINCIPAL)
+    async init() {
+      await this.loadMachines()
+      await this.loadOperarios()
+    },
 
-      if (!this.canContinue) {
-        this.$notify.error("Completa el paso actual")
+    authConfig() {
+      const token = localStorage.getItem("token")
+      return {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    },
+
+    getStoredUser() {
+      try {
+        return JSON.parse(localStorage.getItem("user"))
+      } catch {
+        return null
+      }
+    },
+
+    async loadMachines() {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/machines`, this.authConfig())
+
+        const machines = Array.isArray(res.data) ? res.data : []
+
+        this.machines = machines.sort((a,b) =>
+          String(a.name).localeCompare(String(b.name), "es")
+        )
+
+        this.sectors = [...new Set(machines.map(m => m.sector).filter(Boolean))]
+
+      } catch (e) {
+        this.$notify?.error("Error cargando máquinas")
+      }
+    },
+
+    async loadOperarios() {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/users/operarios`, this.authConfig())
+
+        this.allOperarios = res.data || []
+        this.operarios = this.allOperarios
+
+      } catch (e) {
+        this.$notify?.error("Error cargando operarios")
+      }
+    },
+
+    onSectorChange() {
+      this.form.machine = ""
+      this.form.machineParts = []
+    },
+
+    // 🔥 FIX HORÓMETRO COMPLETO (NO ROMPE MÁS)
+    async updateHorometroFromPanel() {
+
+      if (!this.horometroForm.machineId) {
+        this.$notify.error("Selecciona una máquina")
         return
       }
 
-      if (this.currentStep < this.steps.length - 1) {
-        this.currentStep++
+      if (!Number.isFinite(this.horometroForm.value)) {
+        this.$notify.error("Valor inválido")
+        return
+      }
+
+      const now = Date.now()
+      const same =
+        this.horometroConfirmState.machineId === this.horometroForm.machineId &&
+        this.horometroConfirmState.value === this.horometroForm.value &&
+        this.horometroConfirmState.expiresAt > now
+
+      if (!same) {
+        this.horometroConfirmState = {
+          machineId: this.horometroForm.machineId,
+          value: this.horometroForm.value,
+          expiresAt: now + 7000
+        }
+
+        this.$notify.warning("Confirmá presionando de nuevo")
+        return
+      }
+
+      this.isUpdatingHorometro = true
+
+      try {
+        await axios.patch(
+          `${API_BASE_URL}/machines/${this.horometroForm.machineId}/horometro`,
+          { horometro: this.horometroForm.value },
+          this.authConfig()
+        )
+
+        this.$notify.success("Actualizado")
+
+        await this.loadMachines()
+
+        this.horometroForm.value = null
+        this.horometroConfirmState = { machineId: "", value: null, expiresAt: 0 }
+
+      } catch (e) {
+        this.$notify?.notifyApiError(e, "Error horómetro")
+      } finally {
+        this.isUpdatingHorometro = false
       }
     },
 
-    prevStep() {
-      if (this.currentStep > 0) {
-        this.currentStep--
+    formatDate(v) {
+      const d = new Date(v)
+      return isNaN(d) ? "-" : d.toLocaleString("es-AR")
+    },
+
+    async saveMaintenance() {
+      try {
+
+        const payload = {
+          ...this.form,
+          additionalWorkers: this.additionalWorkersList.map(w => w._id),
+          machinePart: this.form.machineParts
+        }
+
+        await axios.post(
+          `${API_BASE_URL}/maintenance/newmaintenance`,
+          payload,
+          this.authConfig()
+        )
+
+        this.$notify.success("Guardado")
+
+        this.reset()
+
+      } catch (e) {
+        this.$notify?.notifyApiError(e, "Error")
       }
     },
 
-    goToStep(index) {
-      this.currentStep = index
-    },
-
-    // 🔥 ESTA ES LA CLAVE PARA QUE “DESPLIEGUE BIEN”
-    isStepVisible(key) {
-
-      const stepIndex = this.steps.findIndex(s => s.key === key)
-
-      if (stepIndex === -1) return false
-
-      return stepIndex <= this.currentStep
-    },
-
-    // 🧼 RESET
-    resetWizard() {
-      this.currentStep = 0
-
+    reset() {
       this.form = {
         sector: "",
         machine: "",
@@ -344,53 +431,6 @@ export default {
       }
 
       this.additionalWorkersList = []
-      this.additionalMachinePartsList = []
-    },
-
-    // 📦 SUBMIT
-    async saveMaintenance() {
-
-      if (!this.isLastStep) {
-        this.$notify.error("Completá todo el formulario")
-        return
-      }
-
-      try {
-
-        const payload = {
-          ...this.form,
-          additionalWorkers: this.additionalWorkersList.map(w => w._id),
-          machinePart: this.form.machineParts
-        }
-
-        await axios.post(
-          `${API_BASE_URL}/maintenance/newmaintenance`,
-          payload
-        )
-
-        this.$notify.success("Mantenimiento registrado")
-
-        this.resetWizard()
-
-      } catch (e) {
-        this.$notify.notifyApiError(e, "Error")
-      }
-    },
-
-    // 🔁 TU LOGICA ORIGINAL SE MANTIENE
-    onSectorChange() {
-      this.form.machine = ""
-      this.form.machineParts = []
-    },
-
-    addMachinePart() {
-      if (!this.selectedAdditionalMachinePart) return
-
-      if (!this.form.machineParts.includes(this.selectedAdditionalMachinePart)) {
-        this.form.machineParts.push(this.selectedAdditionalMachinePart)
-      }
-
-      this.selectedAdditionalMachinePart = ""
     }
   }
 }
