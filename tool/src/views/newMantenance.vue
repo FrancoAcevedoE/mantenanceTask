@@ -185,6 +185,8 @@
     </div>
 
 </template>
+
+
 <script>
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
@@ -233,11 +235,6 @@ export default {
       },
 
       isUpdatingHorometro: false,
-      horometroConfirmState: {
-        machineId: "",
-        value: null,
-        expiresAt: 0
-      },
 
       showMachineDetailModal: false
     }
@@ -300,25 +297,24 @@ export default {
     },
 
     // =========================
-    // 🔥 WIZARD CORE REAL (NO WATCH DEEP)
+    // 🔥 AUTO WIZARD CORE
     // =========================
-    next() {
+    autoStep() {
       const key = this.steps[this.currentStep]
+      if (!key) return
 
-      if (!this.isValid(key)) {
-        this.$notify.error("Completa este paso")
-        return
-      }
+      if (!this.isValid(key)) return
 
+      // avanza si el siguiente existe
       if (this.currentStep < this.steps.length - 1) {
         this.currentStep++
       }
     },
 
     isValid(key) {
+      if (!key) return false
 
       switch (key) {
-
         case "sector":
           return !!this.form.sector
 
@@ -349,13 +345,11 @@ export default {
     },
 
     // =========================
-    // 🔥 AUTO FLOW SOLO DONDE CORRESPONDE
+    // 🔥 TRIGGERS REALES (CLAVE)
     // =========================
-
     onSectorChange() {
       this.form.machine = ""
       this.form.machineParts = []
-
       this.autoStep()
     },
 
@@ -386,15 +380,6 @@ export default {
 
     onStatusChange() {
       this.autoStep()
-    },
-
-    autoStep() {
-      const key = this.steps[this.currentStep]
-      if (this.isValid(key)) {
-        if (this.currentStep < this.steps.length - 1) {
-          this.currentStep++
-        }
-      }
     },
 
     // =========================
@@ -454,28 +439,9 @@ export default {
 
       if (!this.horometroForm.machineId) return
 
-      const now = Date.now()
-
-      const same =
-        this.horometroConfirmState.machineId === this.horometroForm.machineId &&
-        this.horometroConfirmState.value === this.horometroForm.value &&
-        this.horometroConfirmState.expiresAt > now
-
-      if (!same) {
-        this.horometroConfirmState = {
-          machineId: this.horometroForm.machineId,
-          value: this.horometroForm.value,
-          expiresAt: now + 7000
-        }
-
-        this.$notify.warning("Confirmá otra vez")
-        return
-      }
-
       this.isUpdatingHorometro = true
 
       try {
-
         await axios.patch(
           `${API_BASE_URL}/machines/${this.horometroForm.machineId}/horometro`,
           { horometro: this.horometroForm.value },
@@ -487,7 +453,6 @@ export default {
         await this.loadMachines()
 
         this.horometroForm.value = null
-        this.horometroConfirmState = { machineId: "", value: null, expiresAt: 0 }
 
       } finally {
         this.isUpdatingHorometro = false
@@ -496,6 +461,10 @@ export default {
   }
 }
 </script>
+
+
+
+
 
 <style scoped>
 .panel-container {
