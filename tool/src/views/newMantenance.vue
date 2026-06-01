@@ -260,7 +260,72 @@ export default {
     }
   },
 
+
   methods: {
+    // =========================
+// 🔥 WIZARD ENGINE REAL (STABLE)
+// =========================
+watch: {
+  form: {
+    deep: true,
+    handler() {
+      this.autoStep()
+    }
+  }
+},
+evaluateWizard() {
+  // sector
+  if (this.currentStep === 0 && this.form.sector) {
+    this.currentStep = 1
+    return
+  }
+
+  // machine
+  if (this.currentStep === 1 && this.form.machine) {
+    this.currentStep = 2
+    return
+  }
+
+  // parts
+  if (this.currentStep === 2 && this.form.machineParts.length > 0) {
+    this.currentStep = 3
+    return
+  }
+
+  // operario
+  if (this.currentStep === 3 && this.form.clientId) {
+    this.currentStep = 4
+    return
+  }
+
+  // type
+  if (this.currentStep === 4 && this.form.maintenanceType) {
+    this.currentStep = 5
+    return
+  }
+
+  // description
+  if (this.currentStep === 5 && String(this.form.workDescription || "").trim()) {
+    this.currentStep = 6
+    return
+  }
+
+  // hours
+  if (this.currentStep === 6 && Number(this.form.hoursWorked) > 0) {
+    this.currentStep = 7
+    return
+  }
+
+  // status
+  if (
+    this.currentStep === 7 &&
+    this.form.machineRunning !== null &&
+    this.form.jobFinished !== null
+  ) {
+    // fin del wizard
+    return
+  }
+},
 
     // =========================
     // INIT
@@ -299,17 +364,14 @@ export default {
     // =========================
     // 🔥 AUTO WIZARD CORE
     // =========================
-    autoStep() {
-      const key = this.steps[this.currentStep]
-      if (!key) return
+   autoStep() {
+  const key = this.steps[this.currentStep]
+  if (!key) return
 
-      if (!this.isValid(key)) return
+  if (!this.isValid(key)) return
 
-      // avanza si el siguiente existe
-      if (this.currentStep < this.steps.length - 1) {
-        this.currentStep++
-      }
-    },
+  this.currentStep++
+},
 
     isValid(key) {
       if (!key) return false
