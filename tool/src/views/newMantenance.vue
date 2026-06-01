@@ -185,7 +185,6 @@
     </div>
 
 </template>
-
 <script>
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
@@ -194,46 +193,17 @@ export default {
   data() {
     return {
       activePanel: "",
-
       currentStep: 0,
 
       steps: [
-        {
-          key: "sector",
-          validate: () => !!this.form.sector
-        },
-        {
-          key: "machine",
-          validate: () => !!this.form.machine
-        },
-        {
-          key: "parts",
-          validate: () => this.form.machineParts.length > 0
-        },
-        {
-          key: "operario",
-          validate: () => !!this.form.clientId
-        },
-        {
-          key: "type",
-          validate: () => !!this.form.maintenanceType
-        },
-        {
-          key: "description",
-          validate: () => !!String(this.form.workDescription || "").trim()
-        },
-        {
-          key: "hours",
-          validate: () =>
-            Number.isFinite(this.form.hoursWorked) &&
-            this.form.hoursWorked > 0
-        },
-        {
-          key: "status",
-          validate: () =>
-            this.form.machineRunning !== null &&
-            this.form.jobFinished !== null
-        }
+        "sector",
+        "machine",
+        "parts",
+        "operario",
+        "type",
+        "description",
+        "hours",
+        "status"
       ],
 
       form: {
@@ -255,9 +225,7 @@ export default {
       sectors: [],
       operarios: [],
       allOperarios: [],
-
       additionalWorkersList: [],
-      additionalMachinePartsList: [],
 
       horometroForm: {
         machineId: "",
@@ -277,32 +245,9 @@ export default {
 
   mounted() {
     this.init()
-
-    document.body.style.background =
-      'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
-  },
-
-  beforeUnmount() {
-    document.body.style.background = ''
-  },
-
-  watch: {
-
-    // 🔥 AUTO ADVANCE CORE ENGINE
-    form: {
-      deep: true,
-      handler() {
-        this.autoAdvance()
-      }
-    },
-
-    "form.machine"(val) {
-      if (!val) this.form.machineParts = []
-    }
   },
 
   computed: {
-
     selectedMachine() {
       return this.machines.find(m => m._id === this.form.machine) || null
     },
@@ -315,26 +260,24 @@ export default {
 
     selectedHorometroMachine() {
       return this.machines.find(m => m._id === this.horometroForm.machineId) || null
-    },
-
-    orderedHorometroHistory() {
-      const h = this.selectedHorometroMachine?.horometroHistory || []
-      return [...h].sort((a,b) => new Date(b.recordedAt) - new Date(a.recordedAt))
     }
   },
 
   methods: {
 
-    // 🔥 INIT
+    // =========================
+    // INIT
+    // =========================
     async init() {
       await this.loadMachines()
       await this.loadOperarios()
     },
 
     authConfig() {
-      const token = localStorage.getItem("token")
       return {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
       }
     },
 
@@ -343,7 +286,7 @@ export default {
 
       const machines = Array.isArray(res.data) ? res.data : []
 
-      this.machines = machines.sort((a,b) =>
+      this.machines = machines.sort((a, b) =>
         String(a.name).localeCompare(String(b.name), "es")
       )
 
@@ -356,29 +299,107 @@ export default {
       this.operarios = this.allOperarios
     },
 
-    // 🔥 CORE ENGINE: AUTO ADVANCE WIZARD
-    autoAdvance() {
+    // =========================
+    // 🔥 WIZARD CORE REAL (NO WATCH DEEP)
+    // =========================
+    next() {
+      const key = this.steps[this.currentStep]
 
-      const step = this.steps[this.currentStep]
-
-      if (!step) return
-
-      if (!step.validate()) return
-
-      // evita saltar steps sin datos intermedios
-      const nextStep = this.currentStep + 1
-      const next = this.steps[nextStep]
-
-      if (next && next.validate()) {
+      if (!this.isValid(key)) {
+        this.$notify.error("Completa este paso")
         return
       }
 
-      if (nextStep < this.steps.length) {
-        this.currentStep = nextStep
+      if (this.currentStep < this.steps.length - 1) {
+        this.currentStep++
       }
     },
 
-    // reset wizard
+    isValid(key) {
+
+      switch (key) {
+
+        case "sector":
+          return !!this.form.sector
+
+        case "machine":
+          return !!this.form.machine
+
+        case "parts":
+          return this.form.machineParts.length > 0
+
+        case "operario":
+          return !!this.form.clientId
+
+        case "type":
+          return !!this.form.maintenanceType
+
+        case "description":
+          return !!String(this.form.workDescription || "").trim()
+
+        case "hours":
+          return Number.isFinite(this.form.hoursWorked) && this.form.hoursWorked > 0
+
+        case "status":
+          return this.form.machineRunning !== null && this.form.jobFinished !== null
+
+        default:
+          return false
+      }
+    },
+
+    // =========================
+    // 🔥 AUTO FLOW SOLO DONDE CORRESPONDE
+    // =========================
+
+    onSectorChange() {
+      this.form.machine = ""
+      this.form.machineParts = []
+
+      this.autoStep()
+    },
+
+    onMachineChange() {
+      this.form.machineParts = []
+      this.autoStep()
+    },
+
+    onPartsChange() {
+      this.autoStep()
+    },
+
+    onOperarioChange() {
+      this.autoStep()
+    },
+
+    onTypeChange() {
+      this.autoStep()
+    },
+
+    onDescriptionChange() {
+      this.autoStep()
+    },
+
+    onHoursChange() {
+      this.autoStep()
+    },
+
+    onStatusChange() {
+      this.autoStep()
+    },
+
+    autoStep() {
+      const key = this.steps[this.currentStep]
+      if (this.isValid(key)) {
+        if (this.currentStep < this.steps.length - 1) {
+          this.currentStep++
+        }
+      }
+    },
+
+    // =========================
+    // RESET
+    // =========================
     reset() {
       this.currentStep = 0
 
@@ -400,7 +421,9 @@ export default {
       this.additionalWorkersList = []
     },
 
-    // submit final
+    // =========================
+    // SAVE
+    // =========================
     async saveMaintenance() {
       try {
 
@@ -424,7 +447,9 @@ export default {
       }
     },
 
-    // horómetro FIX
+    // =========================
+    // HORÓMETRO
+    // =========================
     async updateHorometroFromPanel() {
 
       if (!this.horometroForm.machineId) return
