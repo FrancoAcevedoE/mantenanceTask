@@ -196,9 +196,48 @@ export default {
 
       currentStep: 0,
 
+      steps: [
+        {
+          key: "sector",
+          validate: () => !!this.form.sector
+        },
+        {
+          key: "machine",
+          validate: () => !!this.form.machine
+        },
+        {
+          key: "parts",
+          validate: () => this.form.machineParts.length > 0
+        },
+        {
+          key: "operario",
+          validate: () => !!this.form.clientId
+        },
+        {
+          key: "type",
+          validate: () => !!this.form.maintenanceType
+        },
+        {
+          key: "description",
+          validate: () => !!String(this.form.workDescription || "").trim()
+        },
+        {
+          key: "hours",
+          validate: () =>
+            Number.isFinite(this.form.hoursWorked) &&
+            this.form.hoursWorked > 0
+        },
+        {
+          key: "status",
+          validate: () =>
+            this.form.machineRunning !== null &&
+            this.form.jobFinished !== null
+        }
+      ],
+
       form: {
         sector: "",
-        machine: "", // <- guarda _id ahora (IMPORTANTE FIX)
+        machine: "",
         machineParts: [],
         clientId: "",
         maintenanceType: "",
@@ -211,19 +250,6 @@ export default {
         unfinishedReason: ""
       },
 
-      horometroForm: {
-        machineId: "",
-        value: null
-      },
-
-      horometroConfirmState: {
-        machineId: "",
-        value: null,
-        expiresAt: 0
-      },
-
-      isUpdatingHorometro: false,
-
       machines: [],
       sectors: [],
       operarios: [],
@@ -232,23 +258,51 @@ export default {
       additionalWorkersList: [],
       additionalMachinePartsList: [],
 
+      horometroForm: {
+        machineId: "",
+        value: null
+      },
+
+      isUpdatingHorometro: false,
+      horometroConfirmState: {
+        machineId: "",
+        value: null,
+        expiresAt: 0
+      },
+
       showMachineDetailModal: false
     }
   },
 
   mounted() {
     this.init()
-    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+
+    document.body.style.background =
+      'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
   },
 
   beforeUnmount() {
     document.body.style.background = ''
   },
 
+  watch: {
+
+    // 🔥 AUTO ADVANCE CORE ENGINE
+    form: {
+      deep: true,
+      handler() {
+        this.autoAdvance()
+      }
+    },
+
+    "form.machine"(val) {
+      if (!val) this.form.machineParts = []
+    }
+  },
+
   computed: {
 
     selectedMachine() {
-      if (!this.form.machine) return null
       return this.machines.find(m => m._id === this.form.machine) || null
     },
 
@@ -263,21 +317,14 @@ export default {
     },
 
     orderedHorometroHistory() {
-      if (!this.selectedHorometroMachine) return []
-      const h = this.selectedHorometroMachine.horometroHistory || []
+      const h = this.selectedHorometroMachine?.horometroHistory || []
       return [...h].sort((a,b) => new Date(b.recordedAt) - new Date(a.recordedAt))
-    }
-  },
-
-  watch: {
-    "form.machine"(val) {
-      if (!val) this.form.machineParts = []
     }
   },
 
   methods: {
 
-    // 🔥 INIT REAL (FIX PRINCIPAL)
+    // 🔥 INIT
     async init() {
       await this.loadMachines()
       await this.loadOperarios()
@@ -290,131 +337,50 @@ export default {
       }
     },
 
-    getStoredUser() {
-      try {
-        return JSON.parse(localStorage.getItem("user"))
-      } catch {
-        return null
-      }
-    },
-
     async loadMachines() {
-      try {
-        const res = await axios.get(`${API_BASE_URL}/machines`, this.authConfig())
+      const res = await axios.get(`${API_BASE_URL}/machines`, this.authConfig())
 
-        const machines = Array.isArray(res.data) ? res.data : []
+      const machines = Array.isArray(res.data) ? res.data : []
 
-        this.machines = machines.sort((a,b) =>
-          String(a.name).localeCompare(String(b.name), "es")
-        )
+      this.machines = machines.sort((a,b) =>
+        String(a.name).localeCompare(String(b.name), "es")
+      )
 
-        this.sectors = [...new Set(machines.map(m => m.sector).filter(Boolean))]
-
-      } catch (e) {
-        this.$notify?.error("Error cargando máquinas")
-      }
+      this.sectors = [...new Set(machines.map(m => m.sector).filter(Boolean))]
     },
 
     async loadOperarios() {
-      try {
-        const res = await axios.get(`${API_BASE_URL}/users/operarios`, this.authConfig())
-
-        this.allOperarios = res.data || []
-        this.operarios = this.allOperarios
-
-      } catch (e) {
-        this.$notify?.error("Error cargando operarios")
-      }
+      const res = await axios.get(`${API_BASE_URL}/users/operarios`, this.authConfig())
+      this.allOperarios = res.data || []
+      this.operarios = this.allOperarios
     },
 
-    onSectorChange() {
-      this.form.machine = ""
-      this.form.machineParts = []
-    },
+    // 🔥 CORE ENGINE: AUTO ADVANCE WIZARD
+    autoAdvance() {
 
-    // 🔥 FIX HORÓMETRO COMPLETO (NO ROMPE MÁS)
-    async updateHorometroFromPanel() {
+      const step = this.steps[this.currentStep]
 
-      if (!this.horometroForm.machineId) {
-        this.$notify.error("Selecciona una máquina")
+      if (!step) return
+
+      if (!step.validate()) return
+
+      // evita saltar steps sin datos intermedios
+      const nextStep = this.currentStep + 1
+      const next = this.steps[nextStep]
+
+      if (next && next.validate()) {
         return
       }
 
-      if (!Number.isFinite(this.horometroForm.value)) {
-        this.$notify.error("Valor inválido")
-        return
-      }
-
-      const now = Date.now()
-      const same =
-        this.horometroConfirmState.machineId === this.horometroForm.machineId &&
-        this.horometroConfirmState.value === this.horometroForm.value &&
-        this.horometroConfirmState.expiresAt > now
-
-      if (!same) {
-        this.horometroConfirmState = {
-          machineId: this.horometroForm.machineId,
-          value: this.horometroForm.value,
-          expiresAt: now + 7000
-        }
-
-        this.$notify.warning("Confirmá presionando de nuevo")
-        return
-      }
-
-      this.isUpdatingHorometro = true
-
-      try {
-        await axios.patch(
-          `${API_BASE_URL}/machines/${this.horometroForm.machineId}/horometro`,
-          { horometro: this.horometroForm.value },
-          this.authConfig()
-        )
-
-        this.$notify.success("Actualizado")
-
-        await this.loadMachines()
-
-        this.horometroForm.value = null
-        this.horometroConfirmState = { machineId: "", value: null, expiresAt: 0 }
-
-      } catch (e) {
-        this.$notify?.notifyApiError(e, "Error horómetro")
-      } finally {
-        this.isUpdatingHorometro = false
+      if (nextStep < this.steps.length) {
+        this.currentStep = nextStep
       }
     },
 
-    formatDate(v) {
-      const d = new Date(v)
-      return isNaN(d) ? "-" : d.toLocaleString("es-AR")
-    },
-
-    async saveMaintenance() {
-      try {
-
-        const payload = {
-          ...this.form,
-          additionalWorkers: this.additionalWorkersList.map(w => w._id),
-          machinePart: this.form.machineParts
-        }
-
-        await axios.post(
-          `${API_BASE_URL}/maintenance/newmaintenance`,
-          payload,
-          this.authConfig()
-        )
-
-        this.$notify.success("Guardado")
-
-        this.reset()
-
-      } catch (e) {
-        this.$notify?.notifyApiError(e, "Error")
-      }
-    },
-
+    // reset wizard
     reset() {
+      this.currentStep = 0
+
       this.form = {
         sector: "",
         machine: "",
@@ -431,6 +397,75 @@ export default {
       }
 
       this.additionalWorkersList = []
+    },
+
+    // submit final
+    async saveMaintenance() {
+      try {
+
+        const payload = {
+          ...this.form,
+          additionalWorkers: this.additionalWorkersList.map(w => w._id),
+          machinePart: this.form.machineParts
+        }
+
+        await axios.post(
+          `${API_BASE_URL}/maintenance/newmaintenance`,
+          payload,
+          this.authConfig()
+        )
+
+        this.$notify.success("Mantenimiento registrado")
+        this.reset()
+
+      } catch (e) {
+        this.$notify.notifyApiError(e, "Error")
+      }
+    },
+
+    // horómetro FIX
+    async updateHorometroFromPanel() {
+
+      if (!this.horometroForm.machineId) return
+
+      const now = Date.now()
+
+      const same =
+        this.horometroConfirmState.machineId === this.horometroForm.machineId &&
+        this.horometroConfirmState.value === this.horometroForm.value &&
+        this.horometroConfirmState.expiresAt > now
+
+      if (!same) {
+        this.horometroConfirmState = {
+          machineId: this.horometroForm.machineId,
+          value: this.horometroForm.value,
+          expiresAt: now + 7000
+        }
+
+        this.$notify.warning("Confirmá otra vez")
+        return
+      }
+
+      this.isUpdatingHorometro = true
+
+      try {
+
+        await axios.patch(
+          `${API_BASE_URL}/machines/${this.horometroForm.machineId}/horometro`,
+          { horometro: this.horometroForm.value },
+          this.authConfig()
+        )
+
+        this.$notify.success("Actualizado")
+
+        await this.loadMachines()
+
+        this.horometroForm.value = null
+        this.horometroConfirmState = { machineId: "", value: null, expiresAt: 0 }
+
+      } finally {
+        this.isUpdatingHorometro = false
+      }
     }
   }
 }
