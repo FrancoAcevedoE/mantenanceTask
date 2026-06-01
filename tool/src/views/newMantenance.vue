@@ -96,35 +96,71 @@
         <!-- PANEL NUEVO TRABAJO -->
         <div v-if="activePanel === 'trabajo'" class="panel-container step-block">
 
-            <h2>Nuevo trabajo</h2>
+  <h2>Nuevo trabajo</h2>
 
-            <form @submit.prevent="saveMaintenance">
+  <form @submit.prevent="saveMaintenance">
 
-                <!-- ACA ARRANCA TU FORMULARIO ORIGINAL -->
+    <label>Sector</label>
+    <select v-model="form.sector" required>
+      <option value="">Seleccionar sector</option>
+      <option v-for="sector in sectors" :key="sector" :value="sector">
+        {{ sector }}
+      </option>
+    </select>
 
-                <label>Sector</label>
+    <label>Máquina</label>
+    <select v-model="form.machine" required>
+      <option value="">Seleccionar máquina</option>
+      <option v-for="machine in machines" :key="machine._id" :value="machine._id">
+        {{ machine.name }}
+      </option>
+    </select>
 
-                <select v-model="form.sector" required @change="onSectorChange">
+    <label>Partes</label>
+    <select v-model="form.machineParts" multiple>
+      <option v-for="p in selectedMachineParts" :key="p" :value="p">
+        {{ p }}
+      </option>
+    </select>
 
-                    <option value="">
-                        Seleccionar sector
-                    </option>
+    <label>Operario</label>
+    <select v-model="form.clientId">
+      <option value="">Seleccionar operario</option>
+      <option v-for="op in operarios" :key="op._id" :value="op._id">
+        {{ op.name }}
+      </option>
+    </select>
 
-                    <option v-for="sector in sectors" :key="sector" :value="sector">
-                        {{ sector }}
-                    </option>
+    <label>Tipo de mantenimiento</label>
+    <input v-model="form.maintenanceType" type="text" />
 
-                </select>
+    <label>Descripción</label>
+    <textarea v-model="form.workDescription"></textarea>
 
-                <!-- TODO EL RESTO DEL FORMULARIO -->
-                <!-- DESDE -->
-                <!-- v-if="currentStep >= 1"class="step-block"> -->
-                <!-- HASTA -->
-                <!-- EL FINAL DEL FORM -->
+    <label>Horas trabajadas</label>
+    <input v-model.number="form.hoursWorked" type="number" />
 
-            </form>
+    <label>Máquina en funcionamiento</label>
+    <select v-model="form.machineRunning">
+      <option :value="null">Seleccionar</option>
+      <option :value="true">Sí</option>
+      <option :value="false">No</option>
+    </select>
 
-        </div>
+    <label>Trabajo finalizado</label>
+    <select v-model="form.jobFinished">
+      <option :value="null">Seleccionar</option>
+      <option :value="true">Sí</option>
+      <option :value="false">No</option>
+    </select>
+
+    <button type="submit">
+      Guardar mantenimiento
+    </button>
+
+  </form>
+
+</div>
 
         <!-- MODAL -->
         <div v-if="showMachineDetailModal" class="modal">
@@ -193,53 +229,39 @@ import { API_BASE_URL } from '@/utils/api'
 
 export default {
   data() {
-    return {
-      activePanel: "",
-      currentStep: 0,
+  return {
+    activePanel: "",
 
-      steps: [
-        "sector",
-        "machine",
-        "parts",
-        "operario",
-        "type",
-        "description",
-        "hours",
-        "status"
-      ],
+    form: {
+      sector: "",
+      machine: "",
+      machineParts: [],
+      clientId: "",
+      maintenanceType: "",
+      workDescription: "",
+      spareParts: "",
+      hoursWorked: null,
+      machineRunning: null,
+      jobFinished: null,
+      unfinishedReasonCategory: "",
+      unfinishedReason: ""
+    },
 
-      form: {
-        sector: "",
-        machine: "",
-        machineParts: [],
-        clientId: "",
-        maintenanceType: "",
-        workDescription: "",
-        spareParts: "",
-        hoursWorked: null,
-        machineRunning: null,
-        jobFinished: null,
-        unfinishedReasonCategory: "",
-        unfinishedReason: ""
-      },
+    machines: [],
+    sectors: [],
+    operarios: [],
+    allOperarios: [],
 
-      machines: [],
-      sectors: [],
-      operarios: [],
-      allOperarios: [],
-      additionalWorkersList: [],
+    horometroForm: {
+      machineId: "",
+      value: null
+    },
 
-      horometroForm: {
-        machineId: "",
-        value: null
-      },
+    isUpdatingHorometro: false,
 
-      isUpdatingHorometro: false,
-
-      showMachineDetailModal: false
-    }
-  },
-
+    showMachineDetailModal: false
+  }
+},
   mounted() {
     this.init()
   },
@@ -262,74 +284,7 @@ export default {
 
 
   methods: {
-    // =========================
-// 🔥 WIZARD ENGINE REAL (STABLE)
-// =========================
-watch: {
-  form: {
-    deep: true,
-    handler() {
-      this.autoStep()
-    }
-  }
-},
-evaluateWizard() {
-  // sector
-  if (this.currentStep === 0 && this.form.sector) {
-    this.currentStep = 1
-    return
-  }
 
-  // machine
-  if (this.currentStep === 1 && this.form.machine) {
-    this.currentStep = 2
-    return
-  }
-
-  // parts
-  if (this.currentStep === 2 && this.form.machineParts.length > 0) {
-    this.currentStep = 3
-    return
-  }
-
-  // operario
-  if (this.currentStep === 3 && this.form.clientId) {
-    this.currentStep = 4
-    return
-  }
-
-  // type
-  if (this.currentStep === 4 && this.form.maintenanceType) {
-    this.currentStep = 5
-    return
-  }
-
-  // description
-  if (this.currentStep === 5 && String(this.form.workDescription || "").trim()) {
-    this.currentStep = 6
-    return
-  }
-
-  // hours
-  if (this.currentStep === 6 && Number(this.form.hoursWorked) > 0) {
-    this.currentStep = 7
-    return
-  }
-
-  // status
-  if (
-    this.currentStep === 7 &&
-    this.form.machineRunning !== null &&
-    this.form.jobFinished !== null
-  ) {
-    // fin del wizard
-    return
-  }
-},
-
-    // =========================
-    // INIT
-    // =========================
     async init() {
       await this.loadMachines()
       await this.loadOperarios()
