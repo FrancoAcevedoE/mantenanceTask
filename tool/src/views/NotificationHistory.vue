@@ -4,8 +4,7 @@
       <div class="notification-history-card">
         <header class="notification-history-header">
           <div>
-            <p>Historial de notificaciones</p>
-            <h1>Centro historico</h1>
+            <p>HISTORIAL DE NOTIFICACIONES</p>
           </div>
           <div class="notification-history-actions">
             <button type="button" class="ghost-button" @click="markVisibleAsRead" :disabled="isLoading || !hasUnreadVisible">
@@ -293,7 +292,10 @@ export default {
   align-items: center;
   justify-content: center;
 }
-
+.notification-history-card,
+.notification-history-card * {
+  font-family: inherit;
+}
 
 
 .page-container {
@@ -341,38 +343,89 @@ export default {
   box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
 }
 
+.container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.notification-history-card {
+  width: min(1080px, 100%);
+  margin: 5.4rem auto 0;
+  text-align: center;
+}
+
 .notification-history-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.notification-history-header p,
-.notification-history-header h1 {
-  margin: 0;
-}
-
-.notification-history-header p {
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .notification-history-actions {
-  display: flex;
-  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .notification-history-filters {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  flex-direction: row;
+flex-wrap: wrap;
+align-content: center;
+justify-content: center;
+
+align-items: center;
   gap: 0.6rem;
-  margin-bottom: 1rem;
 }
 
+.notification-history-filters input,
+.notification-history-filters select {
+  width: 180px;
+}
+
+.notification-history-filters button {
+  width: auto;
+  padding: 0.62rem 1.5rem;
+}
+
+.notification-history-summary article {
+  text-align: center;
+  justify-items: center;
+}
+
+.history-item {
+  text-align: center;
+}
+
+.history-item-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.history-item-meta {
+  justify-content: center;
+}
+
+.mark-read-button {
+  display: block;
+  margin: 0.65rem auto 0;
+}
+
+.notification-history-filters input,
+.notification-history-filters select,
+.notification-history-filters button {
+  text-align: center;
+}
+
+h1,
+h2,
+h3,
+p,
+span {
+  text-align: center;
+}
 .notification-history-filters input,
 .notification-history-filters select,
 .notification-history-filters button,

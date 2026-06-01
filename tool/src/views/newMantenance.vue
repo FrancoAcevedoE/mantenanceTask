@@ -12,7 +12,7 @@
                 @click="activePanel = activePanel === 'horometro' ? '' : 'horometro'"
             >
                 <i class="bi bi-stopwatch"></i>
-                <h3>Actualizar horómetro</h3>
+                <p class="action-title">ACTUALIZAR HORÓMETRO</p>
             </div>
 
             <!-- NUEVO TRABAJO -->
@@ -21,7 +21,7 @@
                 @click="activePanel = activePanel === 'trabajo' ? '' : 'trabajo'"
             >
                 <i class="bi bi-clipboard-data"></i>
-                <h3>Nuevo Trabajo</h3>
+                <p class="action-title">NUEVO TRABAJO</p>
             </div>
 
         </div>
@@ -740,6 +740,7 @@ second: "2-digit"
     width: 100%;
     max-width: 700px;
     margin: 1.5rem auto 0;
+    justify-content: center;
 }
 
 
@@ -752,7 +753,7 @@ second: "2-digit"
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
 
     padding: 2rem;
 

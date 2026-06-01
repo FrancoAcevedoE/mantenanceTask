@@ -1,36 +1,42 @@
 <template>
   <div class="page-container">
 
-    <div class="machine-layout">
-
-      <!-- =========================
-           NUEVA MAQUINA
-      ========================== -->
-      <div class="box">
-
-        <div
-          class="collapse-header"
-          @click="showNewMachineForm = !showNewMachineForm"
-        >
-
-          <div class="section-title">
-            <i class="bi bi-clipboard-plus"></i>
-
-            <h2>
-              {{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}
-            </h2>
-          </div>
-
-          <i
-            class="bi"
-            :class="showNewMachineForm ? 'bi-chevron-up' : 'bi-chevron-down'"
-          ></i>
-
+    <!-- SELECTOR DE ACCIONES -->
+    <div class="machine-selector">
+      <!-- FORMULARIO CARD -->
+      <div
+        class="box action-card"
+        @click="showNewMachineForm = !showNewMachineForm"
+      >
+        <div class="section-title">
+          <i class="bi bi-clipboard-plus"></i>
+          <h3>
+            {{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}
+          </h3>
         </div>
+      </div>
 
-        <!-- CONTENIDO -->
-        <div v-if="showNewMachineForm">
+      <!-- MÁQUINAS CARD -->
+      <div
+        class="box action-card"
+        @click="showMachinesPanel = !showMachinesPanel"
+      >
+        <div class="section-title">
+          <i class="bi bi-clipboard2-data"></i>
+          <h3>Máquinas cargadas</h3>
+        </div>
+      </div>
+    </div>
 
+    <!-- PANEL FORMULARIO -->
+    <div
+      v-if="showNewMachineForm"
+      class="panel-container"
+    >
+      <div class="box">
+        <h2>{{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}</h2>
+
+        <div class="form-content">
           <input
             type="text"
             v-model="form.sector"
@@ -69,7 +75,6 @@
           </div>
 
           <div class="part-input-row">
-
             <input
               type="text"
               v-model="newPart"
@@ -84,7 +89,6 @@
             >
               +
             </button>
-
           </div>
 
           <input
@@ -99,7 +103,6 @@
           ></textarea>
 
           <div class="button-group">
-
             <button @click="save">
               {{ editingMachineId ? 'Guardar cambios' : 'Guardar' }}
             </button>
@@ -107,47 +110,24 @@
             <button @click="cancel">
               {{ editingMachineId ? 'Cancelar edición' : 'Cancelar' }}
             </button>
-
           </div>
-
         </div>
       </div>
+    </div>
 
-      <!-- =========================
-           LISTA MAQUINAS
-      ========================== -->
-      <div class="box machines-panel">
+    <!-- PANEL MÁQUINAS -->
+    <div
+      v-if="showMachinesPanel"
+      class="panel-container"
+    >
+      <div class="box">
+        <h2>Máquinas cargadas</h2>
 
-        <div
-          class="collapse-header"
-          @click="showMachinesPanel = !showMachinesPanel"
-        >
-
-          <div class="section-title">
-
-            <i class="bi bi-clipboard2-data"></i>
-
-            <h2>
-              Máquinas cargadas
-            </h2>
-
-          </div>
-
-          <i
-            class="bi"
-            :class="showMachinesPanel ? 'bi-chevron-up' : 'bi-chevron-down'"
-          ></i>
-
-        </div>
-
-        <!-- CONTENIDO -->
-        <div v-if="showMachinesPanel">
-
+        <div class="machines-content">
           <select
             class="sector-select"
             v-model="sectorFilter"
           >
-
             <option value="">
               Todas las máquinas
             </option>
@@ -159,7 +139,6 @@
             >
               {{ s }}
             </option>
-
           </select>
 
           <p
@@ -180,7 +159,6 @@
             v-else
             class="machines-list"
           >
-
             <div
               v-for="machine in filteredMachines"
               :key="machine._id"
@@ -188,7 +166,6 @@
             >
 
               <div class="machine-info">
-
                 <strong>
                   {{ machine.name }}
                 </strong>
@@ -204,11 +181,9 @@
                 <span v-if="machine.machineParts?.length">
                   Partes: {{ machine.machineParts.join(', ') }}
                 </span>
-
               </div>
 
               <div class="machine-actions">
-
                 <button
                   type="button"
                   class="history-button"
@@ -232,21 +207,14 @@
                 >
                   Ocultar
                 </button>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
       </div>
-
     </div>
 
-    <!-- =========================
-         MODAL DETALLES
-    ========================== -->
+    <!-- MODAL -->
     <div
       v-if="showMachineModal"
       class="modal"
@@ -258,7 +226,7 @@
           {{ selectedMachine?.name }}
         </h3>
 
-        <div style="text-align: left; line-height: 1.8;">
+        <div style="text-align:left;line-height:1.8;">
 
           <p>
             <strong>Sector:</strong>
@@ -283,10 +251,10 @@
 
             <p
               style="
-                background: #f5f5f5;
-                padding: 0.75rem;
-                border-radius: 8px;
-                white-space: pre-wrap;
+                background:#f5f5f5;
+                padding:.75rem;
+                border-radius:8px;
+                white-space:pre-wrap;
               "
             >
               {{ selectedMachine.instructions }}
@@ -302,35 +270,29 @@
 
             <div
               style="
-                background: rgba(107,142,58,0.12);
-                padding: 0.65rem 0.75rem;
-                border-radius: 0.55rem;
-                margin-bottom: 0.5rem;
+                background:rgba(107,142,58,.12);
+                padding:.65rem .75rem;
+                border-radius:.55rem;
+                margin-bottom:.5rem;
               "
               v-html="machineHorometroSummary"
             ></div>
 
             <ul
               style="
-                text-align: left;
-                padding-left: 1.2rem;
-                margin: 0;
+                text-align:left;
+                padding-left:1.2rem;
+                margin:0;
               "
             >
 
               <li
                 v-for="(item, i) in sortedHorometroHistory"
                 :key="i"
-                style="margin-bottom: 0.35rem;"
               >
-
-                <strong>
-                  {{ item.value }}h
-                </strong>
-
+                <strong>{{ item.value }}h</strong>
                 -
                 {{ formatDate(item.recordedAt) }}
-
               </li>
 
             </ul>
@@ -338,17 +300,14 @@
           </template>
 
           <p v-else>
-            <em style="color: #888;">
+            <em style="color:#888;">
               Sin historial de horómetro registrado.
             </em>
           </p>
 
         </div>
 
-        <button
-          @click="closeMachineModal"
-          style="margin-top: 1rem;"
-        >
+        <button @click="closeMachineModal">
           Cerrar
         </button>
 
@@ -359,35 +318,34 @@
   </div>
 </template>
 
-
 <script>
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 
 export default {
   data() {
-  return {
+    return {
 
-    showNewMachineForm: false,
-    showMachinesPanel: false,
+      showNewMachineForm: false,
+      showMachinesPanel: false,
 
-    form: {
-      sector: "",
-      name: "",
-      machineParts: [],
-      horometro: null,
-      instructions: ""
-    },
+      form: {
+        sector: "",
+        name: "",
+        machineParts: [],
+        horometro: null,
+        instructions: ""
+      },
 
-    newPart: "",
-    machines: [],
-    deletedMachines: [],
-    editingMachineId: null,
-    showMachineModal: false,
-    selectedMachine: null,
-    sectorFilter: "",
-    availableSectors: []
-  }
+      newPart: "",
+      machines: [],
+      deletedMachines: [],
+      editingMachineId: null,
+      showMachineModal: false,
+      selectedMachine: null,
+      sectorFilter: "",
+      availableSectors: []
+    }
 
   },
   computed: {
@@ -616,8 +574,8 @@ export default {
   min-height: 100vh;
 
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
+  align-items: flex-start;
 
   padding: 2rem;
 
@@ -633,42 +591,96 @@ export default {
   content: none !important;
 }
 
-.machine-layout {
+.form-panel,
+.machines-panel {
+  width: 330px;
+  flex: 0 0 330px;
+
+  cursor: pointer;
+
+  transition: 0.25s ease;
+}
+
+.form-panel.expanded,
+.machines-panel.expanded {
+  cursor: default;
+}
+
+.machine-selector {
   width: 100%;
-  max-width: 400px;
+  max-width: 700px;
+  margin: 0 auto;
 
   display: grid;
-  grid-template-columns: 1fr;
-  justify-content: center;
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
 }
+
+.panel-container {
+  width: 100%;
+  max-width: 700px;
+  margin: 1.5rem auto 0;
+}
+
+.action-card {
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center !important;
+}
+
+.form-content,
+.machines-content {
+  margin-top: 0.5rem;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 0.75rem;
+}
+
+/* =========================
+   BOX
+========================= */
+
+.box {
+  background: rgba(255, 255, 255, 0.95);
+
+  border-radius: 18px;
+
+  padding: 2rem 1rem;
+
+  border: 1px solid rgba(0, 0, 0, 0.08);
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  transition: 0.25s ease;
+}
+
+.box:hover {
+  transform: translateY(-4px);
+
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* =========================
+   HEADER
+========================= */
+
 .collapse-header {
   width: 100%;
 
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  cursor: pointer;
-
-  user-select: none;
-
- width: 100%;
-
-  display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 
   position: relative;
 
   cursor: pointer;
-
   user-select: none;
-
-  padding: 0.4rem 0;
 }
-
-
 
 .collapse-header .bi-chevron-up,
 .collapse-header .bi-chevron-down {
@@ -676,218 +688,62 @@ export default {
   right: 0;
 
   font-size: 1rem;
-
   color: #6b8e3a;
 }
 
 .section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-}
-
-.section-title i {
-  font-size: 2rem;
-  color: #6b8e3a;
-
-  background: rgba(107, 142, 58, 0.12);
-
-  padding: 0.8rem;
-
-  border-radius: 1rem;
-}
-
-.section-title h2 {
-  margin: 0;
-  font-size: 1.8rem;
-}
-/* =========================
-   BOXES PRINCIPALES
-========================= */
-
-.box {
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
-
-  border-radius: 1.5rem;
-
-  padding: 1.6rem;
-
-  border: 1px solid rgba(255, 255, 255, 0.45);
-
-  box-shadow:
-    0 10px 35px rgba(0, 0, 0, 0.08),
-    0 2px 10px rgba(0, 0, 0, 0.05);
-
-  transition: 0.25s ease;
-}
-
-.box:hover {
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 14px 45px rgba(0, 0, 0, 0.12),
-    0 4px 14px rgba(0, 0, 0, 0.06);
-}
-
-/* =========================
-   HEADERS CON ICONOS
-========================= */
-
-.section-header {
   width: 100%;
 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 1rem;
-
-  margin-bottom: 1.5rem;
-}
-.section-title {
   display: flex;
   flex-direction: column;
 
-  align-items: center;
   justify-content: center;
+  align-items: center;
 
-  gap: 0.45rem;
-
-  width: 100%;
+  gap: 0.5rem;
 }
 
 .section-title i {
-  font-size: 1.3rem;
-
-  color: #6b8e3a;
-
-  background: rgba(107, 142, 58, 0.12);
-
-  width: 42px;
-  height: 42px;
-
-  border-radius: 0.9rem;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  box-shadow: 0 2px 8px rgba(107, 142, 58, 0.12);
+  font-size: 3rem;
+  color: rgb(69, 82, 28);
+  margin-bottom: 1rem;
 }
 
-.section-title h2 {
+.section-title h3 {
   margin: 0;
-
-  font-size: 1rem;
 
   color: #333;
 
-  text-align: center;
-
+  font-size: 1.1rem;
   font-weight: 600;
+
+  text-align: center;
 }
 
 /* =========================
-   FORMULARIOS
+   INPUTS
 ========================= */
-
-.parts-label {
-  display: block;
-  margin-top: 0.25rem;
-  color: #4b4b4b;
-  font-size: 0.95rem;
-}
-
-.parts-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.5rem 0 0.4rem;
-}
-
-.part-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-
-  background: #6b8e3a;
-  color: #fff;
-
-  border-radius: 2rem;
-
-  padding: 4px 12px;
-
-  font-size: 0.88rem;
-}
-
-.chip-remove {
-  background: none;
-  border: none;
-
-  color: #fff;
-
-  cursor: pointer;
-
-  font-size: 1rem;
-
-  padding: 0;
-
-  line-height: 1;
-  border-radius: 0;
-}
-
-.chip-remove:hover {
-  background: none;
-  color: #ffd;
-}
-
-.part-input-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-
-  gap: 0.5rem;
-
-  align-items: center;
-
-  margin-bottom: 0.5rem;
-}
-
-.part-input-row input {
-  margin: 0;
-}
-
-.add-part-button {
-  padding: 10px 10px;
-  font-size: 1.2rem;
-  line-height: 0;
-}
 
 input[type="text"],
 input[type="number"],
 textarea,
 .sector-select {
-  display: block;
-
   width: 100%;
 
   margin: 10px 0;
 
-  padding: 12px 14px;
+  padding: 10px;
 
-  border: 1px solid #d8d8d8;
-
+  border: 1px solid #ccc;
   border-radius: 2rem;
 
-  background: #fff;
+  background: white;
 
-  color: #000;
+  color: black;
 
   font-size: 1rem;
 
   text-align: center;
-
-  transition: 0.2s;
 }
 
 textarea {
@@ -903,11 +759,95 @@ textarea:focus,
 .sector-select:focus {
   outline: none;
 
-  background: #f8f8f8;
+  background: #f0f0f0;
 
-  box-shadow: 0 3px 10px rgba(189, 189, 189, 0.25);
+  box-shadow: 0 1px 5px rgba(189, 189, 189, .31);
+}
 
-  border-color: #c9c9c9;
+/* =========================
+   PARTES
+========================= */
+
+.parts-label {
+  display: block;
+
+  margin-top: .25rem;
+
+  color: #4b4b4b;
+
+  font-size: .95rem;
+}
+
+.parts-chips {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: .4rem;
+
+  margin: .5rem 0;
+}
+
+.part-chip {
+  display: inline-flex;
+  align-items: center;
+
+  gap: .35rem;
+
+  background: #6b8e3a;
+  color: white;
+
+  border-radius: 2rem;
+
+  padding: 4px 12px;
+
+  font-size: .88rem;
+}
+
+.chip-remove {
+  width: auto;
+
+  margin: 0;
+  padding: 0;
+
+  background: transparent;
+
+  border: none;
+
+  color: white;
+
+  font-size: 1rem;
+
+  cursor: pointer;
+}
+
+.chip-remove:hover {
+  background: transparent;
+  color: #ffe082;
+}
+
+.part-input-row {
+  display: grid;
+
+  grid-template-columns: 1fr auto;
+
+  gap: .5rem;
+
+  align-items: center;
+}
+
+.part-input-row input {
+  margin: 0;
+}
+
+.add-part-button {
+  width: 48px;
+  height: 48px;
+
+  margin: 0;
+
+  padding: 0;
+
+  font-size: 1.3rem;
 }
 
 /* =========================
@@ -915,18 +855,21 @@ textarea:focus,
 ========================= */
 
 button {
-  padding: 10px 14px;
+  width: 100%;
+
+  margin-top: 1rem;
+
+  padding: 10px;
 
   border: none;
+
   border-radius: 2rem;
 
   background: #a6a6a6;
 
-  color: #fff;
+  color: white;
 
   cursor: pointer;
-
-  transition: 0.2s;
 }
 
 button:hover {
@@ -934,132 +877,11 @@ button:hover {
 }
 
 .button-group {
-  width: 100%;
-
   display: grid;
 
-  gap: 0.75rem;
-
-  margin-top: 0.8rem;
-}
-
-.toggle-machines-button {
-  width: auto;
-
-  padding: 0.75rem 1rem;
-
-  background: #6b8e3a;
-
-  font-weight: 600;
-}
-
-.toggle-machines-button:hover {
-  background: #5a7d3a;
-}
-
-.close-machines-button {
-  width: 42px;
-  height: 42px;
-
-  border-radius: 50%;
-
-  background: #dc2626;
-
-  color: white;
-
-  font-size: 1.5rem;
-
-  line-height: 1;
-
-  padding: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-machines-button:hover {
-  background: #b91c1c;
-}
-
-/* =========================
-   PANEL MAQUINAS
-========================= */
-
-.machines-panel {
-  text-align: left;
-}
-
-.empty-state {
-  color: #888;
-
-  font-size: 0.95rem;
-
-  text-align: center;
+  gap: .75rem;
 
   margin-top: 1rem;
-}
-
-.machines-list {
-  display: flex;
-  flex-direction: column;
-
-  gap: 0.75rem;
-
-  margin-top: 0.5rem;
-}
-
-.machine-item {
-  display: flex;
-  flex-wrap: wrap;
-
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 0.75rem;
-
-  padding: 1rem;
-
-  background: rgba(0, 0, 0, 0.04);
-
-  border-radius: 1rem;
-
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.machine-info {
-  display: flex;
-  flex-direction: column;
-
-  gap: 0.15rem;
-
-  font-size: 0.9rem;
-
-  min-width: 0;
-
-  word-break: break-word;
-}
-
-.machine-info strong {
-  font-size: 1rem;
-  color: #5a7d3a;
-}
-
-.machine-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-
-  gap: 0.5rem;
-
-  flex-shrink: 0;
-}
-
-.machine-actions .edit-button,
-.machine-actions .danger-button,
-.machine-actions .history-button {
-  min-width: 104px;
-  text-align: center;
 }
 
 .history-button {
@@ -1087,6 +909,77 @@ button:hover {
 }
 
 /* =========================
+   LISTA
+========================= */
+
+.machines-panel {
+  text-align: left;
+}
+
+.empty-state {
+  text-align: center;
+
+  color: #888;
+
+  margin-top: 1rem;
+}
+
+.machines-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: .75rem;
+
+  margin-top: .75rem;
+}
+
+.machine-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 1rem;
+
+  background: rgba(255, 255, 255, .95);
+
+  border-radius: 18px;
+
+  padding: 1rem;
+
+  border: 1px solid rgba(0, 0, 0, .08);
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
+}
+
+.machine-info {
+  display: flex;
+  flex-direction: column;
+
+  gap: .2rem;
+
+  min-width: 0;
+}
+
+.machine-info strong {
+  color: #5a7d3a;
+}
+
+.machine-actions {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: .5rem;
+}
+
+.machine-actions button {
+  width: auto;
+  min-width: 110px;
+
+  margin-top: 0;
+}
+
+/* =========================
    MODAL
 ========================= */
 
@@ -1099,10 +992,9 @@ button:hover {
   width: 100%;
   height: 100%;
 
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, .3);
 
   display: flex;
-
   justify-content: center;
   align-items: center;
 
@@ -1116,7 +1008,7 @@ button:hover {
 
   border-radius: 1rem;
 
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, .25);
 
   width: min(420px, 90vw);
 }
@@ -1131,64 +1023,28 @@ button:hover {
 
 .modal-box h3 {
   margin-top: 0;
+
   color: #333;
 }
 
 /* =========================
-   RESPONSIVE
+   MOBILE
 ========================= */
 
 @media (max-width: 768px) {
 
-  .machine-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .box {
-    padding: 1rem;
-  }
-
-  .section-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .section-title {
-    justify-content: center;
-  }
-
-  .section-title h2 {
-    text-align: center;
-    font-size: 1.5rem;
-  }
-
-  .toggle-machines-button,
-  .close-machines-button {
-    align-self: center;
-  }
-
-  .button-group {
-    gap: 0.6rem;
-  }
-
-  button {
-    width: 100%;
-  }
-
+ 
   .machine-item {
     flex-direction: column;
     align-items: stretch;
   }
 
   .machine-actions {
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    flex-direction: column;
   }
 
-  .machine-item .danger-button,
-  .machine-item .edit-button,
-  .machine-item .history-button {
-    width: auto;
+  .machine-actions button {
+    width: 100%;
   }
 }
 </style>

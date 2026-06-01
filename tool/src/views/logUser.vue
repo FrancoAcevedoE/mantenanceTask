@@ -40,7 +40,6 @@
       </div>
 
       <div class="social-box">
-        <h3>Mis redes</h3>
         <div class="social-links">
           <a href="https://www.instagram.com/_.francoacevedo?igsh=MXBkZTcxYTdjbHZ4dQ%3D%3D&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">
             <i class="bi bi-instagram"></i>
@@ -55,9 +54,10 @@
             <i class="bi bi-whatsapp"></i>
           </a>
         </div>
-        <p class="social-signature">Acevedo Franco Emanuel | Desarrollo de Software ~ 2026</p>
       </div>
     </footer>
+            <p class="social-signature">
+  Acevedo Franco Emanuel | Desarrollo de Software · 2026</p>
 
   </div>
 </template>
@@ -142,214 +142,208 @@ export default {
 </script>
 
 <style>
-.nav {
-   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
-     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
-    padding: 1rem;
-}
-.login-container{
+input {
+  width: 100%;
+  padding: 12px 16px;
+  margin: 10px 0;
 
-  min-height:100vh;
-  display:flex;
-  flex-direction: column;
-  justify-content:flex-start;
-  align-items:center;
-  background-image: none;
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  padding: 1rem;
+  border: 1px solid #d8d8d8;
+  border-radius: 999px;
+
+  background: #fff;
+  color: #333;
+
+  font-size: 1rem;
+
   box-sizing: border-box;
-  overflow-y: auto;
+
+  transition: 0.2s;
 }
 
+input:hover,
+input:focus {
+  outline: none;
+  background: #f8f8f8;
+  border-color: #bdbdbd;
+
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
 .login-box{
   background: rgba(255,255,255,0.96);
+
   padding: 2rem;
+
   border-radius: 24px;
+
   width: min(420px, 100%);
+
   margin-top: 1.25rem;
-  box-shadow: var(--shadow-soft, 0 10px 24px rgba(21,38,18,0.18));
-}
-.login-box:hover {
-  transition: 0.3s;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
-}
-.title {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
-  font-size: 2.2rem;
-  letter-spacing: 0.1rem;
-}
-.title i {
-  font-size: 2rem;
-  margin-left: 0.5rem;
 
-}
-input{
-  width:100%;
-  padding:10px;
-  margin:10px 0;
-  border-radius: 2rem;
-  border: 1px solid #ccc;
-}
-input:hover {
-  outline: none;
-  background:#f0f0f0;
-  transition: 0.2s;
-  box-shadow:0 1px 5px rgba(189, 189, 189, 0.31);
-}
+  box-shadow:
+    0 10px 24px rgba(21,38,18,0.18);
 
-button{
-  width: 100%;
-  max-width: 150px;
-  border-radius: 999px;
-  padding: 0.95rem 1.25rem;
-  background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
-  color: white;
-  border: none;
-  cursor: pointer;
-  display: block;
-  margin: 0.75rem auto 0;
+  backdrop-filter: blur(8px);
 }
-
-.error{
-
-  color:red;
-  margin-top:10px;
-
+* {
+  box-sizing: border-box;
 }
+.login-container{
+  min-height:100vh;
 
-.pwa-qr-box {
-  margin-top: 0;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 10px;
-  padding: 0.75rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
-}
+  display:flex;
+  flex-direction:column;
 
-.pwa-qr-box h3 {
-  margin: 0 0 0.5rem;
-  color: #333;
-  font-size: 1rem;
-}
+  justify-content:center;
+  align-items:center;
 
-.pwa-qr-box p {
-  margin: 0 0 0.75rem;
-  color: #555;
-  font-size: 0.85rem;
-  line-height: 1.3;
-}
-
-.qr-image {
-  width: 140px;
-  height: 140px;
-  display: block;
-  margin: 0.25rem auto 0.75rem;
-  border-radius: 8px;
-  background: #fff;
-  padding: 6px;
-}
-
-.pwa-qr-box a {
-  color: #0369a1;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.pwa-qr-box a:hover {
-  text-decoration: underline;
+  padding:1rem;
 }
 
 .login-footer {
   width: 100%;
-  max-width: 760px;
-  margin-top: auto;
-  margin-bottom: 1rem;
+  max-width: 500px;
+
+  margin-top: 1rem;
+
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.25rem;
+  flex-direction: row;
+
+  justify-content: center;
+  align-items: stretch;
+
+  gap: 0.75rem;
+}
+/* =========================
+   QR
+========================= */
+
+.pwa-qr-box {
+  background: rgba(255,255,255,0.92);
+
+  border-radius: 16px;
+
+  padding: 0.75rem;
+
+  text-align: center;
+
+  box-shadow: 0 2px 4px rgba(0,0,0,.18);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
+.pwa-qr-box,
 .social-box {
-  border-left: 1px solid #e0e0e0;
-  padding-left: 1rem;
+  width: 200px;
+}
+
+
+
+.pwa-qr-box h3 {
+  margin: 0 0 .4rem;
+  color: #333;
+  font-size: .95rem;
+}
+
+.pwa-qr-box p {
+  display: none;
+}
+
+.qr-image {
+  width: 90px;
+  height: 90px;
+
+  margin: .3rem auto;
+
+  padding: 4px;
+
+  background: white;
+  border-radius: 8px;
+}
+
+.pwa-qr-box a {
+  font-size: .8rem;
+  text-decoration: none;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+/* =========================
+   REDES
+========================= */
+
+.social-box {
+  background: rgba(255,255,255,0.12);
+
+  border-radius: 16px;
+
+  padding: 0.75rem;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .social-box h3 {
-  margin: 0 0 0.75rem;
-  color: #fff;
-  font-size: 1rem;
+  margin: 0 0 .6rem;
+
+  color: white;
+
+  font-size: .95rem;
+
   text-align: center;
 }
 
 .social-links {
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
-}
-
-.social-signature {
-  margin: 0.75rem 0 0;
-  text-align: center;
-  color: #fff;
-  font-size: 0.92rem;
-  line-height: 1.35;
+  gap: .6rem;
 }
 
 .social-links a {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
+
   border-radius: 999px;
-  display: inline-flex;
+
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  color: #0369a1;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  text-decoration: none;
-}
 
-.social-links a i {
-  font-size: 1.8rem;
+  background: white;
+
+  color: #0369a1;
+
+  text-decoration: none;
+
+  box-shadow: 0 1px 4px rgba(0,0,0,.18);
+
+  transition: .2s;
 }
 
 .social-links a:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .login-box {
-    width: 90%;
-    padding: 20px;
-  }
-
-  .title {
-    font-size: 1.8rem;
-  }
-
-  .title i {
-    font-size: 1.5rem;
-  }
-
-  .login-footer {
-    width: 90%;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .social-box {
-    border-left: none;
-    border-top: 1px solid #e0e0e0;
-    padding-left: 0;
-    padding-top: 0.75rem;
-  }
+.social-links a i {
+  font-size: 1.4rem;
 }
+
+.social-signature {
+  margin-top: .6rem;
+
+  font-size: .75rem;
+
+  color: white;
+
+  text-align: center;
+
+  line-height: 1.3;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
 
 </style>

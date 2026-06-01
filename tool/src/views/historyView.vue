@@ -2,7 +2,7 @@
     <div class="page-container">
     <div class="container">
         <div class="topbar">
-            <h1>Historial</h1>
+            <p>HISTORIAL</p>
             <button @click="$router.push('/dashboard')">
                 Ir al Dashboard
             </button>

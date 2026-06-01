@@ -16,6 +16,7 @@
 
 * {
   box-sizing: border-box;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 *::before,
@@ -50,6 +51,8 @@ h6 {
   font-weight: 600;
   color: var(--color-text);
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 p,
@@ -60,6 +63,16 @@ input,
 textarea,
 select {
   font-family: inherit;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+p,
+span,
+label {
+  text-transform: uppercase;
+  color: var(--color-text);
+  letter-spacing: 0.03em;
 }
 
 button,
@@ -187,12 +200,26 @@ select {
 }
 
 .machine-layout {
-  display: grid;
-  grid-template-columns: 1fr 1.15fr;
+  width: min(700px, 90vw);
+  max-width: 90vw;
+
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 1.5rem;
-  align-items: start;
+
+  align-items: flex-start;
+  justify-content: center;
+
+  transition:
+    width 0.25s ease,
+    max-width 0.25s ease;
 }
 
+.machine-layout.expanded {
+  width: min(1600px, 95vw);
+  max-width: 95vw;
+}
 .admin-layout {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(420px, 1.6fr);
@@ -734,7 +761,6 @@ select {
 }
 
 @media (max-width: 1024px) {
-  .machine-layout,
   .admin-layout,
   .login-footer,
   .notification-history-filters,
@@ -748,7 +774,6 @@ select {
     flex-direction: column;
   }
 
-  .machine-layout,
   .admin-layout {
     grid-template-columns: 1fr;
   }
