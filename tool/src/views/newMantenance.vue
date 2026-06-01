@@ -185,6 +185,7 @@
     </div>
 
 </template>
+
 <script>
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
