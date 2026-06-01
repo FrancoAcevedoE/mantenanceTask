@@ -27,101 +27,100 @@
         </div>
 
         <!-- PANEL HOROMETRO -->
-        <div
-            v-if="activePanel === 'horometro'"
-            class="panel-container step-block"
-        >
+        <!-- PANEL HOROMETRO -->
+<div
+    v-if="activePanel === 'horometro'"
+    class="panel-container step-block"
+>
 
-            <details class="horometro-panel" open>
+    <div class="horometro-panel">
 
-                <summary>Actualizar horometro</summary>
+        <h2>Actualizar horómetro</h2>
 
-                <div class="horometro-body">
+        <div class="horometro-body">
 
-                    <label>Maquina</label>
+            <label>Máquina</label>
 
-                    <select v-model="horometroForm.machineId">
+            <select v-model="horometroForm.machineId">
 
-                        <option value="">
-                            Seleccionar maquina
-                        </option>
+                <option value="">
+                    Seleccionar máquina
+                </option>
 
-                        <option
-                            v-for="machine in machines"
-                            :key="machine._id"
-                            :value="machine._id"
-                        >
-                            {{
-                                machine.sector
-                                ? `${machine.sector} - ${machine.name}`
-                                : machine.name
-                            }}
-                        </option>
+                <option
+                    v-for="machine in machines"
+                    :key="machine._id"
+                    :value="machine._id"
+                >
+                    {{
+                        machine.sector
+                        ? `${machine.sector} - ${machine.name}`
+                        : machine.name
+                    }}
+                </option>
 
-                    </select>
+            </select>
 
-                    <label>Nuevo horometro</label>
+            <label>Nuevo horómetro</label>
 
-                    <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        v-model.number="horometroForm.value"
+            <input
+                type="number"
+                min="0"
+                step="1"
+                v-model.number="horometroForm.value"
+            >
+
+            <button
+                type="button"
+                :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro"
+                @click="updateHorometroFromPanel"
+            >
+                {{
+                    isUpdatingHorometro
+                    ? 'Actualizando...'
+                    : 'Actualizar horómetro'
+                }}
+            </button>
+
+            <div
+                v-if="selectedHorometroMachine"
+                class="horometro-history"
+            >
+
+                <p>
+                    <strong>Horómetro actual:</strong>
+                    {{ selectedHorometroMachine.horometro ?? 0 }}h
+                </p>
+
+                <p>
+                    <strong>Historial</strong>
+                </p>
+
+                <ul
+                    v-if="orderedHorometroHistory.length"
+                    class="horometro-list"
+                >
+                    <li
+                        v-for="entry in orderedHorometroHistory"
+                        :key="`${entry.recordedAt}-${entry.value}`"
                     >
+                        {{ formatDate(entry.recordedAt) }}
+                        -
+                        {{ entry.value }}h
+                    </li>
+                </ul>
 
-                    <button
-                        type="button"
-                        :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro"
-                        @click="updateHorometroFromPanel"
-                    >
-                        {{
-                            isUpdatingHorometro
-                            ? 'Actualizando...'
-                            : 'Actualizar horometro'
-                        }}
-                    </button>
+                <p v-else>
+                    No hay historial registrado.
+                </p>
 
-                    <div
-                        v-if="selectedHorometroMachine"
-                        class="horometro-history"
-                    >
-
-                        <p>
-                            <strong>Horometro actual:</strong>
-                            {{ selectedHorometroMachine.horometro ?? 0 }}h
-                        </p>
-
-                        <p>
-                            <strong>Historial</strong>
-                        </p>
-
-                        <ul
-                            v-if="orderedHorometroHistory.length"
-                            class="horometro-list"
-                        >
-
-                            <li
-                                v-for="entry in orderedHorometroHistory"
-                                :key="`${entry.recordedAt}-${entry.value}`"
-                            >
-                                {{ formatDate(entry.recordedAt) }}
-                                -
-                                {{ entry.value }}h
-                            </li>
-
-                        </ul>
-
-                        <p v-else>
-                            No hay historial registrado.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </details>
+            </div>
 
         </div>
+
+    </div>
+
+</div>
 
         <!-- PANEL NUEVO TRABAJO -->
         <div
@@ -739,13 +738,9 @@ second: "2-digit"
 <style scoped>
 .panel-container {
     width: 100%;
-    margin-top: 1.5rem;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    max-width: 700px;
+    margin: 1.5rem auto 0;
 }
-
 
 
 
@@ -785,17 +780,17 @@ second: "2-digit"
     border: none !important;
 }
 
-
-
-
-
-
-
 .action-selector {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
 }
+
+
 
 .action-card {
     background: rgba(255,255,255,0.95);

@@ -635,11 +635,12 @@ export default {
 
 .machine-layout {
   width: 100%;
-  max-width: 1100px;
+  max-width: 400px;
+
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
+  justify-content: center;
   gap: 1.5rem;
-  align-items: flex-start;
 }
 .collapse-header {
   width: 100%;

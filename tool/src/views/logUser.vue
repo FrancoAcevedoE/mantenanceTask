@@ -203,7 +203,7 @@ input:hover {
 
 button{
   width: 100%;
-  max-width: 320px;
+  max-width: 150px;
   border-radius: 999px;
   padding: 0.95rem 1.25rem;
   background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
