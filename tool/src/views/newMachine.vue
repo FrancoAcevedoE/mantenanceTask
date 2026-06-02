@@ -4,10 +4,7 @@
     <!-- SELECTOR DE ACCIONES -->
     <div class="machine-selector">
       <!-- FORMULARIO CARD -->
-      <div
-        class="box action-card"
-        @click="showNewMachineForm = !showNewMachineForm"
-      >
+      <div class="box action-card" @click="showNewMachineForm = !showNewMachineForm">
         <div class="section-title">
           <i class="bi bi-clipboard-plus"></i>
           <h3>
@@ -17,10 +14,7 @@
       </div>
 
       <!-- MÁQUINAS CARD -->
-      <div
-        class="box action-card"
-        @click="showMachinesPanel = !showMachinesPanel"
-      >
+      <div class="box action-card" @click="showMachinesPanel = !showMachinesPanel">
         <div class="section-title">
           <i class="bi bi-clipboard2-data"></i>
           <h3>Máquinas cargadas</h3>
@@ -29,78 +23,48 @@
     </div>
 
     <!-- PANEL FORMULARIO -->
-    <div
-      v-if="showNewMachineForm"
-      class="panel-container"
-    >
+    <div v-if="showNewMachineForm" class="panel-container">
       <div class="box">
         <h2>{{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}</h2>
 
         <div class="form-content">
-          <input
-            type="text"
-            v-model="form.sector"
-            placeholder="Sector de la fábrica"
-          />
+          <input type="text" v-model="form.sector" placeholder="Sector de la fábrica" />
 
-          <input
-            type="text"
-            v-model="form.name"
-            placeholder="Máquina"
-          />
+          <input type="text" v-model="form.name" placeholder="Máquina" />
+
 
           <label class="parts-label">
             Partes de la máquina
           </label>
 
-          <div
-            class="parts-chips"
-            v-if="form.machineParts.length"
-          >
-            <span
-              v-for="(part, index) in form.machineParts"
-              :key="index"
-              class="part-chip"
-            >
-              {{ part }}
+          <div class="parts-container">
 
-              <button
-                type="button"
-                class="chip-remove"
-                @click="removePart(index)"
-              >
-                ×
+            <div class="parts-chips" v-if="form.machineParts.length">
+              <span v-for="(part, index) in form.machineParts" :key="index" class="part-chip">
+                {{ part }}
+
+                <button type="button" class="chip-remove" @click="removePart(index)">
+                  ×
+                </button>
+              </span>
+            </div>
+
+            <div class="part-input-row">
+
+              <input type="text" v-model="newPart" placeholder="Agregar nueva parte" @keyup.enter="addPart" />
+
+              <button type="button" class="add-part-button" @click="addPart">
+                +
               </button>
-            </span>
+
+            </div>
+
           </div>
 
-          <div class="part-input-row">
-            <input
-              type="text"
-              v-model="newPart"
-              placeholder="Nombre de la parte"
-              @keyup.enter="addPart"
-            />
 
-            <button
-              type="button"
-              class="add-part-button"
-              @click="addPart"
-            >
-              +
-            </button>
-          </div>
+          <input type="number" v-model.number="form.horometro" placeholder="Horómetro" />
 
-          <input
-            type="number"
-            v-model.number="form.horometro"
-            placeholder="Horómetro"
-          />
-
-          <textarea
-            v-model="form.instructions"
-            placeholder="Instrucciones/observaciones de la máquina"
-          ></textarea>
+          <textarea v-model="form.instructions" placeholder="Instrucciones/observaciones de la máquina"></textarea>
 
           <div class="button-group">
             <button @click="save">
@@ -116,54 +80,31 @@
     </div>
 
     <!-- PANEL MÁQUINAS -->
-    <div
-      v-if="showMachinesPanel"
-      class="panel-container"
-    >
+    <div v-if="showMachinesPanel" class="panel-container">
       <div class="box">
         <h2>Máquinas cargadas</h2>
 
         <div class="machines-content">
-          <select
-            class="sector-select"
-            v-model="sectorFilter"
-          >
+          <select class="sector-select" v-model="sectorFilter">
             <option value="">
               Todas las máquinas
             </option>
 
-            <option
-              v-for="s in availableSectors"
-              :key="s"
-              :value="s"
-            >
+            <option v-for="s in availableSectors" :key="s" :value="s">
               {{ s }}
             </option>
           </select>
 
-          <p
-            v-if="!machines.length"
-            class="empty-state"
-          >
+          <p v-if="!machines.length" class="empty-state">
             No hay máquinas cargadas.
           </p>
 
-          <p
-            v-else-if="sectorFilter && !filteredMachines.length"
-            class="empty-state"
-          >
+          <p v-else-if="sectorFilter && !filteredMachines.length" class="empty-state">
             No hay máquinas en este sector.
           </p>
 
-          <div
-            v-else
-            class="machines-list"
-          >
-            <div
-              v-for="machine in filteredMachines"
-              :key="machine._id"
-              class="machine-item"
-            >
+          <div v-else class="machines-list">
+            <div v-for="machine in filteredMachines" :key="machine._id" class="machine-item">
 
               <div class="machine-info">
                 <strong>
@@ -184,27 +125,15 @@
               </div>
 
               <div class="machine-actions">
-                <button
-                  type="button"
-                  class="history-button"
-                  @click="openMachineModal(machine)"
-                >
+                <button type="button" class="history-button" @click="openMachineModal(machine)">
                   Detalles
                 </button>
 
-                <button
-                  type="button"
-                  class="edit-button"
-                  @click="modifyMachine(machine._id)"
-                >
+                <button type="button" class="edit-button" @click="modifyMachine(machine._id)">
                   Modificar
                 </button>
 
-                <button
-                  type="button"
-                  class="danger-button"
-                  @click="deleteMachine(machine._id)"
-                >
+                <button type="button" class="danger-button" @click="deleteMachine(machine._id)">
                   Ocultar
                 </button>
               </div>
@@ -215,10 +144,7 @@
     </div>
 
     <!-- MODAL -->
-    <div
-      v-if="showMachineModal"
-      class="modal"
-    >
+    <div v-if="showMachineModal" class="modal">
 
       <div class="modal-box modal-box-detail">
 
@@ -249,14 +175,12 @@
               <strong>Instrucciones/observaciones:</strong>
             </p>
 
-            <p
-              style="
+            <p style="
                 background:#f5f5f5;
                 padding:.75rem;
                 border-radius:8px;
                 white-space:pre-wrap;
-              "
-            >
+              ">
               {{ selectedMachine.instructions }}
             </p>
 
@@ -268,28 +192,20 @@
               <strong>Historial de horómetro:</strong>
             </p>
 
-            <div
-              style="
+            <div style="
                 background:rgba(107,142,58,.12);
                 padding:.65rem .75rem;
                 border-radius:.55rem;
                 margin-bottom:.5rem;
-              "
-              v-html="machineHorometroSummary"
-            ></div>
+              " v-html="machineHorometroSummary"></div>
 
-            <ul
-              style="
+            <ul style="
                 text-align:left;
                 padding-left:1.2rem;
                 margin:0;
-              "
-            >
+              ">
 
-              <li
-                v-for="(item, i) in sortedHorometroHistory"
-                :key="i"
-              >
+              <li v-for="(item, i) in sortedHorometroHistory" :key="i">
                 <strong>{{ item.value }}h</strong>
                 -
                 {{ formatDate(item.recordedAt) }}
@@ -615,7 +531,54 @@ export default {
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 }
+.parts-container {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
 
+.parts-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.part-chip {
+  background: #6b8e3a;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip-remove {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+}
+
+.chip-remove:hover {
+  color: #ffd54f;
+}
+
+.part-input-row {
+  display: flex;
+  gap: .5rem;
+}
+
+.part-input-row input {
+  flex: 1;
+}
+
+.add-part-button {
+  width: 50px;
+  min-width: 50px;
+}
 .panel-container {
   width: 100%;
   max-width: 700px;
@@ -1033,7 +996,7 @@ button:hover {
 
 @media (max-width: 768px) {
 
- 
+
   .machine-item {
     flex-direction: column;
     align-items: stretch;

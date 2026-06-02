@@ -71,8 +71,8 @@
 
           <div class="multi-select">
             <div class="multi-select-header" @click="showPartsDropdown = !showPartsDropdown">
-              <span v-if="form.machineParts.length">
-                {{ form.machineParts.join(', ') }}
+              <span v-if="form.machinePart.length">
+                {{ form.machinePart.join(', ') }}
               </span>
 
               <span v-else>
@@ -85,13 +85,13 @@
             </div>
 
             <div v-if="showPartsDropdown" class="multi-select-dropdown">
-              <label v-for="part in selectedMachineParts" :key="part" class="multi-option">
-                <input type="checkbox" :value="part" v-model="form.machineParts">
+              <label v-for="part in selectedMachinePart" :key="part" class="multi-option">
+                <input type="checkbox" :value="part" v-model="form.machinePart">
 
                 {{ part }}
               </label>
 
-              <div v-if="!selectedMachineParts.length" class="multi-empty">
+              <div v-if="!selectedMachinePart.length" class="multi-empty">
                 La máquina no tiene partes configuradas.
               </div>
             </div>
@@ -103,18 +103,23 @@
               {{ op.name }}
             </option>
           </select>
-          <label>TIPO DE TRABAJO</label>
-          <select v-model="form.maintenanceType" required>
-            <option value="">Seleccionar tipo</option>
+          <select v-model="form.maintenanceType">
 
-            <option v-for="type in maintenanceTypes" :key="type" :value="type">
-              {{ type }}
+            <option value="Preventivo predictivo">Preventivo predictivo</option>
+            <option value="Preventivo de mejora continua">Preventivo de mejora continua</option>
+            <option value="Preventivo de correctivo">Preventivo de correctivo</option>
+            <option value="Arreglo">Arreglo</option>
+            <option value="fabricación">Fabricación</option>
+            <option value="Limpieza">Limpieza</option>
+            <option value="Puesta en marcha (maquina parada)">
+              Puesta en marcha (maquina parada)
             </option>
+
           </select>
           <label>DESCRIPCIÓN</label>
           <textarea v-model="form.workDescription"></textarea>
           <label>HORAS TRABAJADAS</label>
-          <input v-model.number="form.hoursWorked" type="number" min="0" step="0.5" />
+          <input type="number" min="0.5" step="0.5" v-model.number="form.hoursWorked" />
           <label>MÁQUINA EN FUNCIONAMIENTO?</label>
           <select v-model="form.machineRunning">
             <option :value="null">Seleccionar</option>
@@ -149,7 +154,7 @@
             </p>
             <p>
               <strong>Partes:</strong>
-              {{ selectedMachineParts.length ? selectedMachineParts.join(', ') : '-' }}
+              {{ selectedMachinePart.length ? selectedMachinePart.join(', ') : '-' }}
             </p>
             <p>
               <strong>Instrucciones/observaciones:</strong>
@@ -185,7 +190,7 @@ export default {
       additionalWorkersList: [],
       selectedAdditionalWorker: '',
       showPartsDropdown: false,
-      additionalMachinePartsList: [],
+      additionalMachinePartList: [],
       selectedAdditionalMachinePart: '',
       machines: [],
       sectors: [],
@@ -198,13 +203,13 @@ export default {
         expiresAt: 0,
       },
       maintenanceTypes: [
-        "Preventivo",
         "Preventivo predictivo",
-        "Lubricación",
-        "Reparación",
-        "Cambio de repuesto",
+        "Preventivo de mejora continua",
+        "Preventivo de correctivo",
+        "Arreglo",
+        "fabricación",
         "Limpieza",
-        "Puesta en marcha",
+        "Puesta en marcha (maquina parada)"
       ],
       horometroForm: {
         machineId: '',
@@ -214,7 +219,7 @@ export default {
       form: {
         sector: '',
         machine: '',
-        machineParts: [],
+        machinePart: [],
         clientId: '',
         maintenanceType: '',
         workDescription: '',
@@ -262,7 +267,7 @@ export default {
       return this.isSectorComplete && Boolean(this.selectedMachine)
     },
     isMachinePartComplete() {
-      return this.isMachineComplete && this.form.machineParts.length > 0
+      return this.isMachineComplete && this.form.machinePart.length > 0
     },
     isOperarioComplete() {
       return this.isMachinePartComplete && Boolean(this.form.clientId)
@@ -298,13 +303,13 @@ export default {
       const usedIds = new Set([this.form.clientId, ...this.additionalWorkersList.map((w) => w._id)])
       return this.allOperarios.filter((op) => !usedIds.has(op._id))
     },
-    availableAdditionalMachineParts() {
-      const usedParts = new Set([...this.form.machineParts, ...this.additionalMachinePartsList])
-      return this.selectedMachineParts.filter((part) => !usedParts.has(part))
+    availableAdditionalMachinePart() {
+      const usedParts = new Set([...this.form.machinePart, ...this.additionalMachinePartList])
+      return this.selectedMachinePart.filter((part) => !usedParts.has(part))
     },
-    availableMachineParts() {
-      const usedParts = new Set(this.form.machineParts)
-      return this.selectedMachineParts.filter((part) => !usedParts.has(part))
+    availableMachinePart() {
+      const usedParts = new Set(this.form.machinePart)
+      return this.selectedMachinePart.filter((part) => !usedParts.has(part))
     },
     filteredMachinesBySector() {
       if (!this.form.sector) return []
@@ -316,12 +321,15 @@ export default {
     },
     selectedMachine() {
       if (!this.form.sector || !this.form.machine) return null
-      return this.filteredMachinesBySector.find((m) => m.name === this.form.machine)
+
+      return this.filteredMachinesBySector.find(
+        m => m._id === this.form.machine
+      )
     },
-    selectedMachineParts() {
+    selectedMachinePart() {
       if (!this.selectedMachine) return []
 
-      const parts = this.selectedMachine.machineParts
+      const parts = this.selectedMachine.additionalMachinePartList
 
       if (Array.isArray(parts)) {
         return parts
@@ -355,8 +363,8 @@ export default {
 
     onSectorChange() {
       this.form.machine = ''
-      this.form.machineParts = []
-      this.additionalMachinePartsList = []
+      this.form.machinePart = []
+      this.additionalMachinePartList = []
       this.selectedAdditionalMachinePart = ''
     },
 
@@ -410,17 +418,18 @@ export default {
     },
 
     onMachineChange() {
+       console.log("MAQUINA", this.selectedMachine)
       if (!this.selectedMachine) {
-        this.form.machineParts = []
-        this.additionalMachinePartsList = []
+        this.form.machinePart = []
+        this.additionalMachinePartList = []
         this.selectedAdditionalMachinePart = ''
-        this.form.machineParts = []
+        this.form.machinePart = []
         this.showPartsDropdown = false
         return
       }
 
-      this.form.machineParts = []
-      this.additionalMachinePartsList = []
+      this.form.machinePart = []
+      this.additionalMachinePartList = []
       this.selectedAdditionalMachinePart = ''
     },
 
@@ -432,11 +441,13 @@ export default {
         return
       }
 
-      if (!Number.isFinite(this.horometroForm.value) || this.horometroForm.value < 0) {
+      if (
+        !Number.isFinite(this.horometroForm.value) ||
+        this.horometroForm.value < 0
+      ) {
         this.$notify.error('El horometro debe ser un numero mayor o igual a 0')
         return
       }
-
       const targetMachine = this.machines.find(
         (machine) => machine._id === this.horometroForm.machineId,
       )
@@ -507,18 +518,18 @@ export default {
 
     addMachinePart() {
       if (!this.selectedAdditionalMachinePart) return
-      if (!this.form.machineParts.includes(this.selectedAdditionalMachinePart)) {
-        this.form.machineParts.push(this.selectedAdditionalMachinePart)
+      if (!this.form.machinePart.includes(this.selectedAdditionalMachinePart)) {
+        this.form.machinePart.push(this.selectedAdditionalMachinePart)
       }
       this.selectedAdditionalMachinePart = ''
     },
 
     removeMachinePart(part) {
-      this.form.machineParts = this.form.machineParts.filter((p) => p !== part)
+      this.form.machinePart = this.form.machinePart.filter((p) => p !== part)
     },
 
     removeMachinePartFromMain(part) {
-      this.additionalMachinePartsList = this.additionalMachinePartsList.filter((p) => p !== part)
+      this.additionalMachinePartList = this.additionalMachinePartList.filter((p) => p !== part)
     },
 
     async saveMaintenance() {
@@ -538,7 +549,7 @@ export default {
           return
         }
 
-        if (this.form.machineParts.length === 0) {
+        if (this.form.machinePart.length === 0) {
           this.$notify.error('Debes seleccionar al menos una parte de maquina')
           return
         }
@@ -587,17 +598,9 @@ export default {
 
         const payload = {
           ...this.form,
-
-          maintenanceType:
-            this.form.maintenanceType === "Otro"
-              ? this.form.customMaintenanceType
-              : this.form.maintenanceType,
-
-          additionalWorkers: this.additionalWorkersList.map(w => w._id),
-
-          machinePart: this.form.machineParts
+          machinePart: this.form.machinePart,
+          additionalWorkers: this.additionalWorkersList.map(w => w._id)
         }
-
         await axios.post(`${API_BASE_URL}/maintenance/newmaintenance`, payload, this.authConfig())
 
         this.$notify.success('Mantenimiento registrado')
@@ -612,7 +615,7 @@ export default {
       this.form = {
         sector: '',
         machine: '',
-        machineParts: [],
+        machinePart: [],
         clientId: this.currentUserRole === 'operario' ? this.currentUserId : '',
         maintenanceType: '',
         workDescription: '',
@@ -674,6 +677,7 @@ export default {
   border: 1px solid #d8d8d8;
   border-radius: 10px;
 }
+
 .multi-select {
   width: 100%;
   position: relative;
@@ -752,6 +756,7 @@ export default {
   text-align: center;
   color: #666;
 }
+
 .panel-container {
   width: 100%;
   max-width: 700px;
