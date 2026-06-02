@@ -329,7 +329,10 @@ export default {
     selectedMachinePart() {
   if (!this.selectedMachine) return []
 
-  const parts = this.selectedMachine.machinePart
+  const parts =
+    this.selectedMachine.machinePart ||
+    this.selectedMachine.additionalMachinePartList ||
+    []
 
   return Array.isArray(parts) ? parts : []
 },
