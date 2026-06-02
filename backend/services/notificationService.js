@@ -196,7 +196,7 @@ export const sendDailyStoppedPendingNotification = async (title) => {
 
   let body = `Reporte diario 7 AM:\n\n⚠ Máquinas detenidas: ${stoppedCount}\n⚠ Mantenimientos pendientes: ${pendingCount}`
 
-  const details = [...stoppedItems, ...pendingItems].slice(0, 5)
+  const details = [...stoppedItems, ...pendingItems]
 
   if (details.length) {
     body += "\n\nDetalles:\n"
@@ -208,10 +208,6 @@ export const sendDailyStoppedPendingNotification = async (title) => {
         return `• ${prefix}: ${machineLabel}${sectorLabel}`
       })
       .join("\n")
-
-    if (details.length < stoppedItems.length + pendingItems.length) {
-      body += `\n...y ${stoppedItems.length + pendingItems.length - details.length} más`
-    }
   }
 
   await sendNotificationMessage({
