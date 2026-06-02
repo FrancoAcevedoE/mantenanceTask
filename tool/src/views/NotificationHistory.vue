@@ -316,6 +316,20 @@ export default {
     outline: none !important;
 }
 
+
+.history-item {
+  text-align: left;
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.history-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
 /* ELIMINA CUALQUIER MARCO FANTASMA */
 .page-container::before,
 .page-container::after {
@@ -393,39 +407,6 @@ align-items: center;
   justify-items: center;
 }
 
-.history-item {
-  text-align: center;
-}
-
-.history-item-top {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.history-item-meta {
-  justify-content: center;
-}
-
-.mark-read-button {
-  display: block;
-  margin: 0.65rem auto 0;
-}
-
-.notification-history-filters input,
-.notification-history-filters select,
-.notification-history-filters button {
-  text-align: center;
-}
-
-h1,
-h2,
-h3,
-p,
-span {
-  text-align: center;
-}
 .notification-history-filters input,
 .notification-history-filters select,
 .notification-history-filters button,
@@ -521,14 +502,15 @@ span {
 }
 
 .history-item-meta {
-  margin-top: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #ececec;
   color: #7a8b73;
-  font-size: 0.86rem;
+  font-size: 0.85rem;
 }
-
 .severity-badge {
   border-radius: 999px;
   padding: 0.25rem 0.55rem;
@@ -558,7 +540,9 @@ span {
 }
 
 .mark-read-button {
-  margin-top: 0.65rem;
+  margin-top: 0.75rem;
+  margin-left: auto;
+  display: block;
 }
 
 @media (max-width: 900px) {
