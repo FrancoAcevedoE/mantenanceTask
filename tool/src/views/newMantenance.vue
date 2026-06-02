@@ -198,7 +198,7 @@ export default {
         expiresAt: 0,
       },
       maintenanceTypes: [
-        "Preventivo correctivo",
+        "Preventivo",
         "Preventivo predictivo",
         "Lubricación",
         "Reparación",
