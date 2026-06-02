@@ -333,9 +333,11 @@ export default {
     this.selectedMachine.machinePart ||
     this.selectedMachine.additionalMachinePartList ||
     []
-
+console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.machine), null, 2))
   return Array.isArray(parts) ? parts : []
+  console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.machine), null, 2))
 },
+
     selectedHorometroMachine() {
       if (!this.horometroForm.machineId) return null
       return this.machines.find((machine) => machine._id === this.horometroForm.machineId) || null
