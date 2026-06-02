@@ -486,12 +486,19 @@ span {
 }
 
 .history-item {
-  border-radius: 16px;
-  padding: 0.95rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: #ffffff;
+  text-align: left;
 }
 
+.history-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.history-item-top > div {
+  flex: 1;
+}
 .history-item.unread {
   border-left: 5px solid #6b8e3a;
 }
@@ -501,11 +508,7 @@ span {
   opacity: 0.9;
 }
 
-.history-item-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-}
+
 
 .history-item-top h3,
 .history-item-top p {
