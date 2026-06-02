@@ -75,10 +75,9 @@
                     {{ item.title }}
                   </div>
 
-                  <div class="notification-preview">
+                  <div v-if="expandedNotification !== item.id" class="notification-preview">
                     {{ item.body }}
                   </div>
-
                 </div>
 
                 <div class="notification-right">
@@ -99,7 +98,6 @@
               <!-- DETALLE -->
               <div v-if="expandedNotification === item.id" class="notification-details">
                 <div class="detail-row">
-                  <strong>Descripción:</strong>
                   <span>{{ item.body }}</span>
                 </div>
 
