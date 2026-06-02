@@ -405,6 +405,11 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
         const response = await axios.get(`${API_BASE_URL}/machines`, this.authConfig())
 
         const machines = Array.isArray(response.data) ? response.data : []
+
+        this.machines = machines.map(m => ({
+  ...m,
+  machinePart: m.machineParts || m.machinePart || []
+}))
         this.machines = machines.sort((a, b) =>
           String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }),
         )
