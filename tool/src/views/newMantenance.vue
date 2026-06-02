@@ -1,4 +1,8 @@
 <template>
+<form class="panel-container form-container" @submit.prevent="saveMaintenance">
+
+
+
 
     <div class="page-container">
 
@@ -219,7 +223,7 @@
         </div>
 
     </div>
-
+</form>
 </template>
 
 
@@ -484,6 +488,19 @@ export default {
 
 
 <style scoped>
+
+
+
+
+.form-container {
+    width: 100%;
+    max-width: 700px;
+    margin: 1.5rem auto 0;
+    padding: 1rem;
+    background: #fafafa;
+    border: 1px solid #d8d8d8;
+    border-radius: 10px;
+}
 .panel-container {
     width: 100%;
     max-width: 700px;
