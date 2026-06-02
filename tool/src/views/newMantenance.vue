@@ -67,19 +67,35 @@
               {{ machine.name }}
             </option>
           </select>
-          <label>Partes de la máquina</label>
+          <label>PARTES DE LA MÁQUINA</label>
 
-          <div v-if="selectedMachineParts.length">
-            <label v-for="part in selectedMachineParts" :key="part"
-              style="display:flex; align-items:center; gap:8px; margin:5px 0;">
-              <input type="checkbox" :value="part" v-model="form.machineParts">
-              {{ part }}
-            </label>
+          <div class="multi-select">
+            <div class="multi-select-header" @click="showPartsDropdown = !showPartsDropdown">
+              <span v-if="form.machineParts.length">
+                {{ form.machineParts.join(', ') }}
+              </span>
+
+              <span v-else>
+                Seleccionar partes
+              </span>
+
+              <span class="dropdown-arrow">
+                ▼
+              </span>
+            </div>
+
+            <div v-if="showPartsDropdown" class="multi-select-dropdown">
+              <label v-for="part in selectedMachineParts" :key="part" class="multi-option">
+                <input type="checkbox" :value="part" v-model="form.machineParts">
+
+                {{ part }}
+              </label>
+
+              <div v-if="!selectedMachineParts.length" class="multi-empty">
+                La máquina no tiene partes configuradas.
+              </div>
+            </div>
           </div>
-
-          <p v-else>
-            La máquina no tiene partes configuradas.
-          </p>
           <label>OPERARIO</label>
           <select v-model="form.clientId">
             <option value="">Seleccionar operario</option>
@@ -168,6 +184,7 @@ export default {
       allOperarios: [],
       additionalWorkersList: [],
       selectedAdditionalWorker: '',
+      showPartsDropdown: false,
       additionalMachinePartsList: [],
       selectedAdditionalMachinePart: '',
       machines: [],
@@ -397,6 +414,8 @@ export default {
         this.form.machineParts = []
         this.additionalMachinePartsList = []
         this.selectedAdditionalMachinePart = ''
+        this.form.machineParts = []
+        this.showPartsDropdown = false
         return
       }
 
@@ -655,7 +674,84 @@ export default {
   border: 1px solid #d8d8d8;
   border-radius: 10px;
 }
+.multi-select {
+  width: 100%;
+  position: relative;
+  margin: 10px 0;
+}
 
+.multi-select-header {
+  width: 100%;
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 16px;
+
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 2rem;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+}
+
+.multi-select-header:hover {
+  background: #f5f5f5;
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  color: #666;
+}
+
+.multi-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+
+  width: 100%;
+
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+
+  z-index: 1000;
+
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.multi-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 15px;
+
+  cursor: pointer;
+  text-align: left;
+}
+
+.multi-option:hover {
+  background: #f5f5f5;
+}
+
+.multi-option input {
+  width: auto;
+  margin: 0;
+}
+
+.multi-empty {
+  padding: 15px;
+  text-align: center;
+  color: #666;
+}
 .panel-container {
   width: 100%;
   max-width: 700px;
