@@ -19,7 +19,6 @@
         <div class="horometro-panel">
           <h2>Actualizar horómetro</h2>
           <div class="horometro-body">
-            <label>Máquina</label>
             <select v-model="horometroForm.machineId">
               <option value="">Seleccionar máquina</option>
               <option v-for="machine in machines" :key="machine._id" :value="machine._id">
@@ -54,50 +53,59 @@
       </div>
       <!-- PANEL NUEVO TRABAJO -->
       <div v-if="activePanel === 'trabajo'" class="panel-container step-block">
-        <h2>Nuevo trabajo</h2>
+        <h2>NUEVA TAREA</h2>
         <form @submit.prevent="saveMaintenance">
-          <label>Sector</label>
           <select v-model="form.sector" required @change="onSectorChange">
-            <option value="">Seleccionar sector</option>
-
+            <option value="">SELECCIONAR SECTOR</option>
             <option v-for="sector in sectors" :key="sector" :value="sector">
               {{ sector }}
             </option>
           </select>
-          <label>Máquina</label>
           <select v-model="form.machine" required @change="onMachineChange">
-            <option value="">Seleccionar máquina</option>
-
+            <option value="">SELECCIONAR MÁQUINA</option>
             <option v-for="machine in filteredMachinesBySector" :key="machine._id" :value="machine.name">
               {{ machine.name }}
             </option>
           </select>
-          <label>Partes</label>
-          <select v-model="form.machineParts" multiple>
-            <option v-for="p in selectedMachineParts" :key="p" :value="p">
-              {{ p }}
-            </option>
-          </select>
-          <label>Operario</label>
+          <label>Partes de la máquina</label>
+
+          <div v-if="selectedMachineParts.length">
+            <label v-for="part in selectedMachineParts" :key="part"
+              style="display:flex; align-items:center; gap:8px; margin:5px 0;">
+              <input type="checkbox" :value="part" v-model="form.machineParts">
+              {{ part }}
+            </label>
+          </div>
+
+          <p v-else>
+            La máquina no tiene partes configuradas.
+          </p>
+          <label>OPERARIO</label>
           <select v-model="form.clientId">
             <option value="">Seleccionar operario</option>
             <option v-for="op in operarios" :key="op._id" :value="op._id">
               {{ op.name }}
             </option>
           </select>
-          <label>Tipo de mantenimiento</label>
-          <input v-model="form.maintenanceType" type="text" />
-          <label>Descripción</label>
+          <label>TIPO DE TRABAJO</label>
+          <select v-model="form.maintenanceType" required>
+            <option value="">Seleccionar tipo</option>
+
+            <option v-for="type in maintenanceTypes" :key="type" :value="type">
+              {{ type }}
+            </option>
+          </select>
+          <label>DESCRIPCIÓN</label>
           <textarea v-model="form.workDescription"></textarea>
-          <label>Horas trabajadas</label>
-          <input v-model.number="form.hoursWorked" type="number" />
-          <label>Máquina en funcionamiento</label>
+          <label>HORAS TRABAJADAS</label>
+          <input v-model.number="form.hoursWorked" type="number" min="0" step="0.5" />
+          <label>MÁQUINA EN FUNCIONAMIENTO?</label>
           <select v-model="form.machineRunning">
             <option :value="null">Seleccionar</option>
             <option :value="true">Sí</option>
             <option :value="false">No</option>
           </select>
-          <label>Trabajo finalizado</label>
+          <label>TRABAJO TERMINADO?</label>
           <select v-model="form.jobFinished">
             <option :value="null">Seleccionar</option>
             <option :value="true">Sí</option>
@@ -172,7 +180,15 @@ export default {
         value: null,
         expiresAt: 0,
       },
-
+      maintenanceTypes: [
+        "Preventivo correctivo",
+        "Preventivo predictivo",
+        "Lubricación",
+        "Reparación",
+        "Cambio de repuesto",
+        "Limpieza",
+        "Puesta en marcha",
+      ],
       horometroForm: {
         machineId: '',
         value: null,
@@ -552,13 +568,15 @@ export default {
 
         const payload = {
           ...this.form,
-          unfinishedReasonCategory: this.form.unfinishedReasonCategory,
-          unfinishedReason:
-            this.form.unfinishedReasonCategory === 'Otros'
-              ? String(this.form.unfinishedReason || '').trim()
-              : this.form.unfinishedReasonCategory,
-          additionalWorkers: this.additionalWorkersList.map((w) => w._id),
-          machinePart: this.form.machineParts,
+
+          maintenanceType:
+            this.form.maintenanceType === "Otro"
+              ? this.form.customMaintenanceType
+              : this.form.maintenanceType,
+
+          additionalWorkers: this.additionalWorkersList.map(w => w._id),
+
+          machinePart: this.form.machineParts
         }
 
         await axios.post(`${API_BASE_URL}/maintenance/newmaintenance`, payload, this.authConfig())
