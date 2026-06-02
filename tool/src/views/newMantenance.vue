@@ -63,7 +63,7 @@
           </select>
           <select v-model="form.machine" required @change="onMachineChange">
             <option value="">SELECCIONAR MÁQUINA</option>
-            <option v-for="machine in filteredMachinesBySector" :key="machine._id" :value="machine.name">
+            <option v-for="machine in filteredMachinesBySector" :key="machine._id" :value="machine._id">
               {{ machine.name }}
             </option>
           </select>
