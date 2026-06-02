@@ -327,16 +327,12 @@ export default {
       )
     },
     selectedMachinePart() {
-      if (!this.selectedMachine) return []
+  if (!this.selectedMachine) return []
 
-      const parts = this.selectedMachine.additionalMachinePartList
+  const parts = this.selectedMachine.machinePart
 
-      if (Array.isArray(parts)) {
-        return parts
-      }
-
-      return parts ? [parts] : []
-    },
+  return Array.isArray(parts) ? parts : []
+},
     selectedHorometroMachine() {
       if (!this.horometroForm.machineId) return null
       return this.machines.find((machine) => machine._id === this.horometroForm.machineId) || null
