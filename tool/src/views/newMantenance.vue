@@ -330,8 +330,8 @@ export default {
   if (!this.selectedMachine) return []
 
   const parts =
-    this.selectedMachine.machinePart ||
-    this.selectedMachine.additionalMachinePartList ||
+    this.selectedMachine.machineParts ||
+    this.selectedMachine.additionalMachinePartsList ||
     []
 console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.machine), null, 2))
   return Array.isArray(parts) ? parts : []
