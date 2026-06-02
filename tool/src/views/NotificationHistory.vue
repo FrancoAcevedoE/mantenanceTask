@@ -7,7 +7,8 @@
             <p>HISTORIAL DE NOTIFICACIONES</p>
           </div>
           <div class="notification-history-actions">
-            <button type="button" class="ghost-button" @click="markVisibleAsRead" :disabled="isLoading || !hasUnreadVisible">
+            <button type="button" class="ghost-button" @click="markVisibleAsRead"
+              :disabled="isLoading || !hasUnreadVisible">
               Marcar visibles como leidas
             </button>
             <button type="button" class="ghost-button" @click="clearReadFilter" :disabled="isLoading">
@@ -56,36 +57,73 @@
           </section>
 
           <p v-if="isLoading" class="state-text">Cargando historial...</p>
-          <p v-else-if="!filteredItems.length" class="state-text">No hay notificaciones para los filtros seleccionados.</p>
+          <p v-else-if="!filteredItems.length" class="state-text">No hay notificaciones para los filtros seleccionados.
+          </p>
 
           <ul v-else class="history-list">
-            <li v-for="item in filteredItems" :key="item.id" :class="['history-item', item.read ? 'read' : 'unread']">
-              <div class="history-item-top">
-                <div>
-                  <h3>{{ item.title }}</h3>
-                  <p>{{ item.body }}</p>
+            <li v-for="item in filteredItems" :key="item.id" :class="[
+              'history-item',
+              item.read ? 'read' : 'unread',
+              expandedNotification === item.id ? 'expanded' : ''
+            ]" @click="toggleNotification(item.id)">
+              <!-- VISTA COMPACTA -->
+              <div class="notification-row">
+
+                <div class="notification-main">
+
+                  <div class="notification-title">
+                    {{ item.title }}
+                  </div>
+
+                  <div class="notification-preview">
+                    {{ item.body }}
+                  </div>
+
                 </div>
-                <span :class="['severity-badge', `severity-${item.severity || 'info'}`]">
-                  {{ formatSeverity(item.severity) }}
-                </span>
+
+                <div class="notification-right">
+                  <span class="notification-date">
+                    {{ formatDate(item.createdAt) }}
+                  </span>
+
+                  <span :class="[
+                    'severity-badge',
+                    `severity-${item.severity || 'info'}`
+                  ]">
+                    {{ formatSeverity(item.severity) }}
+                  </span>
+                </div>
+
               </div>
 
-              <div class="history-item-meta">
-                <span>{{ formatDate(item.createdAt) }}</span>
-                <span v-if="item.machine">{{ item.machine }}</span>
-                <span v-if="item.sector">{{ item.sector }}</span>
-                <span>{{ item.read ? 'Leida' : 'No leida' }}</span>
-              </div>
+              <!-- DETALLE -->
+              <div v-if="expandedNotification === item.id" class="notification-details">
+                <div class="detail-row">
+                  <strong>Descripción:</strong>
+                  <span>{{ item.body }}</span>
+                </div>
 
-              <button
-                v-if="!item.read"
-                type="button"
-                class="mark-read-button"
-                @click="markAsRead(item.id)"
-                :disabled="isLoading"
-              >
-                Marcar leida
-              </button>
+                <div v-if="item.machine" class="detail-row">
+                  <strong>Máquina:</strong>
+                  <span>{{ item.machine }}</span>
+                </div>
+
+                <div v-if="item.sector" class="detail-row">
+                  <strong>Sector:</strong>
+                  <span>{{ item.sector }}</span>
+                </div>
+
+                <div class="detail-row">
+                  <strong>Estado:</strong>
+                  <span>
+                    {{ item.read ? 'Leída' : 'No leída' }}
+                  </span>
+                </div>
+
+                <button v-if="!item.read" type="button" class="mark-read-button" @click.stop="markAsRead(item.id)">
+                  Marcar leída
+                </button>
+              </div>
             </li>
           </ul>
         </div>
@@ -111,7 +149,9 @@ export default {
       fromDate: '',
       toDate: '',
       searchText: '',
-      isLoading: false
+      isLoading: false,
+
+      expandedNotification: null
     }
   },
 
@@ -147,7 +187,10 @@ export default {
         }
       }
     },
-
+    toggleNotification(id) {
+      this.expandedNotification =
+        this.expandedNotification === id ? null : id
+    },
     buildHistoryQuery() {
       const params = new URLSearchParams()
 
@@ -272,7 +315,7 @@ export default {
     // No cargar historial de notificaciones de mantenimiento para vendedores
     const user = JSON.parse(localStorage.getItem('user') || '{}')
     if (user.role === 'vendedor') {
-        return
+      return
     }
 
     this.loadHistory()
@@ -292,6 +335,7 @@ export default {
   align-items: center;
   justify-content: center;
 }
+
 .notification-history-card,
 .notification-history-card * {
   font-family: inherit;
@@ -299,23 +343,94 @@ export default {
 
 
 .page-container {
-    width: 100%;
-    min-height: 100vh;
+  width: 100%;
+  min-height: 100vh;
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 
-    padding: 2rem;
+  padding: 2rem;
 
-    background: transparent !important;
+  background: transparent !important;
 
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
+
+.notification-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.notification-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-weight: 700;
+  color: #26331e;
+  margin-bottom: 0.2rem;
+}
+
+.notification-preview {
+  color: #6b7280;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.notification-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .4rem;
+  min-width: 140px;
+}
+
+.notification-date {
+  font-size: .8rem;
+  color: #94a3b8;
+}
+
+.notification-details {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.detail-row {
+  display: flex;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+
+.expanded {
+  background: #fafcf7;
+}
+
+@media (max-width: 768px) {
+
+  .notification-row {
+    flex-direction: column;
+  }
+
+  .notification-right {
+    align-items: flex-start;
+    min-width: auto;
+  }
+}
 
 .history-item {
   text-align: left;
@@ -330,11 +445,12 @@ export default {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
+
 /* ELIMINA CUALQUIER MARCO FANTASMA */
 .page-container::before,
 .page-container::after {
-    display: none !important;
-    content: none !important;
+  display: none !important;
+  content: none !important;
 }
 
 /* POR SI ALGUN PADRE AGREGA EL RECUADRO */
@@ -342,9 +458,9 @@ export default {
 :deep(.content),
 :deep(.wrapper),
 :deep(.container) {
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 
@@ -384,11 +500,11 @@ export default {
 .notification-history-filters {
   display: flex;
   flex-direction: row;
-flex-wrap: wrap;
-align-content: center;
-justify-content: center;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
 
-align-items: center;
+  align-items: center;
   gap: 0.6rem;
 }
 
@@ -477,9 +593,10 @@ align-items: center;
   gap: 1rem;
 }
 
-.history-item-top > div {
+.history-item-top>div {
   flex: 1;
 }
+
 .history-item.unread {
   border-left: 5px solid #6b8e3a;
 }
@@ -511,6 +628,7 @@ align-items: center;
   color: #7a8b73;
   font-size: 0.85rem;
 }
+
 .severity-badge {
   border-radius: 999px;
   padding: 0.25rem 0.55rem;
