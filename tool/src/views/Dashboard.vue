@@ -167,10 +167,6 @@
                   <span class="machine-status-state">
                     {{ machine.label }}
                   </span>
-
-                  <p class="machine-status-sector">
-                    {{ machine.sector || 'Sin sector' }}
-                  </p>
                 </div>
               </div>
               <p class="machine-status-label">{{ machine.label }}</p>
@@ -922,7 +918,7 @@ export default {
 
 </script>
 
-<style>
+<style scoped>
 .seller-message {
   text-align: center;
   padding: 2rem;
@@ -944,13 +940,13 @@ export default {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1rem;
 }
 
 .seller-message button:hover {
   background: #0056b3;
 }
 
+/* LAYOUT GENERAL */
 .page-container {
   background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28));
   min-height: 100vh;
@@ -969,6 +965,7 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
 }
 
+/* PERIOD */
 .period-section {
   margin-bottom: 1.2rem;
   background: #f7fbff;
@@ -978,10 +975,10 @@ export default {
 }
 
 .period-section h2 {
-  margin: 0 0 0.7rem;
   text-align: center;
   font-size: 1.05rem;
   color: #2f3d4f;
+  margin-bottom: 0.7rem;
 }
 
 .period-toolbar {
@@ -991,42 +988,32 @@ export default {
   align-items: center;
 }
 
-.period-toolbar>* {
-  min-width: 0;
-}
-
-.period-toolbar input {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 2rem;
-  background: #fff;
-}
-
-.period-toolbar select {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border: 1px solid #ccc;
-  border-radius: 2rem;
-  background: #fff;
-}
-
 .period-select-group {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 0.5rem;
 }
 
+.period-toolbar input,
+.period-toolbar select,
+.recent-toolbar input,
+.recent-toolbar select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 2rem;
+  background: #fff;
+  box-sizing: border-box;
+}
+
 .period-toolbar input:hover,
 .period-toolbar input:focus,
 .period-toolbar select:hover,
-.period-toolbar select:focus {
+.period-toolbar select:focus,
+.recent-toolbar input:hover,
+.recent-toolbar input:focus,
+.recent-toolbar select:hover,
+.recent-toolbar select:focus {
   outline: none;
   background: #f0f0f0;
   transition: 0.2s;
@@ -1060,7 +1047,7 @@ export default {
 }
 
 .period-label {
-  margin: 0.65rem 0 0;
+  margin-top: 0.65rem;
   text-align: center;
   color: #4b4b4b;
   font-size: 0.95rem;
@@ -1070,14 +1057,15 @@ export default {
   display: none;
 }
 
+/* TITULOS */
 h1 {
   text-align: center;
-  margin: 0 0 1.5rem;
+  margin-bottom: 1.5rem;
   color: #333;
   font-size: 2rem;
-  letter-spacing: 0.04rem;
 }
 
+/* CARDS */
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1098,27 +1086,15 @@ h1 {
   transform: translateY(-2px);
 }
 
-.card h3 {
-  margin: 0 0 0.75rem;
-  color: #4b4b4b;
-}
-
-.card p {
-  font-size: 28px;
-  font-weight: bold;
-  margin: 0;
-  color: #333;
-}
-
+/* CHARTS */
 .charts-section {
   margin-top: 1.5rem;
 }
 
 .charts-section h2 {
-  margin: 0 0 1rem;
   text-align: center;
-  color: #333;
   font-size: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .charts-grid {
@@ -1128,24 +1104,11 @@ h1 {
 }
 
 .chart-card {
-  background: linear-gradient(135deg, #ffffff, #f4f9ff);
+  background: linear-gradient(135deg, #fff, #f4f9ff);
   border: 1px solid #e7edf7;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
   padding: 0.85rem;
   height: 300px;
-}
-
-.chart-card h3 {
-  margin: 0 0 0.65rem;
-  text-align: center;
-  color: #2f3d4f;
-  font-size: 1.05rem;
-}
-
-.chart-card canvas {
-  width: 100%;
-  height: calc(100% - 32px) !important;
 }
 
 .chart-card-wide {
@@ -1153,15 +1116,9 @@ h1 {
   height: 320px;
 }
 
+/* MACHINE STATUS */
 .machine-status-section {
   margin-top: 1.5rem;
-}
-
-.machine-status-section h2 {
-  margin: 0 0 1rem;
-  text-align: center;
-  color: #333;
-  font-size: 1.5rem;
 }
 
 .machine-status-grid {
@@ -1181,77 +1138,38 @@ h1 {
   border-radius: 12px;
   padding: 0.9rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
-  border: 1px solid transparent;
 }
 
 .machine-summary-top {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 0.55rem;
 }
 
-.machine-summary-card p {
-  margin: 0;
-  font-size: 0.95rem;
-  color: #364152;
-}
-
-.machine-summary-card span:last-child {
-  display: inline-block;
-  margin-top: 0.45rem;
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.state-green {
-  border: 2px solid #2e7d32;
-}
-
-.state-yellow {
-  border: 2px solid #f9a825;
-}
-
-.state-red {
-  border: 2px solid #c62828;
-}
-
+/* CARD BASE (UNIFICADO) */
 .machine-status-card {
+  position: relative;
   background: #fff;
   border-radius: 12px;
   padding: 0.8rem;
   border: 2px solid transparent;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  position: relative;
-}
-
-.machine-status-card:hover {
-  transform: scale(1.06);
-  z-index: 10;
-}
-
-/* 🟢 OPERATIVO */
-.machine-status-card {
-  position: relative;
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-/* 🔥 hover más marcado */
 .machine-status-card:hover {
   transform: scale(1.07);
   z-index: 10;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
 
-/* ✨ tooltip oculto */
+/* TOOLTIP */
 .machine-tooltip {
   position: absolute;
   top: -10px;
   left: 50%;
-   background: rgba(20, 20, 20, 0.9);
-  color: white;
   transform: translateX(-50%);
+  background: rgba(20, 20, 20, 0.9);
+  color: white;
   padding: 6px 10px;
   font-size: 0.75rem;
   border-radius: 8px;
@@ -1261,161 +1179,47 @@ h1 {
   white-space: nowrap;
 }
 
-/* mostrar tooltip en hover */
 .machine-status-card:hover .machine-tooltip {
   opacity: 1;
   top: -18px;
 }
 
-/* 🔆 refuerzo de brillo por estado en hover */
-/* amarillo = advertencia */
+/* STATES */
+.state-green {
+  border-color: #2e7d32;
+  box-shadow: 0 0 8px rgba(46, 125, 50, 0.15);
+}
+
+.state-yellow {
+  border-color: #f9a825;
+  box-shadow: 0 0 8px rgba(249, 168, 37, 0.15);
+}
+
+.state-red {
+  border-color: #c62828;
+  box-shadow: 0 0 8px rgba(198, 40, 40, 0.15);
+}
 
 .state-green:hover {
-  box-shadow: 0 0 18px rgba(46, 125, 50, 0.6);
+  box-shadow: 0 0 22px rgba(46, 125, 50, 0.55);
 }
 
 .state-yellow:hover {
-  box-shadow: 0 0 18px rgba(249, 168, 37, 0.6);
+  box-shadow: 0 0 22px rgba(249, 168, 37, 0.55);
 }
 
 .state-red:hover {
-  box-shadow: 0 0 18px rgba(198, 40, 40, 0.6);
+  box-shadow: 0 0 22px rgba(198, 40, 40, 0.55);
 }
 
-
-/* verde = ok */
-
-.machine-status-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-}
-
-.machine-status-title {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.machine-status-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: #2f3d4f;
-}
-
-.machine-status-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.machine-status-card h3,
-.machine-status-card p {
-  margin: 0;
-  line-height: 1.2;
-}
-
-.machine-status-label {
-  font-size: 0.85rem;
-}
-
-.status-green {
-  background: #2e7d32;
-}
-
-.status-yellow {
-  background: #f9a825;
-}
-
-.status-red {
-  background: #c62828;
-}
-
+/* UNFINISHED */
 .unfinished-reasons-section {
   margin-top: 1.5rem;
 }
 
-.unfinished-reasons-section h2 {
-  margin: 0 0 0.55rem;
-  text-align: center;
-  color: #333;
-  font-size: 1.35rem;
-}
-
-.unfinished-total {
-  margin: 0 0 0.95rem;
-  text-align: center;
-  color: #4b4b4b;
-  font-weight: 600;
-}
-
-.unfinished-reasons-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.85rem;
-}
-
-.unfinished-reason-card {
-  background: #fff;
-  border: 1px solid #e4e7eb;
-  border-radius: 12px;
-  padding: 0.85rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
-}
-
-.unfinished-reason-card h3 {
-  margin: 0 0 0.45rem;
-  font-size: 1rem;
-  color: #243447;
-}
-
-.unfinished-reason-card p {
-  margin: 0;
-  font-weight: 700;
-  color: #364152;
-}
-
-.unfinished-other-list {
-  margin: 0.65rem 0 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid #e8ecf1;
-  padding-top: 0.55rem;
-}
-
-.unfinished-other-list li {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem;
-  align-items: center;
-  font-size: 0.86rem;
-  color: #4a5568;
-  margin-bottom: 0.35rem;
-}
-
-.unfinished-other-list li span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.unfinished-other-list li strong {
-  color: #243447;
-}
-
+/* RECENT */
 .recent-section {
   margin-top: 1.5rem;
-}
-
-.recent-section h2 {
-  margin: 0 0 1rem;
-  text-align: center;
-  color: #333;
-  font-size: 1.5rem;
 }
 
 .recent-toolbar {
@@ -1423,22 +1227,6 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.75rem;
   margin-bottom: 1rem;
-}
-
-.recent-toolbar input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 2rem;
-  background: #fff;
-}
-
-.recent-toolbar select {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 2rem;
-  background: #fff;
 }
 
 .clear-filters-button {
@@ -1451,37 +1239,16 @@ h1 {
   cursor: pointer;
 }
 
-.recent-toolbar input:hover,
-.recent-toolbar input:focus {
-  outline: none;
-  background: #f0f0f0;
-  transition: 0.2s;
-  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
-}
-
-.recent-toolbar select:hover,
-.recent-toolbar select:focus {
-  outline: none;
-  background: #f0f0f0;
-  transition: 0.2s;
-  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
-}
-
 .clear-filters-button:hover {
   background: #8f8f8f;
 }
 
+/* TABLE */
 .recent-table-wrapper {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
   overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-}
-
-.recent-table-wrapper::-webkit-scrollbar {
-  height: 0;
 }
 
 .recent-table {
@@ -1494,118 +1261,42 @@ h1 {
 .recent-table td {
   padding: 12px 10px;
   border-bottom: 1px solid #e8e8e8;
-  text-align: left;
-  color: #555;
 }
 
 .recent-table th {
   background: #efefef;
-  color: #333;
 }
 
-.recent-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
+/* SCROLL FIX */
 .recent-fixed-horizontal-scroll {
   position: sticky;
-  left: 0;
   bottom: 0;
-  width: 100%;
   height: 14px;
   overflow-x: auto;
-  overflow-y: hidden;
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid #d5d5d5;
   border-radius: 999px;
-  z-index: 900;
-  margin-top: 0.35rem;
 }
 
-.recent-fixed-horizontal-scroll-inner {
-  height: 1px;
-}
+/* STATES TEXT */
+.status-green { background: #2e7d32; }
+.status-yellow { background: #f9a825; }
+.status-red { background: #c62828; }
 
-.recent-fixed-horizontal-scroll::-webkit-scrollbar {
-  height: 10px;
-}
-
-.recent-operario {
-  font-weight: 700;
-  color: #2f2f2f;
-}
-
+/* EMPTY */
 .empty-state {
-  margin: 0;
   text-align: center;
   color: #666;
 }
 
-@media (max-width: 1400px) {
-  .container {
-    width: min(97vw, 1320px);
-    padding: 1.7rem;
-  }
-}
-
-@media (max-width: 1200px) {
-  .container {
-    width: min(98vw, 1120px);
-    padding: 1.45rem;
-  }
-}
-
-@media (max-width: 992px) {
-  .container {
-    width: 100%;
-    padding: 1.15rem;
-  }
-}
-
+/* RESPONSIVE */
 @media (max-width: 768px) {
-  .container {
-    padding: 1rem;
-  }
-
-  .page-container {
-    align-items: flex-start;
-    padding: 0.6rem;
-    background-attachment: scroll;
-  }
-
   .period-toolbar {
     grid-template-columns: 1fr;
   }
 
-  .period-toolbar input,
-  .period-toolbar select,
-  .period-button {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
   .period-select-group {
     grid-template-columns: 1fr 1fr;
-  }
-
-  .period-label {
-    font-size: 0.88rem;
-    line-height: 1.35;
-  }
-
-  h1 {
-    font-size: 1.6rem;
-  }
-
-  .recent-table-wrapper {
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-  }
-
-  .recent-table-wrapper::-webkit-scrollbar {
-    height: 4px;
   }
 
   .recent-fixed-horizontal-scroll {
@@ -1622,18 +1313,12 @@ h1 {
     display: inline;
   }
 
-  .period-button {
-    padding: 10px;
-    font-size: 0.9rem;
-  }
-
   .period-label-full {
     display: none;
   }
 
   .period-label-compact {
     display: inline;
-    font-size: 0.85rem;
   }
 }
 </style>
