@@ -54,7 +54,7 @@
             <span class="period-label-full">Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{
               formatMonthLabel(periodEnd) }}</span>
             <span class="period-label-compact">{{ formatMonthLabel(periodStart) }} - {{ formatMonthLabel(periodEnd)
-            }}</span>
+              }}</span>
           </p>
         </section>
 
@@ -155,7 +155,9 @@
           <div v-if="machineStatusOverview.length" class="machine-status-grid">
             <article v-for="machine in machineStatusOverview" :key="machine.id" class="machine-status-card"
               :class="`state-${machine.indicator}`">
-
+              <div class="machine-tooltip">
+                {{ machine.indicator === 'yellow' ? 'Tiene pendientes' : 'Sin pendientes' }}
+              </div>
               <div class="machine-status-header">
 
 
@@ -1211,32 +1213,65 @@ h1 {
   border-radius: 12px;
   padding: 0.8rem;
   border: 1px solid #e4e7eb;
-  transition: 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
 }
 
-
+.machine-status-card:hover {
+  transform: scale(1.07);
+  z-index: 10;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
 /* 🟢 OPERATIVO */
-.state-green {
-  border: 1px solid #2e7d32;
-  box-shadow:
-    0 0 0 2px rgba(46, 125, 50, 0.25),
-    0 0 18px rgba(46, 125, 50, 0.25);
+.machine-status-card {
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-/* 🟡 PENDIENTE */
-.state-yellow {
-  border: 1px solid #f9a825;
-  box-shadow:
-    0 0 0 2px rgba(249, 168, 37, 0.25),
-    0 0 18px rgba(249, 168, 37, 0.25);
+/* 🔥 hover más marcado */
+.machine-status-card:hover {
+  transform: scale(1.07);
+  z-index: 10;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
 
-/* 🔴 DETENIDO */
-.state-red {
-  border: 1px solid #c62828;
-  box-shadow:
-    0 0 0 2px rgba(198, 40, 40, 0.25),
-    0 0 18px rgba(198, 40, 40, 0.25);
+/* ✨ tooltip oculto */
+.machine-tooltip {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 20, 0.9);
+  color: white;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+/* mostrar tooltip en hover */
+.machine-status-card:hover .machine-tooltip {
+  opacity: 1;
+  top: -18px;
+}
+
+/* 🔆 refuerzo de brillo por estado en hover */
+.state-green:hover {
+  box-shadow: 0 0 0 2px rgba(46,125,50,0.4),
+              0 0 25px rgba(46,125,50,0.5);
+}
+
+.state-yellow:hover {
+  box-shadow: 0 0 0 2px rgba(249,168,37,0.4),
+              0 0 25px rgba(249,168,37,0.5);
+}
+
+.state-red:hover {
+  box-shadow: 0 0 0 2px rgba(198,40,40,0.4),
+              0 0 25px rgba(198,40,40,0.5);
 }
 
 .machine-status-header {
