@@ -29,7 +29,7 @@ import machineRoutes from "./routes/machineRoutes.js"
 import productRoutes from "./routes/productRoutes.js"
 import quoteRoutes from "./routes/quoteRoutes.js"
 import User from "./models/userModels.js"
-import { startCronNotifications } from "./services/cronScheduler.js"
+
 console.log("[server] imported routes and models")
 
 const DEFAULT_ADMIN = {
