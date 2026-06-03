@@ -1145,8 +1145,11 @@ h1 {
 }
 
 .machine-status-grid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
    gap: 0.9rem;
+    display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, max-content));
+
+  justify-content: start;
 }
  
 
