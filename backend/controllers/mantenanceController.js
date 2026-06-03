@@ -722,6 +722,136 @@ export const dashboardController = async (req, res) => {
 
 
 
+export const notificationsController = async (req, res) => {
+
+    try {
+
+        const notificationsFeed = await getMaintenanceNotificationsFeed()
+
+        const user = await User.findById(req.user.id)
+            .select("notificationReadIds")
+
+        const persistedReadIds = normalizeNotificationReadIds(
+            user?.notificationReadIds
+        )
+
+        const activeNotificationIds = new Set(
+            (notificationsFeed.items || [])
+                .map(item => String(item.id || "").trim())
+        )
+
+        const activeReadIds = persistedReadIds.filter(
+            itemId => activeNotificationIds.has(itemId)
+        )
+
+        if (
+            user &&
+            JSON.stringify(activeReadIds) !== JSON.stringify(persistedReadIds)
+        ) {
+            user.notificationReadIds = activeReadIds
+            await user.save()
+        }
+
+        res.json({
+            ok: true,
+            ...notificationsFeed,
+            readIds: activeReadIds
+        })
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Error al obtener notificaciones"
+        })
+
+    }
+
+}
+
+
+
+
+
+export const markNotificationsReadController = async (req, res) => {
+
+    try {
+
+        const incomingReadIds =
+            normalizeNotificationReadIds(req.body?.ids)
+
+        if (!incomingReadIds.length) {
+            return res.status(400).json({
+                message:
+                    "Debes enviar al menos un id de notificacion"
+            })
+        }
+
+        await User.updateOne(
+            { _id: req.user.id },
+            {
+                $addToSet: {
+                    notificationReadIds: {
+                        $each: incomingReadIds
+                    }
+                }
+            }
+        )
+
+        res.json({
+            ok: true,
+            readIds: incomingReadIds
+        })
+
+    } catch (error) {
+
+        res.status(500).json({
+            message:
+                "Error al marcar notificaciones como leidas"
+        })
+
+    }
+
+}
+
+
+
+export const clearNotificationReadsController = async (req, res) => {
+
+    try {
+
+        await User.updateOne(
+            { _id: req.user.id },
+            {
+                $set: {
+                    notificationReadIds: []
+                }
+            }
+        )
+
+        res.json({
+            ok: true
+        })
+
+    } catch (error) {
+
+        res.status(500).json({
+            message:
+                "Error al limpiar notificaciones leidas"
+        })
+
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
 
 export const notificationsHistoryController = async (req, res) => {
     try {
