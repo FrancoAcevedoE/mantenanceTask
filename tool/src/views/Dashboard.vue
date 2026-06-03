@@ -1205,34 +1205,30 @@ h1 {
   color: #111827;
 }
 
-.summary-green {
-  background: #eef8f0;
-  border-color: #cfe9d3;
+.state-green {
+  border: 2px solid #2e7d32;
 }
 
-.summary-yellow {
-  background: #fff8e8;
-  border-color: #f5df9e;
+.state-yellow {
+  border: 2px solid #f9a825;
 }
 
-.summary-red {
-  background: #fdeeee;
-  border-color: #efc1c1;
+.state-red {
+  border: 2px solid #c62828;
 }
 
 .machine-status-card {
   background: #fff;
   border-radius: 12px;
   padding: 0.8rem;
-  border: 1px solid #e4e7eb;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  border: 2px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
 }
 
 .machine-status-card:hover {
-  transform: scale(1.07);
+  transform: scale(1.06);
   z-index: 10;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
 
 /* 🟢 OPERATIVO */
@@ -1273,20 +1269,26 @@ h1 {
 
 /* 🔆 refuerzo de brillo por estado en hover */
 /* amarillo = advertencia */
-.state-yellow .machine-tooltip {
-  background: rgba(249, 168, 37, 0.95);
-  color: #1a1a1a;
+
+.state-green:hover {
+  box-shadow: 0 0 18px rgba(46, 125, 50, 0.6);
 }
 
-/* rojo = crítico */
-.state-red .machine-tooltip {
-  background: rgba(198, 40, 40, 0.95);
+.state-yellow:hover {
+  box-shadow: 0 0 18px rgba(249, 168, 37, 0.6);
 }
+
+.state-red:hover {
+  box-shadow: 0 0 18px rgba(198, 40, 40, 0.6);
+}
+
+
+
+
+
 
 /* verde = ok */
-.state-green .machine-tooltip {
-  background: rgba(46, 125, 50, 0.95);
-}
+
 .machine-status-header {
   display: flex;
   align-items: flex-start;
