@@ -900,7 +900,13 @@ export default {
   border-radius: 8px;
   margin: 2rem 0;
 }
+* {
+  box-sizing: border-box;
+}
 
+body {
+  overflow-x: hidden;
+}
 .seller-message p {
   font-size: 1.2rem;
   margin-bottom: 1rem;
@@ -1454,7 +1460,23 @@ h1 {
     padding: 1.7rem;
   }
 }
+@media (max-width: 1024px) {
+  .container {
+    padding: 1rem;
+  }
 
+  .recent-table {
+    min-width: 700px;
+  }
+
+  .cards {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .machine-status-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
 @media (max-width: 1200px) {
   .container {
     width: min(98vw, 1120px);
@@ -1468,7 +1490,11 @@ h1 {
     padding: 1.15rem;
   }
 }
-
+@media (max-width: 950px) {
+  .recent-table {
+    min-width: 100%;
+  }
+}
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
@@ -1505,11 +1531,10 @@ h1 {
     font-size: 1.6rem;
   }
 
-  .recent-table-wrapper {
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-  }
+.recent-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+}
 
   .recent-table-wrapper::-webkit-scrollbar {
     height: 4px;
