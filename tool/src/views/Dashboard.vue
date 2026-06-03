@@ -919,6 +919,11 @@ export default {
 </script>
 
 <style scoped>
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 .seller-message {
   text-align: center;
   padding: 2rem;
@@ -957,12 +962,16 @@ export default {
 }
 
 .container {
-  width: min(96vw, 1500px);
+   width: min(98vw, 1600px);
+  max-width: 1600px;
   margin: 0 auto;
+  overflow-x: hidden;
   background: rgba(255, 255, 255, 0.94);
   padding: 1.9rem;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+  box-shadow:
+    0 4px 20px rgba(0,0,0,.06),
+    0 1px 3px rgba(0,0,0,.04);
 }
 
 /* PERIOD */
@@ -1076,15 +1085,29 @@ h1 {
   background: #fff;
   padding: 20px 16px;
   text-align: center;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(15,23,42,.05);
   transition: 0.3s;
 }
 
 .card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 20px rgba(15,23,42,.08);
   transform: translateY(-2px);
 }
+  
+.chart-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card canvas {
+  flex: 1;
+  width: 100% !important;
+}
+
+
+
 
 /* CHARTS */
 .charts-section {
@@ -1122,10 +1145,10 @@ h1 {
 }
 
 .machine-status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+   gap: 0.9rem;
 }
+ 
 
 .machine-status-summary {
   display: grid;
@@ -1145,21 +1168,25 @@ h1 {
   align-items: center;
   gap: 0.6rem;
 }
-
+.machine-status-title h3 {
+  margin: 0;
+  font-size: .95rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
 /* CARD BASE (UNIFICADO) */
 .machine-status-card {
   position: relative;
   background: #fff;
   border-radius: 12px;
   padding: 0.8rem;
-  border: 2px solid transparent;
+  border: 1px solid #e5e7eb;
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .machine-status-card:hover {
-  transform: scale(1.07);
-  z-index: 10;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.12);
 }
 
 /* TOOLTIP */
@@ -1186,17 +1213,17 @@ h1 {
 
 /* STATES */
 .state-green {
-  border-color: #2e7d32;
+  border-left: 4px solid #22c55e;
   box-shadow: 0 0 8px rgba(46, 125, 50, 0.15);
 }
 
 .state-yellow {
-  border-color: #f9a825;
+  border-left: 4px solid #f59e0b;
   box-shadow: 0 0 8px rgba(249, 168, 37, 0.15);
 }
 
 .state-red {
-  border-color: #c62828;
+   border-left: 4px solid #ef4444;
   box-shadow: 0 0 8px rgba(198, 40, 40, 0.15);
 }
 
