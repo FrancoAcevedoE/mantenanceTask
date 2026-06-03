@@ -44,7 +44,11 @@ const getCurrentStoppedMachines = async () => {
 }
 
 const getStoppedMachinesDetail = async () => {
-  const allMachines = await Machine.find({ isDeleted: { $ne: true } }).select("name sector").lean()
+  const allMachines = await Machine.find({
+    isDeleted: { $ne: true }
+  })
+    .select("name sector")
+    .lean()
 
   if (!allMachines.length) {
     return []
@@ -69,13 +73,23 @@ const getStoppedMachinesDetail = async () => {
       }
     }
   ])
-console.log("latestMachineStatusRaw:")
-console.log(JSON.stringify(latestMachineStatusRaw, null, 2))
+
+  console.log("latestMachineStatusRaw:")
+  console.log(JSON.stringify(latestMachineStatusRaw, null, 2))
+
   const latestStatusMap = new Map(
-    latestMachineStatusRaw.map(item => [String(item._id || "").trim(), item])
+    latestMachineStatusRaw.map(item => [
+      String(item._id || "").trim(),
+      item
+    ])
   )
-console.log("latestStatusMap keys:")
-console.log([...latestStatusMap.keys()])
+
+  console.log("latestStatusMap keys:")
+  console.log([...latestStatusMap.keys()])
+
+  console.log("allMachines:")
+  console.log(allMachines.map(m => m.name))
+
   return allMachines
     .map(machine => {
       const machineName = String(machine.name || "").trim()
@@ -84,8 +98,7 @@ console.log([...latestStatusMap.keys()])
       if (!latestStatus) {
         return null
       }
-console.log("allMachines:")
-console.log(allMachines.map(m => m.name))
+
       return {
         id: `stopped-${machineName}`,
         type: "stopped-machine",
@@ -94,16 +107,18 @@ console.log(allMachines.map(m => m.name))
           ? `Motivo: ${latestStatus.unfinishedReason}`
           : "La maquina sigue en estado detenido.",
         machine: machineName,
-        sector: String(latestStatus.sector || machine.sector || "").trim(),
+        sector: String(
+          latestStatus.sector || machine.sector || ""
+        ).trim(),
         createdAt: latestStatus.createdAt,
         severity: "error"
       }
     })
-    console.log("latestStatusMap keys:")
-console.log([...latestStatusMap.keys()])
     .filter(Boolean)
-    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
-    
+    .sort(
+      (left, right) =>
+        new Date(right.createdAt) - new Date(left.createdAt)
+    )
 }
 
 const getPendingMaintenancesDetail = async () => {
@@ -288,20 +303,33 @@ export const sendWeeklyCompletedMaintenanceNotification = async (title) => {
 }
 
 export const getMaintenanceNotificationsFeed = async () => {
-  const [stoppedMachines, pendingMaintenances, pendingMaintenancesCount] = await Promise.all([
+  const [
+    stoppedMachines,
+    pendingMaintenances,
+    pendingMaintenancesCount
+  ] = await Promise.all([
     getStoppedMachinesDetail(),
     getPendingMaintenancesDetail(),
     Maintenance.countDocuments({ status: "pending" })
   ])
 
-  const items = [...stoppedMachines, ...pendingMaintenances]
-    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+  const items = [
+    ...stoppedMachines,
+    ...pendingMaintenances
+  ]
+    .filter(item => item && item.createdAt)
+    .sort(
+      (left, right) =>
+        new Date(right.createdAt) - new Date(left.createdAt)
+    )
 
   return {
     summary: {
-      stoppedMachinesCount: stoppedMachines.length,
+      stoppedMachinesCount: stoppedMachines.filter(Boolean).length,
       pendingMaintenancesCount,
-      totalActive: stoppedMachines.length + pendingMaintenancesCount
+      totalActive:
+        stoppedMachines.filter(Boolean).length +
+        pendingMaintenancesCount
     },
     items
   }
