@@ -6,33 +6,35 @@ import { sendPushNotificationToAllUsers } from "./pushService.js"
 const WEBHOOK_URL = String(process.env.NOTIFICATION_WEBHOOK_URL || "").trim()
 const NOTIFICATION_ITEM_LIMIT = 8
 
+
 const getCurrentStoppedMachines = async () => {
-  const allMachines = await Machine.find({ isDeleted: { $ne: true } }).select("name").lean()
+  const allMachines = await Machine.find({
+    isDeleted: { $ne: true }
+  }).select("name").lean()
 
   if (!allMachines.length) {
     return 0
   }
 
   const latestMachineStatusRaw = await Maintenance.aggregate([
-  {
-    $sort: { createdAt: -1 }
-  },
-  {
-    $group: {
-      _id: "$machine",
-      status: { $first: "$status" },
-      unfinishedReason: { $first: "$unfinishedReason" },
-      updatedAt: { $first: "$createdAt" }
+    {
+      $sort: { createdAt: -1 }
+    },
+    {
+      $group: {
+        _id: "$machine",
+        status: { $first: "$status" },
+        unfinishedReason: { $first: "$unfinishedReason" },
+        updatedAt: { $first: "$createdAt" }
+      }
     }
-  }
-])
-
-const latestMachineStatusMap = new Map(
-  latestMachineStatusRaw.map(item => [item._id, item])
-)
+  ])
 
   const latestStatusMap = new Map(
-    latestMachineStatusRaw.map(item => [String(item._id || "").trim(), item.status])
+    latestMachineStatusRaw.map(item => [
+      String(item._id || "").trim(),
+      item.status
+    ])
   )
 
   let stoppedCount = 0
@@ -48,6 +50,15 @@ const latestMachineStatusMap = new Map(
 
   return stoppedCount
 }
+
+
+
+
+
+
+
+
+
 
 const getStoppedMachinesDetail = async () => {
   const allMachines = await Machine.find({

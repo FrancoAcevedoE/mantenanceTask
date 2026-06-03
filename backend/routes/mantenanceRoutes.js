@@ -3,17 +3,14 @@ import { verifyToken } from "../middlewares/authMiddleware.js"
 import { checkRole } from "../middlewares/roleMiddleware.js"
 
 import {
-    clearNotificationReadsController,
     clearNotificationHistoryReadsController,
     purgeMaintenanceDataController,
     finishMaintenance,
     historyController,
-    markNotificationsReadController,
     markNotificationHistoryReadController,
     newMaintenanceController,
     dashboardController,
     notificationsHistoryController,
-    notificationsController,
     notifyTestController,
     deleteMaintenanceController
 } from "../controllers/mantenanceController.js"
@@ -55,27 +52,6 @@ router.get(
 )
 
 router.get(
-    "/notifications",
-    verifyToken,
-    checkRole("admin","supervisor", "operario"),
-    notificationsController
-)
-
-router.post(
-    "/notifications/read",
-    verifyToken,
-    checkRole("admin","supervisor", "operario"),
-    markNotificationsReadController
-)
-
-router.delete(
-    "/notifications/read",
-    verifyToken,
-    checkRole("admin","supervisor", "operario"),
-    clearNotificationReadsController
-)
-
-router.get(
     "/notifications/history",
     verifyToken,
     checkRole("admin","supervisor", "operario"),
@@ -109,6 +85,5 @@ router.delete(
     checkRole("admin"),
     purgeMaintenanceDataController
 )
-
 
 export default router
