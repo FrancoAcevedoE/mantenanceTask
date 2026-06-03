@@ -567,19 +567,18 @@ export default {
       }
 
     },
-    getMachineTooltip(machine) {
-      const pending = machine.pendingCount || 0
+   getMachineTooltip(machine) {
 
-      if (machine.indicator === 'red') {
-        return 'Máquina detenida'
-      }
+  if (machine.indicator === "green") {
+    return "Operativa"
+  }
 
-      if (pending > 0) {
-        return `Tiene ${pending} pendiente${pending > 1 ? 's' : ''}`
-      }
+  if (machine.unfinishedReason) {
+    return machine.unfinishedReason
+  }
 
-      return 'Sin pendientes'
-    },
+  return machine.label
+},
     destroyCharts() {
 
       if (this.statusChartInstance) {
