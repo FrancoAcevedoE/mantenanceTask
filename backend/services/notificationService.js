@@ -128,10 +128,7 @@ const getPendingMaintenancesDetail = async () => {
       }
     }
   ])
-    .select("machine sector unfinishedReason createdAt priority clientId")
-    .populate("clientId", "name company")
-    .sort({ createdAt: -1 })
-    .lean()
+
   return pendingMaintenances.map(item => ({
     id: `pending-${String(item._id)}`,
     type: "pending-maintenance",
