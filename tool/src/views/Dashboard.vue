@@ -1202,24 +1202,18 @@ h1 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
 }
 
-.machine-status-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
 
 .machine-status-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  color: #243447;
+  font-size: 0.9rem;
 }
 
 .machine-status-header p {
-  margin: 0.2rem 0 0;
-  font-size: 0.88rem;
-  color: #667085;
+  font-size: 0.75rem;
 }
 
+.machine-status-label {
+  font-size: 0.85rem;
+}
 .machine-status-dot {
   width: 16px;
   height: 16px;
@@ -1240,11 +1234,6 @@ h1 {
   background: #c62828;
 }
 
-.machine-status-label {
-  margin: 0.8rem 0 0;
-  font-weight: 700;
-  color: #364152;
-}
 
 .unfinished-reasons-section {
   margin-top: 1.5rem;
