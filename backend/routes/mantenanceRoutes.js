@@ -85,6 +85,5 @@ router.delete(
     checkRole("admin"),
     purgeMaintenanceDataController
 )
-
-export default router
 console.log("maintenance routes loaded")
+export default router
