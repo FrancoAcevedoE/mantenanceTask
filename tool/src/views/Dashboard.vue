@@ -54,7 +54,7 @@
             <span class="period-label-full">Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{
               formatMonthLabel(periodEnd) }}</span>
             <span class="period-label-compact">{{ formatMonthLabel(periodStart) }} - {{ formatMonthLabel(periodEnd)
-              }}</span>
+            }}</span>
           </p>
         </section>
 
@@ -153,11 +153,11 @@
             </article>
           </div>
           <div v-if="machineStatusOverview.length" class="machine-status-grid">
-            <article v-for="machine in machineStatusOverview" :key="machine.id" class="machine-status-card">
-
+            <article v-for="machine in machineStatusOverview" :key="machine.id" class="machine-status-card"
+              :class="`state-${machine.indicator}`">
 
               <div class="machine-status-header">
-                <span :class="['machine-status-dot', `status-${machine.indicator}`]"></span>
+
 
                 <div class="machine-status-title">
                   <h3>{{ machine.name }}</h3>
@@ -182,23 +182,20 @@
           <p class="unfinished-total">Total con motivo cargado: {{ unfinishedReasonSummary.totalWithReason }}</p>
 
           <div v-if="unfinishedReasonSummary.reasons.length" class="unfinished-reasons-grid">
-  <article
-    v-for="reason in unfinishedReasonSummary.reasons"
-    :key="reason.reason"
-    class="unfinished-reason-card"
-  >
-    <div class="machine-status-header">
-      <div>
-        <h3>{{ formatUnfinishedReason(reason.reason) }}</h3>
-        <p>{{ reason.count }} casos</p>
-      </div>
-    </div>
+            <article v-for="reason in unfinishedReasonSummary.reasons" :key="reason.reason"
+              class="unfinished-reason-card">
+              <div class="machine-status-header">
+                <div>
+                  <h3>{{ formatUnfinishedReason(reason.reason) }}</h3>
+                  <p>{{ reason.count }} casos</p>
+                </div>
+              </div>
 
-    <p class="machine-status-label">
-      {{ reason.reason }}
-    </p>
-  </article>
-</div>
+              <p class="machine-status-label">
+                {{ reason.reason }}
+              </p>
+            </article>
+          </div>
 
           <p v-else class="empty-state">No hay tareas con motivo de no finalización en este periodo.</p>
         </section>
@@ -1208,30 +1205,38 @@ h1 {
   background: #fdeeee;
   border-color: #efc1c1;
 }
+
 .machine-status-card {
   background: #fff;
-  border: 1px solid #e4e7eb;
   border-radius: 12px;
   padding: 0.8rem;
+  border: 1px solid #e4e7eb;
   transition: 0.25s ease;
 }
 
+
 /* 🟢 OPERATIVO */
 .state-green {
-  border-color: #2e7d32;
-  box-shadow: 0 0 12px rgba(46, 125, 50, 0.25);
+  border: 1px solid #2e7d32;
+  box-shadow:
+    0 0 0 2px rgba(46, 125, 50, 0.25),
+    0 0 18px rgba(46, 125, 50, 0.25);
 }
 
 /* 🟡 PENDIENTE */
 .state-yellow {
-  border-color: #f9a825;
-  box-shadow: 0 0 12px rgba(249, 168, 37, 0.25);
+  border: 1px solid #f9a825;
+  box-shadow:
+    0 0 0 2px rgba(249, 168, 37, 0.25),
+    0 0 18px rgba(249, 168, 37, 0.25);
 }
 
 /* 🔴 DETENIDO */
 .state-red {
-  border-color: #c62828;
-  box-shadow: 0 0 12px rgba(198, 40, 40, 0.25);
+  border: 1px solid #c62828;
+  box-shadow:
+    0 0 0 2px rgba(198, 40, 40, 0.25),
+    0 0 18px rgba(198, 40, 40, 0.25);
 }
 
 .machine-status-header {
