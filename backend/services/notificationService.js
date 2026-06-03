@@ -101,34 +101,49 @@ const getStoppedMachinesDetail = async () => {
 }
 
 const getPendingMaintenancesDetail = async () => {
-  const pendingMaintenances = await Maintenance.find({ status: "pending" })
+  const pendingMaintenances = await Maintenance.aggregate([
+    {
+      $match: {
+        status: "pending"
+      }
+    },
+    {
+      $sort: {
+        createdAt: -1
+      }
+    },
+    {
+      $group: {
+        _id: "$machine",
+        machine: { $first: "$machine" },
+        sector: { $first: "$sector" },
+        unfinishedReason: { $first: "$unfinishedReason" },
+        createdAt: { $first: "$createdAt" },
+        priority: { $first: "$priority" }
+      }
+    },
+    {
+      $sort: {
+        createdAt: -1
+      }
+    }
+  ])
     .select("machine sector unfinishedReason createdAt priority clientId")
     .populate("clientId", "name company")
     .sort({ createdAt: -1 })
-    .limit(NOTIFICATION_ITEM_LIMIT)
     .lean()
-
-  return pendingMaintenances.map(item => {
-    const operatorName = String(item?.clientId?.name || "").trim()
-    const operatorCompany = String(item?.clientId?.company || "").trim()
-    const operatorLabel = operatorCompany
-      ? `${operatorName} - ${operatorCompany}`
-      : operatorName
-
-    return {
-      id: `pending-${String(item._id)}`,
-      type: "pending-maintenance",
-      title: `Trabajo pendiente: ${String(item.machine || "Sin maquina").trim()}`,
-      message: item.unfinishedReason
-        ? `Motivo: ${item.unfinishedReason}`
-        : "Hay un mantenimiento pendiente de cierre.",
-      machine: String(item.machine || "").trim(),
-      sector: String(item.sector || "").trim(),
-      operator: operatorLabel,
-      createdAt: item.createdAt,
-      severity: item.priority === "alta" ? "error" : "warning"
-    }
-  })
+  return pendingMaintenances.map(item => ({
+    id: `pending-${String(item._id)}`,
+    type: "pending-maintenance",
+    title: `Trabajo pendiente: ${String(item.machine || "Sin maquina").trim()}`,
+    message: item.unfinishedReason
+      ? `Motivo: ${item.unfinishedReason}`
+      : "Hay un mantenimiento pendiente de cierre.",
+    machine: String(item.machine || "").trim(),
+    sector: String(item.sector || "").trim(),
+    createdAt: item.createdAt,
+    severity: item.priority === "alta" ? "error" : "warning"
+  }))
 }
 
 const formatShortDate = (value) => {
@@ -194,19 +209,23 @@ export const sendDailyStoppedPendingNotification = async (title) => {
   const stoppedCount = feed.summary.stoppedMachinesCount
   const pendingCount = feed.summary.pendingMaintenancesCount
 
-  let body = `Reporte diario 7 AM:\n\n⚠ Máquinas detenidas: ${stoppedCount}\n⚠ Mantenimientos pendientes: ${pendingCount}`
+  let body = "Reporte diario 7 AM\n\n"
 
-  const details = [...stoppedItems, ...pendingItems]
+  body += `Máquinas detenidas: ${stoppedCount}\n`
 
-  if (details.length) {
-    body += "\n\nDetalles:\n"
-    body += details
-      .map(item => {
-        const prefix = item.type === "stopped-machine" ? "Detenida" : "Pendiente"
-        const machineLabel = String(item.machine || "Sin máquina").trim()
-        const sectorLabel = item.sector ? ` (${item.sector})` : ""
-        return `• ${prefix}: ${machineLabel}${sectorLabel}`
-      })
+  if (stoppedItems.length) {
+    body += stoppedItems
+      .map(item => `- ${item.machine}`)
+      .join("\n")
+  }
+
+  body += "\n\n"
+
+  body += `Mantenimientos pendientes: ${pendingCount}\n`
+
+  if (pendingItems.length) {
+    body += pendingItems
+      .map(item => `- ${item.machine}`)
       .join("\n")
   }
 
@@ -263,7 +282,6 @@ export const getMaintenanceNotificationsFeed = async () => {
 
   const items = [...stoppedMachines, ...pendingMaintenances]
     .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
-    .slice(0, NOTIFICATION_ITEM_LIMIT * 2)
 
   return {
     summary: {
