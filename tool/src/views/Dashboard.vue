@@ -1283,10 +1283,6 @@ h1 {
 }
 
 
-
-
-
-
 /* verde = ok */
 
 .machine-status-header {
