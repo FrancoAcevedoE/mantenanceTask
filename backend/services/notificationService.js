@@ -69,11 +69,13 @@ const getStoppedMachinesDetail = async () => {
       }
     }
   ])
-
+console.log("latestMachineStatusRaw:")
+console.log(JSON.stringify(latestMachineStatusRaw, null, 2))
   const latestStatusMap = new Map(
     latestMachineStatusRaw.map(item => [String(item._id || "").trim(), item])
   )
-
+console.log("latestStatusMap keys:")
+console.log([...latestStatusMap.keys()])
   return allMachines
     .map(machine => {
       const machineName = String(machine.name || "").trim()
@@ -82,7 +84,8 @@ const getStoppedMachinesDetail = async () => {
       if (!latestStatus) {
         return null
       }
-
+console.log("allMachines:")
+console.log(allMachines.map(m => m.name))
       return {
         id: `stopped-${machineName}`,
         type: "stopped-machine",
@@ -96,8 +99,11 @@ const getStoppedMachinesDetail = async () => {
         severity: "error"
       }
     })
+    console.log("latestStatusMap keys:")
+console.log([...latestStatusMap.keys()])
     .filter(Boolean)
     .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+    
 }
 
 const getPendingMaintenancesDetail = async () => {
@@ -201,8 +207,19 @@ export const getWeeklyCompletedMaintenances = async () => {
 
 export const sendDailyStoppedPendingNotification = async (title) => {
   const feed = await getMaintenanceNotificationsFeed()
-  const stoppedItems = feed.items.filter(item => item.type === "stopped-machine")
-  const pendingItems = feed.items.filter(item => item.type === "pending-maintenance")
+
+  console.log("STOPPED:", feed.summary.stoppedMachinesCount)
+  console.log("PENDING:", feed.summary.pendingMaintenancesCount)
+  console.log("ITEMS:", feed.items)
+
+  const stoppedItems = feed.items.filter(
+    item => item.type === "stopped-machine"
+  )
+
+  const pendingItems = feed.items.filter(
+    item => item.type === "pending-maintenance"
+  )
+
   const stoppedCount = feed.summary.stoppedMachinesCount
   const pendingCount = feed.summary.pendingMaintenancesCount
 
