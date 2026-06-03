@@ -169,7 +169,6 @@
                   </span>
                 </div>
               </div>
-              <p class="machine-status-label">{{ machine.label }}</p>
             </article>
           </div>
           <p v-else class="empty-state">No hay máquinas registradas todavía.</p>
