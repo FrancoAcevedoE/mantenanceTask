@@ -14,16 +14,22 @@ const getCurrentStoppedMachines = async () => {
   }
 
   const latestMachineStatusRaw = await Maintenance.aggregate([
-    {
-      $sort: { createdAt: -1 }
-    },
-    {
-      $group: {
-        _id: "$machine",
-        status: { $first: "$status" }
-      }
+  {
+    $sort: { createdAt: -1 }
+  },
+  {
+    $group: {
+      _id: "$machine",
+      status: { $first: "$status" },
+      unfinishedReason: { $first: "$unfinishedReason" },
+      updatedAt: { $first: "$createdAt" }
     }
-  ])
+  }
+])
+
+const latestMachineStatusMap = new Map(
+  latestMachineStatusRaw.map(item => [item._id, item])
+)
 
   const latestStatusMap = new Map(
     latestMachineStatusRaw.map(item => [String(item._id || "").trim(), item.status])

@@ -677,26 +677,9 @@ const allMachines = await Machine.find({ isDeleted: { $ne: true } })
 .select("name sector")
 .sort({ sector: 1, name: 1 })
 
-const latestMachineStatusRaw = await Maintenance.aggregate([
-  {
-    $sort: { createdAt: -1 }
-  },
-  {
-    $group: {
-      _id: "$machine",
-      status: { $first: "$status" },
-      unfinishedReason: { $first: "$unfinishedReason" },
-      updatedAt: { $first: "$createdAt" }
-    }
-  }
-])
 
 const latestMachineStatusMap = new Map(
   latestMachineStatusRaw.map(item => [item._id, item])
-)
-
-const latestMachineStatusMap = new Map(
-latestMachineStatusRaw.map(item => [item._id, item])
 )
 
 
@@ -722,28 +705,27 @@ const latestMaintenanceMap = new Map(
 
 
 const machineStatusOverview = allMachines.map(machine => {
-const latestStatus = latestMaintenanceMap.get(machine.name)
-const currentStatus = latestStatus?.status || "ok"
+  const latestStatus = latestMaintenanceMap.get(machine.name)
+  const currentStatus = latestStatus?.status || "ok"
 
-return {
-id: machine._id,
-name: machine.name,
-sector: formatSectorLabel(machine.sector || ""),
-status: currentStatus,
-
-unfinishedReason: latestStatus?.unfinishedReason || "",
-
-indicator: currentStatus === "stopped"
-? "red"
-: currentStatus === "pending"
-? "yellow"
-: "green",
-label: currentStatus === "stopped"
-? "Detenida"
-: currentStatus === "pending"
-? "Pendiente"
-: "Operativa",
-updatedAt: latestStatus?.updatedAt || null
+  return {
+    id: machine._id,
+    name: machine.name,
+    sector: formatSectorLabel(machine.sector || ""),
+    status: currentStatus,
+    unfinishedReason: latestStatus?.unfinishedReason || "",
+    indicator: currentStatus === "stopped"
+      ? "red"
+      : currentStatus === "pending"
+      ? "yellow"
+      : "green",
+    label: currentStatus === "stopped"
+      ? "Detenida"
+      : currentStatus === "pending"
+      ? "Pendiente"
+      : "Operativa",
+    updatedAt: latestStatus?.updatedAt || null
+  }
 })
 
 res.json({
