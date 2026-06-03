@@ -1202,7 +1202,7 @@ h1 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
 }
 
-
+    
 .machine-status-header h3 {
   font-size: 0.9rem;
 }
@@ -1214,6 +1214,8 @@ h1 {
 .machine-status-label {
   font-size: 0.85rem;
 }
+
+
 .machine-status-dot {
   width: 16px;
   height: 16px;
@@ -1233,7 +1235,6 @@ h1 {
 .status-red {
   background: #c62828;
 }
-
 
 .unfinished-reasons-section {
   margin-top: 1.5rem;
