@@ -54,7 +54,7 @@
             <span class="period-label-full">Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{
               formatMonthLabel(periodEnd) }}</span>
             <span class="period-label-compact">{{ formatMonthLabel(periodStart) }} - {{ formatMonthLabel(periodEnd)
-            }}</span>
+              }}</span>
           </p>
         </section>
 
@@ -182,16 +182,17 @@
           <p class="unfinished-total">Total con motivo cargado: {{ unfinishedReasonSummary.totalWithReason }}</p>
 
           <div v-if="unfinishedReasonSummary.reasons.length" class="unfinished-reasons-grid">
-            <article v-for="item in unfinishedReasonSummary.reasons" :key="item.reason" class="unfinished-reason-card">
-              <h3>{{ formatUnfinishedReason(item.reason) }}</h3>
-              <p>{{ item.count }} tareas</p>
-              <ul v-if="item.reason === 'Otros' && unfinishedReasonSummary.otherDetailsTop.length"
-                class="unfinished-other-list">
-                <li v-for="detail in unfinishedReasonSummary.otherDetailsTop" :key="detail.detail">
-                  <span>{{ detail.detail }}</span>
-                  <strong>{{ detail.count }}</strong>
-                </li>
-              </ul>
+            <article class="machine-status-card" :class="`state-${machine.indicator}`">
+              <div class="machine-status-header">
+                <div>
+                  <h3>{{ machine.name }}</h3>
+                  <p>{{ machine.sector || 'Sin sector' }}</p>
+                </div>
+              </div>
+
+              <p class="machine-status-label">
+                {{ machine.label }}
+              </p>
             </article>
           </div>
 
@@ -1203,13 +1204,30 @@ h1 {
   background: #fdeeee;
   border-color: #efc1c1;
 }
-
 .machine-status-card {
   background: #fff;
   border: 1px solid #e4e7eb;
-  border-radius: 10px;
-  padding: 0.6rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
+  border-radius: 12px;
+  padding: 0.8rem;
+  transition: 0.25s ease;
+}
+
+/* 🟢 OPERATIVO */
+.state-green {
+  border-color: #2e7d32;
+  box-shadow: 0 0 12px rgba(46, 125, 50, 0.25);
+}
+
+/* 🟡 PENDIENTE */
+.state-yellow {
+  border-color: #f9a825;
+  box-shadow: 0 0 12px rgba(249, 168, 37, 0.25);
+}
+
+/* 🔴 DETENIDO */
+.state-red {
+  border-color: #c62828;
+  box-shadow: 0 0 12px rgba(198, 40, 40, 0.25);
 }
 
 .machine-status-header {
@@ -1217,11 +1235,13 @@ h1 {
   align-items: flex-start;
   gap: 0.6rem;
 }
+
 .machine-status-title {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
+
 .machine-status-state {
   display: inline-flex;
   align-items: center;
@@ -1230,6 +1250,7 @@ h1 {
   font-size: 0.85rem;
   color: #2f3d4f;
 }
+
 .machine-status-dot {
   width: 14px;
   height: 14px;
