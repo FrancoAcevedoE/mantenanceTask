@@ -182,19 +182,23 @@
           <p class="unfinished-total">Total con motivo cargado: {{ unfinishedReasonSummary.totalWithReason }}</p>
 
           <div v-if="unfinishedReasonSummary.reasons.length" class="unfinished-reasons-grid">
-            <article class="machine-status-card" :class="`state-${machine.indicator}`">
-              <div class="machine-status-header">
-                <div>
-                  <h3>{{ machine.name }}</h3>
-                  <p>{{ machine.sector || 'Sin sector' }}</p>
-                </div>
-              </div>
+  <article
+    v-for="reason in unfinishedReasonSummary.reasons"
+    :key="reason.reason"
+    class="unfinished-reason-card"
+  >
+    <div class="machine-status-header">
+      <div>
+        <h3>{{ formatUnfinishedReason(reason.reason) }}</h3>
+        <p>{{ reason.count }} casos</p>
+      </div>
+    </div>
 
-              <p class="machine-status-label">
-                {{ machine.label }}
-              </p>
-            </article>
-          </div>
+    <p class="machine-status-label">
+      {{ reason.reason }}
+    </p>
+  </article>
+</div>
 
           <p v-else class="empty-state">No hay tareas con motivo de no finalización en este periodo.</p>
         </section>
