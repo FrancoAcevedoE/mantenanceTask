@@ -87,3 +87,4 @@ router.delete(
 )
 
 export default router
+console.log("maintenance routes loaded")
