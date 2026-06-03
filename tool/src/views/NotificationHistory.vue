@@ -61,11 +61,13 @@
           </p>
 
           <ul v-else class="history-list">
+
             <li v-for="item in filteredItems" :key="item.id" :class="[
               'history-item',
               item.read ? 'read' : 'unread',
               expandedNotification === item.id ? 'expanded' : ''
             ]" @click="toggleNotification(item.id)">
+
               <!-- VISTA COMPACTA -->
               <div class="notification-row">
 
@@ -78,9 +80,11 @@
                   <div v-if="expandedNotification !== item.id" class="notification-preview">
                     {{ item.body }}
                   </div>
+
                 </div>
 
                 <div class="notification-right">
+
                   <span class="notification-date">
                     {{ formatDate(item.createdAt) }}
                   </span>
@@ -91,15 +95,15 @@
                   ]">
                     {{ formatSeverity(item.severity) }}
                   </span>
+
                 </div>
 
               </div>
 
               <!-- DETALLE -->
               <div v-if="expandedNotification === item.id" class="notification-details">
-                <div class="detail-row">
-                  <span>{{ item.body }}</span>
-                </div>
+
+                <pre class="notification-text">{{ item.body }}</pre>
 
                 <div v-if="item.machine" class="detail-row">
                   <strong>Máquina:</strong>
@@ -121,8 +125,11 @@
                 <button v-if="!item.read" type="button" class="mark-read-button" @click.stop="markAsRead(item.id)">
                   Marcar leída
                 </button>
+
               </div>
+
             </li>
+
           </ul>
         </div>
       </div>
@@ -339,6 +346,13 @@ export default {
   font-family: inherit;
 }
 
+.notification-text {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 0;
+  line-height: 1.6;
+  color: #3a4a2f;
+}
 
 .page-container {
   width: 100%;
