@@ -5,6 +5,8 @@ import cors from "cors"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 // esto levanta el servidor e importa las todas las rutas
+import { sendDailyStoppedPendingNotification } from "./services/notificationService.js"
+import { startCronNotifications } from "./services/cronScheduler.js"
 
 console.log("[server] startup begin")
 
@@ -112,7 +114,11 @@ mongoose.connect(mongoURI)
 
 .then(async()=>{
   console.log("Mongo conectado")
+
   await ensureDefaultAdmin()
+
+  await sendDailyStoppedPendingNotification("PRUEBA")
+
   startCronNotifications()
 })
 .catch(err=>console.log(err))
