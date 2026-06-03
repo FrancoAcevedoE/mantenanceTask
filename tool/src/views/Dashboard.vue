@@ -54,7 +54,7 @@
             <span class="period-label-full">Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{
               formatMonthLabel(periodEnd) }}</span>
             <span class="period-label-compact">{{ formatMonthLabel(periodStart) }} - {{ formatMonthLabel(periodEnd)
-              }}</span>
+            }}</span>
           </p>
         </section>
 
@@ -154,11 +154,21 @@
           </div>
           <div v-if="machineStatusOverview.length" class="machine-status-grid">
             <article v-for="machine in machineStatusOverview" :key="machine.id" class="machine-status-card">
+
+
               <div class="machine-status-header">
                 <span :class="['machine-status-dot', `status-${machine.indicator}`]"></span>
-                <div>
+
+                <div class="machine-status-title">
                   <h3>{{ machine.name }}</h3>
-                  <p>{{ machine.sector || 'Sin sector' }}</p>
+
+                  <span class="machine-status-state">
+                    {{ machine.label }}
+                  </span>
+
+                  <p class="machine-status-sector">
+                    {{ machine.sector || 'Sin sector' }}
+                  </p>
                 </div>
               </div>
               <p class="machine-status-label">{{ machine.label }}</p>
@@ -780,17 +790,17 @@ export default {
 
     },
 
-   setDefaultPeriod() {
-  const now = new Date()
+    setDefaultPeriod() {
+      const now = new Date()
 
-  const end = new Date(now.getFullYear(), now.getMonth(), 1)
-  const start = new Date(end.getFullYear(), end.getMonth() - 11, 1)
+      const end = new Date(now.getFullYear(), now.getMonth(), 1)
+      const start = new Date(end.getFullYear(), end.getMonth() - 11, 1)
 
-  this.periodStart = this.toMonthValue(start)
-  this.periodEnd = this.toMonthValue(end)
+      this.periodStart = this.toMonthValue(start)
+      this.periodEnd = this.toMonthValue(end)
 
-  this.syncPeriodSelectorsFromPeriod()
-},
+      this.syncPeriodSelectorsFromPeriod()
+    },
 
     syncPeriodSelectorsFromPeriod() {
       const [startYear = "", startMonth = ""] = String(this.periodStart || "").split("-")
@@ -1201,23 +1211,38 @@ h1 {
   padding: 0.6rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
 }
+
 .machine-status-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.6rem;
-  margin-bottom: 0.4rem;
-}.machine-status-dot {
+}
+.machine-status-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.machine-status-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #2f3d4f;
+}
+.machine-status-dot {
   width: 14px;
   height: 14px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-    
+
 .machine-status-card h3,
 .machine-status-card p {
   margin: 0;
   line-height: 1.2;
 }
+
 .machine-status-label {
   font-size: 0.85rem;
 }
