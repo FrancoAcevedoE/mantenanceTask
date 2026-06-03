@@ -62,7 +62,7 @@
 
           <div class="card">
 
-            <h3>Total mantenimientos</h3>
+            <h3>TOTAL DE TRABAJOS</h3>
 
             <p>{{ stats.totalMaintenances }}</p>
 
@@ -70,7 +70,7 @@
 
           <div class="card">
 
-            <h3>Máquinas registradas</h3>
+            <h3>EQUIPOS REGISTRADOS</h3>
 
             <p>{{ stats.machinesRegistered }}</p>
 
@@ -78,7 +78,7 @@
 
           <div class="card">
 
-            <h3>Mantenimientos pendientes</h3>
+            <h3>TRABAJOS PENDIENTES</h3>
 
             <p>{{ stats.pending }}</p>
 
@@ -86,7 +86,7 @@
 
           <div class="card">
 
-            <h3>Máquinas detenidas</h3>
+            <h3>EQUIPOS DETENIDOS</h3>
 
             <p>{{ stats.stopped }}</p>
 
@@ -94,7 +94,7 @@
 
           <div class="card">
 
-            <h3>Operarios atendidos</h3>
+            <h3>TOTAL DE TRABAJADORES</h3>
 
             <p>{{ stats.operariosAttended }}</p>
 
@@ -189,7 +189,7 @@
         </section>
 
         <section class="recent-section">
-          <h2>Últimos mantenimientos</h2>
+          <h2>ÚLTIMOS TRABAJOS</h2>
 
           <div class="recent-toolbar">
             <input v-model="searchOperario" type="text" placeholder="Buscar por operario" />
@@ -780,13 +780,17 @@ export default {
 
     },
 
-    setDefaultPeriod() {
-      const now = new Date()
-      const start = new Date(now.getFullYear(), now.getMonth() - 11, 1)
-      this.periodStart = this.toMonthValue(start)
-      this.periodEnd = this.toMonthValue(now)
-      this.syncPeriodSelectorsFromPeriod()
-    },
+   setDefaultPeriod() {
+  const now = new Date()
+
+  const end = new Date(now.getFullYear(), now.getMonth(), 1)
+  const start = new Date(end.getFullYear(), end.getMonth() - 11, 1)
+
+  this.periodStart = this.toMonthValue(start)
+  this.periodEnd = this.toMonthValue(end)
+
+  this.syncPeriodSelectorsFromPeriod()
+},
 
     syncPeriodSelectorsFromPeriod() {
       const [startYear = "", startMonth = ""] = String(this.periodStart || "").split("-")
@@ -1193,8 +1197,8 @@ h1 {
 .machine-status-card {
   background: #fff;
   border: 1px solid #e4e7eb;
-  border-radius: 12px;
-  padding: 0.95rem;
+  border-radius: 10px;
+  padding: 0.6rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
 }
 
