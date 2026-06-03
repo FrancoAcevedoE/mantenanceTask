@@ -156,7 +156,7 @@
             <article v-for="machine in machineStatusOverview" :key="machine.id" class="machine-status-card"
               :class="`state-${machine.indicator}`">
               <div class="machine-tooltip">
-                {{ machine.indicator === 'yellow' ? 'Tiene pendientes' : 'Sin pendientes' }}
+                {{ getMachineTooltip(machine) }}
               </div>
               <div class="machine-status-header">
 
@@ -572,7 +572,19 @@ export default {
       }
 
     },
+    getMachineTooltip(machine) {
+      const pending = machine.pendingCount || 0
 
+      if (machine.indicator === 'red') {
+        return 'Máquina detenida'
+      }
+
+      if (pending > 0) {
+        return `Tiene ${pending} pendiente${pending > 1 ? 's' : ''}`
+      }
+
+      return 'Sin pendientes'
+    },
     destroyCharts() {
 
       if (this.statusChartInstance) {
@@ -1222,6 +1234,7 @@ h1 {
   z-index: 10;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
+
 /* 🟢 OPERATIVO */
 .machine-status-card {
   position: relative;
@@ -1240,9 +1253,9 @@ h1 {
   position: absolute;
   top: -10px;
   left: 50%;
-  transform: translateX(-50%);
-  background: rgba(20, 20, 20, 0.9);
+   background: rgba(20, 20, 20, 0.9);
   color: white;
+  transform: translateX(-50%);
   padding: 6px 10px;
   font-size: 0.75rem;
   border-radius: 8px;
@@ -1259,21 +1272,21 @@ h1 {
 }
 
 /* 🔆 refuerzo de brillo por estado en hover */
-.state-green:hover {
-  box-shadow: 0 0 0 2px rgba(46,125,50,0.4),
-              0 0 25px rgba(46,125,50,0.5);
+/* amarillo = advertencia */
+.state-yellow .machine-tooltip {
+  background: rgba(249, 168, 37, 0.95);
+  color: #1a1a1a;
 }
 
-.state-yellow:hover {
-  box-shadow: 0 0 0 2px rgba(249,168,37,0.4),
-              0 0 25px rgba(249,168,37,0.5);
+/* rojo = crítico */
+.state-red .machine-tooltip {
+  background: rgba(198, 40, 40, 0.95);
 }
 
-.state-red:hover {
-  box-shadow: 0 0 0 2px rgba(198,40,40,0.4),
-              0 0 25px rgba(198,40,40,0.5);
+/* verde = ok */
+.state-green .machine-tooltip {
+  background: rgba(46, 125, 50, 0.95);
 }
-
 .machine-status-header {
   display: flex;
   align-items: flex-start;
