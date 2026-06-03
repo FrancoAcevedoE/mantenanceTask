@@ -1201,27 +1201,25 @@ h1 {
   padding: 0.6rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
 }
-
+.machine-status-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}.machine-status-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
     
-.machine-status-header h3 {
-  font-size: 0.9rem;
+.machine-status-card h3,
+.machine-status-card p {
+  margin: 0;
+  line-height: 1.2;
 }
-
-.machine-status-header p {
-  font-size: 0.75rem;
-}
-
 .machine-status-label {
   font-size: 0.85rem;
-}
-
-
-.machine-status-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  flex-shrink: 0;
-  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
 }
 
 .status-green {
