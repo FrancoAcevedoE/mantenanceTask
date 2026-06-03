@@ -117,8 +117,6 @@ mongoose.connect(mongoURI)
 
   await ensureDefaultAdmin()
 
-  await sendDailyStoppedPendingNotification("PRUEBA")
-
   startCronNotifications()
 })
 .catch(err=>console.log(err))
