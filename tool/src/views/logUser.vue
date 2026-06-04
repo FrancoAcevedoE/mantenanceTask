@@ -11,10 +11,7 @@
         @keyup.enter="$refs.passwordInput.focus()" />
 
       <input ref="passwordInput" v-model="password" type="password" inputmode="numeric" maxlength="4"
-        placeholder="Contraseña" @keyup.enter="login" /><input ref="dniInput" v-model="dni"
-        @keyup.enter="$refs.passwordInput.focus()" />
-
-      <input ref="passwordInput" v-model="password" @keyup.enter="login" />
+        placeholder="Contraseña" @keyup.enter="login" />
 
       <button type="submit" :disabled="loading">
         <span v-if="loading" class="spinner"></span>
