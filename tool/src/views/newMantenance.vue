@@ -253,6 +253,7 @@ export default {
     await this.loadMachines()
 
     document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+document.body.style.backgroundAttachment = 'fixed'
   },
 
   beforeUnmount() {

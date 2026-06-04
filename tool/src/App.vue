@@ -8,6 +8,10 @@ const route = useRoute()
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
 
+/* =========================
+   USER
+========================= */
+
 const getStoredUser = () => {
   try {
     const rawUser = localStorage.getItem('user')
@@ -22,6 +26,10 @@ const currentUser = computed(() => {
   return getStoredUser()
 })
 
+/* =========================
+   NAV VISIBILITY
+========================= */
+
 const showNav = computed(() => {
   route.fullPath
   return route.name !== 'LogUser' && Boolean(localStorage.getItem('token'))
@@ -34,12 +42,20 @@ const canViewSeller = computed(() => ['vendedor'].includes(currentUser.value?.ro
 const canViewHistory = computed(() => currentUser.value?.role !== 'vendedor')
 const canViewNotifications = computed(() => currentUser.value?.role !== 'vendedor')
 
+/* =========================
+   LOGOUT
+========================= */
+
 const logout = async () => {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
   notificationsStore.reset()
   await router.push('/logUser')
 }
+
+/* =========================
+   NOTIFICATIONS
+========================= */
 
 const syncNotifications = async () => {
   if (showNav.value) {
@@ -49,6 +65,35 @@ const syncNotifications = async () => {
 
   notificationsStore.reset()
 }
+
+/* =========================
+   🎨 BACKGROUND CONTROL (NUEVO)
+========================= */
+
+const setBodyTheme = (theme) => {
+  document.body.classList.remove(
+    'bg-login',
+    'bg-app',
+    'bg-dashboard',
+    'bg-notifications'
+  )
+
+  if (theme) {
+    document.body.classList.add(theme)
+  }
+}
+
+watch(
+  () => route.meta?.bodyClass,
+  (theme) => {
+    setBodyTheme(theme)
+  },
+  { immediate: true }
+)
+
+/* =========================
+   LIFECYCLE
+========================= */
 
 onMounted(() => {
   syncNotifications().catch(() => {})
@@ -86,6 +131,25 @@ onBeforeUnmount(() => {
 </template>
 
 <style>
+/* =========================
+   BODY THEMES
+========================= */
+
+body.bg-login {
+  background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28));
+}
+
+body.bg-app {
+  background: #f8f8fc;
+}
+
+body.bg-dashboard {
+  background: #ffffff;
+}
+
+body.bg-notifications {
+  background: #f8f8fc;
+}
 /* global minimalist styling */
 html, body, #app {
   min-height: 100vh;

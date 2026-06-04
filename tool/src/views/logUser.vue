@@ -162,8 +162,8 @@ export default {
     this.pwaUrl = normalizedUrl
     this.qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(this.pwaUrl)}`
 
-    document.body.style.background =
-      'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+   document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+document.body.style.backgroundAttachment = 'fixed'
   },
 
   beforeUnmount() {

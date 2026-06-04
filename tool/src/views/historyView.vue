@@ -224,7 +224,8 @@ export default {
     },
 
     async mounted() {
-        document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+        document.body.style.background =
+  'linear-gradient(180deg, rgb(248, 248, 252), #ffffff)'
 
         const currentUser = this.getStoredUser()
         this.currentUserRole = currentUser?.role || ""

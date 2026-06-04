@@ -192,12 +192,12 @@ export default {
         }
       }
     },
-    goToNotification(item) {
-      this.$router.push({
-        path: '/notifications',
-        query: { id: item.id }
-      })
-    },
+   goToNotification(item) {
+  this.$router.push({
+  path: '/notifications-history',
+  query: { id: item.id }
+})
+},
     toggleNotification(id) {
       this.expandedNotification =
         this.expandedNotification === id ? null : id
@@ -348,6 +348,7 @@ export default {
       this.markAsRead(id)
     }
     document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+document.body.style.backgroundAttachment = 'fixed' 
 
     // No cargar historial de notificaciones de mantenimiento para vendedores
     const user = JSON.parse(localStorage.getItem('user') || '{}')
