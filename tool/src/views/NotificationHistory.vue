@@ -122,7 +122,8 @@
                   </span>
                 </div>
 
-                <button v-if="!item.read" type="button" class="mark-read-button" @click.stop="markAsRead(item.id)">
+                <button v-if="expandedNotification === String(item.id) && !item.read" type="button"
+                  class="mark-read-button" @click.stop="markAsRead(item.id)">
                   Marcar leída
                 </button>
 
@@ -155,7 +156,6 @@ export default {
       toDate: '',
       searchText: '',
       isLoading: false,
-
       expandedNotification: null
     }
   },
@@ -164,9 +164,7 @@ export default {
     filteredItems() {
       const query = this.searchText.trim().toLowerCase()
 
-      if (!query) {
-        return this.items
-      }
+      if (!query) return this.items
 
       return this.items.filter(item => {
         const title = String(item.title || '').toLowerCase()
@@ -184,6 +182,22 @@ export default {
     }
   },
 
+  watch: {
+    '$route.query.id': {
+      immediate: true,
+      handler(newId) {
+        if (!newId) return
+
+        const id = Number(newId)
+
+        if (!id) return
+
+        this.expandedNotification = String(id)
+        this.markAsRead(id)
+      }
+    }
+  },
+
   methods: {
     authConfig() {
       return {
@@ -192,34 +206,56 @@ export default {
         }
       }
     },
-   goToNotification(item) {
-  this.$router.push({
-  path: '/notifications-history',
-  query: { id: item.id }
-})
-},
+
+    goToNotification(item) {
+      const id = String(item.id)
+      const isOpen = this.expandedNotification === id
+
+      if (isOpen) {
+        this.expandedNotification = null
+        this.markAsRead(id)
+        return
+      }
+
+      this.expandedNotification = id
+
+      this.$router.push({
+        path: '/notifications-history',
+        query: { id }
+      })
+    },
+
     toggleNotification(id) {
       this.expandedNotification =
-        this.expandedNotification === id ? null : id
+        this.expandedNotification === id ? null : String(id)
     },
+
     async markAsRead(id) {
       try {
+        if (!id) return
+
+        const parsedId = Number(id)
+        if (!parsedId) return
+
         await axios.post(
           `${API_BASE_URL}/maintenance/notifications/read`,
-          { ids: [id] },
+          { ids: [parsedId] },
           this.authConfig()
         )
 
-        // actualizar UI local si existe en lista
-        if (this.items) {
-          this.items = this.items.map(item =>
-            item.id === id ? { ...item, read: true } : item
-          )
-        }
+        this.items = this.items.map(item =>
+          Number(item.id) === parsedId
+            ? { ...item, read: true }
+            : item
+        )
+
+        this.expandedNotification = null
+
       } catch (error) {
         this.$notify.notifyApiError(error, 'No se pudo marcar como leída')
       }
     },
+
     buildHistoryQuery() {
       const params = new URLSearchParams()
 
@@ -227,16 +263,11 @@ export default {
         params.set('read', this.readFilter)
       }
 
-      if (this.fromDate) {
-        params.set('from', this.fromDate)
-      }
+      if (this.fromDate) params.set('from', this.fromDate)
+      if (this.toDate) params.set('to', this.toDate)
 
-      if (this.toDate) {
-        params.set('to', this.toDate)
-      }
-
-      const rawQuery = params.toString()
-      return rawQuery ? `?${rawQuery}` : ''
+      const raw = params.toString()
+      return raw ? `?${raw}` : ''
     },
 
     async loadHistory() {
@@ -248,59 +279,54 @@ export default {
           this.authConfig()
         )
 
-        this.items = Array.isArray(response.data?.items) ? response.data.items : []
+        this.items = Array.isArray(response.data?.items)
+          ? response.data.items
+          : []
+
         this.summary = response.data?.summary || {
           total: this.items.length,
-          read: this.items.filter(item => item.read).length,
-          unread: this.items.filter(item => !item.read).length
+          read: this.items.filter(i => i.read).length,
+          unread: this.items.filter(i => !i.read).length
         }
       } catch (error) {
-        this.$notify.notifyApiError(error, 'No se pudo cargar el historial de notificaciones')
+        this.$notify.notifyApiError(
+          error,
+          'No se pudo cargar el historial de notificaciones'
+        )
       } finally {
         this.isLoading = false
       }
     },
 
-    // async markAsRead(notificationId) {
-    //   try {
-    //     await axios.post(
-    //       `${API_BASE_URL}/maintenance/notifications/history/read`,
-    //       {
-    //         ids: [notificationId]
-    //       },
-    //       this.authConfig()
-    //     )
-
-    //     this.items = this.items.map(item => item.id === notificationId ? { ...item, read: true } : item)
-    //     this.summary.read += 1
-    //     this.summary.unread = Math.max(0, this.summary.unread - 1)
-    //   } catch (error) {
-    //     this.$notify.notifyApiError(error, 'No se pudo marcar como leida')
-    //   }
-    // },
-
     async markVisibleAsRead() {
-      const unreadVisibleIds = this.filteredItems.filter(item => !item.read).map(item => item.id)
+      const ids = this.filteredItems
+        .filter(i => !i.read)
+        .map(i => i.id)
 
-      if (!unreadVisibleIds.length) {
-        return
-      }
+      if (!ids.length) return
 
       try {
         await axios.post(
           `${API_BASE_URL}/maintenance/notifications/history/read`,
-          {
-            ids: unreadVisibleIds
-          },
+          { ids },
           this.authConfig()
         )
 
-        const unreadSet = new Set(unreadVisibleIds)
-        this.items = this.items.map(item => unreadSet.has(item.id) ? { ...item, read: true } : item)
-        this.summary.read += unreadVisibleIds.length
-        this.summary.unread = Math.max(0, this.summary.unread - unreadVisibleIds.length)
+        const set = new Set(ids)
+
+        this.items = this.items.map(item =>
+          set.has(item.id)
+            ? { ...item, read: true }
+            : item
+        )
+        this.expandedNotification = null
+        this.summary.read += ids.length
+        this.summary.unread = Math.max(0, this.summary.unread - ids.length)
       } catch (error) {
-        this.$notify.notifyApiError(error, 'No se pudieron marcar las notificaciones visibles')
+        this.$notify.notifyApiError(
+          error,
+          'No se pudieron marcar las notificaciones visibles'
+        )
       }
     },
 
@@ -311,11 +337,14 @@ export default {
           this.authConfig()
         )
 
-        this.items = this.items.map(item => ({ ...item, read: false }))
+        this.items = this.items.map(i => ({ ...i, read: false }))
         this.summary.read = 0
         this.summary.unread = this.items.length
       } catch (error) {
-        this.$notify.notifyApiError(error, 'No se pudo limpiar el estado de leidas')
+        this.$notify.notifyApiError(
+          error,
+          'No se pudo limpiar el estado de leídas'
+        )
       }
     },
 
@@ -329,7 +358,7 @@ export default {
     formatSeverity(value) {
       const map = {
         success: 'Exito',
-        warning: 'Atencion',
+        warning: 'Atención',
         error: 'Urgente',
         info: 'Info'
       }
@@ -339,22 +368,20 @@ export default {
   },
 
   mounted() {
-
     const id = this.$route.query.id
 
     if (id) {
-      // this.openNotification(id)
-      this.expandedNotification = id
+      this.expandedNotification = String(id)
       this.markAsRead(id)
     }
-    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
-document.body.style.backgroundAttachment = 'fixed' 
 
-    // No cargar historial de notificaciones de mantenimiento para vendedores
+    document.body.style.background =
+      'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+    document.body.style.backgroundAttachment = 'fixed'
+
     const user = JSON.parse(localStorage.getItem('user') || '{}')
-    if (user.role === 'vendedor') {
-      return
-    }
+    if (user.role === 'vendedor') return
+
     this.loadHistory()
   },
 
