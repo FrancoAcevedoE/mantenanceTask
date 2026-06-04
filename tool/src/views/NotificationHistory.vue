@@ -66,7 +66,7 @@
               'history-item',
               item.read ? 'read' : 'unread',
               expandedNotification === item.id ? 'expanded' : ''
-            ]" @click="toggleNotification(item.id)">
+            ]" @click="goToNotification(item)">
 
               <!-- VISTA COMPACTA -->
               <div class="notification-row">
@@ -192,9 +192,33 @@ export default {
         }
       }
     },
+    goToNotification(item) {
+      this.$router.push({
+        path: '/notifications',
+        query: { id: item.id }
+      })
+    },
     toggleNotification(id) {
       this.expandedNotification =
         this.expandedNotification === id ? null : id
+    },
+    async markAsRead(id) {
+      try {
+        await axios.post(
+          `${API_BASE_URL}/maintenance/notifications/read`,
+          { ids: [id] },
+          this.authConfig()
+        )
+
+        // actualizar UI local si existe en lista
+        if (this.items) {
+          this.items = this.items.map(item =>
+            item.id === id ? { ...item, read: true } : item
+          )
+        }
+      } catch (error) {
+        this.$notify.notifyApiError(error, 'No se pudo marcar como leída')
+      }
     },
     buildHistoryQuery() {
       const params = new URLSearchParams()
@@ -237,23 +261,23 @@ export default {
       }
     },
 
-    async markAsRead(notificationId) {
-      try {
-        await axios.post(
-          `${API_BASE_URL}/maintenance/notifications/history/read`,
-          {
-            ids: [notificationId]
-          },
-          this.authConfig()
-        )
+    // async markAsRead(notificationId) {
+    //   try {
+    //     await axios.post(
+    //       `${API_BASE_URL}/maintenance/notifications/history/read`,
+    //       {
+    //         ids: [notificationId]
+    //       },
+    //       this.authConfig()
+    //     )
 
-        this.items = this.items.map(item => item.id === notificationId ? { ...item, read: true } : item)
-        this.summary.read += 1
-        this.summary.unread = Math.max(0, this.summary.unread - 1)
-      } catch (error) {
-        this.$notify.notifyApiError(error, 'No se pudo marcar como leida')
-      }
-    },
+    //     this.items = this.items.map(item => item.id === notificationId ? { ...item, read: true } : item)
+    //     this.summary.read += 1
+    //     this.summary.unread = Math.max(0, this.summary.unread - 1)
+    //   } catch (error) {
+    //     this.$notify.notifyApiError(error, 'No se pudo marcar como leida')
+    //   }
+    // },
 
     async markVisibleAsRead() {
       const unreadVisibleIds = this.filteredItems.filter(item => !item.read).map(item => item.id)
@@ -315,6 +339,14 @@ export default {
   },
 
   mounted() {
+
+    const id = this.$route.query.id
+
+    if (id) {
+      // this.openNotification(id)
+      this.expandedNotification = id
+      this.markAsRead(id)
+    }
     document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
 
     // No cargar historial de notificaciones de mantenimiento para vendedores
@@ -322,7 +354,6 @@ export default {
     if (user.role === 'vendedor') {
       return
     }
-
     this.loadHistory()
   },
 
