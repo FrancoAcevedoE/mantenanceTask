@@ -65,7 +65,7 @@
             <li v-for="item in filteredItems" :key="item.id" :class="[
               'history-item',
               item.read ? 'read' : 'unread',
-              expandedNotification === item.id ? 'expanded' : ''
+              expandedNotification === String(item.id) ? 'expanded' : ''
             ]" @click="goToNotification(item)">
 
               <!-- VISTA COMPACTA -->
@@ -101,7 +101,7 @@
               </div>
 
               <!-- DETALLE -->
-              <div v-if="expandedNotification === item.id" class="notification-details">
+              <div v-if="expandedNotification === String(item.id)" class="notification-details">
 
                 <pre class="notification-text">{{ item.body }}</pre>
 
@@ -230,31 +230,32 @@ export default {
         this.expandedNotification === id ? null : String(id)
     },
 
-    async markAsRead(id) {
-      try {
-        if (!id) return
+   async markAsRead(id) {
+  try {
+    const parsedId = Number(id)
+    if (!parsedId) return
 
-        const parsedId = Number(id)
-        if (!parsedId) return
+    await axios.post(
+      `${API_BASE_URL}/maintenance/notifications/read`,
+      { ids: [parsedId] },
+      this.authConfig()
+    )
 
-        await axios.post(
-          `${API_BASE_URL}/maintenance/notifications/read`,
-          { ids: [parsedId] },
-          this.authConfig()
-        )
+    this.items = this.items.map(item => {
+      const itemId = Number(item.id)
 
-        this.items = this.items.map(item =>
-          Number(item.id) === parsedId
-            ? { ...item, read: true }
-            : item
-        )
-
-        this.expandedNotification = null
-
-      } catch (error) {
-        this.$notify.notifyApiError(error, 'No se pudo marcar como leída')
+      return {
+        ...item,
+        read: itemId === parsedId ? true : item.read
       }
-    },
+    })
+console.log("ITEMS:", this.items)
+    this.expandedNotification = null
+
+  } catch (error) {
+    this.$notify.notifyApiError(error, 'No se pudo marcar como leída')
+  }
+},
 
     buildHistoryQuery() {
       const params = new URLSearchParams()
