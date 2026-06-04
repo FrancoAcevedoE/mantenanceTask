@@ -506,9 +506,9 @@ console.log("ITEMS:", this.items)
 
 .history-item {
   text-align: left;
-  border-radius: 16px;
-  padding: 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+  padding: 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.15);
   background: #ffffff;
   transition: all 0.2s ease;
 }
@@ -651,7 +651,7 @@ console.log("ITEMS:", this.items)
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.7rem;
+  gap: 0.3rem;
 }
 
 .history-item {

@@ -227,8 +227,9 @@ export const newMaintenanceController = async (req, res) => {
             reportedBy: req.user.id,
             status
         })
-
+console.log("machine:", maintenance.machine)
         await maintenance.save()
+        console.log("machine:", maintenance.machine)
         sendMaintenanceStatusAlert(maintenance).catch(() => { })
 
         await registerAuditEvent({
@@ -808,12 +809,8 @@ export const markNotificationsReadController = async (req, res) => {
             message:
                 "Error al marcar notificaciones como leidas"
         })
-
     }
-
 }
-
-
 
 export const clearNotificationReadsController = async (req, res) => {
 
@@ -843,24 +840,13 @@ export const clearNotificationReadsController = async (req, res) => {
 
 }
 
-
-
-
-
-
-
-
-
-
-
 export const notificationsHistoryController = async (req, res) => {
     try {
         const readFilter = String(req.query.read || "all").trim().toLowerCase()
         const fromDateRaw = String(req.query.from || "").trim()
         const toDateRaw = String(req.query.to || "").trim()
-
+        
         const query = {}
-
         if (fromDateRaw || toDateRaw) {
             query.createdAt = {}
 
