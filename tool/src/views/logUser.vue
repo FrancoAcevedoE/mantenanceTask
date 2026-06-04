@@ -73,9 +73,8 @@ export default {
       dni: "",
       password: "",
       error: null,
-      pwaUrl: PWA_URL,
       qrUrl: "",
-       pwaUrl: import.meta.env.VITE_PWA_URL,
+      pwaUrl: import.meta.env.VITE_PWA_URL,
     }
   },
   methods: {
@@ -90,63 +89,63 @@ export default {
       }
     },
 
- async login() {
-  const now = Date.now()
+    async login() {
+      const now = Date.now()
 
-  // 🔒 bloqueo doble real
-  if (this.loading || this.submitLock) return
+      // 🔒 bloqueo doble real
+      if (this.loading || this.submitLock) return
 
-  // 🔒 anti spam (mejora 4)
-  const diff = now - this.lastSubmitAt
-  if (diff < 800) return
+      // 🔒 anti spam (mejora 4)
+      const diff = now - this.lastSubmitAt
+      if (diff < 800) return
 
-  this.submitLock = true
-  this.loading = true
-  this.lastSubmitAt = now
-  this.error = null
+      this.submitLock = true
+      this.loading = true
+      this.lastSubmitAt = now
+      this.error = null
 
-  try {
-    const dni = this.dni.replace(/\D/g, "").slice(0, 8)
-    const password = this.password.replace(/\D/g, "").slice(0, 4)
+      try {
+        const dni = this.dni.replace(/\D/g, "").slice(0, 8)
+        const password = this.password.replace(/\D/g, "").slice(0, 4)
 
-    // ❗ VALIDACIONES CON DESBLOQUEO (mejora 5)
-    if (!/^\d{8}$/.test(dni)) {
-      this.triggerError("DNI inválido")
-      this.loading = false
-      this.submitLock = false
-      return
-    }
+        // ❗ VALIDACIONES CON DESBLOQUEO (mejora 5)
+        if (!/^\d{8}$/.test(dni)) {
+          this.triggerError("DNI inválido")
+          this.loading = false
+          this.submitLock = false
+          return
+        }
 
-    if (!/^\d{4}$/.test(password)) {
-      this.triggerError("Contraseña inválida")
-      this.loading = false
-      this.submitLock = false
-      return
-    }
+        if (!/^\d{4}$/.test(password)) {
+          this.triggerError("Contraseña inválida")
+          this.loading = false
+          this.submitLock = false
+          return
+        }
 
-    const response = await axios.post(`${API_BASE_URL}/users/login`, {
-      dni,
-      password
-    })
+        const response = await axios.post(`${API_BASE_URL}/users/login`, {
+          dni,
+          password
+        })
 
-    const { token, user } = response.data
+        const { token, user } = response.data
 
-    localStorage.setItem("token", token)
-    localStorage.setItem("user", JSON.stringify(user))
+        localStorage.setItem("token", token)
+        localStorage.setItem("user", JSON.stringify(user))
 
-    this.$router.push(user.role === "admin" ? "/adminView" : "/dashboard")
+        this.$router.push(user.role === "admin" ? "/adminView" : "/dashboard")
 
-  } catch (err) {
-    this.triggerError("Usuario o contraseña incorrectos")
+      } catch (err) {
+        this.triggerError("Usuario o contraseña incorrectos")
 
-  } finally {
-    this.loading = false
+      } finally {
+        this.loading = false
 
-    setTimeout(() => {
-      this.submitLock = false
-    }, 800) // alineado con cooldown real
-  }
-},
+        setTimeout(() => {
+          this.submitLock = false
+        }, 800) // alineado con cooldown real
+      }
+    },
 
     focusFirstInput() {
       this.$nextTick(() => {
