@@ -2,45 +2,58 @@
   <div class="page-container">
     <div class="container">
       <div class="notification-history-card">
+
+        <!-- HEADER -->
         <header class="notification-history-header">
-          <div>
-            <p>HISTORIAL DE NOTIFICACIONES</p>
-          </div>
+          <p>HISTORIAL DE NOTIFICACIONES</p>
+
           <div class="notification-history-actions">
-            <button type="button" class="ghost-button" @click="markVisibleAsRead"
-              :disabled="isLoading || !hasUnreadVisible">
-              Marcar visibles como leidas
+            <button
+              type="button"
+              class="ghost-button"
+              @click="markVisibleAsRead"
+              :disabled="isLoading || !hasUnreadVisible"
+            >
+              Marcar visibles como leídas
             </button>
-            <button type="button" class="ghost-button" @click="clearReadFilter" :disabled="isLoading">
-              Limpiar leidas
+
+            <button
+              type="button"
+              class="ghost-button"
+              @click="clearReadFilter"
+              :disabled="isLoading"
+            >
+              Limpiar leídas
             </button>
           </div>
         </header>
 
-        <!-- Mensaje para vendedores -->
+        <!-- RESTRICCIÓN ROL -->
         <div v-if="currentUser?.role === 'vendedor'" class="seller-message">
-          <p>Como vendedor, no tienes acceso al historial de notificaciones de mantenimiento.</p>
+          <p>Como vendedor no tenés acceso al historial.</p>
           <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
         </div>
 
-        <!-- Contenido del historial solo para otros roles -->
         <div v-else>
+
+          <!-- FILTROS -->
           <section class="notification-history-filters">
             <select v-model="readFilter">
               <option value="all">Todas</option>
-              <option value="unread">No leidas</option>
-              <option value="read">Leidas</option>
+              <option value="unread">No leídas</option>
+              <option value="read">Leídas</option>
             </select>
 
             <input v-model="fromDate" type="date" />
             <input v-model="toDate" type="date" />
-            <input v-model="searchText" type="text" placeholder="Buscar por titulo o detalle" />
+            <input v-model="searchText" type="text" placeholder="Buscar..." />
 
-            <button type="button" @click="loadHistory" :disabled="isLoading">
+            <button @click="loadHistory" :disabled="isLoading">
               Aplicar filtros
             </button>
           </section>
 
+          <!-- SUMMARY -->
           <section class="notification-history-summary">
             <article>
               <strong>{{ summary.total }}</strong>
@@ -48,89 +61,85 @@
             </article>
             <article>
               <strong>{{ summary.unread }}</strong>
-              <span>No leidas</span>
+              <span>No leídas</span>
             </article>
             <article>
               <strong>{{ summary.read }}</strong>
-              <span>Leidas</span>
+              <span>Leídas</span>
             </article>
           </section>
 
-          <p v-if="isLoading" class="state-text">Cargando historial...</p>
-          <p v-else-if="!filteredItems.length" class="state-text">No hay notificaciones para los filtros seleccionados.
+          <p v-if="isLoading" class="state-text">Cargando...</p>
+
+          <p v-else-if="!filteredItems.length" class="state-text">
+            No hay notificaciones.
           </p>
 
-          <ul v-else class="history-list">
+          <!-- SPLIT VIEW -->
+          <div v-else class="split-view">
 
-            <li v-for="item in filteredItems" :key="item.id" :class="[
-              'history-item',
-              item.read ? 'read' : 'unread',
-              expandedNotification === item.id ? 'expanded' : ''
-            ]" @click="goToNotification(item)">
+            <!-- LISTA IZQUIERDA -->
+            <ul class="history-list">
 
-              <!-- VISTA COMPACTA -->
-              <div class="notification-row">
-
-                <div class="notification-main">
-
-                  <div class="notification-title">
-                    {{ item.title }}
-                  </div>
-
-                  <div v-if="expandedNotification !== item.id" class="notification-preview">
-                    {{ item.body }}
-                  </div>
-
+              <li
+                v-for="item in filteredItems"
+                :key="item.id"
+                :class="[
+                  'history-item',
+                  item.read ? 'read' : 'unread',
+                  expandedNotification === item.id ? 'active' : ''
+                ]"
+                @click="selectNotification(item)"
+              >
+                <div class="notification-title">
+                  {{ item.title }}
                 </div>
 
-                <div class="notification-right">
-
-                  <span class="notification-date">
-                    {{ formatDate(item.createdAt) }}
-                  </span>
-
-                  <span :class="[
-                    'severity-badge',
-                    `severity-${item.severity || 'info'}`
-                  ]">
-                    {{ formatSeverity(item.severity) }}
-                  </span>
-
+                <div class="notification-preview">
+                  {{ item.body }}
                 </div>
 
+                <span class="notification-date">
+                  {{ formatDate(item.createdAt) }}
+                </span>
+              </li>
+
+            </ul>
+
+            <!-- PANEL DERECHO (DETALLE) -->
+            <div class="notification-detail-panel" v-if="selectedNotification">
+
+              <h2>{{ selectedNotification.title }}</h2>
+
+              <pre class="notification-text">
+                {{ selectedNotification.body }}
+              </pre>
+
+              <div v-if="selectedNotification.machine">
+                <strong>Máquina:</strong> {{ selectedNotification.machine }}
               </div>
 
-              <!-- DETALLE -->
-              <div v-if="expandedNotification === item.id" class="notification-details">
-
-                <pre class="notification-text">{{ item.body }}</pre>
-
-                <div v-if="item.machine" class="detail-row">
-                  <strong>Máquina:</strong>
-                  <span>{{ item.machine }}</span>
-                </div>
-
-                <div v-if="item.sector" class="detail-row">
-                  <strong>Sector:</strong>
-                  <span>{{ item.sector }}</span>
-                </div>
-
-                <div class="detail-row">
-                  <strong>Estado:</strong>
-                  <span>
-                    {{ item.read ? 'Leída' : 'No leída' }}
-                  </span>
-                </div>
-
-                <button v-if="!item.read" type="button" class="mark-read-button" @click.stop="markAsRead(item.id)">
-                  Marcar leída
-                </button>
-
+              <div v-if="selectedNotification.sector">
+                <strong>Sector:</strong> {{ selectedNotification.sector }}
               </div>
 
-            </li>
+              <div>
+                <strong>Estado:</strong>
+                {{ selectedNotification.read ? 'Leída' : 'No leída' }}
+              </div>
 
-          </ul>
+              <button
+                v-if="!selectedNotification.read"
+                class="mark-read-button"
+                @click="markAsRead(selectedNotification.id)"
+              >
+                Marcar como leída
+              </button>
+
+            </div>
+
+          </div>
+
         </div>
       </div>
     </div>
@@ -145,6 +154,7 @@ export default {
   data() {
     return {
       items: [],
+      selectedNotification: null,
       summary: {
         total: 0,
         read: 0,
@@ -155,7 +165,6 @@ export default {
       toDate: '',
       searchText: '',
       isLoading: false,
-
       expandedNotification: null
     }
   },
@@ -197,6 +206,14 @@ export default {
         path: '/notifications',
         query: { id: item.id }
       })
+    },
+    selectNotification(item) {
+      this.selectedNotification = item
+      this.expandedNotification = item.id
+
+      if (!item.read) {
+        this.markAsRead(item.id)
+      }
     },
     toggleNotification(id) {
       this.expandedNotification =
@@ -384,7 +401,41 @@ export default {
   line-height: 1.6;
   color: #3a4a2f;
 }
+.split-view {
+  display: flex;
+  height: 70vh;
+  gap: 1rem;
+}
 
+.list-pane {
+  width: 40%;
+  overflow-y: auto;
+  border-right: 1px solid #e5e7eb;
+  padding-right: 0.5rem;
+}
+
+.detail-pane {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.detail-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.history-item.active {
+  background: #f3f7ec;
+  border-left: 4px solid #6b8e3a;
+}
+
+.empty-state {
+  color: #888;
+  padding: 2rem;
+}
 .page-container {
   width: 100%;
   min-height: 100vh;
