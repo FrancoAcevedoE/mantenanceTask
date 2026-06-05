@@ -1096,13 +1096,14 @@ h1 {
 }
   
 .chart-card {
-  display: flex;
-  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .chart-card canvas {
-  flex: 1;
   width: 100% !important;
+  max-width: 100%;
+  height: 100% !important;
 }
 
 
@@ -1123,6 +1124,8 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1rem;
+  width: 100%;
+  overflow: hidden;
 }
 
 .chart-card {
