@@ -7,9 +7,9 @@
       <div class="box action-card" @click="showNewMachineForm = !showNewMachineForm">
         <div class="section-title">
           <i class="bi bi-clipboard-plus"></i>
-          <h3>
-            {{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}
-          </h3>
+          <P>
+            {{ editingMachineId ? 'Modificar máquina' : 'NUEVA MÁQUINA' }}
+          </P>
         </div>
       </div>
 
@@ -17,7 +17,7 @@
       <div class="box action-card" @click="showMachinesPanel = !showMachinesPanel">
         <div class="section-title">
           <i class="bi bi-clipboard2-data"></i>
-          <h3>Máquinas cargadas</h3>
+          <p>MAQUINAS CARGADAS</p>
         </div>
       </div>
     </div>
