@@ -547,8 +547,10 @@ export default {
         this.syncPeriodSelectorsFromPeriod()
 
         this.$nextTick(() => {
-          this.renderCharts()
-          this.updateRecentBottomScrollbar()
+          setTimeout(() => {
+            this.renderCharts()
+            this.updateRecentBottomScrollbar()
+          }, 200)
         })
 
       } catch (error) {
@@ -583,10 +585,10 @@ export default {
     destroyCharts() {
 
       if (this.statusChartInstance) {
-  this.statusChartInstance.stop()
-  this.statusChartInstance.destroy()
-  this.statusChartInstance = null
-}
+        this.statusChartInstance.stop()
+        this.statusChartInstance.destroy()
+        this.statusChartInstance = null
+      }
 
       if (this.typeChartInstance) {
         this.typeChartInstance.destroy()
@@ -657,16 +659,10 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-              padding: {
-                left: 10,
-                right: 20,
-                top: 10,
-                bottom: 10
-              }
-            }
+            resizeDelay: 100,
           }
-        })
+        }
+        )
       }
 
       if (this.$refs.sectorChart) {
@@ -685,6 +681,7 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
+            resizeDelay: 100,
             plugins: {
               legend: {
                 display: false
@@ -711,7 +708,8 @@ export default {
           },
           options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            resizeDelay: 100
           }
         })
       }
@@ -1099,25 +1097,31 @@ h1 {
   box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
   transform: translateY(-2px);
 }
-
 .chart-card {
-  min-width: 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+
+  min-height: 350px;
+  height: 350px;
+
+  position: relative;
+  width: 100%;
+
   overflow: hidden;
 }
 
-.chart-card {
-  position: relative;
-  height: 200px;
+.chart-card canvas {
+  width: 100% !important;
+  height: calc(100% - 50px) !important;
 }
 
 .chart-card-wide {
-  height: 100px;
+  grid-column: span 2;
+  height: 500px;
+  min-height: 500px;
 }
-
-.chart-card canvas {
-  max-height: fit-content;
-}
-
 
 /* CHARTS */
 .charts-section {
@@ -1132,24 +1136,11 @@ h1 {
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1rem;
   width: 100%;
-  overflow: hidden;
 }
 
-.chart-card {
-  background: linear-gradient(135deg, #fff, #f4f9ff);
-  border: 1px solid #e7edf7;
-  border-radius: 12px;
-  padding: 0.85rem;
-  min-height: 400px;
-  height: auto;
-}
-
-.chart-card-wide {
-  min-height: 450px;
-}
 
 /* MACHINE STATUS */
 .machine-status-section {
