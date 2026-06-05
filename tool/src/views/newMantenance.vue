@@ -21,7 +21,8 @@
           <div class="horometro-body">
             <select v-model="horometroForm.machineId">
               <option value="">Seleccionar máquina</option>
-              <option v-for="machine in machines" :key="machine._id" :value="machine._id">
+
+              <option v-for="machine in machines" :key="machine._id" :value="machine.name">
                 {{ machine.sector ? `${machine.sector} - ${machine.name}` : machine.name }}
               </option>
             </select>
@@ -253,7 +254,7 @@ export default {
     await this.loadMachines()
 
     document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
-document.body.style.backgroundAttachment = 'fixed'
+    document.body.style.backgroundAttachment = 'fixed'
   },
 
   beforeUnmount() {
@@ -328,16 +329,21 @@ document.body.style.backgroundAttachment = 'fixed'
       )
     },
     selectedMachinePart() {
-  if (!this.selectedMachine) return []
+      if (!this.selectedMachine) return []
 
-  const parts =
-    this.selectedMachine.machineParts ||
-    this.selectedMachine.additionalMachinePartsList ||
-    []
-console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.machine), null, 2))
-  return Array.isArray(parts) ? parts : []
-  console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.machine), null, 2))
-},
+      console.log(
+        "JSON:",
+        JSON.stringify(
+          this.machines.find(m => m._id === this.form.machine),
+          null,
+          2
+        )
+      )
+
+      return Array.isArray(this.selectedMachine.machineParts)
+        ? this.selectedMachine.machineParts
+        : []
+    },
 
     selectedHorometroMachine() {
       if (!this.horometroForm.machineId) return null
@@ -403,29 +409,51 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
 
     async loadMachines() {
       try {
-        const response = await axios.get(`${API_BASE_URL}/machines`, this.authConfig())
-
-        const machines = Array.isArray(response.data) ? response.data : []
-
-        this.machines = machines.map(m => ({
-  ...m,
-  machinePart: m.machineParts || m.machinePart || []
-}))
-        this.machines = machines.sort((a, b) =>
-          String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }),
+        const response = await axios.get(
+          `${API_BASE_URL}/machines`,
+          this.authConfig()
         )
+
+        const machines = Array.isArray(response.data)
+          ? response.data
+          : []
+
+        this.machines = machines
+          .map(machine => ({
+            ...machine
+          }))
+          .sort((a, b) =>
+            String(a.name || '').localeCompare(
+              String(b.name || ''),
+              'es',
+              { sensitivity: 'base' }
+            )
+          )
+
         this.sectors = [
-          ...new Set(this.machines.map((machine) => machine.sector).filter(Boolean)),
+          ...new Set(
+            this.machines
+              .map(machine => machine.sector)
+              .filter(Boolean)
+          )
         ].sort((a, b) =>
-          String(a || '').localeCompare(String(b || ''), 'es', { sensitivity: 'base' }),
+          String(a || '').localeCompare(
+            String(b || ''),
+            'es',
+            { sensitivity: 'base' }
+          )
         )
+
       } catch (error) {
         this.$notify.error('Error al cargar maquinas')
       }
     },
 
     onMachineChange() {
-       console.log("MAQUINA", this.selectedMachine)
+      console.log("MAQUINA", this.selectedMachine)
+      console.log("ID seleccionado:", this.form.machine)
+  console.log("Máquina encontrada:", this.selectedMachine)
+  console.log("Partes:", this.selectedMachine?.machineParts)
       if (!this.selectedMachine) {
         this.form.machinePart = []
         this.additionalMachinePartList = []
