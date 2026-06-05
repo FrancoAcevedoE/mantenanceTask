@@ -54,7 +54,7 @@
             <span class="period-label-full">Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{
               formatMonthLabel(periodEnd) }}</span>
             <span class="period-label-compact">{{ formatMonthLabel(periodStart) }} - {{ formatMonthLabel(periodEnd)
-            }}</span>
+              }}</span>
           </p>
         </section>
 
@@ -637,6 +637,18 @@ export default {
             plugins: {
               legend: {
                 position: "bottom"
+              },
+              tooltip: {
+                enabled: true,
+                callbacks: {
+                  label: function (context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0)
+                    const value = context.raw
+                    const percentage = ((value / total) * 100).toFixed(1)
+
+                    return `${context.label}: ${value} (${percentage}%)`
+                  }
+                }
               }
             }
           }
@@ -659,7 +671,15 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            resizeDelay: 100,
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `Cantidad: ${context.raw}`
+                  }
+                }
+              }
+            }
           }
         }
         )
@@ -681,10 +701,16 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            resizeDelay: 100,
             plugins: {
               legend: {
                 display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `Sector: ${context.label} (${context.raw})`
+                  }
+                }
               }
             }
           }
@@ -1097,6 +1123,7 @@ h1 {
   box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
   transform: translateY(-2px);
 }
+
 .chart-card {
   background: #fff;
   border-radius: 12px;
@@ -1115,6 +1142,10 @@ h1 {
 .chart-card canvas {
   width: 100% !important;
   height: calc(100% - 50px) !important;
+}
+
+.chart-card canvas:hover {
+  cursor: default !important;
 }
 
 .chart-card-wide {
