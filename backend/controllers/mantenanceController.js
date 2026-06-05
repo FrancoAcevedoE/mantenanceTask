@@ -218,7 +218,7 @@ export const newMaintenanceController = async (req, res) => {
             data.unfinishedReasonCategory = ""
         }
         console.log('paso 3')
-
+console.log("MACHINE RECIBIDA:", data.machine)
         const maintenance = new Maintenance({
             ...data,
             additionalWorkers: additionalWorkerIds,
@@ -227,8 +227,9 @@ export const newMaintenanceController = async (req, res) => {
             reportedBy: req.user.id,
             status
         })
-console.log("machine:", maintenance.machine)
+
         await maintenance.save()
+        console.log("MACHINE GUARDADA:", maintenance.machine)
         console.log("machine:", maintenance.machine)
         sendMaintenanceStatusAlert(maintenance).catch(() => { })
 
@@ -293,7 +294,7 @@ export const finishMaintenance = async (req, res) => {
         maintenance.updatedAt = new Date()
 
         await maintenance.save()
-
+console.log("MACHINE GUARDADA:", maintenance.machine)
         await registerAuditEvent({
             req,
             action: "MAINTENANCE_FINISHED",
