@@ -219,14 +219,29 @@ export const newMaintenanceController = async (req, res) => {
         }
         console.log('paso 3')
 console.log("MACHINE RECIBIDA:", data.machine)
-        const maintenance = new Maintenance({
-            ...data,
-            additionalWorkers: additionalWorkerIds,
-            clientSnapshot: toUserSnapshot(client),
-            additionalWorkersSnapshots,
-            reportedBy: req.user.id,
-            status
-        })
+
+// Buscar la máquina por ID
+const machineDoc = await Machine.findById(data.machine)
+
+if (!machineDoc) {
+    return res.status(404).json({
+        message: "Máquina no encontrada"
+    })
+}
+
+console.log("MACHINE ENCONTRADA:", machineDoc.name)
+
+// Guardar el nombre en lugar del ID
+data.machine = machineDoc.name
+
+const maintenance = new Maintenance({
+    ...data,
+    additionalWorkers: additionalWorkerIds,
+    clientSnapshot: toUserSnapshot(client),
+    additionalWorkersSnapshots,
+    reportedBy: req.user.id,
+    status
+})
 
         await maintenance.save()
         console.log("MACHINE GUARDADA:", maintenance.machine)
