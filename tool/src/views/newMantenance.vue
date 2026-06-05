@@ -707,10 +707,11 @@ export default {
   width: 100%;
   max-width: 700px;
   margin: 1.5rem auto 0;
-  padding: 1rem;
-  background: #fafafa;
-  border: 1px solid #d8d8d8;
-  border-radius: 10px;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .multi-select {
