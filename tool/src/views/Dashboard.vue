@@ -54,7 +54,7 @@
             <span class="period-label-full">Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{
               formatMonthLabel(periodEnd) }}</span>
             <span class="period-label-compact">{{ formatMonthLabel(periodStart) }} - {{ formatMonthLabel(periodEnd)
-              }}</span>
+            }}</span>
           </p>
         </section>
 
@@ -441,7 +441,7 @@ export default {
   async mounted() {
 
     document.body.style.background =
-  'linear-gradient(180deg, rgb(248, 248, 252), #ffffff)'
+      'linear-gradient(180deg, rgb(248, 248, 252), #ffffff)'
 
     this.setDefaultPeriod()
     this.syncPeriodSelectorsFromPeriod()
@@ -568,18 +568,18 @@ export default {
       }
 
     },
-   getMachineTooltip(machine) {
+    getMachineTooltip(machine) {
 
-  if (machine.indicator === "green") {
-    return "Operativa"
-  }
+      if (machine.indicator === "green") {
+        return "Operativa"
+      }
 
-  if (machine.unfinishedReason) {
-    return machine.unfinishedReason
-  }
+      if (machine.unfinishedReason) {
+        return machine.unfinishedReason
+      }
 
-  return machine.label
-},
+      return machine.label
+    },
     destroyCharts() {
 
       if (this.statusChartInstance) {
@@ -656,9 +656,12 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
+            layout: {
+              padding: {
+                left: 10,
+                right: 20,
+                top: 10,
+                bottom: 10
               }
             }
           }
@@ -923,6 +926,7 @@ export default {
 *::after {
   box-sizing: border-box;
 }
+
 .seller-message {
   text-align: center;
   padding: 2rem;
@@ -961,7 +965,7 @@ export default {
 }
 
 .container {
-   width: min(98vw, 1600px);
+  width: min(98vw, 1600px);
   max-width: 1600px;
   margin: 0 auto;
   overflow-x: hidden;
@@ -969,8 +973,8 @@ export default {
   padding: 1.9rem;
   border-radius: 12px;
   box-shadow:
-    0 4px 20px rgba(0,0,0,.06),
-    0 1px 3px rgba(0,0,0,.04);
+    0 4px 20px rgba(0, 0, 0, .06),
+    0 1px 3px rgba(0, 0, 0, .04);
 }
 
 /* PERIOD */
@@ -1086,15 +1090,15 @@ h1 {
   text-align: center;
   border: 1px solid #eef2f7;
   border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(15,23,42,.05);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, .05);
   transition: 0.3s;
 }
 
 .card:hover {
-  box-shadow: 0 8px 20px rgba(15,23,42,.08);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
   transform: translateY(-2px);
 }
-  
+
 .chart-card {
   min-width: 0;
   overflow: hidden;
@@ -1133,12 +1137,12 @@ h1 {
   border: 1px solid #e7edf7;
   border-radius: 12px;
   padding: 0.85rem;
-  height: 300px;
+  min-height: 400px;
+  height: auto;
 }
 
 .chart-card-wide {
-  grid-column: 1 / -1;
-  height: 320px;
+  min-height: 450px;
 }
 
 /* MACHINE STATUS */
@@ -1147,13 +1151,13 @@ h1 {
 }
 
 .machine-status-grid {
-   gap: 0.9rem;
-    display: grid;
+  gap: 0.9rem;
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, max-content));
 
   justify-content: start;
 }
- 
+
 
 .machine-status-summary {
   display: grid;
@@ -1173,12 +1177,14 @@ h1 {
   align-items: center;
   gap: 0.6rem;
 }
+
 .machine-status-title h3 {
   margin: 0;
   font-size: .95rem;
   word-break: break-word;
   overflow-wrap: break-word;
 }
+
 /* CARD BASE (UNIFICADO) */
 .machine-status-card {
   position: relative;
@@ -1191,7 +1197,7 @@ h1 {
 
 .machine-status-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 18px rgba(0,0,0,.12);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .12);
 }
 
 /* TOOLTIP */
@@ -1228,7 +1234,7 @@ h1 {
 }
 
 .state-red {
-   border-left: 4px solid #ef4444;
+  border-left: 4px solid #ef4444;
   box-shadow: 0 0 8px rgba(198, 40, 40, 0.15);
 }
 
@@ -1311,9 +1317,17 @@ h1 {
 }
 
 /* STATES TEXT */
-.status-green { background: #2e7d32; }
-.status-yellow { background: #f9a825; }
-.status-red { background: #c62828; }
+.status-green {
+  background: #2e7d32;
+}
+
+.status-yellow {
+  background: #f9a825;
+}
+
+.status-red {
+  background: #c62828;
+}
 
 /* EMPTY */
 .empty-state {
