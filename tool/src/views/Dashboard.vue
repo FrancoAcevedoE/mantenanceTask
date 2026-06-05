@@ -583,9 +583,10 @@ export default {
     destroyCharts() {
 
       if (this.statusChartInstance) {
-        this.statusChartInstance.destroy()
-        this.statusChartInstance = null
-      }
+  this.statusChartInstance.stop()
+  this.statusChartInstance.destroy()
+  this.statusChartInstance = null
+}
 
       if (this.typeChartInstance) {
         this.typeChartInstance.destroy()
