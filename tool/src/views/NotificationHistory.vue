@@ -393,6 +393,12 @@ console.log("ITEMS:", this.items)
 </script>
 
 <style scoped>
+.container,
+.charts-section,
+.charts-grid,
+.chart-card {
+  min-width: 0;
+}
 .notification-history-page {
   min-height: 100vh;
   padding: 1rem;
