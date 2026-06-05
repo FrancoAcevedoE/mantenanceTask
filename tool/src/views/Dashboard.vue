@@ -1105,13 +1105,18 @@ h1 {
   overflow: hidden;
 }
 
-.chart-card canvas {
-  width: 100% !important;
-  max-width: 100%;
-  height: 100% !important;
+.chart-card {
+  position: relative;
+  height: 200px;
 }
 
+.chart-card-wide {
+  height: 100px;
+}
 
+.chart-card canvas {
+  max-height: fit-content;
+}
 
 
 /* CHARTS */
