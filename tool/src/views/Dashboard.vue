@@ -51,10 +51,7 @@
             </button>
           </div>
           <p class="period-label">
-            <span class="period-label-full">Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{
-              formatMonthLabel(periodEnd) }}</span>
-            <span class="period-label-compact">{{ formatMonthLabel(periodStart) }} - {{ formatMonthLabel(periodEnd)
-              }}</span>
+    
           </p>
         </section>
 
@@ -62,7 +59,7 @@
 
           <div class="card">
 
-            <h3>Total mantenimientos</h3>
+            <h3>TOTAL DE TRABAJOS</h3>
 
             <p>{{ stats.totalMaintenances }}</p>
 
@@ -70,7 +67,7 @@
 
           <div class="card">
 
-            <h3>Máquinas registradas</h3>
+            <h3>EQUIPOS REGISTRADOS</h3>
 
             <p>{{ stats.machinesRegistered }}</p>
 
@@ -78,7 +75,7 @@
 
           <div class="card">
 
-            <h3>Mantenimientos pendientes</h3>
+            <h3>TRABAJOS PENDIENTES</h3>
 
             <p>{{ stats.pending }}</p>
 
@@ -86,7 +83,7 @@
 
           <div class="card">
 
-            <h3>Máquinas detenidas</h3>
+            <h3>EQUIPOS DETENIDOS</h3>
 
             <p>{{ stats.stopped }}</p>
 
@@ -94,7 +91,7 @@
 
           <div class="card">
 
-            <h3>Operarios atendidos</h3>
+            <h3>TOTAL DE TRABAJADORES</h3>
 
             <p>{{ stats.operariosAttended }}</p>
 
@@ -153,15 +150,22 @@
             </article>
           </div>
           <div v-if="machineStatusOverview.length" class="machine-status-grid">
-            <article v-for="machine in machineStatusOverview" :key="machine.id" class="machine-status-card">
+            <article v-for="machine in machineStatusOverview" :key="machine.id" class="machine-status-card"
+              :class="`state-${machine.indicator}`">
+              <div class="machine-tooltip">
+                {{ getMachineTooltip(machine) }}
+              </div>
               <div class="machine-status-header">
-                <span :class="['machine-status-dot', `status-${machine.indicator}`]"></span>
-                <div>
+
+
+                <div class="machine-status-title">
                   <h3>{{ machine.name }}</h3>
-                  <p>{{ machine.sector || 'Sin sector' }}</p>
+
+                  <span class="machine-status-state">
+                    {{ machine.label }}
+                  </span>
                 </div>
               </div>
-              <p class="machine-status-label">{{ machine.label }}</p>
             </article>
           </div>
           <p v-else class="empty-state">No hay máquinas registradas todavía.</p>
@@ -172,16 +176,18 @@
           <p class="unfinished-total">Total con motivo cargado: {{ unfinishedReasonSummary.totalWithReason }}</p>
 
           <div v-if="unfinishedReasonSummary.reasons.length" class="unfinished-reasons-grid">
-            <article v-for="item in unfinishedReasonSummary.reasons" :key="item.reason" class="unfinished-reason-card">
-              <h3>{{ formatUnfinishedReason(item.reason) }}</h3>
-              <p>{{ item.count }} tareas</p>
-              <ul v-if="item.reason === 'Otros' && unfinishedReasonSummary.otherDetailsTop.length"
-                class="unfinished-other-list">
-                <li v-for="detail in unfinishedReasonSummary.otherDetailsTop" :key="detail.detail">
-                  <span>{{ detail.detail }}</span>
-                  <strong>{{ detail.count }}</strong>
-                </li>
-              </ul>
+            <article v-for="reason in unfinishedReasonSummary.reasons" :key="reason.reason"
+              class="unfinished-reason-card">
+              <div class="machine-status-header">
+                <div>
+                  <h3>{{ formatUnfinishedReason(reason.reason) }}</h3>
+                  <p>{{ reason.count }} casos</p>
+                </div>
+              </div>
+
+              <p class="machine-status-label">
+                {{ reason.reason }}
+              </p>
             </article>
           </div>
 
@@ -189,7 +195,7 @@
         </section>
 
         <section class="recent-section">
-          <h2>Últimos mantenimientos</h2>
+          <h2>ÚLTIMOS TRABAJOS</h2>
 
           <div class="recent-toolbar">
             <input v-model="searchOperario" type="text" placeholder="Buscar por operario" />
@@ -431,7 +437,8 @@ export default {
 
   async mounted() {
 
-    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))';
+    document.body.style.background =
+      'linear-gradient(180deg, rgb(248, 248, 252), #ffffff)'
 
     this.setDefaultPeriod()
     this.syncPeriodSelectorsFromPeriod()
@@ -537,8 +544,10 @@ export default {
         this.syncPeriodSelectorsFromPeriod()
 
         this.$nextTick(() => {
-          this.renderCharts()
-          this.updateRecentBottomScrollbar()
+          setTimeout(() => {
+            this.renderCharts()
+            this.updateRecentBottomScrollbar()
+          }, 200)
         })
 
       } catch (error) {
@@ -558,10 +567,22 @@ export default {
       }
 
     },
+    getMachineTooltip(machine) {
 
+      if (machine.indicator === "green") {
+        return "Operativa"
+      }
+
+      if (machine.unfinishedReason) {
+        return machine.unfinishedReason
+      }
+
+      return machine.label
+    },
     destroyCharts() {
 
       if (this.statusChartInstance) {
+        this.statusChartInstance.stop()
         this.statusChartInstance.destroy()
         this.statusChartInstance = null
       }
@@ -613,6 +634,18 @@ export default {
             plugins: {
               legend: {
                 position: "bottom"
+              },
+              tooltip: {
+                enabled: true,
+                callbacks: {
+                  label: function (context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0)
+                    const value = context.raw
+                    const percentage = ((value / total) * 100).toFixed(1)
+
+                    return `${context.label}: ${value} (${percentage}%)`
+                  }
+                }
               }
             }
           }
@@ -636,12 +669,17 @@ export default {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: {
-                display: false
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `Cantidad: ${context.raw}`
+                  }
+                }
               }
             }
           }
-        })
+        }
+        )
       }
 
       if (this.$refs.sectorChart) {
@@ -663,6 +701,13 @@ export default {
             plugins: {
               legend: {
                 display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `Sector: ${context.label} (${context.raw})`
+                  }
+                }
               }
             }
           }
@@ -686,7 +731,8 @@ export default {
           },
           options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            resizeDelay: 100
           }
         })
       }
@@ -782,9 +828,13 @@ export default {
 
     setDefaultPeriod() {
       const now = new Date()
-      const start = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+
+      const end = new Date(now.getFullYear(), now.getMonth(), 1)
+      const start = new Date(end.getFullYear(), end.getMonth() - 11, 1)
+
       this.periodStart = this.toMonthValue(start)
-      this.periodEnd = this.toMonthValue(now)
+      this.periodEnd = this.toMonthValue(end)
+
       this.syncPeriodSelectorsFromPeriod()
     },
 
@@ -892,7 +942,13 @@ export default {
 
 </script>
 
-<style>
+<style scoped>
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .seller-message {
   text-align: center;
   padding: 2rem;
@@ -900,13 +956,7 @@ export default {
   border-radius: 8px;
   margin: 2rem 0;
 }
-* {
-  box-sizing: border-box;
-}
 
-body {
-  overflow-x: hidden;
-}
 .seller-message p {
   font-size: 1.2rem;
   margin-bottom: 1rem;
@@ -920,13 +970,13 @@ body {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1rem;
 }
 
 .seller-message button:hover {
   background: #0056b3;
 }
 
+/* LAYOUT GENERAL */
 .page-container {
   background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28));
   min-height: 100vh;
@@ -937,14 +987,19 @@ body {
 }
 
 .container {
-  width: min(96vw, 1500px);
+  width: min(98vw, 1600px);
+  max-width: 1600px;
   margin: 0 auto;
+  overflow-x: hidden;
   background: rgba(255, 255, 255, 0.94);
   padding: 1.9rem;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, .06),
+    0 1px 3px rgba(0, 0, 0, .04);
 }
 
+/* PERIOD */
 .period-section {
   margin-bottom: 1.2rem;
   background: #f7fbff;
@@ -954,10 +1009,10 @@ body {
 }
 
 .period-section h2 {
-  margin: 0 0 0.7rem;
   text-align: center;
   font-size: 1.05rem;
   color: #2f3d4f;
+  margin-bottom: 0.7rem;
 }
 
 .period-toolbar {
@@ -967,42 +1022,32 @@ body {
   align-items: center;
 }
 
-.period-toolbar>* {
-  min-width: 0;
-}
-
-.period-toolbar input {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 2rem;
-  background: #fff;
-}
-
-.period-toolbar select {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border: 1px solid #ccc;
-  border-radius: 2rem;
-  background: #fff;
-}
-
 .period-select-group {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 0.5rem;
 }
 
+.period-toolbar input,
+.period-toolbar select,
+.recent-toolbar input,
+.recent-toolbar select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 2rem;
+  background: #fff;
+  box-sizing: border-box;
+}
+
 .period-toolbar input:hover,
 .period-toolbar input:focus,
 .period-toolbar select:hover,
-.period-toolbar select:focus {
+.period-toolbar select:focus,
+.recent-toolbar input:hover,
+.recent-toolbar input:focus,
+.recent-toolbar select:hover,
+.recent-toolbar select:focus {
   outline: none;
   background: #f0f0f0;
   transition: 0.2s;
@@ -1036,7 +1081,7 @@ body {
 }
 
 .period-label {
-  margin: 0.65rem 0 0;
+  margin-top: 0.65rem;
   text-align: center;
   color: #4b4b4b;
   font-size: 0.95rem;
@@ -1046,14 +1091,15 @@ body {
   display: none;
 }
 
+/* TITULOS */
 h1 {
   text-align: center;
-  margin: 0 0 1.5rem;
+  margin-bottom: 1.5rem;
   color: #333;
   font-size: 2rem;
-  letter-spacing: 0.04rem;
 }
 
+/* CARDS */
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1064,87 +1110,79 @@ h1 {
   background: #fff;
   padding: 20px 16px;
   text-align: center;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, .05);
   transition: 0.3s;
 }
 
 .card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
   transform: translateY(-2px);
 }
 
-.card h3 {
-  margin: 0 0 0.75rem;
-  color: #4b4b4b;
+.chart-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+
+  min-height: 350px;
+  height: 350px;
+
+  position: relative;
+  width: 100%;
+
+  overflow: hidden;
 }
 
-.card p {
-  font-size: 28px;
-  font-weight: bold;
-  margin: 0;
-  color: #333;
+.chart-card canvas {
+  width: 100% !important;
+  height: calc(100% - 50px) !important;
 }
 
+.chart-card canvas:hover {
+  cursor: default !important;
+}
+
+.chart-card-wide {
+  grid-column: span 2;
+  height: 500px;
+  min-height: 500px;
+}
+
+/* CHARTS */
 .charts-section {
   margin-top: 1.5rem;
 }
 
 .charts-section h2 {
-  margin: 0 0 1rem;
   text-align: center;
-  color: #333;
   font-size: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1rem;
-}
-
-.chart-card {
-  background: linear-gradient(135deg, #ffffff, #f4f9ff);
-  border: 1px solid #e7edf7;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
-  padding: 0.85rem;
-  height: 300px;
-}
-
-.chart-card h3 {
-  margin: 0 0 0.65rem;
-  text-align: center;
-  color: #2f3d4f;
-  font-size: 1.05rem;
-}
-
-.chart-card canvas {
   width: 100%;
-  height: calc(100% - 32px) !important;
 }
 
-.chart-card-wide {
-  grid-column: 1 / -1;
-  height: 320px;
-}
 
+/* MACHINE STATUS */
 .machine-status-section {
   margin-top: 1.5rem;
 }
 
-.machine-status-section h2 {
-  margin: 0 0 1rem;
-  text-align: center;
-  color: #333;
-  font-size: 1.5rem;
+.machine-status-grid {
+  gap: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, max-content));
+
+  justify-content: start;
 }
 
-.machine-status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.9rem;
-}
 
 .machine-status-summary {
   display: grid;
@@ -1157,178 +1195,94 @@ h1 {
   border-radius: 12px;
   padding: 0.9rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
-  border: 1px solid transparent;
 }
 
 .machine-summary-top {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 0.55rem;
 }
 
-.machine-summary-card p {
+.machine-status-title h3 {
   margin: 0;
-  font-size: 0.95rem;
-  color: #364152;
+  font-size: .95rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
-.machine-summary-card span:last-child {
-  display: inline-block;
-  margin-top: 0.45rem;
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.summary-green {
-  background: #eef8f0;
-  border-color: #cfe9d3;
-}
-
-.summary-yellow {
-  background: #fff8e8;
-  border-color: #f5df9e;
-}
-
-.summary-red {
-  background: #fdeeee;
-  border-color: #efc1c1;
-}
-
+/* CARD BASE (UNIFICADO) */
 .machine-status-card {
+  position: relative;
   background: #fff;
-  border: 1px solid #e4e7eb;
   border-radius: 12px;
-  padding: 0.95rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
+  padding: 0.8rem;
+  border: 1px solid #e5e7eb;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.machine-status-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.machine-status-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .12);
 }
 
-.machine-status-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  color: #243447;
+/* TOOLTIP */
+.machine-tooltip {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 20, 0.9);
+  color: white;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+  white-space: nowrap;
 }
 
-.machine-status-header p {
-  margin: 0.2rem 0 0;
-  font-size: 0.88rem;
-  color: #667085;
+.machine-status-card:hover .machine-tooltip {
+  opacity: 1;
+  top: -18px;
 }
 
-.machine-status-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  flex-shrink: 0;
-  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+/* STATES */
+.state-green {
+  border-left: 4px solid #22c55e;
+  box-shadow: 0 0 8px rgba(46, 125, 50, 0.15);
 }
 
-.status-green {
-  background: #2e7d32;
+.state-yellow {
+  border-left: 4px solid #f59e0b;
+  box-shadow: 0 0 8px rgba(249, 168, 37, 0.15);
 }
 
-.status-yellow {
-  background: #f9a825;
+.state-red {
+  border-left: 4px solid #ef4444;
+  box-shadow: 0 0 8px rgba(198, 40, 40, 0.15);
 }
 
-.status-red {
-  background: #c62828;
+.state-green:hover {
+  box-shadow: 0 0 22px rgba(46, 125, 50, 0.55);
 }
 
-.machine-status-label {
-  margin: 0.8rem 0 0;
-  font-weight: 700;
-  color: #364152;
+.state-yellow:hover {
+  box-shadow: 0 0 22px rgba(249, 168, 37, 0.55);
 }
 
+.state-red:hover {
+  box-shadow: 0 0 22px rgba(198, 40, 40, 0.55);
+}
+
+/* UNFINISHED */
 .unfinished-reasons-section {
   margin-top: 1.5rem;
 }
 
-.unfinished-reasons-section h2 {
-  margin: 0 0 0.55rem;
-  text-align: center;
-  color: #333;
-  font-size: 1.35rem;
-}
-
-.unfinished-total {
-  margin: 0 0 0.95rem;
-  text-align: center;
-  color: #4b4b4b;
-  font-weight: 600;
-}
-
-.unfinished-reasons-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.85rem;
-}
-
-.unfinished-reason-card {
-  background: #fff;
-  border: 1px solid #e4e7eb;
-  border-radius: 12px;
-  padding: 0.85rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
-}
-
-.unfinished-reason-card h3 {
-  margin: 0 0 0.45rem;
-  font-size: 1rem;
-  color: #243447;
-}
-
-.unfinished-reason-card p {
-  margin: 0;
-  font-weight: 700;
-  color: #364152;
-}
-
-.unfinished-other-list {
-  margin: 0.65rem 0 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid #e8ecf1;
-  padding-top: 0.55rem;
-}
-
-.unfinished-other-list li {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem;
-  align-items: center;
-  font-size: 0.86rem;
-  color: #4a5568;
-  margin-bottom: 0.35rem;
-}
-
-.unfinished-other-list li span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.unfinished-other-list li strong {
-  color: #243447;
-}
-
+/* RECENT */
 .recent-section {
   margin-top: 1.5rem;
-}
-
-.recent-section h2 {
-  margin: 0 0 1rem;
-  text-align: center;
-  color: #333;
-  font-size: 1.5rem;
 }
 
 .recent-toolbar {
@@ -1336,22 +1290,6 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.75rem;
   margin-bottom: 1rem;
-}
-
-.recent-toolbar input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 2rem;
-  background: #fff;
-}
-
-.recent-toolbar select {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 2rem;
-  background: #fff;
 }
 
 .clear-filters-button {
@@ -1364,37 +1302,16 @@ h1 {
   cursor: pointer;
 }
 
-.recent-toolbar input:hover,
-.recent-toolbar input:focus {
-  outline: none;
-  background: #f0f0f0;
-  transition: 0.2s;
-  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
-}
-
-.recent-toolbar select:hover,
-.recent-toolbar select:focus {
-  outline: none;
-  background: #f0f0f0;
-  transition: 0.2s;
-  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
-}
-
 .clear-filters-button:hover {
   background: #8f8f8f;
 }
 
+/* TABLE */
 .recent-table-wrapper {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
   overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-}
-
-.recent-table-wrapper::-webkit-scrollbar {
-  height: 0;
 }
 
 .recent-table {
@@ -1407,137 +1324,50 @@ h1 {
 .recent-table td {
   padding: 12px 10px;
   border-bottom: 1px solid #e8e8e8;
-  text-align: left;
-  color: #555;
 }
 
 .recent-table th {
   background: #efefef;
-  color: #333;
 }
 
-.recent-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
+/* SCROLL FIX */
 .recent-fixed-horizontal-scroll {
   position: sticky;
-  left: 0;
   bottom: 0;
-  width: 100%;
   height: 14px;
   overflow-x: auto;
-  overflow-y: hidden;
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid #d5d5d5;
   border-radius: 999px;
-  z-index: 900;
-  margin-top: 0.35rem;
 }
 
-.recent-fixed-horizontal-scroll-inner {
-  height: 1px;
+/* STATES TEXT */
+.status-green {
+  background: #2e7d32;
 }
 
-.recent-fixed-horizontal-scroll::-webkit-scrollbar {
-  height: 10px;
+.status-yellow {
+  background: #f9a825;
 }
 
-.recent-operario {
-  font-weight: 700;
-  color: #2f2f2f;
+.status-red {
+  background: #c62828;
 }
 
+/* EMPTY */
 .empty-state {
-  margin: 0;
   text-align: center;
   color: #666;
 }
 
-@media (max-width: 1400px) {
-  .container {
-    width: min(97vw, 1320px);
-    padding: 1.7rem;
-  }
-}
-@media (max-width: 1024px) {
-  .container {
-    padding: 1rem;
-  }
-
-  .recent-table {
-    min-width: 700px;
-  }
-
-  .cards {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  }
-
-  .machine-status-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  }
-}
-@media (max-width: 1200px) {
-  .container {
-    width: min(98vw, 1120px);
-    padding: 1.45rem;
-  }
-}
-
-@media (max-width: 992px) {
-  .container {
-    width: 100%;
-    padding: 1.15rem;
-  }
-}
-@media (max-width: 950px) {
-  .recent-table {
-    min-width: 100%;
-  }
-}
+/* RESPONSIVE */
 @media (max-width: 768px) {
-  .container {
-    padding: 1rem;
-  }
-
-  .page-container {
-    align-items: flex-start;
-    padding: 0.6rem;
-    background-attachment: scroll;
-  }
-
   .period-toolbar {
     grid-template-columns: 1fr;
   }
 
-  .period-toolbar input,
-  .period-toolbar select,
-  .period-button {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
   .period-select-group {
     grid-template-columns: 1fr 1fr;
-  }
-
-  .period-label {
-    font-size: 0.88rem;
-    line-height: 1.35;
-  }
-
-  h1 {
-    font-size: 1.6rem;
-  }
-
-.recent-table-wrapper {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-  .recent-table-wrapper::-webkit-scrollbar {
-    height: 4px;
   }
 
   .recent-fixed-horizontal-scroll {
@@ -1554,18 +1384,12 @@ h1 {
     display: inline;
   }
 
-  .period-button {
-    padding: 10px;
-    font-size: 0.9rem;
-  }
-
   .period-label-full {
     display: none;
   }
 
   .period-label-compact {
     display: inline;
-    font-size: 0.85rem;
   }
 }
 </style>
