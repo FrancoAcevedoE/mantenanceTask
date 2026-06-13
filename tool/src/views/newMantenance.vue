@@ -253,7 +253,7 @@ export default {
     await this.loadOperarios()
     await this.loadMachines()
 
-    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+    document.body.style.background = 'rgb(103, 111, 62)'
     document.body.style.backgroundAttachment = 'fixed'
   },
 
@@ -704,8 +704,8 @@ export default {
 
 <style scoped>
 .form-container {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 1.5rem auto 0;
   padding: 0;
 
@@ -794,8 +794,8 @@ export default {
 }
 
 .panel-container {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 1.5rem auto 0;
   justify-content: center;
 }
@@ -836,8 +836,8 @@ export default {
 }
 
 .action-selector {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 0 auto;
 
   display: grid;

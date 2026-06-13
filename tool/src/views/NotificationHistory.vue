@@ -376,8 +376,7 @@ console.log("ITEMS:", this.items)
       this.markAsRead(id)
     }
 
-    document.body.style.background =
-      'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+    document.body.style.background = 'rgb(103, 111, 62)'
     document.body.style.backgroundAttachment = 'fixed'
 
     const user = JSON.parse(localStorage.getItem('user') || '{}')

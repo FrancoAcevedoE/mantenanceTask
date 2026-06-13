@@ -440,8 +440,7 @@ export default {
 
   async mounted() {
 
-    document.body.style.background =
-      'linear-gradient(180deg, rgb(248, 248, 252), #ffffff)'
+    document.body.style.background = 'rgb(103, 111, 62)'
 
     this.setDefaultPeriod()
     this.syncPeriodSelectorsFromPeriod()
@@ -981,7 +980,7 @@ export default {
 
 /* LAYOUT GENERAL */
 .page-container {
-  background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28));
+  background: rgb(103, 111, 62);
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -990,8 +989,8 @@ export default {
 }
 
 .container {
-  width: min(98vw, 1600px);
-  max-width: 1600px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 0 auto;
   overflow-x: hidden;
   background: rgba(255, 255, 255, 0.94);

@@ -512,7 +512,7 @@ export default {
   },
   mounted() {
     this.loadUsers()
-document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+document.body.style.background = 'rgb(103, 111, 62)'
 document.body.style.backgroundAttachment = 'fixed'
   },
   beforeUnmount() {
@@ -531,15 +531,15 @@ align-items: center;
 }
 
 .admin-layout {
-  width: 100%;
-  max-width: 1100px;
+  width: min(1080px, 100%);
+  max-width: unset;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1rem;
 }
 
 .admin-layout.single-column {
-  max-width: 720px;
+  max-width: unset;
   grid-template-columns: 1fr;
 }
 

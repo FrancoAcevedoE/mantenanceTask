@@ -224,8 +224,7 @@ export default {
     },
 
     async mounted() {
-        document.body.style.background =
-  'linear-gradient(180deg, rgb(248, 248, 252), #ffffff)'
+        document.body.style.background = 'rgb(103, 111, 62)'
 
         const currentUser = this.getStoredUser()
         this.currentUserRole = currentUser?.role || ""
@@ -550,7 +549,7 @@ export default {
 
 
 .container {
-    width: min(96vw, 1650px);
+    width: min(1080px, 100%);
     background: rgba(255, 255, 255, 0.94);
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);

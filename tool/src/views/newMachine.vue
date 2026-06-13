@@ -4,21 +4,15 @@
     <!-- SELECTOR DE ACCIONES -->
     <div class="machine-selector">
       <!-- FORMULARIO CARD -->
-      <div class="box action-card" @click="showNewMachineForm = !showNewMachineForm">
-        <div class="section-title">
-          <i class="bi bi-clipboard-plus"></i>
-          <P>
-            {{ editingMachineId ? 'Modificar máquina' : 'NUEVA MÁQUINA' }}
-          </P>
-        </div>
+      <div class="action-card" @click="showNewMachineForm = !showNewMachineForm">
+        <i class="bi bi-clipboard-plus"></i>
+        <p>{{ editingMachineId ? 'MODIFICAR MÁQUINA' : 'NUEVA MÁQUINA' }}</p>
       </div>
 
       <!-- MÁQUINAS CARD -->
-      <div class="box action-card" @click="showMachinesPanel = !showMachinesPanel">
-        <div class="section-title">
-          <i class="bi bi-clipboard2-data"></i>
-          <p>MAQUINAS CARGADAS</p>
-        </div>
+      <div class="action-card" @click="showMachinesPanel = !showMachinesPanel">
+        <i class="bi bi-clipboard2-data"></i>
+        <p>MÁQUINAS CARGADAS</p>
       </div>
     </div>
 
@@ -477,7 +471,7 @@ export default {
   },
   mounted() {
     this.loadMachines()
-   document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+   document.body.style.background = 'rgb(103, 111, 62)'
 document.body.style.backgroundAttachment = 'fixed'
   },
   beforeUnmount() {
@@ -524,8 +518,8 @@ document.body.style.backgroundAttachment = 'fixed'
 }
 
 .machine-selector {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 0 auto;
 
   display: grid;
@@ -581,18 +575,42 @@ document.body.style.backgroundAttachment = 'fixed'
   min-width: 50px;
 }
 .panel-container {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 1.5rem auto 0;
 }
 
 .action-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  padding: 2rem 1rem;
   cursor: pointer;
+  transition: 0.25s;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center !important;
+  justify-content: center;
+}
+
+.action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.action-card i {
+  font-size: 3rem;
+  color: rgb(69, 82, 28);
+  margin-bottom: 1rem;
+}
+
+.action-card p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  text-align: center;
 }
 
 .form-content,
