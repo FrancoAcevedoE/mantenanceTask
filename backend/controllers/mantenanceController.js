@@ -5,6 +5,7 @@ import NotificationLog from "../models/notificationLogModel.js"
 import mongoose from "mongoose"
 import {
     getMaintenanceNotificationSummary,
+    getMaintenanceNotificationsFeed,
     sendMaintenanceStatusAlert,
     sendMaintenanceSummaryNotification
 } from "../services/notificationService.js"
@@ -42,6 +43,30 @@ const MAX_NOTIFICATION_READ_IDS = 300
 const MAX_NOTIFICATION_HISTORY_READ_IDS = 1200
 
 
+
+const normalizeNotificationReadIds = (rawIds) => {
+    if (!Array.isArray(rawIds)) {
+        return []
+    }
+
+    const uniqueIds = new Set()
+
+    for (const rawId of rawIds) {
+        const normalizedId = String(rawId || "").trim()
+
+        if (!normalizedId) {
+            continue
+        }
+
+        uniqueIds.add(normalizedId)
+
+        if (uniqueIds.size >= MAX_NOTIFICATION_READ_IDS) {
+            break
+        }
+    }
+
+    return [...uniqueIds]
+}
 
 const normalizeNotificationHistoryReadIds = (rawIds) => {
     if (!Array.isArray(rawIds)) {
