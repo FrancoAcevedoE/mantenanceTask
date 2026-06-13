@@ -320,7 +320,6 @@ export const sendWeeklyCompletedMaintenanceNotification = async (title) => {
 }
 
 export const getMaintenanceNotificationsFeed = async () => {
-  console.log(JSON.stringify(pendingMaintenances, null, 2))
   const [
     stoppedMachines,
     pendingMaintenances,
