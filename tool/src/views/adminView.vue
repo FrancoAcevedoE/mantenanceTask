@@ -534,7 +534,7 @@ align-items: center;
   width: min(1080px, 100%);
   max-width: unset;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
 }
 
@@ -835,6 +835,10 @@ button:hover {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
   .panel-card {
     padding: 1rem;
   }
@@ -844,6 +848,7 @@ button:hover {
   }
 
   .user-item {
+    grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
   }
@@ -851,6 +856,10 @@ button:hover {
   .panel-header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .panel-header button {
+    width: 100%;
   }
 }
 </style>

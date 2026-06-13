@@ -1180,9 +1180,7 @@ h1 {
 .machine-status-grid {
   gap: 0.9rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, max-content));
-
-  justify-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
 
 
@@ -1369,11 +1367,33 @@ h1 {
   }
 
   .period-select-group {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card-wide {
+    grid-column: span 1;
+    height: 320px;
+    min-height: 320px;
+  }
+
+  .machine-status-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .machine-status-summary {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .recent-fixed-horizontal-scroll {
     display: none;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

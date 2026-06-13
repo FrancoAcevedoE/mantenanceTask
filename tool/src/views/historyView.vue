@@ -555,6 +555,7 @@ export default {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
     padding: 1.9rem;
     margin: 0;
+    overflow: hidden;
 }
 
 .topbar {
@@ -818,23 +819,8 @@ button:hover {
     background: #8f8f8f;
 }
 
-@media (max-width: 1400px) {
-    .container {
-        width: min(97vw, 1400px);
-        padding: 1.7rem;
-    }
-}
-
-@media (max-width: 1200px) {
-    .container {
-        width: min(98vw, 1200px);
-        padding: 1.45rem;
-    }
-}
-
 @media (max-width: 992px) {
     .container {
-        width: 100%;
         padding: 1.15rem;
     }
 }

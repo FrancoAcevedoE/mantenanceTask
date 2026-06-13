@@ -1014,11 +1014,12 @@ button:hover {
 ========================= */
 
 @media (max-width: 768px) {
-
+  .machine-selector {
+    grid-template-columns: 1fr;
+  }
 
   .machine-item {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: 1fr;
   }
 
   .machine-actions {
@@ -1027,6 +1028,10 @@ button:hover {
 
   .machine-actions button {
     width: 100%;
+  }
+
+  .panel-container {
+    padding: 0;
   }
 }
 </style>

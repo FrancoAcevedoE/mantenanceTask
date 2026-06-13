@@ -1180,7 +1180,14 @@ button:hover {
 @media (max-width: 768px) {
   .box {
     padding: 1rem;
-    max-width: 90%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .form-container,
+  .panel-container,
+  .action-selector {
+    width: 100%;
   }
 
   h2 {
