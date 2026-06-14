@@ -741,7 +741,7 @@ export default {
                   },
                   font: (ctx) => {
                     const hovered = this.$refs.typeChart?._hoveredLabelIndex
-                    return hovered === ctx.index ? { size: 12, weight: 'bold' } : { size: 12 }
+                    return hovered === ctx.index ? { size: 14, weight: 'bold' } : { size: 12 }
                   }
                 }
               }
@@ -785,7 +785,7 @@ export default {
                   },
                   font: (ctx) => {
                     const hovered = this.$refs.sectorChart?._hoveredLabelIndex
-                    return hovered === ctx.index ? { size: 12, weight: 'bold' } : { size: 12 }
+                    return hovered === ctx.index ? { size: 14, weight: 'bold' } : { size: 12 }
                   }
                 }
               }
@@ -871,41 +871,40 @@ export default {
       if (!chart) return
 
       const data = getData()
-      const meta = chart.getDatasetMeta(0)
-      if (!data.length || !meta?.data?.length) return
+      if (!data.length) return
 
       canvas._hoveredLabelIndex = -1
 
-      // Use getBoundingClientRect for precise canvas-to-card offset
       const cardRect = card.getBoundingClientRect()
       const canvasRect = canvas.getBoundingClientRect()
       const relTop = canvasRect.top - cardRect.top
       const relLeft = canvasRect.left - cardRect.left
+
       const overlay = document.createElement('div')
       overlay.className = 'chart-label-overlay'
       Object.assign(overlay.style, {
         position: 'absolute',
         top: `${relTop}px`,
         left: `${relLeft}px`,
-        width: `${canvasRect.width}px`,
+        width: `${chart.chartArea.left}px`,
         height: `${canvasRect.height}px`,
         pointerEvents: 'none',
         zIndex: '2',
         overflow: 'hidden'
       })
 
-      for (let i = 0; i < meta.data.length; i++) {
-        const el = meta.data[i]
-        const centerY = el.y
-        const halfH = Math.abs(el.height) / 2 || 14
+      const fontSize = 12
+
+      for (let i = 0; i < data.length; i++) {
+        const centerY = chart.scales.y.getPixelForValue(i)
 
         const hit = document.createElement('div')
         Object.assign(hit.style, {
           position: 'absolute',
           left: '0',
           right: '0',
-          top: `${centerY - halfH - 40}px`,
-          height: `${halfH * 2}px`,
+          top: `${centerY - fontSize / 2}px`,
+          height: `${fontSize}px`,
           cursor: 'pointer',
           pointerEvents: 'all'
         })
