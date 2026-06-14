@@ -876,32 +876,36 @@ export default {
 
       canvas._hoveredLabelIndex = -1
 
-      // Position overlay over the label area of the canvas
-      const canvasTop = canvas.offsetTop
-      const canvasLeft = canvas.offsetLeft
+      // Use getBoundingClientRect for precise canvas-to-card offset
+      const cardRect = card.getBoundingClientRect()
+      const canvasRect = canvas.getBoundingClientRect()
+      const relTop = canvasRect.top - cardRect.top
+      const relLeft = canvasRect.left - cardRect.left
       const labelWidth = chart.chartArea.left
+      const yScale = chart.scales.y
 
       const overlay = document.createElement('div')
       overlay.className = 'chart-label-overlay'
       Object.assign(overlay.style, {
         position: 'absolute',
-        top: `${canvasTop}px`,
-        left: `${canvasLeft}px`,
+        top: `${relTop}px`,
+        left: `${relLeft}px`,
         width: `${labelWidth}px`,
-        height: `${canvas.offsetHeight}px`,
+        height: `${canvasRect.height}px`,
         pointerEvents: 'none',
         zIndex: '2'
       })
 
       for (let i = 0; i < meta.data.length; i++) {
-        const center = meta.data[i].getCenterPoint()
+        // getPixelForValue(i) returns the CSS-pixel Y of the tick in canvas coordinates
+        const tickY = yScale.getPixelForValue(i)
         const btn = document.createElement('button')
         Object.assign(btn.style, {
           position: 'absolute',
           left: '0',
           right: '0',
           height: '26px',
-          top: `${center.y - 13}px`,
+          top: `${tickY - 13}px`,
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
