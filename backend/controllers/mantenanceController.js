@@ -363,6 +363,8 @@ console.log("MACHINE GUARDADA:", maintenance.machine)
 
 
 
+const isObjectId = (val) => /^[a-f\d]{24}$/i.test(String(val || ""))
+
 export const historyController = async (req, res) => {
     try {
         const historyRaw = await Maintenance.find()
@@ -371,7 +373,21 @@ export const historyController = async (req, res) => {
             .sort({ createdAt: -1 })
             .lean()
 
+        // Resolver IDs de máquinas en registros viejos
+        const oldMachineIds = [...new Set(
+            historyRaw.map(item => item.machine).filter(isObjectId)
+        )]
+        const machineIdToName = new Map()
+        if (oldMachineIds.length) {
+            const machines = await Machine.find({ _id: { $in: oldMachineIds } })
+                .select("name").lean()
+            machines.forEach(m => machineIdToName.set(String(m._id), m.name))
+        }
+
         const history = historyRaw.map((item) => {
+            const machineName = isObjectId(item.machine)
+                ? (machineIdToName.get(item.machine) || item.machine)
+                : item.machine
             const hasClientPopulated = item.clientId && typeof item.clientId === "object"
             const fallbackClient = item.clientSnapshot?.name
                 ? {
@@ -398,6 +414,7 @@ export const historyController = async (req, res) => {
                     : [])
             return {
                 ...item,
+                machine: machineName,
                 clientId: hasClientPopulated ? item.clientId : fallbackClient,
                 additionalWorkers
             }
@@ -699,6 +716,7 @@ export const dashboardController = async (req, res) => {
 
         const machineStatusOverview = allMachines.map(machine => {
             const latestStatus = latestMaintenanceMap.get(machine.name)
+                || latestMaintenanceMap.get(String(machine._id))
             const currentStatus = latestStatus?.status || "ok"
 
             return {
