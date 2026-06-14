@@ -640,8 +640,10 @@ export default {
         if (canvas?._labelClick) {
           canvas.removeEventListener('click', canvas._labelClick)
           canvas.removeEventListener('mousemove', canvas._labelMove)
+          canvas.removeEventListener('mouseleave', canvas._labelLeave)
           delete canvas._labelClick
           delete canvas._labelMove
+          delete canvas._labelLeave
         }
       }
 
@@ -737,8 +739,14 @@ export default {
             scales: {
               y: {
                 ticks: {
-                  color: '#1e88e5',
-                  font: { size: 12 }
+                  color: (ctx) => {
+                    const hovered = this.$refs.typeChart?._hoveredLabelIndex
+                    return hovered === ctx.index ? '#0d47a1' : '#1e88e5'
+                  },
+                  font: (ctx) => {
+                    const hovered = this.$refs.typeChart?._hoveredLabelIndex
+                    return hovered === ctx.index ? { size: 12, weight: 'bold' } : { size: 12 }
+                  }
                 }
               }
             },
@@ -775,8 +783,14 @@ export default {
             scales: {
               y: {
                 ticks: {
-                  color: '#6d4c41',
-                  font: { size: 12 }
+                  color: (ctx) => {
+                    const hovered = this.$refs.sectorChart?._hoveredLabelIndex
+                    return hovered === ctx.index ? '#3e2723' : '#6d4c41'
+                  },
+                  font: (ctx) => {
+                    const hovered = this.$refs.sectorChart?._hoveredLabelIndex
+                    return hovered === ctx.index ? { size: 12, weight: 'bold' } : { size: 12 }
+                  }
                 }
               }
             },
@@ -846,10 +860,21 @@ export default {
 
     _attachLabelListeners(canvas, type) {
       if (!canvas) return
+      canvas._hoveredLabelIndex = -1
 
       const getChart = () => type === 'operario' ? this.typeChartInstance : this.sectorChartInstance
       const getData = () => type === 'operario' ? this.sortedOperarioData : this.sortedSectorData
       const getKey = (item) => type === 'operario' ? item.operario : item.sector
+
+      const findLabelIndex = (chart, y) => {
+        const data = getData()
+        const yScale = chart.scales.y
+        const tickH = (yScale.bottom - yScale.top) / Math.max(data.length, 1)
+        for (let i = 0; i < data.length; i++) {
+          if (Math.abs(y - yScale.getPixelForValue(i)) <= tickH / 2) return i
+        }
+        return -1
+      }
 
       const onClick = (e) => {
         const chart = getChart()
@@ -859,15 +884,10 @@ export default {
         const y = e.clientY - rect.top
         if (x >= chart.chartArea.left) return
 
-        const data = getData()
-        const yScale = chart.scales.y
-        const tickH = (yScale.bottom - yScale.top) / Math.max(data.length, 1)
-        for (let i = 0; i < data.length; i++) {
-          if (Math.abs(y - yScale.getPixelForValue(i)) <= tickH / 2) {
-            const raw = getKey(data[i])
-            if (raw) this.openChartDetail(type, raw)
-            return
-          }
+        const idx = findLabelIndex(chart, y)
+        if (idx >= 0) {
+          const raw = getKey(getData()[idx])
+          if (raw) this.openChartDetail(type, raw)
         }
       }
 
@@ -876,13 +896,39 @@ export default {
         if (!chart) return
         const rect = canvas.getBoundingClientRect()
         const x = e.clientX - rect.left
-        canvas.style.cursor = x < chart.chartArea.left ? 'pointer' : 'default'
+        const y = e.clientY - rect.top
+
+        if (x < chart.chartArea.left) {
+          const found = findLabelIndex(chart, y)
+          if (canvas._hoveredLabelIndex !== found) {
+            canvas._hoveredLabelIndex = found
+            chart.update('none')
+          }
+          canvas.style.cursor = found >= 0 ? 'pointer' : 'default'
+        } else {
+          if (canvas._hoveredLabelIndex !== -1) {
+            canvas._hoveredLabelIndex = -1
+            chart.update('none')
+          }
+          canvas.style.cursor = 'default'
+        }
+      }
+
+      const onLeave = () => {
+        const chart = getChart()
+        if (canvas._hoveredLabelIndex !== -1) {
+          canvas._hoveredLabelIndex = -1
+          if (chart) chart.update('none')
+        }
+        canvas.style.cursor = 'default'
       }
 
       canvas._labelClick = onClick
       canvas._labelMove = onMove
+      canvas._labelLeave = onLeave
       canvas.addEventListener('click', onClick)
       canvas.addEventListener('mousemove', onMove)
+      canvas.addEventListener('mouseleave', onLeave)
     },
 
     openChartDetail(type, rawLabel) {
