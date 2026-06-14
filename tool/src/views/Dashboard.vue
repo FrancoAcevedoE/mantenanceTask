@@ -882,7 +882,6 @@ export default {
       const relTop = canvasRect.top - cardRect.top
       const relLeft = canvasRect.left - cardRect.left
       const labelWidth = chart.chartArea.left
-      const yScale = chart.scales.y
 
       const overlay = document.createElement('div')
       overlay.className = 'chart-label-overlay'
@@ -896,18 +895,32 @@ export default {
         zIndex: '2'
       })
 
+      // Slot height = space per label row
+      const slotH = meta.data.length > 1
+        ? Math.abs(meta.data[1].y - meta.data[0].y)
+        : (chart.chartArea.bottom - chart.chartArea.top) / (meta.data.length || 1)
+
       for (let i = 0; i < meta.data.length; i++) {
-        // getPixelForValue(i) returns the CSS-pixel Y of the tick in canvas coordinates
-        const tickY = yScale.getPixelForValue(i)
+        // el.y is the vertical center of the bar, same coordinate system as the canvas rendering
+        const centerY = meta.data[i].y
+        const halfSlot = slotH / 2
+
         const btn = document.createElement('button')
         Object.assign(btn.style, {
           position: 'absolute',
           left: '0',
           right: '0',
-          height: '26px',
-          top: `${tickY - 13}px`,
+          height: `${halfSlot * 2}px`,
+          top: `${centerY - halfSlot}px`,
           background: 'transparent',
+          backgroundColor: 'transparent',
           border: 'none',
+          outline: 'none',
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          boxShadow: 'none',
+          padding: '0',
+          margin: '0',
           cursor: 'pointer',
           pointerEvents: 'all'
         })
