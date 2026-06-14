@@ -444,8 +444,9 @@ button:hover { background: #8f8f8f; }
   .col-hide-mobile { display: none; }
   .btn-full { display: none; }
   .btn-short { display: inline; }
-  .btn-detail, .btn-delete { padding: 4px 8px; font-size: 0.72rem; border-radius: 1rem; }
-  .action-buttons { gap: 0.25rem; }
+  .btn-detail, .btn-delete { padding: 3px 6px; font-size: 0.65rem; border-radius: 0.75rem; }
+  .action-buttons { gap: 0.2rem; }
+  .action-cell { padding: 6px 4px !important; }
 }
 
 @media (max-width: 768px) {
