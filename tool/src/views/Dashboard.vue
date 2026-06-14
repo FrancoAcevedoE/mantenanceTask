@@ -880,31 +880,32 @@ export default {
       const relTop = canvasRect.top - cardRect.top
       const relLeft = canvasRect.left - cardRect.left
 
+      const { top: chartTop, bottom: chartBottom, left: chartLeft } = chart.chartArea
+      const chartH = chartBottom - chartTop
+      const n = data.length
+      const slotH = chartH / n
+
+      // Overlay aligned exactly to the chart's plotted area (below legend)
       const overlay = document.createElement('div')
       overlay.className = 'chart-label-overlay'
       Object.assign(overlay.style, {
         position: 'absolute',
-        top: `${relTop}px`,
+        top: `${relTop + chartTop}px`,
         left: `${relLeft}px`,
-        width: `${chart.chartArea.left}px`,
-        height: `${canvasRect.height}px`,
+        width: `${chartLeft}px`,
+        height: `${chartH}px`,
         pointerEvents: 'none',
-        zIndex: '2',
-        overflow: 'hidden'
+        zIndex: '2'
       })
 
-      const fontSize = 12
-
-      for (let i = 0; i < data.length; i++) {
-        const centerY = chart.scales.y.getPixelForValue(i)
-
+      for (let i = 0; i < n; i++) {
         const hit = document.createElement('div')
         Object.assign(hit.style, {
           position: 'absolute',
           left: '0',
           right: '0',
-          top: `${centerY - fontSize / 2}px`,
-          height: `${fontSize}px`,
+          top: `${i * slotH}px`,
+          height: `${slotH}px`,
           cursor: 'pointer',
           pointerEvents: 'all'
         })
