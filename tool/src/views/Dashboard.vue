@@ -881,52 +881,58 @@ export default {
       const canvasRect = canvas.getBoundingClientRect()
       const relTop = canvasRect.top - cardRect.top
       const relLeft = canvasRect.left - cardRect.left
+      const { top: chartTop, bottom: chartBottom, left: chartLeft } = chart.chartArea
+      const chartH = chartBottom - chartTop
+      const n = data.length
+      const slotH = chartH / n
+
+      // Single overlay covering exactly the chart area's label zone
       const overlay = document.createElement('div')
       overlay.className = 'chart-label-overlay'
       Object.assign(overlay.style, {
         position: 'absolute',
-        top: `${relTop}px`,
+        top: `${relTop + chartTop}px`,
         left: `${relLeft}px`,
-        width: `${canvasRect.width}px`,
-        height: `${canvasRect.height}px`,
-        pointerEvents: 'none',
+        width: `${chartLeft}px`,
+        height: `${chartH}px`,
+        pointerEvents: 'all',
         zIndex: '2',
-        overflow: 'hidden'
+        cursor: 'default'
       })
 
-      for (let i = 0; i < meta.data.length; i++) {
-        const el = meta.data[i]
-        // el.y = vertical center of the bar in canvas CSS-pixel coordinates
-        // el.height = bar thickness (CSS pixels), may be negative — use abs
-        const centerY = el.y
-        const halfH = Math.abs(el.height) / 2 || 14
-
-        const hit = document.createElement('div')
-        Object.assign(hit.style, {
-          position: 'absolute',
-          left: '0',
-          right: '0',
-          top: `${centerY - halfH}px`,
-          height: `${halfH * 2}px`,
-          cursor: 'pointer',
-          pointerEvents: 'all'
-        })
-        hit.addEventListener('click', () => {
-          const raw = getKey(getData()[i])
-          if (raw) this.openChartDetail(type, raw)
-        })
-        hit.addEventListener('mouseenter', () => {
-          canvas._hoveredLabelIndex = i
-          const c = getChart()
-          if (c) c.update('none')
-        })
-        hit.addEventListener('mouseleave', () => {
-          canvas._hoveredLabelIndex = -1
-          const c = getChart()
-          if (c) c.update('none')
-        })
-        overlay.appendChild(hit)
+      const idxFromEvent = (e) => {
+        const rect = overlay.getBoundingClientRect()
+        const y = e.clientY - rect.top
+        const idx = Math.floor(y / slotH)
+        return idx >= 0 && idx < n ? idx : -1
       }
+
+      overlay.addEventListener('click', (e) => {
+        const idx = idxFromEvent(e)
+        if (idx >= 0) {
+          const raw = getKey(getData()[idx])
+          if (raw) this.openChartDetail(type, raw)
+        }
+      })
+
+      overlay.addEventListener('mousemove', (e) => {
+        const idx = idxFromEvent(e)
+        overlay.style.cursor = idx >= 0 ? 'pointer' : 'default'
+        if (canvas._hoveredLabelIndex !== idx) {
+          canvas._hoveredLabelIndex = idx
+          const c = getChart()
+          if (c) c.update('none')
+        }
+      })
+
+      overlay.addEventListener('mouseleave', () => {
+        if (canvas._hoveredLabelIndex !== -1) {
+          canvas._hoveredLabelIndex = -1
+          overlay.style.cursor = 'default'
+          const c = getChart()
+          if (c) c.update('none')
+        }
+      })
 
       card.appendChild(overlay)
       canvas._labelOverlay = overlay
