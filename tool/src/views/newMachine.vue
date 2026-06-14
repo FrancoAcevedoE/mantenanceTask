@@ -481,8 +481,9 @@ document.body.style.backgroundAttachment = 'fixed'
   min-height: 100vh;
 
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
 
   padding: 2rem;
 
