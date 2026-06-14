@@ -719,11 +719,29 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            onClick: (_event, elements) => {
-              if (!elements.length) return
-              const index = elements[0].index
-              const raw = sortedOperarioData[index]?.operario
-              if (raw) this.openChartDetail('operario', raw)
+            onClick: (event, _elements) => {
+              const chart = this.typeChartInstance
+              if (!chart || event.x >= chart.chartArea.left) return
+              const yScale = chart.scales.y
+              const tickHeight = (yScale.bottom - yScale.top) / sortedOperarioData.length
+              for (let i = 0; i < sortedOperarioData.length; i++) {
+                if (Math.abs(event.y - yScale.getPixelForValue(i)) <= tickHeight / 2) {
+                  const raw = sortedOperarioData[i]?.operario
+                  if (raw) this.openChartDetail('operario', raw)
+                  return
+                }
+              }
+            },
+            onHover: (event, _elements, chart) => {
+              chart.canvas.style.cursor = event.x < chart.chartArea.left ? 'pointer' : 'default'
+            },
+            scales: {
+              y: {
+                ticks: {
+                  color: '#1e88e5',
+                  font: { size: 12 }
+                }
+              }
             },
             plugins: {
               tooltip: {
@@ -754,11 +772,29 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            onClick: (_event, elements) => {
-              if (!elements.length) return
-              const index = elements[0].index
-              const raw = sortedSectorData[index]?.sector
-              if (raw) this.openChartDetail('sector', raw)
+            onClick: (event, _elements) => {
+              const chart = this.sectorChartInstance
+              if (!chart || event.x >= chart.chartArea.left) return
+              const yScale = chart.scales.y
+              const tickHeight = (yScale.bottom - yScale.top) / sortedSectorData.length
+              for (let i = 0; i < sortedSectorData.length; i++) {
+                if (Math.abs(event.y - yScale.getPixelForValue(i)) <= tickHeight / 2) {
+                  const raw = sortedSectorData[i]?.sector
+                  if (raw) this.openChartDetail('sector', raw)
+                  return
+                }
+              }
+            },
+            onHover: (event, _elements, chart) => {
+              chart.canvas.style.cursor = event.x < chart.chartArea.left ? 'pointer' : 'default'
+            },
+            scales: {
+              y: {
+                ticks: {
+                  color: '#6d4c41',
+                  font: { size: 12 }
+                }
+              }
             },
             plugins: {
               legend: {
