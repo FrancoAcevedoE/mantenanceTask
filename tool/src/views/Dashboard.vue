@@ -253,6 +253,53 @@
       </div>
 
     </div>
+
+    <!-- MODAL DETALLE GRÁFICO -->
+    <div v-if="chartDetail" class="chart-detail-overlay" @click.self="chartDetail = null">
+      <div class="chart-detail-modal">
+        <div class="chart-detail-header">
+          <h3>
+            <span v-if="chartDetail.type === 'operario'">Operario: {{ chartDetail.label }}</span>
+            <span v-else>Sector: {{ chartDetail.label }}</span>
+          </h3>
+          <button class="chart-detail-close" @click="chartDetail = null">✕</button>
+        </div>
+
+        <p class="chart-detail-count">{{ chartDetail.items.length }} trabajo{{ chartDetail.items.length !== 1 ? 's' : '' }} en el periodo</p>
+
+        <div v-if="!chartDetail.items.length" class="chart-detail-empty">
+          Sin registros en el periodo seleccionado.
+        </div>
+
+        <div v-else class="chart-detail-table-wrapper">
+          <table class="chart-detail-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Máquina</th>
+                <th v-if="chartDetail.type === 'operario'">Sector</th>
+                <th v-if="chartDetail.type === 'sector'">Operario</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in chartDetail.items" :key="item._id">
+                <td>{{ formatDate(item.createdAt) }}</td>
+                <td>{{ item.machine || '-' }}</td>
+                <td v-if="chartDetail.type === 'operario'">{{ item.sector || '-' }}</td>
+                <td v-if="chartDetail.type === 'sector'">{{ item.clientId?.name || '-' }}</td>
+                <td>
+                  <span :class="['status-pill', `status-pill-${item.status}`]">
+                    {{ formatStatus(item.status) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </template>
@@ -353,7 +400,9 @@ export default {
 
       syncingRecentScroll: false,
 
-      showRecentBottomScrollbar: false
+      showRecentBottomScrollbar: false,
+
+      chartDetail: null
     }
   },
 
@@ -670,6 +719,12 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
+            onClick: (_event, elements) => {
+              if (!elements.length) return
+              const index = elements[0].index
+              const raw = sortedOperarioData[index]?.operario
+              if (raw) this.openChartDetail('operario', raw)
+            },
             plugins: {
               tooltip: {
                 callbacks: {
@@ -680,8 +735,7 @@ export default {
               }
             }
           }
-        }
-        )
+        })
       }
 
       if (this.$refs.sectorChart) {
@@ -700,6 +754,12 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
+            onClick: (_event, elements) => {
+              if (!elements.length) return
+              const index = elements[0].index
+              const raw = sortedSectorData[index]?.sector
+              if (raw) this.openChartDetail('sector', raw)
+            },
             plugins: {
               legend: {
                 display: false
@@ -761,6 +821,23 @@ export default {
 
       return status || "-"
 
+    },
+
+    openChartDetail(type, rawLabel) {
+      const all = this.stats.recentMaintenances || []
+      let items
+      if (type === 'operario') {
+        items = all.filter(m => {
+          const name = String(m.clientId?.name || '').trim()
+          return name && rawLabel.startsWith(name)
+        })
+      } else {
+        const normalized = rawLabel.toLowerCase().trim()
+        items = all.filter(m =>
+          String(m.sector || '').toLowerCase().trim() === normalized
+        )
+      }
+      this.chartDetail = { type, label: rawLabel, items }
     },
 
     formatUnfinishedReason(reason) {
@@ -1414,4 +1491,121 @@ h1 {
     display: inline;
   }
 }
+
+/* CHART DETAIL MODAL */
+.chart-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.chart-detail-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: min(680px, 100%);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.chart-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chart-detail-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a2e0f;
+}
+
+.chart-detail-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.chart-detail-close:hover {
+  background: #f3f4f6;
+  color: #111;
+}
+
+.chart-detail-count {
+  padding: 0.5rem 1.2rem;
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.chart-detail-empty {
+  padding: 2rem 1.2rem;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.chart-detail-table-wrapper {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.chart-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.chart-detail-table th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chart-detail-table td {
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+}
+
+.chart-detail-table tr:last-child td {
+  border-bottom: none;
+}
+
+.chart-detail-table tr:hover td {
+  background: #f9fafb;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.status-pill-finished  { background: #dcfce7; color: #166534; }
+.status-pill-pending   { background: #fef9c3; color: #854d0e; }
+.status-pill-stopped   { background: #fee2e2; color: #991b1b; }
 </style>
