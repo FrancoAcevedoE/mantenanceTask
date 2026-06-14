@@ -149,6 +149,33 @@
             <option :value="true">Sí</option>
             <option :value="false">No</option>
           </select>
+
+          <div v-if="form.jobFinished === false || form.machineRunning === false" class="unfinished-block">
+            <label class="unfinished-title">MOTIVO DE NO FINALIZACIÓN</label>
+            <div class="reason-list">
+              <label
+                v-for="option in unfinishedReasonOptions"
+                :key="option"
+                class="reason-option"
+                :class="{ 'reason-option--selected': form.unfinishedReasonCategory === option }"
+              >
+                <input
+                  type="radio"
+                  :value="option"
+                  v-model="form.unfinishedReasonCategory"
+                  @change="onUnfinishedReasonCategoryChange"
+                />
+                {{ option }}
+              </label>
+            </div>
+            <textarea
+              v-if="form.unfinishedReasonCategory === 'Otros'"
+              v-model="form.unfinishedReason"
+              placeholder="Describe el motivo..."
+              class="reason-textarea"
+            ></textarea>
+          </div>
+
           <button type="submit">Guardar mantenimiento</button>
         </form>
       </div>
@@ -1225,6 +1252,89 @@ button:hover {
   margin: 0.5rem 0 0;
   color: #666;
   font-size: 0.9rem;
+}
+
+.unfinished-block {
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 1rem 1.25rem;
+  background: #fff8f0;
+  border: 1px solid #f9a825;
+  border-radius: 14px;
+  animation: stepReveal 200ms ease-out;
+}
+
+.unfinished-title {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #e65100;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.reason-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.reason-option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.92rem;
+  color: #444;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: left;
+  margin: 0;
+  width: 100%;
+}
+
+.reason-option:hover {
+  background: #fff3e0;
+  border-color: #ffcc80;
+}
+
+.reason-option--selected {
+  background: #fff3e0;
+  border-color: #f9a825;
+  color: #e65100;
+  font-weight: 600;
+}
+
+.reason-option input[type='radio'] {
+  width: auto;
+  margin: 0;
+  accent-color: #f9a825;
+  cursor: pointer;
+  background: transparent;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+.reason-textarea {
+  width: 100%;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ffcc80;
+  border-radius: 10px;
+  background: #fffde7;
+  font-size: 0.92rem;
+  color: #444;
+  resize: vertical;
+  min-height: 80px;
+  box-sizing: border-box;
+}
+
+.reason-textarea:focus {
+  outline: none;
+  border-color: #f9a825;
+  box-shadow: 0 0 0 2px rgba(249, 168, 37, 0.2);
 }
 
 /* Responsive */
