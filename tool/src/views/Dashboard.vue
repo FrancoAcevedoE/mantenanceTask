@@ -904,7 +904,7 @@ export default {
           position: 'absolute',
           left: '0',
           right: '0',
-          top: `${centerY - halfH - 80}px`,
+          top: `${centerY - halfH - 60}px`,
           height: `${halfH * 2}px`,
           cursor: 'pointer',
           pointerEvents: 'all'
