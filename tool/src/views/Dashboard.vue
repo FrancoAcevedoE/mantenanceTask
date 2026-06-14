@@ -262,22 +262,22 @@
                 <tr>
                   <th>Operario</th>
                   <th>Máquina</th>
-                  <th>Parte</th>
+                  <th class="col-mobile-hide">Parte</th>
                   <th>Sector</th>
                   <th>Estado</th>
                   <th>Fecha</th>
-                  <th>Hora</th>
+                  <th class="col-mobile-hide">Hora</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="item in filteredRecentMaintenances" :key="item._id">
                   <td class="recent-operario">{{ formatOperarioName(item.clientId) }}</td>
                   <td>{{ item.machine }}</td>
-                  <td>{{ Array.isArray(item.machinePart) ? item.machinePart.join(', ') : item.machinePart }}</td>
+                  <td class="col-mobile-hide">{{ Array.isArray(item.machinePart) ? item.machinePart.join(', ') : item.machinePart }}</td>
                   <td>{{ item.sector }}</td>
                   <td>{{ formatStatus(item.status) }}</td>
                   <td>{{ formatDate(item.createdAt) }}</td>
-                  <td>{{ formatTime(item.createdAt) }}</td>
+                  <td class="col-mobile-hide">{{ formatTime(item.createdAt) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -1564,6 +1564,16 @@ h1 {
 
   .cards {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .col-mobile-hide { display: none; }
+
+  .recent-table { min-width: unset; }
+
+  .recent-table th,
+  .recent-table td {
+    padding: 8px 6px;
+    font-size: 0.78rem;
   }
 }
 

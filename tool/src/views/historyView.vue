@@ -42,14 +42,14 @@
             </thead>
             <tbody>
               <tr v-for="item in filteredHistory" :key="item._id" :class="getRowClass(item.status)">
-                <td>{{ item.machine }}</td>
-                <td>{{ formatDate(item.createdAt) }}</td>
-                <td>
+                <td data-label="Nombre">{{ item.machine }}</td>
+                <td data-label="Fecha">{{ formatDate(item.createdAt) }}</td>
+                <td data-label="Estado">
                   <span class="status-badge" :class="'badge-' + item.status">
                     {{ formatStatus(item.status) }}
                   </span>
                 </td>
-                <td class="action-cell">
+                <td data-label="Acciones" class="action-cell">
                   <div class="action-buttons">
                     <button class="btn-detail" @click="openDetailModal(item)">Ver detalle</button>
                     <button v-if="currentUserRole === 'admin'" class="btn-delete" @click="deleteMaintenanceRecord(item)">Eliminar</button>
@@ -437,6 +437,60 @@ button:hover { background: #8f8f8f; }
   .container { padding: 1rem; }
   .topbar { flex-direction: column; align-items: stretch; }
   .filters input, .filters select { min-width: 100%; }
+}
+
+@media (max-width: 600px) {
+  /* Convertir tabla en tarjetas */
+  .table-wrapper { background: transparent; box-shadow: none; border-radius: 0; }
+
+  .history-table,
+  .history-table thead,
+  .history-table tbody,
+  .history-table td,
+  .history-table tr { display: block; }
+
+  .history-table thead tr { display: none; }
+
+  .history-table tbody tr {
+    margin-bottom: 0.65rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+
+  .history-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.85rem;
+  }
+
+  .history-table td:last-child { border-bottom: none; }
+
+  .history-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #777;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+  }
+
+  .history-table td[data-label="Acciones"]::before { display: none; }
+  .history-table td[data-label="Acciones"] { justify-content: flex-end; padding: 6px 10px; }
+
+  .action-buttons { gap: 0.4rem; }
+  .btn-detail, .btn-delete { padding: 6px 10px; font-size: 0.78rem; }
+
+  /* Indicador de estado en el borde izquierdo */
+  .history-table tr.row-yellow { border-left: 4px solid #f59e0b; }
+  .history-table tr.row-red    { border-left: 4px solid #ef4444; }
 }
 
 /* ── Loading ── */
