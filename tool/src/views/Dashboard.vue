@@ -402,7 +402,10 @@ export default {
 
       showRecentBottomScrollbar: false,
 
-      chartDetail: null
+      chartDetail: null,
+
+      sortedOperarioData: [],
+      sortedSectorData: []
     }
   },
 
@@ -632,6 +635,16 @@ export default {
     },
     destroyCharts() {
 
+      for (const ref of ['typeChart', 'sectorChart']) {
+        const canvas = this.$refs[ref]
+        if (canvas?._labelClick) {
+          canvas.removeEventListener('click', canvas._labelClick)
+          canvas.removeEventListener('mousemove', canvas._labelMove)
+          delete canvas._labelClick
+          delete canvas._labelMove
+        }
+      }
+
       if (this.statusChartInstance) {
         this.statusChartInstance.stop()
         this.statusChartInstance.destroy()
@@ -668,6 +681,8 @@ export default {
 
       const sortedOperarioData = [...operarioData].sort((a, b) => String(a.operario || "").localeCompare(String(b.operario || ""), "es", { sensitivity: "base" }))
       const sortedSectorData = [...sectorData].sort((a, b) => String(a.sector || "").localeCompare(String(b.sector || ""), "es", { sensitivity: "base" }))
+      this.sortedOperarioData = sortedOperarioData
+      this.sortedSectorData = sortedSectorData
 
       if (this.$refs.statusChart) {
         this.statusChartInstance = new Chart(this.$refs.statusChart, {
@@ -719,22 +734,6 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            onClick: (event, _elements) => {
-              const chart = this.typeChartInstance
-              if (!chart || event.x >= chart.chartArea.left) return
-              const yScale = chart.scales.y
-              const tickHeight = (yScale.bottom - yScale.top) / sortedOperarioData.length
-              for (let i = 0; i < sortedOperarioData.length; i++) {
-                if (Math.abs(event.y - yScale.getPixelForValue(i)) <= tickHeight / 2) {
-                  const raw = sortedOperarioData[i]?.operario
-                  if (raw) this.openChartDetail('operario', raw)
-                  return
-                }
-              }
-            },
-            onHover: (event, _elements, chart) => {
-              chart.canvas.style.cursor = event.x < chart.chartArea.left ? 'pointer' : 'default'
-            },
             scales: {
               y: {
                 ticks: {
@@ -754,6 +753,7 @@ export default {
             }
           }
         })
+        this._attachLabelListeners(this.$refs.typeChart, 'operario')
       }
 
       if (this.$refs.sectorChart) {
@@ -772,22 +772,6 @@ export default {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            onClick: (event, _elements) => {
-              const chart = this.sectorChartInstance
-              if (!chart || event.x >= chart.chartArea.left) return
-              const yScale = chart.scales.y
-              const tickHeight = (yScale.bottom - yScale.top) / sortedSectorData.length
-              for (let i = 0; i < sortedSectorData.length; i++) {
-                if (Math.abs(event.y - yScale.getPixelForValue(i)) <= tickHeight / 2) {
-                  const raw = sortedSectorData[i]?.sector
-                  if (raw) this.openChartDetail('sector', raw)
-                  return
-                }
-              }
-            },
-            onHover: (event, _elements, chart) => {
-              chart.canvas.style.cursor = event.x < chart.chartArea.left ? 'pointer' : 'default'
-            },
             scales: {
               y: {
                 ticks: {
@@ -810,6 +794,7 @@ export default {
             }
           }
         })
+        this._attachLabelListeners(this.$refs.sectorChart, 'sector')
       }
 
       if (this.$refs.dailyChart) {
@@ -857,6 +842,47 @@ export default {
 
       return status || "-"
 
+    },
+
+    _attachLabelListeners(canvas, type) {
+      if (!canvas) return
+
+      const getChart = () => type === 'operario' ? this.typeChartInstance : this.sectorChartInstance
+      const getData = () => type === 'operario' ? this.sortedOperarioData : this.sortedSectorData
+      const getKey = (item) => type === 'operario' ? item.operario : item.sector
+
+      const onClick = (e) => {
+        const chart = getChart()
+        if (!chart) return
+        const rect = canvas.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        if (x >= chart.chartArea.left) return
+
+        const data = getData()
+        const yScale = chart.scales.y
+        const tickH = (yScale.bottom - yScale.top) / Math.max(data.length, 1)
+        for (let i = 0; i < data.length; i++) {
+          if (Math.abs(y - yScale.getPixelForValue(i)) <= tickH / 2) {
+            const raw = getKey(data[i])
+            if (raw) this.openChartDetail(type, raw)
+            return
+          }
+        }
+      }
+
+      const onMove = (e) => {
+        const chart = getChart()
+        if (!chart) return
+        const rect = canvas.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        canvas.style.cursor = x < chart.chartArea.left ? 'pointer' : 'default'
+      }
+
+      canvas._labelClick = onClick
+      canvas._labelMove = onMove
+      canvas.addEventListener('click', onClick)
+      canvas.addEventListener('mousemove', onMove)
     },
 
     openChartDetail(type, rawLabel) {
