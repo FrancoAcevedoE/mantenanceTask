@@ -4,20 +4,20 @@
     <!-- SELECTOR DE ACCIONES -->
     <div class="machine-selector">
       <!-- FORMULARIO CARD -->
-      <div class="action-card" @click="showNewMachineForm = !showNewMachineForm">
+      <div class="action-card" @click="activePanel = activePanel === 'form' ? '' : 'form'">
         <i class="bi bi-clipboard-plus"></i>
         <p>{{ editingMachineId ? 'MODIFICAR MÁQUINA' : 'NUEVA MÁQUINA' }}</p>
       </div>
 
       <!-- MÁQUINAS CARD -->
-      <div class="action-card" @click="showMachinesPanel = !showMachinesPanel">
+      <div class="action-card" @click="activePanel = activePanel === 'machines' ? '' : 'machines'">
         <i class="bi bi-clipboard2-data"></i>
         <p>MÁQUINAS CARGADAS</p>
       </div>
     </div>
 
     <!-- PANEL FORMULARIO -->
-    <div v-if="showNewMachineForm" class="panel-container">
+    <div v-if="activePanel === 'form'" class="panel-container">
       <div class="box">
         <h2>{{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}</h2>
 
@@ -74,7 +74,7 @@
     </div>
 
     <!-- PANEL MÁQUINAS -->
-    <div v-if="showMachinesPanel" class="panel-container">
+    <div v-if="activePanel === 'machines'" class="panel-container">
       <div class="box">
         <h2>Máquinas cargadas</h2>
 
@@ -236,8 +236,7 @@ export default {
   data() {
     return {
 
-      showNewMachineForm: false,
-      showMachinesPanel: false,
+      activePanel: '',
 
       form: {
         sector: "",
@@ -372,6 +371,7 @@ export default {
       }
       this.newPart = ""
       this.editingMachineId = machineId
+      this.activePanel = 'form'
 
       window.scrollTo({ top: 0, behavior: "smooth" })
     },
@@ -461,12 +461,8 @@ export default {
       }
     },
     cancel() {
-      if (this.editingMachineId) {
-        this.resetForm()
-        return
-      }
-
-      this.$router.back()
+      this.resetForm()
+      this.activePanel = ''
     }
   },
   mounted() {
