@@ -637,13 +637,9 @@ export default {
 
       for (const ref of ['typeChart', 'sectorChart']) {
         const canvas = this.$refs[ref]
-        if (canvas?._labelClick) {
-          canvas.removeEventListener('click', canvas._labelClick)
-          canvas.removeEventListener('mousemove', canvas._labelMove)
-          canvas.removeEventListener('mouseleave', canvas._labelLeave)
-          delete canvas._labelClick
-          delete canvas._labelMove
-          delete canvas._labelLeave
+        if (canvas?._labelOverlay) {
+          canvas._labelOverlay.remove()
+          delete canvas._labelOverlay
         }
       }
 
@@ -860,84 +856,76 @@ export default {
 
     _attachLabelListeners(canvas, type) {
       if (!canvas) return
-      canvas._hoveredLabelIndex = -1
 
       const getChart = () => type === 'operario' ? this.typeChartInstance : this.sectorChartInstance
       const getData = () => type === 'operario' ? this.sortedOperarioData : this.sortedSectorData
       const getKey = (item) => type === 'operario' ? item.operario : item.sector
 
-      // Use actual rendered bar element positions (avoids DPR coordinate mismatch)
-      const findRowIndex = (chart, y) => {
-        const meta = chart.getDatasetMeta(0)
-        if (!meta?.data?.length) return -1
-        for (let i = 0; i < meta.data.length; i++) {
-          const el = meta.data[i]
-          const halfH = (Math.abs(el.height) || 20) / 2 + 4
-          if (Math.abs(y - el.y) <= halfH) return i
-        }
-        return -1
-      }
+      const card = canvas.closest('.chart-card')
+      if (!card) return
 
-      const getY = (e) => e.clientY - canvas.getBoundingClientRect().top
-      const getX = (e) => e.clientX - canvas.getBoundingClientRect().left
+      // Remove any existing overlay from previous render
+      card.querySelectorAll('.chart-label-overlay').forEach(el => el.remove())
 
-      const isInLabelArea = (chart, x) => {
-        if (!chart.chartArea) return true
-        // chartArea.left may be in CSS or device pixels depending on Chart.js version/DPR
-        // Compare against both: accept if x is less than chartArea.left in CSS pixels
-        // or less than chartArea.left / devicePixelRatio
-        const dpr = window.devicePixelRatio || 1
-        return x < chart.chartArea.left || x < chart.chartArea.left / dpr
-      }
+      const chart = getChart()
+      if (!chart) return
 
-      const onClick = (e) => {
-        const chart = getChart()
-        if (!chart) return
-        if (!isInLabelArea(chart, getX(e))) return
-        const idx = findRowIndex(chart, getY(e))
-        if (idx >= 0) {
-          const raw = getKey(getData()[idx])
+      const data = getData()
+      const meta = chart.getDatasetMeta(0)
+      if (!data.length || !meta?.data?.length) return
+
+      canvas._hoveredLabelIndex = -1
+
+      // Position overlay over the label area of the canvas
+      const canvasTop = canvas.offsetTop
+      const canvasLeft = canvas.offsetLeft
+      const labelWidth = chart.chartArea.left
+
+      const overlay = document.createElement('div')
+      overlay.className = 'chart-label-overlay'
+      Object.assign(overlay.style, {
+        position: 'absolute',
+        top: `${canvasTop}px`,
+        left: `${canvasLeft}px`,
+        width: `${labelWidth}px`,
+        height: `${canvas.offsetHeight}px`,
+        pointerEvents: 'none',
+        zIndex: '2'
+      })
+
+      for (let i = 0; i < meta.data.length; i++) {
+        const center = meta.data[i].getCenterPoint()
+        const btn = document.createElement('button')
+        Object.assign(btn.style, {
+          position: 'absolute',
+          left: '0',
+          right: '0',
+          height: '26px',
+          top: `${center.y - 13}px`,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          pointerEvents: 'all'
+        })
+        btn.addEventListener('click', () => {
+          const raw = getKey(getData()[i])
           if (raw) this.openChartDetail(type, raw)
-        }
-      }
-
-      const onMove = (e) => {
-        const chart = getChart()
-        if (!chart || !chart.chartArea) return
-        const x = getX(e)
-        const y = getY(e)
-
-        if (isInLabelArea(chart, x)) {
-          const found = findRowIndex(chart, y)
-          if (canvas._hoveredLabelIndex !== found) {
-            canvas._hoveredLabelIndex = found
-            chart.update('none')
-          }
-          canvas.style.cursor = found >= 0 ? 'pointer' : 'default'
-        } else {
-          if (canvas._hoveredLabelIndex !== -1) {
-            canvas._hoveredLabelIndex = -1
-            chart.update('none')
-          }
-          canvas.style.cursor = 'default'
-        }
-      }
-
-      const onLeave = () => {
-        const chart = getChart()
-        if (canvas._hoveredLabelIndex !== -1) {
+        })
+        btn.addEventListener('mouseenter', () => {
+          canvas._hoveredLabelIndex = i
+          const c = getChart()
+          if (c) c.update('none')
+        })
+        btn.addEventListener('mouseleave', () => {
           canvas._hoveredLabelIndex = -1
-          if (chart) chart.update('none')
-        }
-        canvas.style.cursor = 'default'
+          const c = getChart()
+          if (c) c.update('none')
+        })
+        overlay.appendChild(btn)
       }
 
-      canvas._labelClick = onClick
-      canvas._labelMove = onMove
-      canvas._labelLeave = onLeave
-      canvas.addEventListener('click', onClick)
-      canvas.addEventListener('mousemove', onMove)
-      canvas.addEventListener('mouseleave', onLeave)
+      card.appendChild(overlay)
+      canvas._labelOverlay = overlay
     },
 
     openChartDetail(type, rawLabel) {
