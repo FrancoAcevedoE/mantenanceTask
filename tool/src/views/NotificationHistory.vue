@@ -96,6 +96,16 @@
                     {{ formatSeverity(item.severity) }}
                   </span>
 
+                  <button
+                    v-if="!item.read && expandedNotification !== String(item.id)"
+                    type="button"
+                    class="mark-read-mini"
+                    title="Marcar como leída"
+                    @click.stop="markAsRead(item.id)"
+                  >
+                    <i class="bi bi-check2"></i>
+                  </button>
+
                 </div>
 
               </div>
@@ -213,11 +223,14 @@ export default {
 
       if (isOpen) {
         this.expandedNotification = null
-        this.markAsRead(id)
         return
       }
 
       this.expandedNotification = id
+
+      if (!item.read) {
+        this.markAsRead(id)
+      }
 
       this.$router.push({
         path: '/notifications-history',
@@ -230,32 +243,31 @@ export default {
         this.expandedNotification === id ? null : String(id)
     },
 
-   async markAsRead(id) {
-  try {
-    const parsedId = Number(id)
-    if (!parsedId) return
+    async markAsRead(id) {
+      try {
+        const parsedId = Number(id)
+        if (!parsedId) return
 
-    await axios.post(
-      `${API_BASE_URL}/maintenance/notifications/read`,
-      { ids: [parsedId] },
-      this.authConfig()
-    )
+        const target = this.items.find(i => Number(i.id) === parsedId)
+        if (target?.read) return
 
-    this.items = this.items.map(item => {
-      const itemId = Number(item.id)
+        await axios.post(
+          `${API_BASE_URL}/maintenance/notifications/read`,
+          { ids: [parsedId] },
+          this.authConfig()
+        )
 
-      return {
-        ...item,
-        read: itemId === parsedId ? true : item.read
+        this.items = this.items.map(item => ({
+          ...item,
+          read: Number(item.id) === parsedId ? true : item.read
+        }))
+
+        this.summary.read += 1
+        this.summary.unread = Math.max(0, this.summary.unread - 1)
+      } catch (error) {
+        this.$notify.notifyApiError(error, 'No se pudo marcar como leída')
       }
-    })
-console.log("ITEMS:", this.items)
-    this.expandedNotification = null
-
-  } catch (error) {
-    this.$notify.notifyApiError(error, 'No se pudo marcar como leída')
-  }
-},
+    },
 
     buildHistoryQuery() {
       const params = new URLSearchParams()
@@ -479,6 +491,28 @@ console.log("ITEMS:", this.items)
 .notification-date {
   font-size: .8rem;
   color: #94a3b8;
+}
+
+.mark-read-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid #a3b97a;
+  background: transparent;
+  color: #6b8a3a;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.18s, color 0.18s;
+  padding: 0;
+}
+
+.mark-read-mini:hover {
+  background: #6b8a3a;
+  color: #fff;
+  border-color: #6b8a3a;
 }
 
 .notification-details {
