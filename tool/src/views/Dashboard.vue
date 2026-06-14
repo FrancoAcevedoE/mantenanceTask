@@ -111,11 +111,47 @@
             </div>
             <div class="chart-card">
               <h3>Mantenimientos por operario</h3>
-              <canvas ref="typeChart"></canvas>
+              <div class="custom-hbar-chart">
+                <div
+                  v-for="(item, i) in sortedOperarioData"
+                  :key="i"
+                  class="hbar-row"
+                  @click="openChartDetail('operario', item.operario)"
+                >
+                  <span class="hbar-label">{{ formatType(item.operario) }}</span>
+                  <div class="hbar-track">
+                    <div class="hbar-fill hbar-fill--blue" :style="{ width: pct(item.count, maxOperario) + '%' }"></div>
+                  </div>
+                  <span class="hbar-value">{{ item.count }}</span>
+                </div>
+                <div class="hbar-axis">
+                  <span>0</span>
+                  <span>{{ Math.round(maxOperario / 2) }}</span>
+                  <span>{{ maxOperario }}</span>
+                </div>
+              </div>
             </div>
             <div class="chart-card">
               <h3>Mantenimientos por sector</h3>
-              <canvas ref="sectorChart"></canvas>
+              <div class="custom-hbar-chart">
+                <div
+                  v-for="(item, i) in sortedSectorData"
+                  :key="i"
+                  class="hbar-row"
+                  @click="openChartDetail('sector', item.sector)"
+                >
+                  <span class="hbar-label hbar-label--brown">{{ item.sector }}</span>
+                  <div class="hbar-track">
+                    <div class="hbar-fill hbar-fill--brown" :style="{ width: pct(item.count, maxSector) + '%' }"></div>
+                  </div>
+                  <span class="hbar-value">{{ item.count }}</span>
+                </div>
+                <div class="hbar-axis">
+                  <span>0</span>
+                  <span>{{ Math.round(maxSector / 2) }}</span>
+                  <span>{{ maxSector }}</span>
+                </div>
+              </div>
             </div>
             <div class="chart-card chart-card-wide">
               <h3>Evolución diaria del periodo</h3>
@@ -392,10 +428,6 @@ export default {
 
       statusChartInstance: null,
 
-      typeChartInstance: null,
-
-      sectorChartInstance: null,
-
       dailyChartInstance: null,
 
       syncingRecentScroll: false,
@@ -410,6 +442,14 @@ export default {
   },
 
   computed: {
+
+    maxOperario() {
+      return Math.max(...this.sortedOperarioData.map(d => d.count), 1)
+    },
+
+    maxSector() {
+      return Math.max(...this.sortedSectorData.map(d => d.count), 1)
+    },
 
     machineStatusOverview() {
       return [...(this.stats.machineStatusOverview || [])].sort((left, right) => {
@@ -635,28 +675,10 @@ export default {
     },
     destroyCharts() {
 
-      for (const ref of ['typeChart', 'sectorChart']) {
-        const canvas = this.$refs[ref]
-        if (canvas?._labelOverlay) {
-          canvas._labelOverlay.remove()
-          delete canvas._labelOverlay
-        }
-      }
-
       if (this.statusChartInstance) {
         this.statusChartInstance.stop()
         this.statusChartInstance.destroy()
         this.statusChartInstance = null
-      }
-
-      if (this.typeChartInstance) {
-        this.typeChartInstance.destroy()
-        this.typeChartInstance = null
-      }
-
-      if (this.sectorChartInstance) {
-        this.sectorChartInstance.destroy()
-        this.sectorChartInstance = null
       }
 
       if (this.dailyChartInstance) {
@@ -716,97 +738,6 @@ export default {
         })
       }
 
-      if (this.$refs.typeChart) {
-        this.typeChartInstance = new Chart(this.$refs.typeChart, {
-          type: "bar",
-          data: {
-            labels: sortedOperarioData.map(item => this.formatType(item.operario)),
-            datasets: [{
-              label: "Cantidad",
-              data: sortedOperarioData.map(item => item.count),
-              backgroundColor: "#1e88e5",
-              borderRadius: 8
-            }]
-          },
-          options: {
-            indexAxis: "y",
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                ticks: {
-                  color: (ctx) => {
-                    const hovered = this.$refs.typeChart?._hoveredLabelIndex
-                    return hovered === ctx.index ? '#0d47a1' : '#1e88e5'
-                  },
-                  font: (ctx) => {
-                    const hovered = this.$refs.typeChart?._hoveredLabelIndex
-                    return hovered === ctx.index ? { size: 14, weight: 'bold' } : { size: 12 }
-                  }
-                }
-              }
-            },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `Cantidad: ${context.raw}`
-                  }
-                }
-              }
-            }
-          }
-        })
-        this._attachLabelListeners(this.$refs.typeChart, 'operario')
-      }
-
-      if (this.$refs.sectorChart) {
-        this.sectorChartInstance = new Chart(this.$refs.sectorChart, {
-          type: "bar",
-          data: {
-            labels: sortedSectorData.map(item => item.sector),
-            datasets: [{
-              label: "Cantidad",
-              data: sortedSectorData.map(item => item.count),
-              backgroundColor: "#6d4c41",
-              borderRadius: 8
-            }]
-          },
-          options: {
-            indexAxis: "y",
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                ticks: {
-                  color: (ctx) => {
-                    const hovered = this.$refs.sectorChart?._hoveredLabelIndex
-                    return hovered === ctx.index ? '#3e2723' : '#6d4c41'
-                  },
-                  font: (ctx) => {
-                    const hovered = this.$refs.sectorChart?._hoveredLabelIndex
-                    return hovered === ctx.index ? { size: 14, weight: 'bold' } : { size: 12 }
-                  }
-                }
-              }
-            },
-            plugins: {
-              legend: {
-                display: false
-              },
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `Sector: ${context.label} (${context.raw})`
-                  }
-                }
-              }
-            }
-          }
-        })
-        this._attachLabelListeners(this.$refs.sectorChart, 'sector')
-      }
-
       if (this.$refs.dailyChart) {
         this.dailyChartInstance = new Chart(this.$refs.dailyChart, {
           type: "line",
@@ -854,80 +785,8 @@ export default {
 
     },
 
-    _attachLabelListeners(canvas, type) {
-      if (!canvas) return
-
-      const getChart = () => type === 'operario' ? this.typeChartInstance : this.sectorChartInstance
-      const getData = () => type === 'operario' ? this.sortedOperarioData : this.sortedSectorData
-      const getKey = (item) => type === 'operario' ? item.operario : item.sector
-
-      const card = canvas.closest('.chart-card')
-      if (!card) return
-
-      // Remove any existing overlay from previous render
-      card.querySelectorAll('.chart-label-overlay').forEach(el => el.remove())
-
-      const chart = getChart()
-      if (!chart) return
-
-      const data = getData()
-      if (!data.length) return
-
-      canvas._hoveredLabelIndex = -1
-
-      const cardRect = card.getBoundingClientRect()
-      const canvasRect = canvas.getBoundingClientRect()
-      const relTop = canvasRect.top - cardRect.top
-      const relLeft = canvasRect.left - cardRect.left
-
-      const { top: chartTop, bottom: chartBottom, left: chartLeft } = chart.chartArea
-      const chartH = chartBottom - chartTop
-      const n = data.length
-      const slotH = chartH / n
-
-      // Overlay aligned exactly to the chart's plotted area (below legend)
-      const overlay = document.createElement('div')
-      overlay.className = 'chart-label-overlay'
-      Object.assign(overlay.style, {
-        position: 'absolute',
-        top: `${relTop + chartTop}px`,
-        left: `${relLeft}px`,
-        width: `${chartLeft}px`,
-        height: `${chartH}px`,
-        pointerEvents: 'none',
-        zIndex: '2'
-      })
-
-      for (let i = 0; i < n; i++) {
-        const hit = document.createElement('div')
-        Object.assign(hit.style, {
-          position: 'absolute',
-          left: '0',
-          right: '0',
-          top: `${i * slotH}px`,
-          height: `${slotH}px`,
-          cursor: 'pointer',
-          pointerEvents: 'all'
-        })
-        hit.addEventListener('click', () => {
-          const raw = getKey(getData()[i])
-          if (raw) this.openChartDetail(type, raw)
-        })
-        hit.addEventListener('mouseenter', () => {
-          canvas._hoveredLabelIndex = i
-          const c = getChart()
-          if (c) c.update('none')
-        })
-        hit.addEventListener('mouseleave', () => {
-          canvas._hoveredLabelIndex = -1
-          const c = getChart()
-          if (c) c.update('none')
-        })
-        overlay.appendChild(hit)
-      }
-
-      card.appendChild(overlay)
-      canvas._labelOverlay = overlay
+    pct(count, max) {
+      return max > 0 ? (count / max) * 100 : 0
     },
 
     openChartDetail(type, rawLabel) {
@@ -1355,6 +1214,96 @@ h1 {
   width: 100%;
 }
 
+
+/* CUSTOM HBAR CHART */
+.custom-hbar-chart {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 2.5rem);
+  overflow: hidden;
+}
+
+.hbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 0 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+  min-height: 0;
+}
+
+.hbar-row:last-of-type {
+  border-bottom: none;
+}
+
+.hbar-row:hover {
+  background: rgba(30, 136, 229, 0.06);
+}
+
+.hbar-row:hover .hbar-label {
+  color: #0d47a1;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.hbar-row:hover .hbar-label--brown {
+  color: #3e2723;
+}
+
+.hbar-label {
+  width: 130px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 12px;
+  color: #1e88e5;
+  padding-right: 8px;
+  transition: color 0.15s, font-weight 0.15s, font-size 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hbar-label--brown {
+  color: #6d4c41;
+}
+
+.hbar-track {
+  flex: 1;
+  height: 18px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.hbar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.hbar-fill--blue { background: #1e88e5; }
+.hbar-fill--brown { background: #6d4c41; }
+
+.hbar-value {
+  width: 26px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 11px;
+  color: #999;
+}
+
+.hbar-axis {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 26px 0 138px;
+  font-size: 10px;
+  color: #bbb;
+  flex-shrink: 0;
+}
 
 /* MACHINE STATUS */
 .machine-status-section {
