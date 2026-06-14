@@ -866,25 +866,35 @@ export default {
       const getData = () => type === 'operario' ? this.sortedOperarioData : this.sortedSectorData
       const getKey = (item) => type === 'operario' ? item.operario : item.sector
 
-      const findLabelIndex = (chart, y) => {
-        const data = getData()
-        const yScale = chart.scales.y
-        const tickH = (yScale.bottom - yScale.top) / Math.max(data.length, 1)
-        for (let i = 0; i < data.length; i++) {
-          if (Math.abs(y - yScale.getPixelForValue(i)) <= tickH / 2) return i
+      // Use actual rendered bar element positions (avoids DPR coordinate mismatch)
+      const findRowIndex = (chart, y) => {
+        const meta = chart.getDatasetMeta(0)
+        if (!meta?.data?.length) return -1
+        for (let i = 0; i < meta.data.length; i++) {
+          const el = meta.data[i]
+          const halfH = (Math.abs(el.height) || 20) / 2 + 4
+          if (Math.abs(y - el.y) <= halfH) return i
         }
         return -1
+      }
+
+      const getY = (e) => e.clientY - canvas.getBoundingClientRect().top
+      const getX = (e) => e.clientX - canvas.getBoundingClientRect().left
+
+      const isInLabelArea = (chart, x) => {
+        if (!chart.chartArea) return true
+        // chartArea.left may be in CSS or device pixels depending on Chart.js version/DPR
+        // Compare against both: accept if x is less than chartArea.left in CSS pixels
+        // or less than chartArea.left / devicePixelRatio
+        const dpr = window.devicePixelRatio || 1
+        return x < chart.chartArea.left || x < chart.chartArea.left / dpr
       }
 
       const onClick = (e) => {
         const chart = getChart()
         if (!chart) return
-        const rect = canvas.getBoundingClientRect()
-        const x = e.clientX - rect.left
-        const y = e.clientY - rect.top
-        if (x >= chart.chartArea.left) return
-
-        const idx = findLabelIndex(chart, y)
+        if (!isInLabelArea(chart, getX(e))) return
+        const idx = findRowIndex(chart, getY(e))
         if (idx >= 0) {
           const raw = getKey(getData()[idx])
           if (raw) this.openChartDetail(type, raw)
@@ -893,13 +903,12 @@ export default {
 
       const onMove = (e) => {
         const chart = getChart()
-        if (!chart) return
-        const rect = canvas.getBoundingClientRect()
-        const x = e.clientX - rect.left
-        const y = e.clientY - rect.top
+        if (!chart || !chart.chartArea) return
+        const x = getX(e)
+        const y = getY(e)
 
-        if (x < chart.chartArea.left) {
-          const found = findLabelIndex(chart, y)
+        if (isInLabelArea(chart, x)) {
+          const found = findRowIndex(chart, y)
           if (canvas._hoveredLabelIndex !== found) {
             canvas._hoveredLabelIndex = found
             chart.update('none')
