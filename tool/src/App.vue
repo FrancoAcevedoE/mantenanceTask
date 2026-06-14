@@ -120,7 +120,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
 <style>
 :root {
   --sidebar-w: 60px;
-  --sidebar-w-open: 220px;
+  --sidebar-w-open: 240px;
 }
 
 body.bg-login       { background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28)); }
@@ -369,9 +369,12 @@ main.app-content.with-nav {
 
   /* Labels siempre visibles en el drawer */
   .sidebar .nav-label {
-    max-width: 160px;
+    max-width: none;
+    flex: 1;
+    overflow: visible;
     opacity: 1;
     margin-left: 0.75rem;
+    white-space: nowrap;
   }
 
   .sidebar-logout {
