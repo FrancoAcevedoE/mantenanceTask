@@ -104,18 +104,34 @@
               {{ op.name }}
             </option>
           </select>
-          <select v-model="form.maintenanceType">
 
+          <div v-if="additionalWorkersList.length" class="workers-chips">
+            <span v-for="worker in additionalWorkersList" :key="worker._id" class="worker-chip">
+              {{ worker.name }}
+              <button type="button" class="chip-remove" @click="removeWorker(worker._id)">×</button>
+            </span>
+          </div>
+          <div v-if="availableAdditionalWorkers.length" class="add-worker-row">
+            <select v-model="selectedAdditionalWorker">
+              <option value="">Agregar otro operario</option>
+              <option v-for="op in availableAdditionalWorkers" :key="op._id" :value="op._id">
+                {{ op.name }}
+              </option>
+            </select>
+            <button type="button" class="add-worker-btn" :disabled="!selectedAdditionalWorker" @click="addWorker">
+              Agregar
+            </button>
+          </div>
+
+          <select v-model="form.maintenanceType">
+            <option value="">SELECCIONAR TIPO DE TRABAJO</option>
             <option value="Preventivo predictivo">Preventivo predictivo</option>
             <option value="Preventivo de mejora continua">Preventivo de mejora continua</option>
             <option value="Preventivo de correctivo">Preventivo de correctivo</option>
             <option value="Arreglo">Arreglo</option>
             <option value="fabricación">Fabricación</option>
             <option value="Limpieza">Limpieza</option>
-            <option value="Puesta en marcha (maquina parada)">
-              Puesta en marcha (maquina parada)
-            </option>
-
+            <option value="Puesta en marcha (maquina parada)">Puesta en marcha (maquina parada)</option>
           </select>
           <label>DESCRIPCIÓN</label>
           <textarea v-model="form.workDescription"></textarea>
@@ -255,10 +271,12 @@ export default {
 
     document.body.style.background = 'rgb(103, 111, 62)'
     document.body.style.backgroundAttachment = 'fixed'
+    document.addEventListener('mousedown', this._onClickOutside)
   },
 
   beforeUnmount() {
     document.body.style.background = ''
+    document.removeEventListener('mousedown', this._onClickOutside)
   },
 
   computed: {
@@ -360,6 +378,14 @@ export default {
   },
 
   methods: {
+    _onClickOutside(e) {
+      if (!this.showPartsDropdown) return
+      const el = this.$el?.querySelector?.('.multi-select')
+      if (el && !el.contains(e.target)) {
+        this.showPartsDropdown = false
+      }
+    },
+
     getStoredUser() {
       try {
         const rawUser = localStorage.getItem('user')
@@ -771,20 +797,27 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-
-  padding: 12px 15px;
-
+  padding: 10px 15px;
   cursor: pointer;
   text-align: left;
+  transition: background 0.15s;
 }
+
+.multi-option:first-child { border-radius: 16px 16px 0 0; }
+.multi-option:last-child  { border-radius: 0 0 16px 16px; }
+.multi-option:only-child  { border-radius: 16px; }
 
 .multi-option:hover {
-  background: #f5f5f5;
+  background: #eef4ff;
 }
 
-.multi-option input {
+.multi-option input[type='checkbox'] {
   width: auto;
   margin: 0;
+  accent-color: #1e88e5;
+  cursor: pointer;
+  background: transparent;
+  box-shadow: none;
 }
 
 .multi-empty {
@@ -937,8 +970,12 @@ textarea {
   min-height: 100px;
 }
 
-input:hover,
-input:focus,
+input[type='text']:hover,
+input[type='text']:focus,
+input[type='number']:hover,
+input[type='number']:focus,
+input[type='date']:hover,
+input[type='date']:focus,
 textarea:hover,
 textarea:focus,
 select:hover,
@@ -1070,12 +1107,26 @@ button:hover {
   color: #b71c1c;
 }
 
+.add-worker-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  width: 100%;
+  margin: 4px 0;
+}
+
+.add-worker-row select {
+  flex: 1;
+  margin: 0;
+}
+
 .add-worker-btn {
   width: auto;
   padding: 0.5rem 1rem;
   background: #00a878;
   margin-top: 0;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .add-worker-btn:hover {
