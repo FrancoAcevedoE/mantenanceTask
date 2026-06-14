@@ -386,7 +386,7 @@ export const historyController = async (req, res) => {
 
         const history = historyRaw.map((item) => {
             const machineName = isObjectId(item.machine)
-                ? (machineIdToName.get(item.machine) || item.machine)
+                ? (machineIdToName.get(item.machine) || "(Máquina eliminada)")
                 : item.machine
             const hasClientPopulated = item.clientId && typeof item.clientId === "object"
             const fallbackClient = item.clientSnapshot?.name
