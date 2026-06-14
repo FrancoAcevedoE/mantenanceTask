@@ -665,7 +665,8 @@ table {
 
 th,
 td {
-    padding: 12px 10px;
+    padding: 8px 10px;
+    font-size: 0.88rem;
     border-bottom: 1px solid #e8e8e8;
     text-align: left;
     color: #555;

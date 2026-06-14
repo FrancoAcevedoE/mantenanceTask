@@ -506,9 +506,27 @@ export const dashboardController = async (req, res) => {
 
         const operariosAttended = uniqueOperarioIds.size
 
-        const recentMaintenances = await Maintenance.find(periodFilter)
+        const recentMaintenancesRaw = await Maintenance.find(periodFilter)
             .populate("clientId", "name role")
             .sort({ createdAt: -1 })
+            .lean()
+
+        const recentOldIds = [...new Set(
+            recentMaintenancesRaw.map(item => item.machine).filter(isObjectId)
+        )]
+        const recentIdToName = new Map()
+        if (recentOldIds.length) {
+            const recentMachines = await Machine.find({ _id: { $in: recentOldIds } })
+                .select("name").lean()
+            recentMachines.forEach(m => recentIdToName.set(String(m._id), m.name))
+        }
+
+        const recentMaintenances = recentMaintenancesRaw.map(item => ({
+            ...item,
+            machine: isObjectId(item.machine)
+                ? (recentIdToName.get(item.machine) || "(Máquina eliminada)")
+                : item.machine
+        }))
 
         const pending = await Maintenance.countDocuments({
             ...periodFilter,
