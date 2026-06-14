@@ -196,13 +196,10 @@ export default {
     '$route.query.id': {
       immediate: true,
       handler(newId) {
-        if (!newId) return
-
-        const id = Number(newId)
-
+        const id = String(newId || '').trim()
         if (!id) return
 
-        this.expandedNotification = String(id)
+        this.expandedNotification = id
         this.markAsRead(id)
       }
     }
@@ -245,21 +242,21 @@ export default {
 
     async markAsRead(id) {
       try {
-        const parsedId = Number(id)
+        const parsedId = String(id || '').trim()
         if (!parsedId) return
 
-        const target = this.items.find(i => Number(i.id) === parsedId)
+        const target = this.items.find(i => String(i.id) === parsedId)
         if (target?.read) return
 
         await axios.post(
-          `${API_BASE_URL}/maintenance/notifications/read`,
+          `${API_BASE_URL}/maintenance/notifications/history/read`,
           { ids: [parsedId] },
           this.authConfig()
         )
 
         this.items = this.items.map(item => ({
           ...item,
-          read: Number(item.id) === parsedId ? true : item.read
+          read: String(item.id) === parsedId ? true : item.read
         }))
 
         this.summary.read += 1
