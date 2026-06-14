@@ -11,6 +11,11 @@
         <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
       </div>
 
+      <div v-else-if="isLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Cargando historial...</p>
+      </div>
+
       <div v-else>
         <div class="filters">
           <input v-model="searchMachine" placeholder="Buscar por máquina" />
@@ -110,6 +115,7 @@ export default {
 
   data() {
     return {
+      isLoading: false,
       history: [],
       searchMachine: "",
       filterSector: "",
@@ -168,20 +174,27 @@ export default {
     },
 
     async loadHistory() {
-      const res = await axios.get(`${API_BASE_URL}/maintenance/history`, this.authConfig())
-      this.history = res.data
-      this.sectors = [...new Set(res.data.map(item => item.sector))]
-      this.operarios = res.data.reduce((acc, item) => {
-        if (item.clientId?._id && !acc.some(o => o.value === item.clientId._id)) {
-          acc.push({ value: item.clientId._id, label: this.formatOperarioName(item.clientId) })
-        }
-        ;(item.additionalWorkers || []).forEach(w => {
-          if (w?._id && !acc.some(o => o.value === w._id)) {
-            acc.push({ value: w._id, label: this.formatOperarioName(w) })
+      this.isLoading = true
+      try {
+        const res = await axios.get(`${API_BASE_URL}/maintenance/history`, this.authConfig())
+        this.history = res.data
+        this.sectors = [...new Set(res.data.map(item => item.sector))]
+        this.operarios = res.data.reduce((acc, item) => {
+          if (item.clientId?._id && !acc.some(o => o.value === item.clientId._id)) {
+            acc.push({ value: item.clientId._id, label: this.formatOperarioName(item.clientId) })
           }
-        })
-        return acc
-      }, [])
+          ;(item.additionalWorkers || []).forEach(w => {
+            if (w?._id && !acc.some(o => o.value === w._id)) {
+              acc.push({ value: w._id, label: this.formatOperarioName(w) })
+            }
+          })
+          return acc
+        }, [])
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo cargar el historial")
+      } finally {
+        this.isLoading = false
+      }
     },
 
     getRowClass(status) {
@@ -424,6 +437,31 @@ button:hover { background: #8f8f8f; }
   .container { padding: 1rem; }
   .topbar { flex-direction: column; align-items: stretch; }
   .filters input, .filters select { min-width: 100%; }
+}
+
+/* ── Loading ── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  gap: 1rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #1e88e5;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Modales (renderizados en <body> via Teleport) ── */

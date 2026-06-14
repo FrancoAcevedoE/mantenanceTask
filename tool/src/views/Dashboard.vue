@@ -12,6 +12,11 @@
       </div>
 
       <!-- Contenido del dashboard solo para admin, supervisor y operario -->
+      <div v-else-if="isLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Cargando dashboard...</p>
+      </div>
+
       <div v-else>
 
         <section class="period-section">
@@ -426,6 +431,8 @@ export default {
         { value: "12", label: "Diciembre" }
       ],
 
+      isLoading: false,
+
       statusChartInstance: null,
 
       dailyChartInstance: null,
@@ -602,18 +609,18 @@ export default {
     },
 
     async loadDashboard() {
+      if (!this.periodStart || !this.periodEnd) {
+        this.setDefaultPeriod()
+      }
+
+      if (this.periodStart > this.periodEnd) {
+        this.$notify.error("El mes de inicio no puede ser mayor al mes de fin")
+        return
+      }
+
+      this.isLoading = true
 
       try {
-
-        if (!this.periodStart || !this.periodEnd) {
-          this.setDefaultPeriod()
-        }
-
-        if (this.periodStart > this.periodEnd) {
-          this.$notify.error("El mes de inicio no puede ser mayor al mes de fin")
-          return
-        }
-
         const res = await axios.get(
           `${API_BASE_URL}/maintenance/dashboard`,
           {
@@ -637,29 +644,22 @@ export default {
 
         this.syncPeriodSelectorsFromPeriod()
 
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.renderCharts()
-            this.updateRecentBottomScrollbar()
-          }, 200)
-        })
-
       } catch (error) {
-
         if (error.response?.status === 401 || error.response?.status === 403) {
           localStorage.removeItem("token")
           localStorage.removeItem("user")
-
           this.$notify.warning("Tu sesion expiro. Volve a iniciar sesion para cargar el dashboard.")
-
           this.$router.push("/logUser")
           return
         }
-
         this.$notify.error("No se pudo cargar el dashboard")
-
+      } finally {
+        this.isLoading = false
+        this.$nextTick(() => {
+          this.renderCharts()
+          this.updateRecentBottomScrollbar()
+        })
       }
-
     },
     getMachineTooltip(machine) {
 
@@ -1503,6 +1503,31 @@ h1 {
 .empty-state {
   text-align: center;
   color: #666;
+}
+
+/* LOADING */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  gap: 1rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #1e88e5;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* RESPONSIVE */
