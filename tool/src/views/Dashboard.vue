@@ -881,64 +881,51 @@ export default {
       const canvasRect = canvas.getBoundingClientRect()
       const relTop = canvasRect.top - cardRect.top
       const relLeft = canvasRect.left - cardRect.left
-      const labelWidth = chart.chartArea.left
-
       const overlay = document.createElement('div')
       overlay.className = 'chart-label-overlay'
       Object.assign(overlay.style, {
         position: 'absolute',
         top: `${relTop}px`,
         left: `${relLeft}px`,
-        width: `${labelWidth}px`,
+        width: `${canvasRect.width}px`,
         height: `${canvasRect.height}px`,
         pointerEvents: 'none',
-        zIndex: '2'
+        zIndex: '2',
+        overflow: 'hidden'
       })
 
-      // Slot height = space per label row
-      const slotH = meta.data.length > 1
-        ? Math.abs(meta.data[1].y - meta.data[0].y)
-        : (chart.chartArea.bottom - chart.chartArea.top) / (meta.data.length || 1)
-
       for (let i = 0; i < meta.data.length; i++) {
-        // el.y is the vertical center of the bar, same coordinate system as the canvas rendering
-        const centerY = meta.data[i].y
-        const halfSlot = slotH / 2
+        const el = meta.data[i]
+        // el.y = vertical center of the bar in canvas CSS-pixel coordinates
+        // el.height = bar thickness (CSS pixels), may be negative — use abs
+        const centerY = el.y
+        const halfH = Math.abs(el.height) / 2 || 14
 
-        const btn = document.createElement('button')
-        Object.assign(btn.style, {
+        const hit = document.createElement('div')
+        Object.assign(hit.style, {
           position: 'absolute',
           left: '0',
           right: '0',
-          height: `${halfSlot * 2}px`,
-          top: `${centerY - halfSlot}px`,
-          background: 'transparent',
-          backgroundColor: 'transparent',
-          border: 'none',
-          outline: 'none',
-          appearance: 'none',
-          WebkitAppearance: 'none',
-          boxShadow: 'none',
-          padding: '0',
-          margin: '0',
+          top: `${centerY - halfH}px`,
+          height: `${halfH * 2}px`,
           cursor: 'pointer',
           pointerEvents: 'all'
         })
-        btn.addEventListener('click', () => {
+        hit.addEventListener('click', () => {
           const raw = getKey(getData()[i])
           if (raw) this.openChartDetail(type, raw)
         })
-        btn.addEventListener('mouseenter', () => {
+        hit.addEventListener('mouseenter', () => {
           canvas._hoveredLabelIndex = i
           const c = getChart()
           if (c) c.update('none')
         })
-        btn.addEventListener('mouseleave', () => {
+        hit.addEventListener('mouseleave', () => {
           canvas._hoveredLabelIndex = -1
           const c = getChart()
           if (c) c.update('none')
         })
-        overlay.appendChild(btn)
+        overlay.appendChild(hit)
       }
 
       card.appendChild(overlay)
