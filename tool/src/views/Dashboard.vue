@@ -794,8 +794,20 @@ export default {
       let items
       if (type === 'operario') {
         items = all.filter(m => {
-          const name = String(m.clientId?.name || '').trim()
-          return name && rawLabel.startsWith(name)
+          // Operario principal (clientId poblado o snapshot)
+          const mainName = String(m.clientId?.name || m.clientSnapshot?.name || '').trim()
+          const mainCompany = String(m.clientId?.company || m.clientSnapshot?.company || '').trim()
+          const mainLabel = mainCompany ? `${mainName} - ${mainCompany}` : mainName
+          if (mainName && rawLabel === mainLabel) return true
+
+          // Operarios adicionales (guardados como snapshots al momento del registro)
+          const snapshots = Array.isArray(m.additionalWorkersSnapshots) ? m.additionalWorkersSnapshots : []
+          return snapshots.some(s => {
+            const sName = String(s.name || '').trim()
+            const sCompany = String(s.company || '').trim()
+            const sLabel = sCompany ? `${sName} - ${sCompany}` : sName
+            return sName && rawLabel === sLabel
+          })
         })
       } else {
         const normalized = rawLabel.toLowerCase().trim()
