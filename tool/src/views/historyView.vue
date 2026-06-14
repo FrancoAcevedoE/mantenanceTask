@@ -141,7 +141,7 @@ export default {
   computed: {
     filteredHistory() {
       return this.history.filter(item => {
-        const machineMatch = item.machine.toLowerCase().includes(this.searchMachine.toLowerCase())
+        const machineMatch = String(item.machine || '').toLowerCase().includes(this.searchMachine.toLowerCase())
         const sectorMatch = this.filterSector ? item.sector === this.filterSector : true
         const operarioMatch = this.filterOperario
           ? item.clientId?._id === this.filterOperario ||

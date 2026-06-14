@@ -234,8 +234,6 @@ export default {
       additionalWorkersList: [],
       selectedAdditionalWorker: '',
       showPartsDropdown: false,
-      additionalMachinePartList: [],
-      selectedAdditionalMachinePart: '',
       machines: [],
       sectors: [],
       currentUserRole: '',
@@ -246,15 +244,6 @@ export default {
         value: null,
         expiresAt: 0,
       },
-      maintenanceTypes: [
-        "Preventivo predictivo",
-        "Preventivo de mejora continua",
-        "Preventivo de correctivo",
-        "Arreglo",
-        "fabricación",
-        "Limpieza",
-        "Puesta en marcha (maquina parada)"
-      ],
       horometroForm: {
         machineId: '',
         value: null,
@@ -350,14 +339,6 @@ export default {
       const usedIds = new Set([this.form.clientId, ...this.additionalWorkersList.map((w) => w._id)])
       return this.allOperarios.filter((op) => !usedIds.has(op._id))
     },
-    availableAdditionalMachinePart() {
-      const usedParts = new Set([...this.form.machinePart, ...this.additionalMachinePartList])
-      return this.selectedMachinePart.filter((part) => !usedParts.has(part))
-    },
-    availableMachinePart() {
-      const usedParts = new Set(this.form.machinePart)
-      return this.selectedMachinePart.filter((part) => !usedParts.has(part))
-    },
     filteredMachinesBySector() {
       if (!this.form.sector) return []
       return this.machines
@@ -375,16 +356,6 @@ export default {
     },
     selectedMachinePart() {
       if (!this.selectedMachine) return []
-
-      console.log(
-        "JSON:",
-        JSON.stringify(
-          this.machines.find(m => m._id === this.form.machine),
-          null,
-          2
-        )
-      )
-
       return Array.isArray(this.selectedMachine.machineParts)
         ? this.selectedMachine.machineParts
         : []
@@ -425,8 +396,6 @@ export default {
     onSectorChange() {
       this.form.machine = ''
       this.form.machinePart = []
-      this.additionalMachinePartList = []
-      this.selectedAdditionalMachinePart = ''
     },
 
     authConfig() {
@@ -503,22 +472,8 @@ export default {
     },
 
     onMachineChange() {
-      console.log("MAQUINA", this.selectedMachine)
-      console.log("ID seleccionado:", this.form.machine)
-  console.log("Máquina encontrada:", this.selectedMachine)
-  console.log("Partes:", this.selectedMachine?.machineParts)
-      if (!this.selectedMachine) {
-        this.form.machinePart = []
-        this.additionalMachinePartList = []
-        this.selectedAdditionalMachinePart = ''
-        this.form.machinePart = []
-        this.showPartsDropdown = false
-        return
-      }
-
       this.form.machinePart = []
-      this.additionalMachinePartList = []
-      this.selectedAdditionalMachinePart = ''
+      this.showPartsDropdown = false
     },
 
     async updateHorometroFromPanel() {
@@ -602,22 +557,6 @@ export default {
 
     removeWorker(workerId) {
       this.additionalWorkersList = this.additionalWorkersList.filter((w) => w._id !== workerId)
-    },
-
-    addMachinePart() {
-      if (!this.selectedAdditionalMachinePart) return
-      if (!this.form.machinePart.includes(this.selectedAdditionalMachinePart)) {
-        this.form.machinePart.push(this.selectedAdditionalMachinePart)
-      }
-      this.selectedAdditionalMachinePart = ''
-    },
-
-    removeMachinePart(part) {
-      this.form.machinePart = this.form.machinePart.filter((p) => p !== part)
-    },
-
-    removeMachinePartFromMain(part) {
-      this.additionalMachinePartList = this.additionalMachinePartList.filter((p) => p !== part)
     },
 
     async saveMaintenance() {
@@ -717,13 +656,6 @@ export default {
 
       this.additionalWorkersList = []
       this.selectedAdditionalWorker = ''
-      this.selectedAdditionalMachinePart = ''
-    },
-
-    showMachineInstructions() {
-      if (this.selectedMachine && this.selectedMachine.instructions) {
-        this.showMachineDetailModal = true
-      }
     },
 
     openMachineDetailModal() {

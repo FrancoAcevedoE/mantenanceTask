@@ -248,7 +248,6 @@ export default {
 
       newPart: "",
       machines: [],
-      deletedMachines: [],
       editingMachineId: null,
       showMachineModal: false,
       selectedMachine: null,
@@ -329,7 +328,6 @@ export default {
         this.resetForm()
         await this.loadMachines()
       } catch (error) {
-        console.error("Error al guardar máquina:", error)
         this.$notify.notifyApiError(error, "Error al guardar la maquina")
       }
     },
@@ -346,16 +344,13 @@ export default {
         this.machines = allMachines
           .filter(machine => !machine.isDeleted)
           .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "es", { sensitivity: "base" }))
-        this.deletedMachines = allMachines
-          .filter(machine => machine.isDeleted)
-          .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "es", { sensitivity: "base" }))
         this.availableSectors = [...new Set(this.machines.map(m => m.sector).filter(Boolean))].sort((a, b) => String(a || "").localeCompare(String(b || ""), "es", { sensitivity: "base" }))
 
         if (this.sectorFilter && !this.availableSectors.includes(this.sectorFilter)) {
           this.sectorFilter = ""
         }
       } catch (error) {
-        console.error("Error al cargar máquinas:", error)
+        this.$notify.notifyApiError(error, "Error al cargar maquinas")
       }
     },
     modifyMachine(machineId) {
@@ -437,27 +432,6 @@ export default {
         await this.loadMachines()
       } catch (error) {
         this.$notify.notifyApiError(error, "No se pudo eliminar la maquina")
-      }
-    },
-    async deleteMachinePermanent(machineId) {
-      const isConfirmed = window.confirm("Eliminar definitivamente maquina? Esta accion no se puede deshacer.")
-      if (!isConfirmed) return
-
-      try {
-        await axios.delete(`${API_BASE_URL}/machines/${machineId}/permanent`, this.authConfig())
-        this.$notify.success("Maquina eliminada definitivamente")
-        await this.loadMachines()
-      } catch (error) {
-        this.$notify.notifyApiError(error, "No se pudo eliminar definitivamente la maquina")
-      }
-    },
-    async restoreMachine(machineId) {
-      try {
-        await axios.patch(`${API_BASE_URL}/machines/${machineId}/restore`, {}, this.authConfig())
-        this.$notify.success("Maquina restaurada correctamente")
-        await this.loadMachines()
-      } catch (error) {
-        this.$notify.notifyApiError(error, "No se pudo restaurar la maquina")
       }
     },
     cancel() {

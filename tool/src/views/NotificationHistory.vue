@@ -235,11 +235,6 @@ export default {
       })
     },
 
-    toggleNotification(id) {
-      this.expandedNotification =
-        this.expandedNotification === id ? null : String(id)
-    },
-
     async markAsRead(id) {
       try {
         const parsedId = String(id || '').trim()

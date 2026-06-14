@@ -123,9 +123,9 @@ onBeforeUnmount(() => { notificationsStore.stop() })
   --sidebar-w-open: 240px;
 }
 
-body.bg-login       { background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28)); }
-body.bg-app         { background: rgb(103, 111, 62); }
-body.bg-dashboard   { background: rgb(103, 111, 62); }
+body.bg-login { background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28)); }
+body.bg-app,
+body.bg-dashboard,
 body.bg-notifications { background: rgb(103, 111, 62); }
 
 html, body, #app { min-height: 100vh; }
