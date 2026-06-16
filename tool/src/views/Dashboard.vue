@@ -46,14 +46,16 @@
                 </option>
               </select>
             </div>
-            <button type="button" class="period-button" @click="applyPeriodFilter">
-              <span class="label-full">Aplicar periodo</span>
-              <span class="label-compact">Aplicar</span>
-            </button>
-            <button type="button" class="period-button secondary" @click="resetPeriodFilter">
-              <span class="label-full">Ultimo año</span>
-              <span class="label-compact">12 meses</span>
-            </button>
+            <div class="period-button-group">
+              <button type="button" class="period-button" @click="applyPeriodFilter">
+                <span class="label-full">Aplicar periodo</span>
+                <span class="label-compact">Aplicar</span>
+              </button>
+              <button type="button" class="period-button secondary" @click="resetPeriodFilter">
+                <span class="label-full">Ultimo año</span>
+                <span class="label-compact">12 meses</span>
+              </button>
+            </div>
           </div>
           <p class="period-label">
             <span class="period-label-full">Mostrando métricas desde {{ formatMonthLabel(periodStart) }} hasta {{
@@ -1106,10 +1108,18 @@ export default {
   box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
 }
 
+.period-button-group {
+  display: flex;
+  gap: 0.6rem;
+  width: max-content;
+  justify-self: start;
+}
+
 .period-button {
   background: #1e88e5;
   color: #fff;
   cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .period-button:hover {
@@ -1149,14 +1159,16 @@ h1 {
 
 /* CARDS */
 .cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 12px;
 }
 
 .card {
+  flex: 0 0 auto;
   background: #fff;
-  padding: 20px 16px;
+  padding: 14px 10px;
   text-align: center;
   border: 1px solid #eef2f7;
   border-radius: 14px;
@@ -1167,6 +1179,17 @@ h1 {
 .card:hover {
   box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
   transform: translateY(-2px);
+}
+
+.card h3 {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.3rem;
+}
+
+.card p {
+  font-size: 1.4rem;
+  margin: 0.2rem 0 0;
 }
 
 .chart-card {
@@ -1432,6 +1455,8 @@ h1 {
   background: #a6a6a6;
   color: #fff;
   cursor: pointer;
+  width: fit-content;
+  justify-self: start;
 }
 
 .clear-filters-button:hover {
@@ -1546,6 +1571,15 @@ h1 {
     grid-template-columns: 1fr;
   }
 
+  .period-button-group {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .period-button {
+    flex: 1 1 auto;
+  }
+
   .period-toolbar input,
   .period-toolbar select,
   .recent-toolbar input,
@@ -1554,11 +1588,13 @@ h1 {
   }
 
   .cards {
+    display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 
   .card {
+    flex: initial;
     padding: 12px 8px;
   }
 

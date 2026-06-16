@@ -8,7 +8,21 @@
       "Bash(node full_screenshot_pass.mjs)",
       "Bash(node --check controllers/mantenanceController.js)",
       "Bash(npx vue-tsc *)",
-      "Bash(node -e \"require\\('@vue/compiler-sfc'\\)\")"
+      "Bash(node -e \"require\\('@vue/compiler-sfc'\\)\")",
+      "Bash(node /tmp/full_screenshot_pass.mjs)",
+      "Bash(python3 -c ' *)",
+      "Bash(grep -n \"^h3\\\\|^p \\\\|^p{\\\\|^p,\\\\|, p \\\\|, p{\\\\|^p\\\\b\" \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/assets/style.css\")",
+      "Bash(npm ls *)",
+      "Bash(npm init *)",
+      "Bash(npm install *)",
+      "Bash(node check_dashboard_cards.mjs)",
+      "Bash(node zoom_card5.mjs)",
+      "Bash(node measure_card.mjs)",
+      "Bash(node check_dashboard_mobile.mjs)",
+      "Bash(sed 's/width: 390, height: 844/width: 360, height: 740/' check_dashboard_mobile.mjs)",
+      "Bash(node check_dashboard_360.mjs)",
+      "Bash(cp dashboard_mobile_check.png dashboard_360_check.png)",
+      "Bash(mv dashboard_mobile_check.png dashboard_360_check.png)"
     ]
   }
 }

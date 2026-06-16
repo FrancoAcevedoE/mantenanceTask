@@ -200,7 +200,7 @@ onBeforeUnmount(() => {
   padding: 0 !important;
   border: 0;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
+  background: #0f172a;
   color: #f8fafc;
   box-shadow: 0 18px 30px rgba(15, 23, 42, 0.28);
   cursor: pointer;
@@ -352,7 +352,7 @@ onBeforeUnmount(() => {
   width: 100%;
   padding: 0.85rem 1rem;
   margin-bottom: 0.9rem;
-  background: linear-gradient(135deg, #0369a1, #0f766e);
+  background: #0369a1;
   color: #fff;
   font-weight: 700;
 }

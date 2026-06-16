@@ -87,14 +87,15 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.95rem 1.35rem;
+  padding: 0.7rem 1.15rem;
   border: none;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+  background: var(--color-primary);
   color: #fff;
-  font-weight: 700;
+  font-size: 0.88rem;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 12px 28px rgba(107, 142, 58, 0.16);
+  box-shadow: 0 4px 10px rgba(107, 142, 58, 0.16);
 }
 
 button:hover:not(:disabled) {
@@ -737,7 +738,7 @@ select {
 }
 
 .tabs button.active {
-  background: linear-gradient(180deg, var(--color-primary), var(--color-accent));
+  background: var(--color-primary);
   color: white;
   border-color: transparent;
 }
@@ -829,9 +830,5 @@ select {
 
   .notification-history-summary article strong {
     font-size: 1.5rem;
-  }
-
-  button {
-    box-shadow: 0 4px 10px rgba(107, 142, 58, 0.16);
   }
 }
