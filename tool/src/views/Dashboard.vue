@@ -1382,6 +1382,7 @@ h1 {
 /* CARD BASE (UNIFICADO) */
 .machine-status-card {
   position: relative;
+  z-index: 1;
   background: #fff;
   border-radius: 12px;
   padding: 0.8rem;
@@ -1390,6 +1391,7 @@ h1 {
 }
 
 .machine-status-card:hover {
+  z-index: 5;
   transform: translateY(-3px);
   box-shadow: 0 8px 18px rgba(0, 0, 0, .12);
 }
@@ -1405,6 +1407,7 @@ h1 {
   padding: 6px 10px;
   font-size: 0.75rem;
   border-radius: 8px;
+  z-index: 10;
   opacity: 0;
   pointer-events: none;
   transition: 0.2s;
