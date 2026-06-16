@@ -456,15 +456,181 @@ export const dashboardController = async (req, res) => {
                 $lte: endDate
             }
         }
-        const totalMaintenances = await Maintenance.countDocuments(periodFilter)
-
-        const machines = await Maintenance.distinct("machine", periodFilter)
-
-        const maintenancesForOperarioBreakdown = await Maintenance.find(periodFilter)
-            .select("clientId additionalWorkers")
-            .populate("clientId", "name company")
-            .populate("additionalWorkers", "name company")
-            .lean()
+        const [
+            totalMaintenances,
+            machines,
+            maintenancesForOperarioBreakdown,
+            recentMaintenancesRaw,
+            pending,
+            stopped,
+            statusBreakdownRaw,
+            sectorBreakdownRaw,
+            dailyRaw,
+            unfinishedReasonBreakdownRaw,
+            unfinishedOtherDetailsRaw,
+            allMachines,
+            latestMaintenances
+        ] = await Promise.all([
+            Maintenance.countDocuments(periodFilter),
+            Maintenance.distinct("machine", periodFilter),
+            Maintenance.find(periodFilter)
+                .select("clientId additionalWorkers")
+                .populate("clientId", "name company")
+                .populate("additionalWorkers", "name company")
+                .lean(),
+            Maintenance.find(periodFilter)
+                .populate("clientId", "name role")
+                .sort({ createdAt: -1 })
+                .lean(),
+            Maintenance.countDocuments({
+                ...periodFilter,
+                status: "pending"
+            }),
+            Maintenance.countDocuments({
+                ...periodFilter,
+                status: "stopped"
+            }),
+            Maintenance.aggregate([
+                {
+                    $match: periodFilter
+                },
+                {
+                    $group: {
+                        _id: "$status",
+                        count: { $sum: 1 }
+                    }
+                }
+            ]),
+            Maintenance.aggregate([
+                {
+                    $match: periodFilter
+                },
+                {
+                    $addFields: {
+                        normalizedSector: {
+                            $toLower: {
+                                $trim: {
+                                    input: { $ifNull: ["$sector", ""] }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    $match: {
+                        normalizedSector: { $nin: [""] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$normalizedSector",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { count: -1 }
+                },
+                {
+                    $limit: 8
+                }
+            ]),
+            Maintenance.aggregate([
+                {
+                    $match: periodFilter
+                },
+                {
+                    $addFields: {
+                        createdDay: {
+                            $dateToString: {
+                                format: "%Y-%m-%d",
+                                date: "$createdAt"
+                            }
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$createdDay",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { _id: 1 }
+                }
+            ]),
+            Maintenance.aggregate([
+                {
+                    $match: {
+                        ...periodFilter,
+                        unfinishedReason: { $nin: [null, ""] }
+                    }
+                },
+                {
+                    $addFields: {
+                        unfinishedReasonKey: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $ne: ["$unfinishedReasonCategory", null] },
+                                        { $ne: ["$unfinishedReasonCategory", ""] }
+                                    ]
+                                },
+                                "$unfinishedReasonCategory",
+                                "$unfinishedReason"
+                            ]
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$unfinishedReasonKey",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { count: -1 }
+                }
+            ]),
+            Maintenance.aggregate([
+                {
+                    $match: {
+                        ...periodFilter,
+                        unfinishedReasonCategory: "Otros",
+                        unfinishedReason: { $nin: [null, "", "Otros"] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$unfinishedReason",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { count: -1 }
+                },
+                {
+                    $limit: 5
+                }
+            ]),
+            Machine.find({
+                isDeleted: { $ne: true }
+            })
+                .select("name sector")
+                .sort({ sector: 1, name: 1 }),
+            Maintenance.aggregate([
+                {
+                    $sort: { createdAt: -1 }
+                },
+                {
+                    $group: {
+                        _id: "$machine",
+                        status: { $first: "$status" },
+                        unfinishedReason: { $first: "$unfinishedReason" },
+                        updatedAt: { $first: "$createdAt" }
+                    }
+                }
+            ])
+        ])
 
         const operarioCountByLabel = new Map()
         const uniqueOperarioIds = new Set()
@@ -506,11 +672,6 @@ export const dashboardController = async (req, res) => {
 
         const operariosAttended = uniqueOperarioIds.size
 
-        const recentMaintenancesRaw = await Maintenance.find(periodFilter)
-            .populate("clientId", "name role")
-            .sort({ createdAt: -1 })
-            .lean()
-
         const recentOldIds = [...new Set(
             recentMaintenancesRaw.map(item => item.machine).filter(isObjectId)
         )]
@@ -528,91 +689,10 @@ export const dashboardController = async (req, res) => {
                 : item.machine
         }))
 
-        const pending = await Maintenance.countDocuments({
-            ...periodFilter,
-            status: "pending"
-        })
-
-        const stopped = await Maintenance.countDocuments({
-            ...periodFilter,
-            status: "stopped"
-        })
-
-        const statusBreakdownRaw = await Maintenance.aggregate([
-            {
-                $match: periodFilter
-            },
-            {
-                $group: {
-                    _id: "$status",
-                    count: { $sum: 1 }
-                }
-            }
-        ])
-
         const operarioBreakdownRaw = [...operarioCountByLabel.entries()]
             .map(([operario, count]) => ({ _id: operario, count }))
             .sort((left, right) => right.count - left.count)
             .slice(0, 8)
-
-        const sectorBreakdownRaw = await Maintenance.aggregate([
-            {
-                $match: periodFilter
-            },
-            {
-                $addFields: {
-                    normalizedSector: {
-                        $toLower: {
-                            $trim: {
-                                input: { $ifNull: ["$sector", ""] }
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                $match: {
-                    normalizedSector: { $nin: [""] }
-                }
-            },
-            {
-                $group: {
-                    _id: "$normalizedSector",
-                    count: { $sum: 1 }
-                }
-            },
-            {
-                $sort: { count: -1 }
-            },
-            {
-                $limit: 8
-            }
-        ])
-
-        const dailyRaw = await Maintenance.aggregate([
-            {
-                $match: periodFilter
-            },
-            {
-                $addFields: {
-                    createdDay: {
-                        $dateToString: {
-                            format: "%Y-%m-%d",
-                            date: "$createdAt"
-                        }
-                    }
-                }
-            },
-            {
-                $group: {
-                    _id: "$createdDay",
-                    count: { $sum: 1 }
-                }
-            },
-            {
-                $sort: { _id: 1 }
-            }
-        ])
 
         const dailySeries = dailyRaw.map(item => ({
             date: item._id,
@@ -636,66 +716,10 @@ export const dashboardController = async (req, res) => {
             count: item.count
         }))
 
-        const unfinishedReasonBreakdownRaw = await Maintenance.aggregate([
-            {
-                $match: {
-                    ...periodFilter,
-                    unfinishedReason: { $nin: [null, ""] }
-                }
-            },
-            {
-                $addFields: {
-                    unfinishedReasonKey: {
-                        $cond: [
-                            {
-                                $and: [
-                                    { $ne: ["$unfinishedReasonCategory", null] },
-                                    { $ne: ["$unfinishedReasonCategory", ""] }
-                                ]
-                            },
-                            "$unfinishedReasonCategory",
-                            "$unfinishedReason"
-                        ]
-                    }
-                }
-            },
-            {
-                $group: {
-                    _id: "$unfinishedReasonKey",
-                    count: { $sum: 1 }
-                }
-            },
-            {
-                $sort: { count: -1 }
-            }
-        ])
-
         const unfinishedReasonBreakdown = unfinishedReasonBreakdownRaw.map(item => ({
             reason: item._id || "sin motivo",
             count: item.count
         }))
-
-        const unfinishedOtherDetailsRaw = await Maintenance.aggregate([
-            {
-                $match: {
-                    ...periodFilter,
-                    unfinishedReasonCategory: "Otros",
-                    unfinishedReason: { $nin: [null, "", "Otros"] }
-                }
-            },
-            {
-                $group: {
-                    _id: "$unfinishedReason",
-                    count: { $sum: 1 }
-                }
-            },
-            {
-                $sort: { count: -1 }
-            },
-            {
-                $limit: 5
-            }
-        ])
 
         const unfinishedOtherDetailsTop = unfinishedOtherDetailsRaw.map(item => ({
             detail: item._id,
@@ -705,28 +729,6 @@ export const dashboardController = async (req, res) => {
         const unfinishedWithReasonTotal = unfinishedReasonBreakdown.reduce((accumulator, item) => {
             return accumulator + item.count
         }, 0)
-
-
-
-        const allMachines = await Machine.find({
-            isDeleted: { $ne: true }
-        })
-            .select("name sector")
-            .sort({ sector: 1, name: 1 })
-
-        const latestMaintenances = await Maintenance.aggregate([
-            {
-                $sort: { createdAt: -1 }
-            },
-            {
-                $group: {
-                    _id: "$machine",
-                    status: { $first: "$status" },
-                    unfinishedReason: { $first: "$unfinishedReason" },
-                    updatedAt: { $first: "$createdAt" }
-                }
-            }
-        ])
 
         const latestMaintenanceMap = new Map(
             latestMaintenances.map(item => [item._id, item])

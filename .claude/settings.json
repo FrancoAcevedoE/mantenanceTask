@@ -5,7 +5,10 @@
       "Bash(node measure.mjs)",
       "Bash(node measure_history2.mjs)",
       "Bash(node -e ' *)",
-      "Bash(node full_screenshot_pass.mjs)"
+      "Bash(node full_screenshot_pass.mjs)",
+      "Bash(node --check controllers/mantenanceController.js)",
+      "Bash(npx vue-tsc *)",
+      "Bash(node -e \"require\\('@vue/compiler-sfc'\\)\")"
     ]
   }
 }

@@ -537,6 +537,12 @@ export default {
 
   },
 
+  watch: {
+    '$route.query.filter'(filter) {
+      this.applyFilterFromQuery(filter)
+    }
+  },
+
   async mounted() {
 
     document.body.style.background = 'rgb(103, 111, 62)'
@@ -550,25 +556,7 @@ export default {
       await this.loadDashboard()
     }
     // Aplicar filtro automatico desde notificaciones
-    const filter = this.$route.query.filter
-
-    if (filter === "pending") {
-      this.searchStatus = "pending"
-
-      this.$nextTick(() => {
-        document.querySelector(".recent-section")
-          ?.scrollIntoView({ behavior: "smooth" })
-      })
-    }
-
-    if (filter === "stopped") {
-      this.searchStatus = "stopped"
-
-      this.$nextTick(() => {
-        document.querySelector(".recent-section")
-          ?.scrollIntoView({ behavior: "smooth" })
-      })
-    }
+    this.applyFilterFromQuery(this.$route.query.filter)
 
     window.addEventListener("resize", this.updateRecentBottomScrollbar)
 
@@ -606,6 +594,17 @@ export default {
         }
       }
 
+    },
+
+    applyFilterFromQuery(filter) {
+      if (filter !== "pending" && filter !== "stopped") return
+
+      this.searchStatus = filter
+
+      this.$nextTick(() => {
+        document.querySelector(".recent-section")
+          ?.scrollIntoView({ behavior: "smooth" })
+      })
     },
 
     async loadDashboard() {
