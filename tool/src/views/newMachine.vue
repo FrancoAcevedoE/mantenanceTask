@@ -808,21 +808,7 @@ textarea:focus,
 ========================= */
 
 button {
-  width: 100%;
-
   margin-top: 1rem;
-
-  padding: 10px;
-
-  border: none;
-
-  border-radius: 2rem;
-
-  background: #a6a6a6;
-
-  color: white;
-
-  cursor: pointer;
 }
 
 button:hover {
@@ -985,12 +971,52 @@ button:hover {
 ========================= */
 
 @media (max-width: 768px) {
+  .page-container {
+    padding: 0.75rem;
+    justify-content: flex-start;
+  }
+
   .machine-selector {
     grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  .action-card {
+    padding: 1rem;
+  }
+
+  .action-card i {
+    font-size: 1.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-card p {
+    font-size: 0.95rem;
+  }
+
+  .box {
+    padding: 1rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  .parts-label {
+    font-size: 0.85rem;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  textarea,
+  .sector-select {
+    padding: 8px;
   }
 
   .machine-item {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
   }
 
   .machine-actions {
@@ -999,6 +1025,11 @@ button:hover {
 
   .machine-actions button {
     width: 100%;
+    min-width: 0;
+  }
+
+  .modal-box {
+    padding: 14px;
   }
 
   .panel-container {

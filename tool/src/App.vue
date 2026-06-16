@@ -128,6 +128,20 @@ body.bg-app,
 body.bg-dashboard,
 body.bg-notifications { background: rgb(103, 111, 62); }
 
+button {
+  padding: 1px 5px !important;
+  font-size: 0.68rem !important;
+  line-height: 1.4 !important;
+  width: fit-content !important;
+  min-width: 0 !important;
+  white-space: nowrap;
+  border: none;
+  border-radius: 2rem;
+  background: #a6a6a6;
+  color: #fff;
+  cursor: pointer;
+}
+
 html, body, #app { min-height: 100vh; }
 
 html, body {

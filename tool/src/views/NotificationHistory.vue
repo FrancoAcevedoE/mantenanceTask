@@ -617,8 +617,7 @@ export default {
 }
 
 .notification-history-filters button {
-  width: auto;
-  padding: 0.62rem 1.5rem;
+  width: fit-content;
 }
 
 .notification-history-summary article {
@@ -627,13 +626,18 @@ export default {
 }
 
 .notification-history-filters input,
-.notification-history-filters select,
+.notification-history-filters select {
+  border: 0;
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
 .notification-history-filters button,
 .ghost-button,
 .mark-read-button {
-  border: 0;
   border-radius: 12px;
-  padding: 0.62rem 0.8rem;
 }
 
 .notification-history-filters input,
@@ -767,9 +771,15 @@ export default {
 }
 
 @media (max-width: 900px) {
+  .page-container {
+    padding: 0.75rem;
+  }
+
   .notification-history-card {
-    margin-top: 0.8rem;
-    margin-bottom: 5rem;
+    margin-top: 0.6rem;
+    margin-bottom: 1.5rem;
+    padding: 0.9rem;
+    border-radius: 16px;
   }
 
   .notification-history-header {
@@ -781,16 +791,41 @@ export default {
     flex-wrap: wrap;
   }
 
+  .notification-history-actions button {
+    flex: 1 1 auto;
+    font-size: 0.78rem;
+  }
+
   .notification-history-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .notification-history-filters input,
+  .notification-history-filters select {
+    width: 100%;
+    flex: 1 1 140px;
   }
 
   .notification-history-filters button {
-    grid-column: span 2;
+    width: 100%;
+    flex-basis: 100%;
   }
 
   .notification-history-summary {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .notification-history-summary article {
+    padding: 0.6rem;
+  }
+
+  .notification-history-summary strong {
+    font-size: 1.15rem;
+  }
+
+  .history-item {
+    padding: 0.5rem;
   }
 }
 

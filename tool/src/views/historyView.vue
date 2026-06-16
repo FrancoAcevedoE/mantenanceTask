@@ -323,6 +323,10 @@ export default {
   color: #333;
 }
 
+.topbar button {
+  min-width: 0;
+}
+
 .filters {
   display: flex;
   gap: 10px;
@@ -393,21 +397,16 @@ export default {
 
 .action-cell {
   white-space: nowrap;
+  width: 1%;
+  text-align: right;
 }
 
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
-}
-
-button {
-  border-radius: 2rem;
-  padding: 8px 14px;
-  background: #a6a6a6;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  font-size: 0.85rem;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0.3rem;
+  justify-content: flex-end;
 }
 
 button:hover { background: #8f8f8f; }

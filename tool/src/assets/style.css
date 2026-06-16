@@ -791,4 +791,47 @@ select {
   .history-table {
     min-width: 0;
   }
+
+  .notification-history-actions button,
+  .filters button,
+  .button-group button,
+  .action-buttons button,
+  .topbar button,
+  .panel-header button {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .action-buttons button {
+    padding: 0.55rem 0.65rem;
+    min-width: 100px;
+  }
+
+  button.mark-read-button {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .history-item {
+    padding: 0.9rem;
+    border-radius: 16px;
+  }
+
+  .modal-box {
+    padding: 1.1rem;
+    border-radius: 18px;
+  }
+
+  .step-block {
+    padding: 0.9rem;
+    border-radius: 16px;
+  }
+
+  .notification-history-summary article strong {
+    font-size: 1.5rem;
+  }
+
+  button {
+    box-shadow: 0 4px 10px rgba(107, 142, 58, 0.16);
+  }
 }

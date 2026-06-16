@@ -1021,12 +1021,8 @@ export default {
 }
 
 .seller-message button {
-  padding: 0.75rem 1.5rem;
   background: #007bff;
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
 }
 
 .seller-message button:hover {
@@ -1112,10 +1108,6 @@ export default {
 }
 
 .period-button {
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  border-radius: 2rem;
   background: #1e88e5;
   color: #fff;
   cursor: pointer;
@@ -1438,10 +1430,6 @@ h1 {
 }
 
 .clear-filters-button {
-  width: 100%;
-  padding: 10px 14px;
-  border: none;
-  border-radius: 2rem;
   background: #a6a6a6;
   color: #fff;
   cursor: pointer;
@@ -1532,6 +1520,25 @@ h1 {
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
+  .page-container {
+    justify-content: flex-start;
+    padding: 0.5rem;
+  }
+
+  .container {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .period-section {
+    padding: 0.6rem;
+  }
+
   .period-toolbar {
     grid-template-columns: 1fr;
   }
@@ -1540,30 +1547,79 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .charts-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .chart-card-wide {
-    grid-column: span 1;
-    height: 320px;
-    min-height: 320px;
-  }
-
-  .machine-status-grid {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  }
-
-  .machine-status-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .recent-fixed-horizontal-scroll {
-    display: none;
+  .period-toolbar input,
+  .period-toolbar select,
+  .recent-toolbar input,
+  .recent-toolbar select {
+    padding: 8px 12px;
   }
 
   .cards {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .card {
+    padding: 12px 8px;
+  }
+
+  .card h3 {
+    font-size: 0.68rem;
+  }
+
+  .card p {
+    font-size: 1.3rem;
+    margin: 0.3rem 0 0;
+  }
+
+  .charts-section h2,
+  .machine-status-section h2,
+  .unfinished-reasons-section h2,
+  .recent-section h2 {
+    font-size: 1.1rem;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .chart-card {
+    padding: 0.75rem;
+    height: 300px;
+    min-height: 300px;
+  }
+
+  .chart-card-wide {
+    grid-column: span 1;
+    height: 280px;
+    min-height: 280px;
+  }
+
+  .machine-status-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .machine-status-card {
+    padding: 0.6rem;
+  }
+
+  .machine-status-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+
+  .machine-summary-card {
+    padding: 0.6rem;
+  }
+
+  .recent-toolbar {
+    gap: 0.5rem;
+  }
+
+  .recent-fixed-horizontal-scroll {
+    display: none;
   }
 
   .col-mobile-hide { display: none; }
@@ -1574,6 +1630,14 @@ h1 {
   .recent-table td {
     padding: 8px 6px;
     font-size: 0.78rem;
+  }
+
+  .chart-detail-modal {
+    border-radius: 12px;
+  }
+
+  .chart-detail-header {
+    padding: 0.75rem 1rem;
   }
 }
 
@@ -1635,11 +1699,7 @@ h1 {
 
 .chart-detail-close {
   background: none;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
   color: #6b7280;
-  padding: 0.25rem 0.5rem;
   border-radius: 6px;
   transition: background 0.15s;
 }

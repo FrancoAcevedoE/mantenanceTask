@@ -947,13 +947,6 @@ select:focus {
 
 button {
   margin-top: 1rem;
-  padding: 10px;
-  border: none;
-  border-radius: 2rem;
-  background: #a6a6a6;
-  color: #fff;
-  cursor: pointer;
-  width: 100%;
 }
 
 .button-group {
@@ -1080,11 +1073,8 @@ button:hover {
 }
 
 .add-worker-btn {
-  width: auto;
-  padding: 0.5rem 1rem;
   background: #00a878;
   margin-top: 0;
-  white-space: nowrap;
   flex-shrink: 0;
 }
 
@@ -1164,11 +1154,8 @@ button:hover {
 }
 
 .add-part-btn {
-  width: auto;
-  padding: 0.5rem 1rem;
   background: #00a878;
   margin-top: 0;
-  white-space: nowrap;
 }
 
 .add-part-btn:hover {
@@ -1271,6 +1258,11 @@ button:hover {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .page-container {
+    padding: 0.75rem;
+    justify-content: flex-start;
+  }
+
   .box {
     padding: 1rem;
     width: 100%;
@@ -1283,8 +1275,60 @@ button:hover {
     width: 100%;
   }
 
+  .action-selector {
+    gap: 0.6rem;
+  }
+
+  .action-card {
+    padding: 1rem;
+  }
+
+  .action-card i {
+    font-size: 1.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-card .action-title,
+  .action-card p {
+    font-size: 0.95rem;
+  }
+
   h2 {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  label {
+    font-size: 0.85rem;
+  }
+
+  input[type='text'],
+  input[type='number'],
+  textarea,
+  select {
+    padding: 8px;
+  }
+
+  .horometro-panel {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .unfinished-block {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .reason-option {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .multi-select-header {
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .modal-box {
+    padding: 14px;
   }
 }
 </style>

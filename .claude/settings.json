@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node mobile_auth_screenshots.mjs)",
+      "Bash(node measure.mjs)",
+      "Bash(node measure_history2.mjs)",
+      "Bash(node -e ' *)"
+    ]
+  }
+}
