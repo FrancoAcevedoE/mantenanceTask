@@ -302,6 +302,9 @@ export default {
 
 .container {
   width: min(900px, 100%);
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
   background: rgba(255, 255, 255, 0.94);
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.62);
@@ -475,8 +478,16 @@ button:hover { background: #8f8f8f; }
   .page-container { padding: 1rem; }
   .container { padding: 1rem; }
   .topbar { flex-direction: column; align-items: stretch; }
-  .filters { justify-content: center; }
-  .filters input, .filters select { width: 100%; min-width: 0; max-width: 100%; flex: 1 1 100%; }
+  .filters { justify-content: center; width: 100%; }
+  .filters input,
+  .filters select,
+  .filters input[type="date"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex: 1 1 100%;
+    box-sizing: border-box;
+  }
   .history-table { min-width: unset; }
   .history-table th, .history-table td { padding: 8px 8px; font-size: 0.82rem; }
 }

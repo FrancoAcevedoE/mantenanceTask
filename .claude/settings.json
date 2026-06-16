@@ -22,7 +22,8 @@
       "Bash(sed 's/width: 390, height: 844/width: 360, height: 740/' check_dashboard_mobile.mjs)",
       "Bash(node check_dashboard_360.mjs)",
       "Bash(cp dashboard_mobile_check.png dashboard_360_check.png)",
-      "Bash(mv dashboard_mobile_check.png dashboard_360_check.png)"
+      "Bash(mv dashboard_mobile_check.png dashboard_360_check.png)",
+      "Bash(vercel project *)"
     ]
   }
 }
