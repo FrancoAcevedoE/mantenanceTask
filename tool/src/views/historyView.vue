@@ -344,6 +344,8 @@ export default {
   max-width: 100%;
   box-sizing: border-box;
   background: #fff;
+  text-align: center;
+  text-align-last: center;
 }
 
 .filters input:focus,
@@ -381,6 +383,24 @@ export default {
   background: #f5f5f5;
   color: #333;
   font-weight: 600;
+}
+
+/* Safari/iOS no recorta el fondo de las celdas con el border-radius del
+   wrapper, así que redondeamos las celdas de las puntas directamente. */
+.history-table thead tr:first-child th:first-child {
+  border-top-left-radius: 10px;
+}
+
+.history-table thead tr:first-child th:last-child {
+  border-top-right-radius: 10px;
+}
+
+.history-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
+}
+
+.history-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
 }
 
 .row-yellow { background: #fff8e1; }
