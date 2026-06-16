@@ -237,7 +237,7 @@ export const updateUser = async (req, res) => {
         }
 
         if (role !== undefined) {
-            if (!["admin", "operario", "supervisor"].includes(role)) {
+            if (!["admin", "operario", "supervisor", "vendedor"].includes(role)) {
                 return res.status(400).json({
                     message: "Rol invalido"
                 })
