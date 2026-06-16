@@ -1595,14 +1595,16 @@ h1 {
   }
 
   .period-button {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
+    padding: 0.5rem 1.4rem;
   }
 
   .period-toolbar input,
   .period-toolbar select,
   .recent-toolbar input,
   .recent-toolbar select {
-    padding: 8px 12px;
+    padding: 12px 14px;
+    font-size: 1rem;
   }
 
   .cards {

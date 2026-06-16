@@ -1,6 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Poppins:wght@600;700&display=swap');
 
 :root {
+  /* Evita que iOS/Safari pinte inputs y selects nativos con sus colores
+     de "modo oscuro" del sistema cuando la página usa fondos claros
+     (causa selects con texto invisible/blanco sobre blanco). */
+  color-scheme: light;
+
   --color-bg: rgb(103, 111, 62);
   --color-surface: #f9f7f2;
   --color-card-top: #e8f0df;
@@ -156,7 +161,9 @@ select:focus {
 }
 
 select {
+  -webkit-appearance: none;
   appearance: none;
+  color: var(--color-text);
 }
 
 .page-container {

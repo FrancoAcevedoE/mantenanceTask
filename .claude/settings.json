@@ -23,7 +23,14 @@
       "Bash(node check_dashboard_360.mjs)",
       "Bash(cp dashboard_mobile_check.png dashboard_360_check.png)",
       "Bash(mv dashboard_mobile_check.png dashboard_360_check.png)",
-      "Bash(vercel project *)"
+      "Bash(vercel project *)",
+      "Bash(find ~/Library/Caches/ms-playwright -maxdepth 1 2>/dev/null; find ~ -maxdepth 4 -iname \"*playwright*\" -path \"*ms-playwright*\" 2>/dev/null | head)",
+      "Read(//Users/francoemanuelacevedo/**)",
+      "Bash(curl -sf http://localhost:5175/ -o /dev/null)",
+      "Bash(node -e \"console.log\\(require.resolve\\('playwright'\\)\\)\")",
+      "Bash(node check.mjs)",
+      "Bash(sed -i '' \"s|/tmp/pw-check/dashboard-mobile-full.png|/tmp/pw-check/dashboard-mobile-full-webkit.png|; s|/tmp/pw-check/period-section.png|/tmp/pw-check/period-section-webkit.png|\" check-webkit.mjs)",
+      "Bash(node check-webkit.mjs)"
     ]
   }
 }
