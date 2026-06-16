@@ -1076,6 +1076,10 @@ export default {
   align-items: center;
 }
 
+.period-toolbar>* {
+  min-width: 0;
+}
+
 .period-select-group {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
@@ -1110,16 +1114,22 @@ export default {
 
 .period-button-group {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.6rem;
-  width: max-content;
-  justify-self: start;
+  width: 100%;
+  min-width: 0;
+  justify-self: center;
 }
 
 .period-button {
   background: #1e88e5;
   color: #fff;
   cursor: pointer;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8rem;
 }
 
 .period-button:hover {
@@ -1161,7 +1171,7 @@ h1 {
 .cards {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 12px;
 }
 
