@@ -411,11 +411,11 @@ export default {
 
 button:hover { background: #8f8f8f; }
 
-.btn-detail { background: #1e88e5; }
-.btn-detail:hover { background: #1565c0; }
+.action-buttons .btn-detail { background: #1e88e5; color: #fff; border: none; }
+.action-buttons .btn-detail:hover { background: #1565c0; }
 
-.btn-delete { background: #c62828; }
-.btn-delete:hover { background: #b71c1c; }
+.action-buttons .btn-delete { background: #c62828; color: #fff; border: none; }
+.action-buttons .btn-delete:hover { background: #b71c1c; }
 
 .btn-finish { background: #2e7d32; }
 .btn-finish:hover { background: #1b5e20; }

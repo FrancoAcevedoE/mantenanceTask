@@ -195,10 +195,11 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 54px;
+  width: 54px !important;
   height: 54px;
+  padding: 0 !important;
   border: 0;
-  border-radius: 18px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #0f172a, #1e293b);
   color: #f8fafc;
   box-shadow: 0 18px 30px rgba(15, 23, 42, 0.28);
@@ -321,6 +322,11 @@ onBeforeUnmount(() => {
   gap: 0.2rem;
 }
 
+.notification-summary-card strong,
+.notification-summary-card span {
+  color: #fff;
+}
+
 .notification-summary-card strong {
   font-size: 1.55rem;
 }
@@ -427,9 +433,9 @@ onBeforeUnmount(() => {
   }
 
   .notification-bell {
-    width: 48px;
+    width: 48px !important;
     height: 48px;
-    border-radius: 16px;
+    border-radius: 50%;
   }
 
   .notification-panel {
