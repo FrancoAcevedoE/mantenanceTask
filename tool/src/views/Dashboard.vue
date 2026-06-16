@@ -1411,7 +1411,12 @@ h1 {
   opacity: 0;
   pointer-events: none;
   transition: 0.2s;
-  white-space: nowrap;
+  white-space: normal;
+  width: max-content;
+  max-width: min(260px, 80vw);
+  text-align: center;
+  word-break: break-word;
+  box-sizing: border-box;
 }
 
 .machine-status-card:hover .machine-tooltip {
@@ -1651,6 +1656,12 @@ h1 {
 
   .machine-status-card {
     padding: 0.6rem;
+  }
+
+  .machine-tooltip {
+    max-width: min(150px, 60vw);
+    font-size: 0.68rem;
+    padding: 5px 8px;
   }
 
   .machine-status-summary {
