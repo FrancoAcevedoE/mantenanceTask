@@ -331,6 +331,7 @@ export default {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: center;
   margin-bottom: 1rem;
 }
 
@@ -340,6 +341,8 @@ export default {
   border: 1px solid #ccc;
   border-radius: 2rem;
   min-width: 180px;
+  max-width: 100%;
+  box-sizing: border-box;
   background: #fff;
 }
 
@@ -411,11 +414,11 @@ export default {
 
 button:hover { background: #8f8f8f; }
 
-.action-buttons .btn-detail { background: #1e88e5; color: #fff; border: none; }
-.action-buttons .btn-detail:hover { background: #1565c0; }
+.action-buttons .btn-detail { background: #e3f0fa; color: #1565c0; border: 1px solid rgba(21, 101, 192, 0.2); }
+.action-buttons .btn-detail:hover { background: #d2e6f7; }
 
-.action-buttons .btn-delete { background: #c62828; color: #fff; border: none; }
-.action-buttons .btn-delete:hover { background: #b71c1c; }
+.action-buttons .btn-delete { background: #fdecea; color: #c62828; border: 1px solid rgba(198, 40, 40, 0.2); }
+.action-buttons .btn-delete:hover { background: #fbdcd9; }
 
 .btn-finish { background: #2e7d32; }
 .btn-finish:hover { background: #1b5e20; }
@@ -452,7 +455,8 @@ button:hover { background: #8f8f8f; }
   .page-container { padding: 1rem; }
   .container { padding: 1rem; }
   .topbar { flex-direction: column; align-items: stretch; }
-  .filters input, .filters select { min-width: 100%; }
+  .filters { justify-content: center; }
+  .filters input, .filters select { width: 100%; min-width: 0; max-width: 100%; flex: 1 1 100%; }
   .history-table { min-width: unset; }
   .history-table th, .history-table td { padding: 8px 8px; font-size: 0.82rem; }
 }

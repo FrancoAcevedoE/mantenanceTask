@@ -772,13 +772,13 @@ export default {
 
 @media (max-width: 900px) {
   .page-container {
-    padding: 0.75rem;
+    padding: 0.5rem;
   }
 
   .notification-history-card {
     margin-top: 0.6rem;
     margin-bottom: 1.5rem;
-    padding: 0.9rem;
+    padding: 1rem;
     border-radius: 16px;
   }
 
