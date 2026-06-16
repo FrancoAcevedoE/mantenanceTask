@@ -580,6 +580,14 @@ export default {
   width: 100%;
   display: flex;
   justify-content: center;
+  /* Anula el .container global de style.css (padding: 1.8rem; background;
+     border…), que de otro modo se filtra acá y angosta la tarjeta. */
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .notification-history-card {
