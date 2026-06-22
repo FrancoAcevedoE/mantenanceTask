@@ -1,33 +1,528 @@
 <template>
   <div class="page-container">
-    <div class="box">
-      <h2>Inventario</h2>
-      <p class="placeholder-text">Próximamente...</p>
+    <div class="container">
+      <div class="topbar">
+        <h2 class="title">Inventario</h2>
+        <div class="toolbar-actions">
+          <div class="search-wrap">
+            <i class="bi bi-search search-icon"></i>
+            <input
+              v-model="search"
+              class="search-input"
+              placeholder="Buscar código, descripción, color..."
+            />
+          </div>
+          <button class="secondary-button" @click="filtersOpen = !filtersOpen">
+            <i class="bi bi-funnel"></i> Filtros
+          </button>
+          <router-link to="/inv-dashboard">
+            <button class="secondary-button"><i class="bi bi-bar-chart-line"></i> Dashboard</button>
+          </router-link>
+        </div>
+      </div>
+
+      <InventorySubNav />
+
+      <div v-if="store.loading" class="empty-state">Cargando productos...</div>
+      <div v-else-if="store.error" class="empty-state" style="color:#dc2626">{{ store.error }}</div>
+
+      <div v-else class="inv-layout">
+        <!-- Sidebar Filters -->
+        <aside :class="['inv-sidebar', { open: filtersOpen }]">
+          <div class="filter-header">
+            <strong>Filtros</strong>
+            <button class="ghost-button small" @click="clearFilters">Limpiar</button>
+          </div>
+
+          <div class="filter-group">
+            <label>Grupo</label>
+            <select v-model="filters.grupo">
+              <option value="">Todos</option>
+              <option v-for="g in store.uniqueGrupos" :key="g" :value="g">{{ g }}</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Color</label>
+            <select v-model="filters.color">
+              <option value="">Todos</option>
+              <option v-for="c in store.uniqueColors" :key="c" :value="c">{{ c }}</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Medida</label>
+            <select v-model="filters.medida">
+              <option value="">Todas</option>
+              <option v-for="m in store.uniqueMedidas" :key="m" :value="m">{{ m }}</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Terminación</label>
+            <select v-model="filters.terminacion">
+              <option value="">Todas</option>
+              <option v-for="t in store.uniqueTerminaciones" :key="t" :value="t">{{ t }}</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Textura</label>
+            <select v-model="filters.textura">
+              <option value="">Todas</option>
+              <option v-for="t in store.uniqueTexturas" :key="t" :value="t">{{ t }}</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Espesor</label>
+            <select v-model="filters.espesor">
+              <option value="">Todos</option>
+              <option v-for="e in store.uniqueEspesores" :key="e" :value="e">{{ e }}</option>
+            </select>
+          </div>
+
+          <div class="filter-count">
+            <span>{{ filtered.length }} producto{{ filtered.length !== 1 ? 's' : '' }}</span>
+          </div>
+        </aside>
+
+        <!-- Table -->
+        <div class="inv-content">
+          <div class="selection-bar" v-if="store.selectedIds.length > 0">
+            <span>{{ store.selectedIds.length }} seleccionado{{ store.selectedIds.length !== 1 ? 's' : '' }}</span>
+            <router-link to="/bulk-price">
+              <button><i class="bi bi-tags"></i> Actualizar precios</button>
+            </router-link>
+            <button class="secondary-button" @click="store.clearSelection()">Deseleccionar</button>
+          </div>
+
+          <div class="table-scroll">
+            <table class="history-table inv-table">
+              <thead>
+                <tr>
+                  <th class="col-check">
+                    <input type="checkbox" :checked="allSelected" @change="toggleAll" />
+                  </th>
+                  <th @click="sortBy('code')" class="sortable">
+                    Código <i :class="sortIcon('code')"></i>
+                  </th>
+                  <th @click="sortBy('name')" class="sortable">
+                    Descripción <i :class="sortIcon('name')"></i>
+                  </th>
+                  <th>Color</th>
+                  <th>Medida</th>
+                  <th>Espesor</th>
+                  <th @click="sortBy('pricePerM2')" class="sortable">
+                    Precio/m² <i :class="sortIcon('pricePerM2')"></i>
+                  </th>
+                  <th @click="sortBy('stock')" class="sortable">
+                    Stock <i :class="sortIcon('stock')"></i>
+                  </th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="p in paged"
+                  :key="p._id"
+                  :class="{ selected: store.selectedIds.includes(p._id) }"
+                >
+                  <td>
+                    <input
+                      type="checkbox"
+                      :checked="store.selectedIds.includes(p._id)"
+                      @change="store.toggleSelect(p._id)"
+                    />
+                  </td>
+                  <td><code class="code-badge">{{ p.code }}</code></td>
+                  <td class="desc-cell">{{ p.name }}</td>
+                  <td>
+                    <span v-if="p.colors?.length" class="color-chip">
+                      <span class="color-dot" :style="colorStyle(p.colors[0])"></span>
+                      {{ p.colors[0] }}
+                    </span>
+                    <span v-else class="muted">—</span>
+                  </td>
+                  <td>{{ p.dimensions || '—' }}</td>
+                  <td>{{ p.thicknesses?.[0] || '—' }}</td>
+                  <td class="price-cell">${{ formatPrice(p.pricePerM2) }}</td>
+                  <td>
+                    <span :class="stockBadge(p.stock)">{{ p.stock ?? 0 }}</span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <router-link :to="`/product/${p._id}`">
+                        <button class="btn-sm secondary-button"><i class="bi bi-eye"></i></button>
+                      </router-link>
+                      <router-link :to="`/product/${p._id}/edit`">
+                        <button class="btn-sm secondary-button"><i class="bi bi-pencil"></i></button>
+                      </router-link>
+                      <button
+                        class="btn-sm"
+                        :class="store.selectedIds.includes(p._id) ? 'btn-selected' : 'secondary-button'"
+                        @click="store.toggleSelect(p._id)"
+                      >
+                        <i :class="store.selectedIds.includes(p._id) ? 'bi bi-check-square' : 'bi bi-square'"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="paged.length === 0">
+                  <td colspan="9" class="empty-row">Sin resultados para los filtros aplicados.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" v-if="totalPages > 1">
+            <button class="secondary-button" :disabled="page === 1" @click="page--">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span>Página {{ page }} de {{ totalPages }}</span>
+            <button class="secondary-button" :disabled="page === totalPages" @click="page++">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'InventoryView'
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import { useProductsStore } from '@/stores/products'
+import InventorySubNav from '@/components/InventorySubNav.vue'
+
+const store = useProductsStore()
+
+const search = ref('')
+const filtersOpen = ref(false)
+const page = ref(1)
+const pageSize = 20
+const sortKey = ref('code')
+const sortDir = ref('asc')
+
+const filters = ref({
+  grupo: '',
+  color: '',
+  medida: '',
+  terminacion: '',
+  textura: '',
+  espesor: ''
+})
+
+onMounted(() => {
+  if (!store.products.length) store.fetchProducts()
+})
+
+function clearFilters() {
+  Object.keys(filters.value).forEach(k => (filters.value[k] = ''))
+  search.value = ''
+}
+
+const filtered = computed(() => {
+  let list = store.products
+
+  if (search.value.trim()) {
+    const q = search.value.toLowerCase()
+    list = list.filter(p =>
+      p.code?.toLowerCase().includes(q) ||
+      p.name?.toLowerCase().includes(q) ||
+      p.colors?.some(c => c.toLowerCase().includes(q)) ||
+      p.dimensions?.toLowerCase().includes(q)
+    )
+  }
+
+  if (filters.value.grupo) list = list.filter(p => p.grupo === filters.value.grupo)
+  if (filters.value.color) list = list.filter(p => p.colors?.includes(filters.value.color))
+  if (filters.value.medida) list = list.filter(p => p.dimensions === filters.value.medida)
+  if (filters.value.terminacion) list = list.filter(p => p.terminacion === filters.value.terminacion)
+  if (filters.value.textura) list = list.filter(p => p.textura === filters.value.textura)
+  if (filters.value.espesor) list = list.filter(p => p.thicknesses?.includes(filters.value.espesor))
+
+  return [...list].sort((a, b) => {
+    const av = a[sortKey.value] ?? ''
+    const bv = b[sortKey.value] ?? ''
+    const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true })
+    return sortDir.value === 'asc' ? cmp : -cmp
+  })
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
+const paged = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize))
+
+watch(filtered, () => { page.value = 1 })
+
+const allSelected = computed(() =>
+  paged.value.length > 0 && paged.value.every(p => store.selectedIds.includes(p._id))
+)
+
+function toggleAll() {
+  if (allSelected.value) {
+    paged.value.forEach(p => {
+      const idx = store.selectedIds.indexOf(p._id)
+      if (idx !== -1) store.selectedIds.splice(idx, 1)
+    })
+  } else {
+    paged.value.forEach(p => {
+      if (!store.selectedIds.includes(p._id)) store.selectedIds.push(p._id)
+    })
+  }
+}
+
+function sortBy(key) {
+  if (sortKey.value === key) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  else { sortKey.value = key; sortDir.value = 'asc' }
+}
+
+function sortIcon(key) {
+  if (sortKey.value !== key) return 'bi bi-chevron-expand text-muted'
+  return sortDir.value === 'asc' ? 'bi bi-chevron-up' : 'bi bi-chevron-down'
+}
+
+function formatPrice(n) {
+  return (n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function stockBadge(stock) {
+  const n = stock ?? 0
+  if (n === 0) return 'badge badge-danger'
+  if (n <= 5) return 'badge badge-warning'
+  return 'badge badge-ok'
+}
+
+function colorStyle(colorName) {
+  const map = {
+    negro: '#1a1a1a', blanco: '#f5f5f5', gris: '#9e9e9e', rojo: '#e53935',
+    azul: '#1e88e5', verde: '#43a047', amarillo: '#fdd835', marrón: '#6d4c41',
+    naranja: '#fb8c00', rosa: '#e91e63', violeta: '#8e24aa', beige: '#d7c4a1',
+    platino: '#e5e4e2', almendra: '#d4a96a', tiza: '#b0b0b0',
+  }
+  const key = Object.keys(map).find(k => colorName?.toLowerCase().includes(k))
+  return { backgroundColor: key ? map[key] : '#ccc', width: '12px', height: '12px', borderRadius: '50%', display: 'inline-block', border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0 }
 }
 </script>
 
 <style scoped>
-.page-container {
-  padding: 1rem;
+.topbar { margin-bottom: 1.2rem; }
+
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.75rem;
 }
 
-.box {
-  background: white;
+.toolbar-actions a { text-decoration: none; }
+
+.search-wrap {
+  position: relative;
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+
+.search-input {
+  padding-left: 2.4rem !important;
+  width: 100%;
+}
+
+.inv-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.inv-sidebar {
+  background: rgba(107, 142, 58, 0.06);
+  border: 1px solid rgba(107, 142, 58, 0.14);
+  border-radius: 20px;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-header strong {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.filter-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filter-group select {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.83rem;
+  border-radius: 12px;
+}
+
+.filter-count {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(107,142,58,0.1);
+}
+
+.inv-content { min-width: 0; }
+
+.selection-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  background: rgba(107, 142, 58, 0.1);
+  border-radius: 14px;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.selection-bar a { text-decoration: none; }
+
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(107, 142, 58, 0.14);
+}
+
+.inv-table { min-width: 800px; }
+
+.inv-table thead th {
+  background: rgba(107, 142, 58, 0.08);
+  font-size: 0.78rem;
+  padding: 0.85rem 0.9rem;
+  white-space: nowrap;
+}
+
+.inv-table tbody tr:hover { background: rgba(107, 142, 58, 0.04); }
+.inv-table tbody tr.selected { background: rgba(107, 142, 58, 0.1); }
+
+.sortable { cursor: pointer; user-select: none; }
+.sortable:hover { background: rgba(107, 142, 58, 0.12); }
+
+.col-check { width: 40px; }
+
+.code-badge {
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  background: rgba(107, 142, 58, 0.1);
+  padding: 0.2rem 0.55rem;
   border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: var(--color-text);
+  font-weight: 600;
 }
 
-.placeholder-text {
-  color: #6c757d;
+.desc-cell {
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.color-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.83rem;
+  white-space: nowrap;
+}
+
+.price-cell { font-weight: 600; white-space: nowrap; }
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.badge-ok { background: rgba(34,197,94,0.12); color: #15803d; }
+.badge-warning { background: rgba(234,179,8,0.14); color: #b45309; }
+.badge-danger { background: rgba(239,68,68,0.12); color: #b91c1c; }
+
+.btn-sm {
+  padding: 0.35rem 0.65rem !important;
+  font-size: 0.8rem;
+  border-radius: 10px !important;
+  min-width: 0 !important;
+}
+
+.btn-selected {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+}
+
+.action-buttons a { text-decoration: none; }
+
+.muted { color: var(--color-muted); }
+
+.empty-row {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-muted);
   font-style: italic;
-  margin-top: 1rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  font-size: 0.88rem;
+}
+
+.ghost-button.small {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .inv-layout { grid-template-columns: 1fr; }
+
+  .inv-sidebar {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    border-radius: 0;
+    overflow-y: auto;
+    background: rgba(255,255,255,0.98);
+    padding: 2rem 1.5rem;
+  }
+
+  .inv-sidebar.open { display: flex; }
 }
 </style>

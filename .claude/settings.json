@@ -35,7 +35,13 @@
       "Bash(lsof -ti:5175)",
       "Bash(node check2.mjs)",
       "Bash(node check4.mjs)",
-      "Bash(grep -rniE \"rol.{0,3}inv[aá]lido|invalid.{0,3}role\" --include=\"*.vue\" --include=\"*.js\" .)"
+      "Bash(grep -rniE \"rol.{0,3}inv[aá]lido|invalid.{0,3}role\" --include=\"*.vue\" --include=\"*.js\" .)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npx vite *)",
+      "Bash(python3)",
+      "Bash(node backend/scripts/seedProducts.js)"
     ]
   }
 }

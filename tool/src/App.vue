@@ -30,7 +30,7 @@ const showNav = computed(() => {
 const isAdmin = computed(() => currentUser.value?.role === 'admin')
 const canViewNewMachine = computed(() => ['admin'].includes(currentUser.value?.role))
 const canViewNew = computed(() => ['admin', 'operario'].includes(currentUser.value?.role))
-const canViewSeller = computed(() => ['vendedor'].includes(currentUser.value?.role))
+const canViewSeller = computed(() => ['admin', 'vendedor'].includes(currentUser.value?.role))
 const canViewHistory = computed(() => currentUser.value?.role !== 'vendedor')
 const canViewNotifications = computed(() => currentUser.value?.role !== 'vendedor')
 

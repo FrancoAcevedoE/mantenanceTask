@@ -8,6 +8,11 @@ import Dashboard from '@/views/Dashboard.vue'
 import NotificationHistory from '@/views/NotificationHistory.vue'
 import sellerView from '@/views/sellerView.vue'
 import inventoryView from '@/views/inventoryView.vue'
+import ProductDetailView from '@/views/ProductDetailView.vue'
+import ProductEditView from '@/views/ProductEditView.vue'
+import BulkPriceUpdateView from '@/views/BulkPriceUpdateView.vue'
+import StockManagementView from '@/views/StockManagementView.vue'
+import InventoryDashboardView from '@/views/InventoryDashboardView.vue'
 
 const getStoredUser = () => {
   try {
@@ -53,6 +58,21 @@ const router = createRouter({
     },
     {
       path: '/inventory', name: 'InventoryView', component: inventoryView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+    },
+    {
+      path: '/product/:id', name: 'ProductDetail', component: ProductDetailView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+    },
+    {
+      path: '/product/:id/edit', name: 'ProductEdit', component: ProductEditView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+    },
+    {
+      path: '/bulk-price', name: 'BulkPrice', component: BulkPriceUpdateView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+    },
+    {
+      path: '/stock-management', name: 'StockManagement', component: StockManagementView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+    },
+    {
+      path: '/inv-dashboard', name: 'InventoryDashboard', component: InventoryDashboardView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
     }
 
   ]
