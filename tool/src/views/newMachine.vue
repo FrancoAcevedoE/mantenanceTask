@@ -4,26 +4,20 @@
     <!-- SELECTOR DE ACCIONES -->
     <div class="machine-selector">
       <!-- FORMULARIO CARD -->
-      <div class="box action-card" @click="showNewMachineForm = !showNewMachineForm">
-        <div class="section-title">
-          <i class="bi bi-clipboard-plus"></i>
-          <h3>
-            {{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}
-          </h3>
-        </div>
+      <div class="action-card" @click="activePanel = activePanel === 'form' ? '' : 'form'">
+        <i class="bi bi-clipboard-plus"></i>
+        <p>{{ editingMachineId ? 'MODIFICAR MÁQUINA' : 'NUEVA MÁQUINA' }}</p>
       </div>
 
       <!-- MÁQUINAS CARD -->
-      <div class="box action-card" @click="showMachinesPanel = !showMachinesPanel">
-        <div class="section-title">
-          <i class="bi bi-clipboard2-data"></i>
-          <h3>Máquinas cargadas</h3>
-        </div>
+      <div class="action-card" @click="activePanel = activePanel === 'machines' ? '' : 'machines'">
+        <i class="bi bi-clipboard2-data"></i>
+        <p>MÁQUINAS CARGADAS</p>
       </div>
     </div>
 
     <!-- PANEL FORMULARIO -->
-    <div v-if="showNewMachineForm" class="panel-container">
+    <div v-if="activePanel === 'form'" class="panel-container">
       <div class="box">
         <h2>{{ editingMachineId ? 'Modificar máquina' : 'Nueva máquina' }}</h2>
 
@@ -80,7 +74,7 @@
     </div>
 
     <!-- PANEL MÁQUINAS -->
-    <div v-if="showMachinesPanel" class="panel-container">
+    <div v-if="activePanel === 'machines'" class="panel-container">
       <div class="box">
         <h2>Máquinas cargadas</h2>
 
@@ -242,8 +236,7 @@ export default {
   data() {
     return {
 
-      showNewMachineForm: false,
-      showMachinesPanel: false,
+      activePanel: '',
 
       form: {
         sector: "",
@@ -255,7 +248,6 @@ export default {
 
       newPart: "",
       machines: [],
-      deletedMachines: [],
       editingMachineId: null,
       showMachineModal: false,
       selectedMachine: null,
@@ -336,7 +328,6 @@ export default {
         this.resetForm()
         await this.loadMachines()
       } catch (error) {
-        console.error("Error al guardar máquina:", error)
         this.$notify.notifyApiError(error, "Error al guardar la maquina")
       }
     },
@@ -353,16 +344,13 @@ export default {
         this.machines = allMachines
           .filter(machine => !machine.isDeleted)
           .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "es", { sensitivity: "base" }))
-        this.deletedMachines = allMachines
-          .filter(machine => machine.isDeleted)
-          .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "es", { sensitivity: "base" }))
         this.availableSectors = [...new Set(this.machines.map(m => m.sector).filter(Boolean))].sort((a, b) => String(a || "").localeCompare(String(b || ""), "es", { sensitivity: "base" }))
 
         if (this.sectorFilter && !this.availableSectors.includes(this.sectorFilter)) {
           this.sectorFilter = ""
         }
       } catch (error) {
-        console.error("Error al cargar máquinas:", error)
+        this.$notify.notifyApiError(error, "Error al cargar maquinas")
       }
     },
     modifyMachine(machineId) {
@@ -378,6 +366,7 @@ export default {
       }
       this.newPart = ""
       this.editingMachineId = machineId
+      this.activePanel = 'form'
 
       window.scrollTo({ top: 0, behavior: "smooth" })
     },
@@ -445,39 +434,15 @@ export default {
         this.$notify.notifyApiError(error, "No se pudo eliminar la maquina")
       }
     },
-    async deleteMachinePermanent(machineId) {
-      const isConfirmed = window.confirm("Eliminar definitivamente maquina? Esta accion no se puede deshacer.")
-      if (!isConfirmed) return
-
-      try {
-        await axios.delete(`${API_BASE_URL}/machines/${machineId}/permanent`, this.authConfig())
-        this.$notify.success("Maquina eliminada definitivamente")
-        await this.loadMachines()
-      } catch (error) {
-        this.$notify.notifyApiError(error, "No se pudo eliminar definitivamente la maquina")
-      }
-    },
-    async restoreMachine(machineId) {
-      try {
-        await axios.patch(`${API_BASE_URL}/machines/${machineId}/restore`, {}, this.authConfig())
-        this.$notify.success("Maquina restaurada correctamente")
-        await this.loadMachines()
-      } catch (error) {
-        this.$notify.notifyApiError(error, "No se pudo restaurar la maquina")
-      }
-    },
     cancel() {
-      if (this.editingMachineId) {
-        this.resetForm()
-        return
-      }
-
-      this.$router.back()
+      this.resetForm()
+      this.activePanel = ''
     }
   },
   mounted() {
     this.loadMachines()
-    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))';
+   document.body.style.background = 'rgb(103, 111, 62)'
+document.body.style.backgroundAttachment = 'fixed'
   },
   beforeUnmount() {
     document.body.style.background = '';
@@ -490,8 +455,9 @@ export default {
   min-height: 100vh;
 
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
 
   padding: 2rem;
 
@@ -523,8 +489,8 @@ export default {
 }
 
 .machine-selector {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 0 auto;
 
   display: grid;
@@ -580,18 +546,42 @@ export default {
   min-width: 50px;
 }
 .panel-container {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 1.5rem auto 0;
 }
 
 .action-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  padding: 2rem 1rem;
   cursor: pointer;
+  transition: 0.25s;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center !important;
+  justify-content: center;
+}
+
+.action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.action-card i {
+  font-size: 3rem;
+  color: rgb(69, 82, 28);
+  margin-bottom: 1rem;
+}
+
+.action-card p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  text-align: center;
 }
 
 .form-content,
@@ -818,21 +808,7 @@ textarea:focus,
 ========================= */
 
 button {
-  width: 100%;
-
   margin-top: 1rem;
-
-  padding: 10px;
-
-  border: none;
-
-  border-radius: 2rem;
-
-  background: #a6a6a6;
-
-  color: white;
-
-  cursor: pointer;
 }
 
 button:hover {
@@ -995,11 +971,52 @@ button:hover {
 ========================= */
 
 @media (max-width: 768px) {
+  .page-container {
+    padding: 0.75rem;
+    justify-content: flex-start;
+  }
 
+  .machine-selector {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  .action-card {
+    padding: 1rem;
+  }
+
+  .action-card i {
+    font-size: 1.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-card p {
+    font-size: 0.95rem;
+  }
+
+  .box {
+    padding: 1rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  .parts-label {
+    font-size: 0.85rem;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  textarea,
+  .sector-select {
+    padding: 8px;
+  }
 
   .machine-item {
     flex-direction: column;
     align-items: stretch;
+    padding: 0.75rem;
   }
 
   .machine-actions {
@@ -1008,6 +1025,15 @@ button:hover {
 
   .machine-actions button {
     width: 100%;
+    min-width: 0;
+  }
+
+  .modal-box {
+    padding: 14px;
+  }
+
+  .panel-container {
+    padding: 0;
   }
 }
 </style>

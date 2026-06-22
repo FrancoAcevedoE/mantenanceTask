@@ -512,7 +512,8 @@ export default {
   },
   mounted() {
     this.loadUsers()
-    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))';
+document.body.style.background = 'rgb(103, 111, 62)'
+document.body.style.backgroundAttachment = 'fixed'
   },
   beforeUnmount() {
     document.body.style.background = '';
@@ -530,15 +531,15 @@ align-items: center;
 }
 
 .admin-layout {
-  width: 100%;
-  max-width: 1100px;
+  width: min(1080px, 100%);
+  max-width: unset;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
 }
 
 .admin-layout.single-column {
-  max-width: 720px;
+  max-width: unset;
   grid-template-columns: 1fr;
 }
 
@@ -834,6 +835,10 @@ button:hover {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
   .panel-card {
     padding: 1rem;
   }
@@ -843,6 +848,7 @@ button:hover {
   }
 
   .user-item {
+    grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
   }
@@ -850,6 +856,10 @@ button:hover {
   .panel-header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .panel-header button {
+    width: 100%;
   }
 }
 </style>

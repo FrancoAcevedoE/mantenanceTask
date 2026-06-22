@@ -12,6 +12,11 @@
       </div>
 
       <!-- Contenido del dashboard solo para admin, supervisor y operario -->
+      <div v-else-if="isLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Cargando dashboard...</p>
+      </div>
+
       <div v-else>
 
         <section class="period-section">
@@ -41,14 +46,16 @@
                 </option>
               </select>
             </div>
-            <button type="button" class="period-button" @click="applyPeriodFilter">
-              <span class="label-full">Aplicar periodo</span>
-              <span class="label-compact">Aplicar</span>
-            </button>
-            <button type="button" class="period-button secondary" @click="resetPeriodFilter">
-              <span class="label-full">Ultimo año</span>
-              <span class="label-compact">12 meses</span>
-            </button>
+            <div class="period-button-group">
+              <button type="button" class="period-button" @click="applyPeriodFilter">
+                <span class="label-full">Aplicar periodo</span>
+                <span class="label-compact">Aplicar</span>
+              </button>
+              <button type="button" class="period-button secondary" @click="resetPeriodFilter">
+                <span class="label-full">Ultimo año</span>
+                <span class="label-compact">12 meses</span>
+              </button>
+            </div>
           </div>
           <p class="period-label">
     
@@ -108,11 +115,47 @@
             </div>
             <div class="chart-card">
               <h3>Mantenimientos por operario</h3>
-              <canvas ref="typeChart"></canvas>
+              <div class="custom-hbar-chart">
+                <div
+                  v-for="(item, i) in sortedOperarioData"
+                  :key="i"
+                  class="hbar-row"
+                  @click="openChartDetail('operario', item.operario)"
+                >
+                  <span class="hbar-label">{{ formatType(item.operario) }}</span>
+                  <div class="hbar-track">
+                    <div class="hbar-fill hbar-fill--blue" :style="{ width: pct(item.count, maxOperario) + '%' }"></div>
+                  </div>
+                  <span class="hbar-value">{{ item.count }}</span>
+                </div>
+                <div class="hbar-axis">
+                  <span>0</span>
+                  <span>{{ Math.round(maxOperario / 2) }}</span>
+                  <span>{{ maxOperario }}</span>
+                </div>
+              </div>
             </div>
             <div class="chart-card">
               <h3>Mantenimientos por sector</h3>
-              <canvas ref="sectorChart"></canvas>
+              <div class="custom-hbar-chart">
+                <div
+                  v-for="(item, i) in sortedSectorData"
+                  :key="i"
+                  class="hbar-row"
+                  @click="openChartDetail('sector', item.sector)"
+                >
+                  <span class="hbar-label hbar-label--brown">{{ item.sector }}</span>
+                  <div class="hbar-track">
+                    <div class="hbar-fill hbar-fill--brown" :style="{ width: pct(item.count, maxSector) + '%' }"></div>
+                  </div>
+                  <span class="hbar-value">{{ item.count }}</span>
+                </div>
+                <div class="hbar-axis">
+                  <span>0</span>
+                  <span>{{ Math.round(maxSector / 2) }}</span>
+                  <span>{{ maxSector }}</span>
+                </div>
+              </div>
             </div>
             <div class="chart-card chart-card-wide">
               <h3>Evolución diaria del periodo</h3>
@@ -218,22 +261,22 @@
                 <tr>
                   <th>Operario</th>
                   <th>Máquina</th>
-                  <th>Parte</th>
+                  <th class="col-mobile-hide">Parte</th>
                   <th>Sector</th>
                   <th>Estado</th>
                   <th>Fecha</th>
-                  <th>Hora</th>
+                  <th class="col-mobile-hide">Hora</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="item in filteredRecentMaintenances" :key="item._id">
                   <td class="recent-operario">{{ formatOperarioName(item.clientId) }}</td>
                   <td>{{ item.machine }}</td>
-                  <td>{{ Array.isArray(item.machinePart) ? item.machinePart.join(', ') : item.machinePart }}</td>
+                  <td class="col-mobile-hide">{{ Array.isArray(item.machinePart) ? item.machinePart.join(', ') : item.machinePart }}</td>
                   <td>{{ item.sector }}</td>
                   <td>{{ formatStatus(item.status) }}</td>
                   <td>{{ formatDate(item.createdAt) }}</td>
-                  <td>{{ formatTime(item.createdAt) }}</td>
+                  <td class="col-mobile-hide">{{ formatTime(item.createdAt) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -250,6 +293,53 @@
       </div>
 
     </div>
+
+    <!-- MODAL DETALLE GRÁFICO -->
+    <div v-if="chartDetail" class="chart-detail-overlay" @click.self="chartDetail = null">
+      <div class="chart-detail-modal">
+        <div class="chart-detail-header">
+          <h3>
+            <span v-if="chartDetail.type === 'operario'">Operario: {{ chartDetail.label }}</span>
+            <span v-else>Sector: {{ chartDetail.label }}</span>
+          </h3>
+          <button class="chart-detail-close" @click="chartDetail = null">✕</button>
+        </div>
+
+        <p class="chart-detail-count">{{ chartDetail.items.length }} trabajo{{ chartDetail.items.length !== 1 ? 's' : '' }} en el periodo</p>
+
+        <div v-if="!chartDetail.items.length" class="chart-detail-empty">
+          Sin registros en el periodo seleccionado.
+        </div>
+
+        <div v-else class="chart-detail-table-wrapper">
+          <table class="chart-detail-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Máquina</th>
+                <th v-if="chartDetail.type === 'operario'">Sector</th>
+                <th v-if="chartDetail.type === 'sector'">Operario</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in chartDetail.items" :key="item._id">
+                <td>{{ formatDate(item.createdAt) }}</td>
+                <td>{{ item.machine || '-' }}</td>
+                <td v-if="chartDetail.type === 'operario'">{{ item.sector || '-' }}</td>
+                <td v-if="chartDetail.type === 'sector'">{{ item.clientId?.name || '-' }}</td>
+                <td>
+                  <span :class="['status-pill', `status-pill-${item.status}`]">
+                    {{ formatStatus(item.status) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </template>
@@ -340,21 +430,32 @@ export default {
         { value: "12", label: "Diciembre" }
       ],
 
+      isLoading: false,
+
       statusChartInstance: null,
-
-      typeChartInstance: null,
-
-      sectorChartInstance: null,
 
       dailyChartInstance: null,
 
       syncingRecentScroll: false,
 
-      showRecentBottomScrollbar: false
+      showRecentBottomScrollbar: false,
+
+      chartDetail: null,
+
+      sortedOperarioData: [],
+      sortedSectorData: []
     }
   },
 
   computed: {
+
+    maxOperario() {
+      return Math.max(...this.sortedOperarioData.map(d => d.count), 1)
+    },
+
+    maxSector() {
+      return Math.max(...this.sortedSectorData.map(d => d.count), 1)
+    },
 
     machineStatusOverview() {
       return [...(this.stats.machineStatusOverview || [])].sort((left, right) => {
@@ -435,10 +536,15 @@ export default {
 
   },
 
+  watch: {
+    '$route.query.filter'(filter) {
+      this.applyFilterFromQuery(filter)
+    }
+  },
+
   async mounted() {
 
-    document.body.style.background =
-      'linear-gradient(180deg, rgb(248, 248, 252), #ffffff)'
+    document.body.style.background = 'rgb(103, 111, 62)'
 
     this.setDefaultPeriod()
     this.syncPeriodSelectorsFromPeriod()
@@ -449,25 +555,7 @@ export default {
       await this.loadDashboard()
     }
     // Aplicar filtro automatico desde notificaciones
-    const filter = this.$route.query.filter
-
-    if (filter === "pending") {
-      this.searchStatus = "pending"
-
-      this.$nextTick(() => {
-        document.querySelector(".recent-section")
-          ?.scrollIntoView({ behavior: "smooth" })
-      })
-    }
-
-    if (filter === "stopped") {
-      this.searchStatus = "stopped"
-
-      this.$nextTick(() => {
-        document.querySelector(".recent-section")
-          ?.scrollIntoView({ behavior: "smooth" })
-      })
-    }
+    this.applyFilterFromQuery(this.$route.query.filter)
 
     window.addEventListener("resize", this.updateRecentBottomScrollbar)
 
@@ -507,19 +595,30 @@ export default {
 
     },
 
+    applyFilterFromQuery(filter) {
+      if (filter !== "pending" && filter !== "stopped") return
+
+      this.searchStatus = filter
+
+      this.$nextTick(() => {
+        document.querySelector(".recent-section")
+          ?.scrollIntoView({ behavior: "smooth" })
+      })
+    },
+
     async loadDashboard() {
+      if (!this.periodStart || !this.periodEnd) {
+        this.setDefaultPeriod()
+      }
+
+      if (this.periodStart > this.periodEnd) {
+        this.$notify.error("El mes de inicio no puede ser mayor al mes de fin")
+        return
+      }
+
+      this.isLoading = true
 
       try {
-
-        if (!this.periodStart || !this.periodEnd) {
-          this.setDefaultPeriod()
-        }
-
-        if (this.periodStart > this.periodEnd) {
-          this.$notify.error("El mes de inicio no puede ser mayor al mes de fin")
-          return
-        }
-
         const res = await axios.get(
           `${API_BASE_URL}/maintenance/dashboard`,
           {
@@ -543,29 +642,22 @@ export default {
 
         this.syncPeriodSelectorsFromPeriod()
 
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.renderCharts()
-            this.updateRecentBottomScrollbar()
-          }, 200)
-        })
-
       } catch (error) {
-
         if (error.response?.status === 401 || error.response?.status === 403) {
           localStorage.removeItem("token")
           localStorage.removeItem("user")
-
           this.$notify.warning("Tu sesion expiro. Volve a iniciar sesion para cargar el dashboard.")
-
           this.$router.push("/logUser")
           return
         }
-
         this.$notify.error("No se pudo cargar el dashboard")
-
+      } finally {
+        this.isLoading = false
+        this.$nextTick(() => {
+          this.renderCharts()
+          this.updateRecentBottomScrollbar()
+        })
       }
-
     },
     getMachineTooltip(machine) {
 
@@ -585,16 +677,6 @@ export default {
         this.statusChartInstance.stop()
         this.statusChartInstance.destroy()
         this.statusChartInstance = null
-      }
-
-      if (this.typeChartInstance) {
-        this.typeChartInstance.destroy()
-        this.typeChartInstance = null
-      }
-
-      if (this.sectorChartInstance) {
-        this.sectorChartInstance.destroy()
-        this.sectorChartInstance = null
       }
 
       if (this.dailyChartInstance) {
@@ -617,6 +699,8 @@ export default {
 
       const sortedOperarioData = [...operarioData].sort((a, b) => String(a.operario || "").localeCompare(String(b.operario || ""), "es", { sensitivity: "base" }))
       const sortedSectorData = [...sectorData].sort((a, b) => String(a.sector || "").localeCompare(String(b.sector || ""), "es", { sensitivity: "base" }))
+      this.sortedOperarioData = sortedOperarioData
+      this.sortedSectorData = sortedSectorData
 
       if (this.$refs.statusChart) {
         this.statusChartInstance = new Chart(this.$refs.statusChart, {
@@ -644,68 +728,6 @@ export default {
                     const percentage = ((value / total) * 100).toFixed(1)
 
                     return `${context.label}: ${value} (${percentage}%)`
-                  }
-                }
-              }
-            }
-          }
-        })
-      }
-
-      if (this.$refs.typeChart) {
-        this.typeChartInstance = new Chart(this.$refs.typeChart, {
-          type: "bar",
-          data: {
-            labels: sortedOperarioData.map(item => this.formatType(item.operario)),
-            datasets: [{
-              label: "Cantidad",
-              data: sortedOperarioData.map(item => item.count),
-              backgroundColor: "#1e88e5",
-              borderRadius: 8
-            }]
-          },
-          options: {
-            indexAxis: "y",
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `Cantidad: ${context.raw}`
-                  }
-                }
-              }
-            }
-          }
-        }
-        )
-      }
-
-      if (this.$refs.sectorChart) {
-        this.sectorChartInstance = new Chart(this.$refs.sectorChart, {
-          type: "bar",
-          data: {
-            labels: sortedSectorData.map(item => item.sector),
-            datasets: [{
-              label: "Cantidad",
-              data: sortedSectorData.map(item => item.count),
-              backgroundColor: "#6d4c41",
-              borderRadius: 8
-            }]
-          },
-          options: {
-            indexAxis: "y",
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
-              },
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `Sector: ${context.label} (${context.raw})`
                   }
                 }
               }
@@ -759,6 +781,39 @@ export default {
 
       return status || "-"
 
+    },
+
+    pct(count, max) {
+      return max > 0 ? (count / max) * 100 : 0
+    },
+
+    openChartDetail(type, rawLabel) {
+      const all = this.stats.recentMaintenances || []
+      let items
+      if (type === 'operario') {
+        items = all.filter(m => {
+          // Operario principal (clientId poblado o snapshot)
+          const mainName = String(m.clientId?.name || m.clientSnapshot?.name || '').trim()
+          const mainCompany = String(m.clientId?.company || m.clientSnapshot?.company || '').trim()
+          const mainLabel = mainCompany ? `${mainName} - ${mainCompany}` : mainName
+          if (mainName && rawLabel === mainLabel) return true
+
+          // Operarios adicionales (guardados como snapshots al momento del registro)
+          const snapshots = Array.isArray(m.additionalWorkersSnapshots) ? m.additionalWorkersSnapshots : []
+          return snapshots.some(s => {
+            const sName = String(s.name || '').trim()
+            const sCompany = String(s.company || '').trim()
+            const sLabel = sCompany ? `${sName} - ${sCompany}` : sName
+            return sName && rawLabel === sLabel
+          })
+        })
+      } else {
+        const normalized = rawLabel.toLowerCase().trim()
+        items = all.filter(m =>
+          String(m.sector || '').toLowerCase().trim() === normalized
+        )
+      }
+      this.chartDetail = { type, label: rawLabel, items }
     },
 
     formatUnfinishedReason(reason) {
@@ -964,12 +1019,8 @@ export default {
 }
 
 .seller-message button {
-  padding: 0.75rem 1.5rem;
   background: #007bff;
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
 }
 
 .seller-message button:hover {
@@ -978,7 +1029,7 @@ export default {
 
 /* LAYOUT GENERAL */
 .page-container {
-  background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28));
+  background: rgb(103, 111, 62);
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -987,8 +1038,8 @@ export default {
 }
 
 .container {
-  width: min(98vw, 1600px);
-  max-width: 1600px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 0 auto;
   overflow-x: hidden;
   background: rgba(255, 255, 255, 0.94);
@@ -1020,6 +1071,10 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.6rem;
   align-items: center;
+}
+
+.period-toolbar>* {
+  min-width: 0;
 }
 
 .period-select-group {
@@ -1054,14 +1109,24 @@ export default {
   box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
 }
 
-.period-button {
+.period-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
   width: 100%;
-  padding: 10px 12px;
-  border: none;
-  border-radius: 2rem;
+  min-width: 0;
+  justify-self: center;
+}
+
+.period-button {
   background: #1e88e5;
   color: #fff;
   cursor: pointer;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8rem;
 }
 
 .period-button:hover {
@@ -1101,14 +1166,16 @@ h1 {
 
 /* CARDS */
 .cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
 }
 
 .card {
+  flex: 0 0 auto;
   background: #fff;
-  padding: 20px 16px;
+  padding: 14px 10px;
   text-align: center;
   border: 1px solid #eef2f7;
   border-radius: 14px;
@@ -1119,6 +1186,17 @@ h1 {
 .card:hover {
   box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
   transform: translateY(-2px);
+}
+
+.card h3 {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.3rem;
+}
+
+.card p {
+  font-size: 1.4rem;
+  margin: 0.2rem 0 0;
 }
 
 .chart-card {
@@ -1146,7 +1224,7 @@ h1 {
 }
 
 .chart-card-wide {
-  grid-column: span 2;
+  grid-column: 1 / -1;
   height: 500px;
   min-height: 500px;
 }
@@ -1164,11 +1242,101 @@ h1 {
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   width: 100%;
 }
 
+
+/* CUSTOM HBAR CHART */
+.custom-hbar-chart {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 2.5rem);
+  overflow: hidden;
+}
+
+.hbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 0 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+  min-height: 0;
+}
+
+.hbar-row:last-of-type {
+  border-bottom: none;
+}
+
+.hbar-row:hover {
+  background: rgba(30, 136, 229, 0.06);
+}
+
+.hbar-row:hover .hbar-label {
+  color: #0d47a1;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.hbar-row:hover .hbar-label--brown {
+  color: #3e2723;
+}
+
+.hbar-label {
+  width: 130px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 12px;
+  color: #1e88e5;
+  padding-right: 8px;
+  transition: color 0.15s, font-weight 0.15s, font-size 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hbar-label--brown {
+  color: #6d4c41;
+}
+
+.hbar-track {
+  flex: 1;
+  height: 18px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.hbar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.hbar-fill--blue { background: #1e88e5; }
+.hbar-fill--brown { background: #6d4c41; }
+
+.hbar-value {
+  width: 26px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 11px;
+  color: #999;
+}
+
+.hbar-axis {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 26px 0 138px;
+  font-size: 10px;
+  color: #bbb;
+  flex-shrink: 0;
+}
 
 /* MACHINE STATUS */
 .machine-status-section {
@@ -1178,9 +1346,7 @@ h1 {
 .machine-status-grid {
   gap: 0.9rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, max-content));
-
-  justify-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
 
 
@@ -1213,6 +1379,7 @@ h1 {
 /* CARD BASE (UNIFICADO) */
 .machine-status-card {
   position: relative;
+  z-index: 1;
   background: #fff;
   border-radius: 12px;
   padding: 0.8rem;
@@ -1221,6 +1388,7 @@ h1 {
 }
 
 .machine-status-card:hover {
+  z-index: 5;
   transform: translateY(-3px);
   box-shadow: 0 8px 18px rgba(0, 0, 0, .12);
 }
@@ -1236,10 +1404,16 @@ h1 {
   padding: 6px 10px;
   font-size: 0.75rem;
   border-radius: 8px;
+  z-index: 10;
   opacity: 0;
   pointer-events: none;
   transition: 0.2s;
-  white-space: nowrap;
+  white-space: normal;
+  width: max-content;
+  max-width: min(260px, 80vw);
+  text-align: center;
+  word-break: break-word;
+  box-sizing: border-box;
 }
 
 .machine-status-card:hover .machine-tooltip {
@@ -1293,13 +1467,11 @@ h1 {
 }
 
 .clear-filters-button {
-  width: 100%;
-  padding: 10px 14px;
-  border: none;
-  border-radius: 2rem;
   background: #a6a6a6;
   color: #fff;
   cursor: pointer;
+  width: fit-content;
+  justify-self: start;
 }
 
 .clear-filters-button:hover {
@@ -1360,18 +1532,170 @@ h1 {
   color: #666;
 }
 
+/* LOADING */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  gap: 1rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #1e88e5;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
+  .page-container {
+    justify-content: flex-start;
+    padding: 0.5rem;
+  }
+
+  .container {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .period-section {
+    padding: 0.6rem;
+  }
+
   .period-toolbar {
     grid-template-columns: 1fr;
   }
 
   .period-select-group {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  .period-button-group {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .period-button {
+    flex: 0 1 auto;
+    padding: 0.5rem 1.4rem;
+  }
+
+  .period-toolbar input,
+  .period-toolbar select,
+  .recent-toolbar input,
+  .recent-toolbar select {
+    padding: 12px 14px;
+    font-size: 1rem;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .card {
+    flex: initial;
+    padding: 12px 8px;
+  }
+
+  .card h3 {
+    font-size: 0.68rem;
+  }
+
+  .card p {
+    font-size: 1.3rem;
+    margin: 0.3rem 0 0;
+  }
+
+  .charts-section h2,
+  .machine-status-section h2,
+  .unfinished-reasons-section h2,
+  .recent-section h2 {
+    font-size: 1.1rem;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .chart-card {
+    padding: 0.75rem;
+    height: 300px;
+    min-height: 300px;
+  }
+
+  .chart-card-wide {
+    grid-column: span 1;
+    height: 280px;
+    min-height: 280px;
+  }
+
+  .machine-status-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .machine-status-card {
+    padding: 0.6rem;
+  }
+
+  .machine-tooltip {
+    max-width: min(150px, 60vw);
+    font-size: 0.68rem;
+    padding: 5px 8px;
+  }
+
+  .machine-status-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+
+  .machine-summary-card {
+    padding: 0.6rem;
+  }
+
+  .recent-toolbar {
+    gap: 0.5rem;
   }
 
   .recent-fixed-horizontal-scroll {
     display: none;
+  }
+
+  .col-mobile-hide { display: none; }
+
+  .recent-table { min-width: unset; }
+
+  .recent-table th,
+  .recent-table td {
+    padding: 8px 6px;
+    font-size: 0.78rem;
+  }
+
+  .chart-detail-modal {
+    border-radius: 12px;
+  }
+
+  .chart-detail-header {
+    padding: 0.75rem 1rem;
   }
 }
 
@@ -1392,4 +1716,117 @@ h1 {
     display: inline;
   }
 }
+
+/* CHART DETAIL MODAL */
+.chart-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.chart-detail-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: min(680px, 100%);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.chart-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chart-detail-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a2e0f;
+}
+
+.chart-detail-close {
+  background: none;
+  color: #6b7280;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.chart-detail-close:hover {
+  background: #f3f4f6;
+  color: #111;
+}
+
+.chart-detail-count {
+  padding: 0.5rem 1.2rem;
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.chart-detail-empty {
+  padding: 2rem 1.2rem;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.chart-detail-table-wrapper {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.chart-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.chart-detail-table th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chart-detail-table td {
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+}
+
+.chart-detail-table tr:last-child td {
+  border-bottom: none;
+}
+
+.chart-detail-table tr:hover td {
+  background: #f9fafb;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.status-pill-finished  { background: #dcfce7; color: #166534; }
+.status-pill-pending   { background: #fef9c3; color: #854d0e; }
+.status-pill-stopped   { background: #fee2e2; color: #991b1b; }
 </style>

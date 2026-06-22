@@ -33,7 +33,9 @@ const getCurrentStoppedMachines = async () => {
 
   for (const machine of allMachines) {
     const machineName = String(machine.name || "").trim()
-    const status = latestStatusMap.get(machineName) || "ok"
+    const status = latestStatusMap.get(machineName)
+      || latestStatusMap.get(String(machine._id))
+      || "ok"
 
     if (status === "stopped") {
       stoppedCount += 1
@@ -94,6 +96,7 @@ const getStoppedMachinesDetail = async () => {
     .map(machine => {
       const machineName = String(machine.name || "").trim()
       const latestStatus = latestStatusMap.get(machineName)
+        || latestStatusMap.get(String(machine._id))
 
       if (!latestStatus) {
         return null
@@ -150,18 +153,33 @@ const getPendingMaintenancesDetail = async () => {
     }
   ])
 
-  return pendingMaintenances.map(item => ({
+  const isObjId = (val) => /^[a-f\d]{24}$/i.test(String(val || ""))
+  const pendingOldIds = [...new Set(pendingMaintenances.map(i => i.machine).filter(isObjId))]
+  const pendingIdToName = new Map()
+  if (pendingOldIds.length) {
+    const machines = await Machine.find({ _id: { $in: pendingOldIds } }).select("name").lean()
+    machines.forEach(m => pendingIdToName.set(String(m._id), m.name))
+  }
+
+  return pendingMaintenances.map(item => {
+    const rawMachine = String(item.machine || "").trim()
+    const resolvedMachine = isObjId(rawMachine)
+      ? (pendingIdToName.get(rawMachine) || "(Máquina eliminada)")
+      : rawMachine
+
+    return ({
     id: `pending-${String(item._id)}`,
     type: "pending-maintenance",
-    title: `Trabajo pendiente: ${String(item.machine || "Sin maquina").trim()}`,
+    title: `Trabajo pendiente: ${resolvedMachine || "Sin maquina"}`,
     message: item.unfinishedReason
       ? `Motivo: ${item.unfinishedReason}`
       : "Hay un mantenimiento pendiente de cierre.",
-    machine: String(item.machine || "").trim(),
+    machine: resolvedMachine,
     sector: String(item.sector || "").trim(),
     createdAt: item.createdAt,
     severity: item.priority === "alta" ? "error" : "warning"
-  }))
+  })
+  })
 }
 
 const formatShortDate = (value) => {

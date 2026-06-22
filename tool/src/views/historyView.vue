@@ -1,903 +1,591 @@
 <template>
-    <div class="page-container">
+  <div class="page-container">
     <div class="container">
-        <div class="topbar">
-            <p>HISTORIAL</p>
-            <button @click="$router.push('/dashboard')">
-                Ir al Dashboard
-            </button>
-        </div>
+      <div class="topbar">
+        <p>HISTORIAL</p>
+        <button @click="$router.push('/dashboard')">Ir al Dashboard</button>
+      </div>
 
-        <!-- Mensaje para vendedores -->
-        <div v-if="currentUserRole === 'vendedor'" class="seller-message">
-            <p>Como vendedor, tienes acceso al historial de cotizaciones.</p>
-            <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
-        </div>
+      <div v-if="currentUserRole === 'vendedor'" class="seller-message">
+        <p>Como vendedor, tienes acceso al historial de cotizaciones.</p>
+        <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
+      </div>
 
-        <!-- Contenido del historial solo para otros roles -->
-        <div v-else>
+      <div v-else-if="isLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Cargando historial...</p>
+      </div>
 
+      <div v-else>
         <div class="filters">
-            <input v-model="searchMachine" placeholder="Buscar por máquina" />
-            <select v-model="filterSector">
-                <option value="">Todos los sectores</option>
-                <option v-for="sector in sectors" :key="sector" :value="sector">
-                    {{ sector }}
-                </option>
-            </select>
-
-            <select v-model="filterOperario">
-                <option value="">Todos los operarios</option>
-                <option v-for="operario in operarios" :key="operario.value" :value="operario.value">
-                    {{ operario.label }}
-                </option>
-            </select>
-
-            <input type="date" v-model="filterDate" />
-
-            <button
-                type="button"
-                class="compact-toggle"
-                @click="toggleCompactMode"
-            >
-                {{ compactMode ? "Vista normal" : "Vista compacta" }}
-            </button>
+          <input v-model="searchMachine" placeholder="Buscar por máquina" />
+          <select v-model="filterSector">
+            <option value="">Todos los sectores</option>
+            <option v-for="sector in sectors" :key="sector" :value="sector">{{ sector }}</option>
+          </select>
+          <select v-model="filterOperario">
+            <option value="">Todos los operarios</option>
+            <option v-for="op in operarios" :key="op.value" :value="op.value">{{ op.label }}</option>
+          </select>
+          <input type="date" v-model="filterDate" />
         </div>
 
-        <div class="table-wrapper" :class="{ 'compact-mode': compactMode }" ref="tableWrapper" @scroll="onTableScroll">
-        <table class="history-table" ref="historyTable">
-            <colgroup>
-                <col class="col-operario" />
-                <col class="col-fecha" />
-                <col class="col-hora" />
-                <col class="col-sector" />
-                <col class="col-maquina" />
-                <col class="col-parte" />
-                <col class="col-descripcion" />
-                <col class="col-horas" />
-                <col class="col-estado" />
-                <col class="col-motivo" />
-                <col class="col-accion" />
-            </colgroup>
+        <div class="table-wrapper">
+          <table class="history-table">
             <thead>
-                <tr>
-                    <th>Operario</th>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Sector</th>
-                    <th>Máquina</th>
-                    <th>Parte</th>
-                    <th>Descripción</th>
-                    <th>Horas</th>
-                    <th>Estado</th>
-                    <th>Motivo</th>
-                    <th>Acción</th>
-                </tr>
+              <tr>
+                <th>Nombre</th>
+                <th class="col-hide-mobile">Fecha</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
             </thead>
-
             <tbody>
-               <tr v-for="item in filteredHistory" :key="item._id" :class="getRowClass(item.status)">
-                    <td>{{ formatOperarioName(item.clientId) }}</td>
-                <td>{{ formatDate(item.createdAt) }}</td>
-                <td>{{ formatTime(item.createdAt) }}</td>
-                    <td>{{ item.sector }}</td>
-                    <td>{{ item.machine }}</td>
-                    <td>{{ Array.isArray(item.machinePart) ? item.machinePart.join(', ') : item.machinePart }}</td>
-                    <td class="description-cell">
-                        <span class="description-preview">{{ item.workDescription || '-' }}</span>
-                    </td>
-                    <td>{{ item.hoursWorked }}</td>
-                    <td>
-                        <span v-if="item.status === 'finished'">
-                            Terminado
-                        </span>
-                        <span v-if="item.status === 'pending'">
-                            Pendiente
-                        </span>
-                        <span v-if="item.status === 'stopped'">
-                            Máquina parada
-                        </span>
-                    </td>
-
-                    <td>
-                        {{ item.unfinishedReason || "-" }}
-                    </td>
-
-                    <td class="action-cell">
-                        <div class="action-buttons">
-                            <button @click="openDetailModal(item)" style="background: #1e88e5;">
-                                Detalles
-                            </button>
-                            <button v-if="item.status !== 'finished'" @click="openFinishModal(item)" style="background: #2e7d32;">
-                                Terminar
-                            </button>
-                            <button v-if="currentUserRole === 'admin'" @click="deleteMaintenanceRecord(item)" style="background: #c62828;">
-                                Eliminar
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+              <tr v-for="item in filteredHistory" :key="item._id" :class="getRowClass(item.status)">
+                <td>{{ item.machine }}</td>
+                <td class="col-hide-mobile">{{ formatDate(item.createdAt) }}</td>
+                <td>
+                  <span class="status-badge" :class="'badge-' + item.status">
+                    {{ formatStatus(item.status) }}
+                  </span>
+                </td>
+                <td class="action-cell">
+                  <div class="action-buttons">
+                    <button class="btn-detail" @click="openDetailModal(item)">
+                      <span class="btn-full">Ver detalle</span>
+                      <span class="btn-short">Info</span>
+                    </button>
+                    <button v-if="currentUserRole === 'admin'" class="btn-delete" @click="deleteMaintenanceRecord(item)">
+                      <span class="btn-full">Eliminar</span>
+                      <span class="btn-short">Borrar</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
             </tbody>
-        </table>
+          </table>
         </div>
-
-        <div
-            v-show="showBottomScrollbar"
-            class="fixed-horizontal-scroll"
-            ref="bottomScroll"
-            @scroll="onBottomScroll"
-        >
-            <div class="fixed-horizontal-scroll-inner" ref="bottomScrollInner"></div>
-        </div>
-
-        <div v-if="showDetailModal" class="modal">
-            <div class="modal-box modal-box-detail">
-                <h3>Detalles del mantenimiento</h3>
-                <div style="text-align: left; line-height: 1.8;">
-                    <p><strong>Operario:</strong> {{ formatOperarioName(selectedDetail?.clientId) }}</p>
-                    <p v-if="selectedDetail?.additionalWorkers?.length">
-                        <strong>Otros operarios:</strong> {{ selectedDetail.additionalWorkers.map(w => formatOperarioName(w)).join(', ') }}
-                    </p>
-                    <p><strong>Sector:</strong> {{ selectedDetail?.sector }}</p>
-                    <p><strong>Máquina:</strong> {{ selectedDetail?.machine }}</p>
-                    <p><strong>Partes:</strong> {{ Array.isArray(selectedDetail?.machinePart) ? selectedDetail.machinePart.join(', ') : selectedDetail?.machinePart }}</p>
-                    <p><strong>Tipo de mantenimiento:</strong> {{ selectedDetail?.maintenanceType }}</p>
-                    <p><strong>Horas trabajadas:</strong> {{ selectedDetail?.hoursWorked }}</p>
-                    <p><strong>Estado:</strong> {{ formatStatus(selectedDetail?.status) }}</p>
-                    <p><strong>Fecha:</strong> {{ formatDate(selectedDetail?.createdAt) }}</p>
-                    <p><strong>Hora:</strong> {{ formatTime(selectedDetail?.createdAt) }}</p>
-                    <p><strong>Descripción del trabajo:</strong></p>
-                    <p style="background: #f5f5f5; padding: 0.75rem; border-radius: 8px; white-space: pre-wrap;">{{ selectedDetail?.workDescription || "-" }}</p>
-                    <p><strong>Repuestos utilizados:</strong></p>
-                    <p style="background: #f5f5f5; padding: 0.75rem; border-radius: 8px; white-space: pre-wrap;">{{ selectedDetail?.spareParts || "-" }}</p>
-                </div>
-                <button @click="closeDetailModal" style="margin-top: 1rem;">
-                    Cerrar
-                </button>
-            </div>
-        </div>
-
-        <div v-if="showFinishModal" class="modal">
-            <div class="modal-box">
-                <h3>Finalizar mantenimiento</h3>
-                <label>Horas adicionales</label>
-                <input type="number" min="0.5" step="0.5" v-model.number="extraHours" />
-                <button @click="finishMaintenance">
-                    Guardar
-                </button>
-                <button @click="closeFinishModal">
-                    Cancelar
-                </button>
-            </div>
-        </div>
+      </div>
     </div>
-    </div>
-</div>
 
+    <Teleport to="body">
+      <div v-if="showDetailModal" class="modal" @click.self="closeDetailModal">
+        <div class="modal-box modal-box-detail">
+          <h3>Detalles del mantenimiento</h3>
+          <div class="detail-content">
+            <p><strong>Operario:</strong> {{ formatOperarioName(selectedDetail?.clientId) }}</p>
+            <p v-if="selectedDetail?.additionalWorkers?.length">
+              <strong>Otros operarios:</strong>
+              {{ selectedDetail.additionalWorkers.map(w => formatOperarioName(w)).join(', ') }}
+            </p>
+            <p><strong>Sector:</strong> {{ selectedDetail?.sector }}</p>
+            <p><strong>Máquina:</strong> {{ selectedDetail?.machine }}</p>
+            <p><strong>Partes:</strong> {{ Array.isArray(selectedDetail?.machinePart) ? selectedDetail.machinePart.join(', ') : selectedDetail?.machinePart }}</p>
+            <p><strong>Tipo de mantenimiento:</strong> {{ selectedDetail?.maintenanceType }}</p>
+            <p><strong>Horas trabajadas:</strong> {{ selectedDetail?.hoursWorked }}</p>
+            <p><strong>Estado:</strong> {{ formatStatus(selectedDetail?.status) }}</p>
+            <p><strong>Fecha:</strong> {{ formatDate(selectedDetail?.createdAt) }}</p>
+            <p><strong>Hora:</strong> {{ formatTime(selectedDetail?.createdAt) }}</p>
+            <p><strong>Descripción del trabajo:</strong></p>
+            <p class="detail-text">{{ selectedDetail?.workDescription || '-' }}</p>
+            <p><strong>Repuestos utilizados:</strong></p>
+            <p class="detail-text">{{ selectedDetail?.spareParts || '-' }}</p>
+          </div>
+          <div class="modal-actions">
+            <button v-if="selectedDetail?.status !== 'finished'" class="btn-finish" @click="openFinishFromDetail">Terminar</button>
+            <button class="btn-close" @click="closeDetailModal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="showFinishModal" class="modal" @click.self="closeFinishModal">
+        <div class="modal-box">
+          <h3>Finalizar mantenimiento</h3>
+          <label>Horas adicionales</label>
+          <input type="number" min="0.5" step="0.5" v-model.number="extraHours" />
+          <div class="modal-actions">
+            <button class="btn-finish" @click="finishMaintenance">Guardar</button>
+            <button class="btn-close" @click="closeFinishModal">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+  </div>
 </template>
 
 <script>
-
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
 
 export default {
 
-    data() {
+  data() {
+    return {
+      isLoading: false,
+      history: [],
+      searchMachine: "",
+      filterSector: "",
+      filterOperario: "",
+      filterDate: "",
+      sectors: [],
+      operarios: [],
+      showDetailModal: false,
+      showFinishModal: false,
+      selectedDetail: null,
+      selectedId: null,
+      extraHours: 0,
+      currentUserRole: ""
+    }
+  },
 
-        return {
+  async mounted() {
+    document.body.style.background = 'rgb(103, 111, 62)'
+    const currentUser = this.getStoredUser()
+    this.currentUserRole = currentUser?.role || ""
+    if (currentUser?.role === 'vendedor') return
+    await this.loadHistory()
+  },
 
-            history: [],
+  beforeUnmount() {
+    document.body.style.background = ''
+  },
 
-            searchMachine: "",
+  computed: {
+    filteredHistory() {
+      return this.history.filter(item => {
+        const machineMatch = String(item.machine || '').toLowerCase().includes(this.searchMachine.toLowerCase())
+        const sectorMatch = this.filterSector ? item.sector === this.filterSector : true
+        const operarioMatch = this.filterOperario
+          ? item.clientId?._id === this.filterOperario ||
+            (item.additionalWorkers || []).some(w => w?._id === this.filterOperario)
+          : true
+        const dateMatch = this.filterDate ? item.createdAt.slice(0, 10) === this.filterDate : true
+        return machineMatch && sectorMatch && operarioMatch && dateMatch
+      })
+    }
+  },
 
-            filterSector: "",
+  methods: {
 
-            filterOperario: "",
-
-            filterDate: "",
-
-            sectors: [],
-
-            operarios: [],
-
-            showDetailModal: false,
-
-            showFinishModal: false,
-
-            selectedDetail: null,
-
-            selectedId: null,
-
-            extraHours: 0,
-
-            syncingHorizontalScroll: false,
-
-            showBottomScrollbar: false,
-
-            compactMode: false,
-
-            currentUserRole: ""
-
-        }
-
+    getStoredUser() {
+      try {
+        const raw = localStorage.getItem("user")
+        return raw ? JSON.parse(raw) : null
+      } catch { return null }
     },
 
-    async mounted() {
-        document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+    authConfig() {
+      const token = localStorage.getItem("token")
+      return { headers: { Authorization: `Bearer ${token}` } }
+    },
 
-        const currentUser = this.getStoredUser()
-        this.currentUserRole = currentUser?.role || ""
+    async loadHistory() {
+      this.isLoading = true
+      try {
+        const res = await axios.get(`${API_BASE_URL}/maintenance/history`, this.authConfig())
+        this.history = res.data
+        this.sectors = [...new Set(res.data.map(item => item.sector))]
+        this.operarios = res.data.reduce((acc, item) => {
+          if (item.clientId?._id && !acc.some(o => o.value === item.clientId._id)) {
+            acc.push({ value: item.clientId._id, label: this.formatOperarioName(item.clientId) })
+          }
+          ;(item.additionalWorkers || []).forEach(w => {
+            if (w?._id && !acc.some(o => o.value === w._id)) {
+              acc.push({ value: w._id, label: this.formatOperarioName(w) })
+            }
+          })
+          return acc
+        }, [])
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo cargar el historial")
+      } finally {
+        this.isLoading = false
+      }
+    },
 
-        // No cargar historial de mantenimiento para vendedores
-        if (currentUser?.role === 'vendedor') {
-            return
-        }
+    getRowClass(status) {
+      if (status === "pending") return "row-yellow"
+      if (status === "stopped") return "row-red"
+      return ""
+    },
 
+    formatOperarioName(operario) {
+      if (!operario) return "-"
+      return operario.company ? `${operario.name} - ${operario.company}` : operario.name
+    },
+
+    formatDate(value) {
+      if (!value) return "-"
+      return new Date(value).toLocaleDateString("es-AR")
+    },
+
+    formatTime(value) {
+      if (!value) return "-"
+      return new Date(value).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
+    },
+
+    formatStatus(status) {
+      if (status === "finished") return "Terminado"
+      if (status === "pending") return "Pendiente"
+      if (status === "stopped") return "Máquina parada"
+      return status || "-"
+    },
+
+    openDetailModal(item) {
+      this.selectedDetail = item
+      this.selectedId = item._id
+      this.showDetailModal = true
+    },
+
+    closeDetailModal() {
+      this.showDetailModal = false
+      this.selectedDetail = null
+    },
+
+    openFinishFromDetail() {
+      this.showDetailModal = false
+      this.showFinishModal = true
+    },
+
+    closeFinishModal() {
+      this.showFinishModal = false
+      this.extraHours = 0
+      this.selectedId = null
+    },
+
+    async finishMaintenance() {
+      if (!Number.isFinite(this.extraHours) || this.extraHours <= 0) {
+        this.$notify.error("Las horas adicionales deben ser un número mayor a 0")
+        return
+      }
+      try {
+        await axios.put(
+          `${API_BASE_URL}/maintenance/finish/${this.selectedId}`,
+          { hoursWorked: this.extraHours },
+          this.authConfig()
+        )
+        this.closeFinishModal()
+        this.$notify.success("Trabajo terminado correctamente")
         await this.loadHistory()
-
-        const savedCompactMode = localStorage.getItem("historyCompactMode")
-        if (savedCompactMode !== null) {
-            this.compactMode = savedCompactMode === "true"
-        } else {
-            this.compactMode = window.innerWidth <= 1366
-        }
-
-        this.$nextTick(() => {
-            this.updateBottomScrollbar()
-        })
-
-        window.addEventListener("resize", this.updateBottomScrollbar)
-
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo terminar el trabajo")
+      }
     },
 
-    beforeUnmount() {
-
-        document.body.style.background = ''
-
-        window.removeEventListener("resize", this.updateBottomScrollbar)
-
-    },
-
-    computed: {
-
-        filteredHistory() {
-
-            return this.history.filter(item => {
-
-                const machineMatch = item.machine
-                    .toLowerCase()
-                    .includes(this.searchMachine.toLowerCase())
-
-                const sectorMatch = this.filterSector
-                    ? item.sector === this.filterSector
-                    : true
-
-                const operarioMatch = this.filterOperario
-                    ? item.clientId?._id === this.filterOperario ||
-                      (item.additionalWorkers || []).some(w => w?._id === this.filterOperario)
-                    : true
-
-                const dateMatch = this.filterDate
-                    ? item.createdAt
-                        .slice(0, 10) === this.filterDate
-                    : true
-
-                return machineMatch && sectorMatch && operarioMatch && dateMatch
-
-            })
-
-        }
-
-    },
-
-    methods: {
-
-        getStoredUser() {
-            try {
-                const rawUser = localStorage.getItem("user")
-                return rawUser ? JSON.parse(rawUser) : null
-            } catch {
-                return null
-            }
-        },
-
-        authConfig() {
-            const token = localStorage.getItem("token")
-            return {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        },
-
-        async loadHistory() {
-
-            const res = await axios.get(
-                `${API_BASE_URL}/maintenance/history`,
-                this.authConfig()
-            )
-
-            this.history = res.data
-
-            this.sectors = [
-                ...new Set(
-                    res.data.map(item => item.sector)
-                )
-            ]
-
-            this.operarios = res.data
-                .reduce((accumulator, item) => {
-
-                    if (item.clientId?._id && !accumulator.some(operario => operario.value === item.clientId._id)) {
-                        accumulator.push({
-                            value: item.clientId._id,
-                            label: this.formatOperarioName(item.clientId)
-                        })
-                    }
-
-                    ;(item.additionalWorkers || []).forEach(worker => {
-                        if (worker?._id && !accumulator.some(op => op.value === worker._id)) {
-                            accumulator.push({
-                                value: worker._id,
-                                label: this.formatOperarioName(worker)
-                            })
-                        }
-                    })
-
-                    return accumulator
-
-                }, [])
-
-            this.$nextTick(() => {
-                this.updateBottomScrollbar()
-            })
-
-        },
-
-        updateBottomScrollbar() {
-            const tableWrapper = this.$refs.tableWrapper
-            const historyTable = this.$refs.historyTable
-            const bottomScrollInner = this.$refs.bottomScrollInner
-
-            if (!tableWrapper || !historyTable || !bottomScrollInner) {
-                this.showBottomScrollbar = false
-                return
-            }
-
-            const fullWidth = historyTable.scrollWidth
-            bottomScrollInner.style.width = `${fullWidth}px`
-            this.showBottomScrollbar = fullWidth > tableWrapper.clientWidth
-        },
-
-        onTableScroll() {
-            if (this.syncingHorizontalScroll) return
-
-            const tableWrapper = this.$refs.tableWrapper
-            const bottomScroll = this.$refs.bottomScroll
-
-            if (!tableWrapper || !bottomScroll) return
-
-            this.syncingHorizontalScroll = true
-            bottomScroll.scrollLeft = tableWrapper.scrollLeft
-            this.syncingHorizontalScroll = false
-        },
-
-        onBottomScroll() {
-            if (this.syncingHorizontalScroll) return
-
-            const tableWrapper = this.$refs.tableWrapper
-            const bottomScroll = this.$refs.bottomScroll
-
-            if (!tableWrapper || !bottomScroll) return
-
-            this.syncingHorizontalScroll = true
-            tableWrapper.scrollLeft = bottomScroll.scrollLeft
-            this.syncingHorizontalScroll = false
-        },
-
-        toggleCompactMode() {
-            this.compactMode = !this.compactMode
-            localStorage.setItem("historyCompactMode", String(this.compactMode))
-
-            this.$nextTick(() => {
-                this.updateBottomScrollbar()
-            })
-        },
-
-        getRowClass(status) {
-
-            if (status === "pending") return "yellow"
-
-            if (status === "stopped") return "red"
-
-            return "white"
-
-        },
-
-        formatOperarioName(operario) {
-
-            if (!operario) return "-"
-
-            return operario.company
-                ? `${operario.name} - ${operario.company}`
-                : operario.name
-
-        },
-
-        formatDate(value) {
-            if (!value) return "-"
-            return new Date(value).toLocaleDateString("es-AR")
-        },
-
-        formatTime(value) {
-            if (!value) return "-"
-            return new Date(value).toLocaleTimeString("es-AR", {
-                hour: "2-digit",
-                minute: "2-digit"
-            })
-        },
-
-        formatStatus(status) {
-            if (status === "finished") return "Terminado"
-            if (status === "pending") return "Pendiente"
-            if (status === "stopped") return "Máquina parada"
-            return status || "-"
-        },
-
-        openDetailModal(item) {
-            this.selectedDetail = item
-            this.showDetailModal = true
-        },
-
-        closeDetailModal() {
-            this.showDetailModal = false
-            this.selectedDetail = null
-        },
-
-        openFinishModal(item) {
-            this.selectedId = item._id
-            this.showFinishModal = true
-        },
-
-        closeFinishModal() {
-            this.showFinishModal = false
-            this.extraHours = 0
-            this.selectedId = null
-        },
-
-        async finishMaintenance() {
-
-            if (!Number.isFinite(this.extraHours) || this.extraHours <= 0) {
-                this.$notify.error("Las horas adicionales deben ser un numero mayor a 0")
-                return
-            }
-
-            try {
-                await axios.put(
-
-                    `${API_BASE_URL}/maintenance/finish/${this.selectedId}`,
-
-                    {
-                        hoursWorked: this.extraHours
-                    },
-                    this.authConfig()
-
-                )
-
-                this.closeFinishModal()
-                this.$notify.success("Trabajo terminado correctamente")
-
-                await this.loadHistory()
-            } catch (error) {
-                this.$notify.notifyApiError(error, "No se pudo terminar el trabajo")
-            }
-
-        },
-
-        async deleteMaintenanceRecord(item) {
-            const message = `¿Estás seguro de que deseas eliminar el registro de ${item.machine}? Esta acción no se puede deshacer.`
-            
-            if (!window.confirm(message)) {
-                return
-            }
-
-            try {
-                await axios.delete(
-                    `${API_BASE_URL}/maintenance/${item._id}`,
-                    this.authConfig()
-                )
-
-                this.$notify.success("Registro eliminado correctamente")
-                await this.loadHistory()
-            } catch (error) {
-                this.$notify.notifyApiError(error, "No se pudo eliminar el registro")
-            }
-        }
-
+    async deleteMaintenanceRecord(item) {
+      if (!window.confirm(`¿Eliminar el registro de ${item.machine}? Esta acción no se puede deshacer.`)) return
+      try {
+        await axios.delete(`${API_BASE_URL}/maintenance/${item._id}`, this.authConfig())
+        this.$notify.success("Registro eliminado correctamente")
+        await this.loadHistory()
+      } catch (error) {
+        this.$notify.notifyApiError(error, "No se pudo eliminar el registro")
+      }
     }
 
-}
+  }
 
+}
 </script>
 
-<style>
+<style scoped>
 
 .page-container {
-    width: 100%;
-    min-height: 100vh;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    padding: 2rem;
-
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  background: transparent;
 }
-
-.page-container::before,
-.page-container::after {
-    display: none !important;
-    content: none !important;
-}
-
-
-
 
 .container {
-    width: min(96vw, 1650px);
-    background: rgba(255, 255, 255, 0.94);
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
-    padding: 1.9rem;
-    margin: 0;
+  width: min(900px, 100%);
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.62);
+  padding: 1.9rem;
 }
 
 .topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-h1 {
-    margin: 0;
-    color: #333;
-    font-size: 2rem;
-    letter-spacing: 0.04rem;
+.topbar p {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.topbar button {
+  min-width: 0;
 }
 
 .filters {
-    margin: 0 0 1rem;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.compact-toggle {
-    background: #4b5563;
-    white-space: nowrap;
-}
-
-.compact-toggle:hover {
-    background: #374151;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 1rem;
 }
 
 .filters input,
 .filters select {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 2rem;
-    min-width: 200px;
-    background: #fff;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 2rem;
+  min-width: 180px;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  text-align: center;
+  text-align-last: center;
 }
 
-.filters input:hover,
 .filters input:focus,
-.filters select:hover,
 .filters select:focus {
-    outline: none;
-    background: #f0f0f0;
-    transition: 0.2s;
-    box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
+  outline: none;
+  background: #f0f0f0;
+  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
 .history-table {
-    table-layout: fixed;
-    min-width: 1610px;
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
 }
 
-.history-table col.col-operario { width: 220px; }
-.history-table col.col-fecha { width: 110px; }
-.history-table col.col-hora { width: 95px; }
-.history-table col.col-sector { width: 140px; }
-.history-table col.col-maquina { width: 170px; }
-.history-table col.col-parte { width: 170px; }
-.history-table col.col-descripcion { width: 280px; }
-.history-table col.col-horas { width: 90px; }
-.history-table col.col-estado { width: 150px; }
-.history-table col.col-motivo { width: 230px; }
-.history-table col.col-accion { width: 220px; }
-
-.compact-mode .history-table {
-    min-width: 1380px;
+.history-table th,
+.history-table td {
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #e8e8e8;
+  text-align: left;
+  color: #444;
+  vertical-align: middle;
 }
 
-.compact-mode .history-table col.col-operario { width: 190px; }
-.compact-mode .history-table col.col-fecha { width: 95px; }
-.compact-mode .history-table col.col-hora { width: 80px; }
-.compact-mode .history-table col.col-sector { width: 120px; }
-.compact-mode .history-table col.col-maquina { width: 140px; }
-.compact-mode .history-table col.col-parte { width: 140px; }
-.compact-mode .history-table col.col-descripcion { width: 220px; }
-.compact-mode .history-table col.col-horas { width: 75px; }
-.compact-mode .history-table col.col-estado { width: 130px; }
-.compact-mode .history-table col.col-motivo { width: 170px; }
-.compact-mode .history-table col.col-accion { width: 190px; }
-
-.table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.263);
+.history-table th {
+  background: #f5f5f5;
+  color: #333;
+  font-weight: 600;
 }
 
-.table-wrapper {
-    scrollbar-width: none;
+/* Safari/iOS no recorta el fondo de las celdas con el border-radius del
+   wrapper, así que redondeamos las celdas de las puntas directamente. */
+.history-table thead tr:first-child th:first-child {
+  border-top-left-radius: 10px;
 }
 
-.table-wrapper::-webkit-scrollbar {
-    height: 0;
+.history-table thead tr:first-child th:last-child {
+  border-top-right-radius: 10px;
 }
 
-th,
-td {
-    padding: 12px 10px;
-    border-bottom: 1px solid #e8e8e8;
-    text-align: left;
-    color: #555;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
+.history-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
 }
 
-.compact-mode th,
-.compact-mode td {
-    padding: 8px 8px;
-    font-size: 0.88rem;
+.history-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
 }
 
-th {
-    background: #efefef;
-    color: #333;
+.row-yellow { background: #fff8e1; }
+.row-red    { background: #fdecea; }
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
-.description-cell {
-    width: 280px;
-    min-width: 280px;
-    max-width: 280px;
-}
-
-.compact-mode .description-cell {
-    width: 220px;
-    min-width: 220px;
-    max-width: 220px;
-}
-
-.description-preview {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.fixed-horizontal-scroll {
-    position: sticky;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 14px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #d5d5d5;
-    border-radius: 999px;
-    z-index: 900;
-    margin-top: 0.35rem;
-}
-
-.fixed-horizontal-scroll::-webkit-scrollbar {
-    height: 10px;
-}
-
-.fixed-horizontal-scroll-inner {
-    height: 1px;
-}
+.badge-finished  { background: #e8f5e9; color: #2e7d32; }
+.badge-pending   { background: #fff3e0; color: #e65100; }
+.badge-stopped   { background: #fdecea; color: #c62828; }
 
 .action-cell {
-    text-align: center;
-    overflow: visible;
-    text-overflow: clip;
-    white-space: normal;
+  white-space: nowrap;
+  width: 1%;
+  text-align: right;
 }
 
 .action-buttons {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: nowrap;
-    justify-content: center;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0.3rem;
+  justify-content: flex-end;
 }
 
-.action-buttons button {
-    white-space: nowrap;
-}
+button:hover { background: #8f8f8f; }
 
-.compact-mode .action-buttons {
-    gap: 0.35rem;
-}
+.action-buttons .btn-detail { background: #e3f0fa; color: #1565c0; border: 1px solid rgba(21, 101, 192, 0.2); }
+.action-buttons .btn-detail:hover { background: #d2e6f7; }
 
-.compact-mode .action-buttons button {
-    padding: 8px 10px;
-    font-size: 0.82rem;
-}
+.action-buttons .btn-delete { background: #fdecea; color: #c62828; border: 1px solid rgba(198, 40, 40, 0.2); }
+.action-buttons .btn-delete:hover { background: #fbdcd9; }
 
-.yellow {
-    background: #fff3cd;
-}
+.btn-finish { background: #2e7d32; }
+.btn-finish:hover { background: #1b5e20; }
 
-.red {
-    background: #f8d7da;
-}
-
-.white {
-    background: white;
-}
-
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-box {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
-    width: min(420px, 90vw);
-}
-
-.modal-box-detail {
-    width: min(700px, 92vw);
-    max-height: 85vh;
-    overflow-y: auto;
-}
-
-.modal-box h3 {
-    margin-top: 0;
-    color: #333;
-}
-
-.modal-box input {
-    width: 100%;
-    margin: 10px 0;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 2rem;
-}
-
-button {
-    border-radius: 2rem;
-    padding: 10px 14px;
-    background: #a6a6a6;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #8f8f8f;
-}
-
-@media (max-width: 1400px) {
-    .container {
-        width: min(97vw, 1400px);
-        padding: 1.7rem;
-    }
-}
-
-@media (max-width: 1200px) {
-    .container {
-        width: min(98vw, 1200px);
-        padding: 1.45rem;
-    }
-}
-
-@media (max-width: 992px) {
-    .container {
-        width: 100%;
-        padding: 1.15rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: 1rem;
-    }
-
-    h1 {
-        font-size: 1.6rem;
-    }
-
-    .topbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filters input,
-    .filters select {
-        min-width: 100%;
-    }
-
-    .table-wrapper {
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: thin;
-    }
-
-    .table-wrapper::-webkit-scrollbar {
-        height: 4px;
-    }
-
-    .fixed-horizontal-scroll {
-        display: none;
-    }
-}
+.btn-close { background: #757575; }
+.btn-close:hover { background: #616161; }
 
 .seller-message {
-    text-align: center;
-    padding: 2rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin: 2rem 0;
+  text-align: center;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 2rem 0;
 }
 
 .seller-message p {
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-    color: #495057;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #495057;
 }
 
-.seller-message button {
-    padding: 0.75rem 1.5rem;
-    background: #6b8e3a;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1rem;
+.btn-short { display: none; }
+
+@media (max-width: 1000px) {
+  .col-hide-mobile { display: none; }
+  .btn-full { display: none; }
+  .btn-short { display: inline; }
+  .btn-detail, .btn-delete { padding: 3px 6px; font-size: 0.65rem; border-radius: 0.75rem; }
+  .action-buttons { gap: 0.2rem; }
+  .action-cell { padding: 6px 4px !important; }
 }
 
-.seller-message button:hover {
-    background: #5a7d3a;
+@media (max-width: 768px) {
+  .page-container { padding: 1rem; }
+  .container { padding: 1rem; }
+  .topbar { flex-direction: column; align-items: stretch; }
+  .filters { justify-content: center; width: 100%; }
+  .filters input,
+  .filters select,
+  .filters input[type="date"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex: 1 1 100%;
+    box-sizing: border-box;
+  }
+  .history-table { min-width: unset; }
+  .history-table th, .history-table td { padding: 8px 8px; font-size: 0.82rem; }
+}
+
+/* ── Loading ── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  gap: 1rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #1e88e5;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Modales (renderizados en <body> via Teleport) ── */
+</style>
+
+<style>
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-box {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  width: min(420px, 90vw);
+}
+
+.modal-box-detail {
+  width: min(680px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-box h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.modal-box input {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 2rem;
+  box-sizing: border-box;
+}
+
+.modal-box label {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.detail-content {
+  text-align: left;
+  line-height: 1.8;
+}
+
+.detail-content p {
+  margin: 0.3rem 0;
+}
+
+.detail-text {
+  background: #f5f5f5;
+  padding: 0.75rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  justify-content: flex-end;
 }
 </style>

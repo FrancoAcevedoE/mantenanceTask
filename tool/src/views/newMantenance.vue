@@ -21,7 +21,8 @@
           <div class="horometro-body">
             <select v-model="horometroForm.machineId">
               <option value="">Seleccionar máquina</option>
-              <option v-for="machine in machines" :key="machine._id" :value="machine._id">
+
+              <option v-for="machine in machines" :key="machine._id" :value="machine.name">
                 {{ machine.sector ? `${machine.sector} - ${machine.name}` : machine.name }}
               </option>
             </select>
@@ -103,18 +104,34 @@
               {{ op.name }}
             </option>
           </select>
-          <select v-model="form.maintenanceType">
 
+          <div v-if="additionalWorkersList.length" class="workers-chips">
+            <span v-for="worker in additionalWorkersList" :key="worker._id" class="worker-chip">
+              {{ worker.name }}
+              <button type="button" class="chip-remove" @click="removeWorker(worker._id)">×</button>
+            </span>
+          </div>
+          <div v-if="availableAdditionalWorkers.length" class="add-worker-row">
+            <select v-model="selectedAdditionalWorker">
+              <option value="">Agregar otro operario</option>
+              <option v-for="op in availableAdditionalWorkers" :key="op._id" :value="op._id">
+                {{ op.name }}
+              </option>
+            </select>
+            <button type="button" class="add-worker-btn" :disabled="!selectedAdditionalWorker" @click="addWorker">
+              Agregar
+            </button>
+          </div>
+
+          <select v-model="form.maintenanceType">
+            <option value="">SELECCIONAR TIPO DE TRABAJO</option>
             <option value="Preventivo predictivo">Preventivo predictivo</option>
             <option value="Preventivo de mejora continua">Preventivo de mejora continua</option>
             <option value="Preventivo de correctivo">Preventivo de correctivo</option>
             <option value="Arreglo">Arreglo</option>
             <option value="fabricación">Fabricación</option>
             <option value="Limpieza">Limpieza</option>
-            <option value="Puesta en marcha (maquina parada)">
-              Puesta en marcha (maquina parada)
-            </option>
-
+            <option value="Puesta en marcha (maquina parada)">Puesta en marcha (maquina parada)</option>
           </select>
           <label>DESCRIPCIÓN</label>
           <textarea v-model="form.workDescription"></textarea>
@@ -132,6 +149,33 @@
             <option :value="true">Sí</option>
             <option :value="false">No</option>
           </select>
+
+          <div v-if="form.jobFinished === false || form.machineRunning === false" class="unfinished-block">
+            <label class="unfinished-title">MOTIVO DE NO FINALIZACIÓN</label>
+            <div class="reason-list">
+              <label
+                v-for="option in unfinishedReasonOptions"
+                :key="option"
+                class="reason-option"
+                :class="{ 'reason-option--selected': form.unfinishedReasonCategory === option }"
+              >
+                <input
+                  type="radio"
+                  :value="option"
+                  v-model="form.unfinishedReasonCategory"
+                  @change="onUnfinishedReasonCategoryChange"
+                />
+                {{ option }}
+              </label>
+            </div>
+            <textarea
+              v-if="form.unfinishedReasonCategory === 'Otros'"
+              v-model="form.unfinishedReason"
+              placeholder="Describe el motivo..."
+              class="reason-textarea"
+            ></textarea>
+          </div>
+
           <button type="submit">Guardar mantenimiento</button>
         </form>
       </div>
@@ -190,8 +234,6 @@ export default {
       additionalWorkersList: [],
       selectedAdditionalWorker: '',
       showPartsDropdown: false,
-      additionalMachinePartList: [],
-      selectedAdditionalMachinePart: '',
       machines: [],
       sectors: [],
       currentUserRole: '',
@@ -202,15 +244,6 @@ export default {
         value: null,
         expiresAt: 0,
       },
-      maintenanceTypes: [
-        "Preventivo predictivo",
-        "Preventivo de mejora continua",
-        "Preventivo de correctivo",
-        "Arreglo",
-        "fabricación",
-        "Limpieza",
-        "Puesta en marcha (maquina parada)"
-      ],
       horometroForm: {
         machineId: '',
         value: null,
@@ -252,11 +285,14 @@ export default {
     await this.loadOperarios()
     await this.loadMachines()
 
-    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+    document.body.style.background = 'rgb(103, 111, 62)'
+    document.body.style.backgroundAttachment = 'fixed'
+    document.addEventListener('mousedown', this._onClickOutside)
   },
 
   beforeUnmount() {
     document.body.style.background = ''
+    document.removeEventListener('mousedown', this._onClickOutside)
   },
 
   computed: {
@@ -303,14 +339,6 @@ export default {
       const usedIds = new Set([this.form.clientId, ...this.additionalWorkersList.map((w) => w._id)])
       return this.allOperarios.filter((op) => !usedIds.has(op._id))
     },
-    availableAdditionalMachinePart() {
-      const usedParts = new Set([...this.form.machinePart, ...this.additionalMachinePartList])
-      return this.selectedMachinePart.filter((part) => !usedParts.has(part))
-    },
-    availableMachinePart() {
-      const usedParts = new Set(this.form.machinePart)
-      return this.selectedMachinePart.filter((part) => !usedParts.has(part))
-    },
     filteredMachinesBySector() {
       if (!this.form.sector) return []
       return this.machines
@@ -327,16 +355,11 @@ export default {
       )
     },
     selectedMachinePart() {
-  if (!this.selectedMachine) return []
-
-  const parts =
-    this.selectedMachine.machineParts ||
-    this.selectedMachine.additionalMachinePartsList ||
-    []
-console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.machine), null, 2))
-  return Array.isArray(parts) ? parts : []
-  console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.machine), null, 2))
-},
+      if (!this.selectedMachine) return []
+      return Array.isArray(this.selectedMachine.machineParts)
+        ? this.selectedMachine.machineParts
+        : []
+    },
 
     selectedHorometroMachine() {
       if (!this.horometroForm.machineId) return null
@@ -353,6 +376,14 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
   },
 
   methods: {
+    _onClickOutside(e) {
+      if (!this.showPartsDropdown) return
+      const el = this.$el?.querySelector?.('.multi-select')
+      if (el && !el.contains(e.target)) {
+        this.showPartsDropdown = false
+      }
+    },
+
     getStoredUser() {
       try {
         const rawUser = localStorage.getItem('user')
@@ -365,8 +396,6 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
     onSectorChange() {
       this.form.machine = ''
       this.form.machinePart = []
-      this.additionalMachinePartList = []
-      this.selectedAdditionalMachinePart = ''
     },
 
     authConfig() {
@@ -402,41 +431,49 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
 
     async loadMachines() {
       try {
-        const response = await axios.get(`${API_BASE_URL}/machines`, this.authConfig())
-
-        const machines = Array.isArray(response.data) ? response.data : []
-
-        this.machines = machines.map(m => ({
-  ...m,
-  machinePart: m.machineParts || m.machinePart || []
-}))
-        this.machines = machines.sort((a, b) =>
-          String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }),
+        const response = await axios.get(
+          `${API_BASE_URL}/machines`,
+          this.authConfig()
         )
+
+        const machines = Array.isArray(response.data)
+          ? response.data
+          : []
+
+        this.machines = machines
+          .map(machine => ({
+            ...machine
+          }))
+          .sort((a, b) =>
+            String(a.name || '').localeCompare(
+              String(b.name || ''),
+              'es',
+              { sensitivity: 'base' }
+            )
+          )
+
         this.sectors = [
-          ...new Set(this.machines.map((machine) => machine.sector).filter(Boolean)),
+          ...new Set(
+            this.machines
+              .map(machine => machine.sector)
+              .filter(Boolean)
+          )
         ].sort((a, b) =>
-          String(a || '').localeCompare(String(b || ''), 'es', { sensitivity: 'base' }),
+          String(a || '').localeCompare(
+            String(b || ''),
+            'es',
+            { sensitivity: 'base' }
+          )
         )
+
       } catch (error) {
         this.$notify.error('Error al cargar maquinas')
       }
     },
 
     onMachineChange() {
-       console.log("MAQUINA", this.selectedMachine)
-      if (!this.selectedMachine) {
-        this.form.machinePart = []
-        this.additionalMachinePartList = []
-        this.selectedAdditionalMachinePart = ''
-        this.form.machinePart = []
-        this.showPartsDropdown = false
-        return
-      }
-
       this.form.machinePart = []
-      this.additionalMachinePartList = []
-      this.selectedAdditionalMachinePart = ''
+      this.showPartsDropdown = false
     },
 
     async updateHorometroFromPanel() {
@@ -520,22 +557,6 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
 
     removeWorker(workerId) {
       this.additionalWorkersList = this.additionalWorkersList.filter((w) => w._id !== workerId)
-    },
-
-    addMachinePart() {
-      if (!this.selectedAdditionalMachinePart) return
-      if (!this.form.machinePart.includes(this.selectedAdditionalMachinePart)) {
-        this.form.machinePart.push(this.selectedAdditionalMachinePart)
-      }
-      this.selectedAdditionalMachinePart = ''
-    },
-
-    removeMachinePart(part) {
-      this.form.machinePart = this.form.machinePart.filter((p) => p !== part)
-    },
-
-    removeMachinePartFromMain(part) {
-      this.additionalMachinePartList = this.additionalMachinePartList.filter((p) => p !== part)
     },
 
     async saveMaintenance() {
@@ -635,13 +656,6 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
 
       this.additionalWorkersList = []
       this.selectedAdditionalWorker = ''
-      this.selectedAdditionalMachinePart = ''
-    },
-
-    showMachineInstructions() {
-      if (this.selectedMachine && this.selectedMachine.instructions) {
-        this.showMachineDetailModal = true
-      }
     },
 
     openMachineDetailModal() {
@@ -675,13 +689,14 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
 
 <style scoped>
 .form-container {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 1.5rem auto 0;
-  padding: 1rem;
-  background: #fafafa;
-  border: 1px solid #d8d8d8;
-  border-radius: 10px;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .multi-select {
@@ -741,20 +756,27 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
   display: flex;
   align-items: center;
   gap: 10px;
-
-  padding: 12px 15px;
-
+  padding: 10px 15px;
   cursor: pointer;
   text-align: left;
+  transition: background 0.15s;
 }
+
+.multi-option:first-child { border-radius: 16px 16px 0 0; }
+.multi-option:last-child  { border-radius: 0 0 16px 16px; }
+.multi-option:only-child  { border-radius: 16px; }
 
 .multi-option:hover {
-  background: #f5f5f5;
+  background: #eef4ff;
 }
 
-.multi-option input {
+.multi-option input[type='checkbox'] {
   width: auto;
   margin: 0;
+  accent-color: #1e88e5;
+  cursor: pointer;
+  background: transparent;
+  box-shadow: none;
 }
 
 .multi-empty {
@@ -764,8 +786,8 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
 }
 
 .panel-container {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 1.5rem auto 0;
   justify-content: center;
 }
@@ -806,8 +828,8 @@ console.log("JSON:", JSON.stringify(this.machines.find(m => m._id === this.form.
 }
 
 .action-selector {
-  width: 100%;
-  max-width: 700px;
+  width: min(1080px, 100%);
+  max-width: unset;
   margin: 0 auto;
 
   display: grid;
@@ -907,8 +929,12 @@ textarea {
   min-height: 100px;
 }
 
-input:hover,
-input:focus,
+input[type='text']:hover,
+input[type='text']:focus,
+input[type='number']:hover,
+input[type='number']:focus,
+input[type='date']:hover,
+input[type='date']:focus,
 textarea:hover,
 textarea:focus,
 select:hover,
@@ -921,13 +947,6 @@ select:focus {
 
 button {
   margin-top: 1rem;
-  padding: 10px;
-  border: none;
-  border-radius: 2rem;
-  background: #a6a6a6;
-  color: #fff;
-  cursor: pointer;
-  width: 100%;
 }
 
 .button-group {
@@ -1040,12 +1059,23 @@ button:hover {
   color: #b71c1c;
 }
 
+.add-worker-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  width: 100%;
+  margin: 4px 0;
+}
+
+.add-worker-row select {
+  flex: 1;
+  margin: 0;
+}
+
 .add-worker-btn {
-  width: auto;
-  padding: 0.5rem 1rem;
   background: #00a878;
   margin-top: 0;
-  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .add-worker-btn:hover {
@@ -1124,11 +1154,8 @@ button:hover {
 }
 
 .add-part-btn {
-  width: auto;
-  padding: 0.5rem 1rem;
   background: #00a878;
   margin-top: 0;
-  white-space: nowrap;
 }
 
 .add-part-btn:hover {
@@ -1146,15 +1173,162 @@ button:hover {
   font-size: 0.9rem;
 }
 
+.unfinished-block {
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 1rem 1.25rem;
+  background: #fff8f0;
+  border: 1px solid #f9a825;
+  border-radius: 14px;
+  animation: stepReveal 200ms ease-out;
+}
+
+.unfinished-title {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #e65100;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.reason-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.reason-option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.92rem;
+  color: #444;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: left;
+  margin: 0;
+  width: 100%;
+}
+
+.reason-option:hover {
+  background: #fff3e0;
+  border-color: #ffcc80;
+}
+
+.reason-option--selected {
+  background: #fff3e0;
+  border-color: #f9a825;
+  color: #e65100;
+  font-weight: 600;
+}
+
+.reason-option input[type='radio'] {
+  width: auto;
+  margin: 0;
+  accent-color: #f9a825;
+  cursor: pointer;
+  background: transparent;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+.reason-textarea {
+  width: 100%;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ffcc80;
+  border-radius: 10px;
+  background: #fffde7;
+  font-size: 0.92rem;
+  color: #444;
+  resize: vertical;
+  min-height: 80px;
+  box-sizing: border-box;
+}
+
+.reason-textarea:focus {
+  outline: none;
+  border-color: #f9a825;
+  box-shadow: 0 0 0 2px rgba(249, 168, 37, 0.2);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .page-container {
+    padding: 0.75rem;
+    justify-content: flex-start;
+  }
+
   .box {
     padding: 1rem;
-    max-width: 90%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .form-container,
+  .panel-container,
+  .action-selector {
+    width: 100%;
+  }
+
+  .action-selector {
+    gap: 0.6rem;
+  }
+
+  .action-card {
+    padding: 1rem;
+  }
+
+  .action-card i {
+    font-size: 1.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-card .action-title,
+  .action-card p {
+    font-size: 0.95rem;
   }
 
   h2 {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  label {
+    font-size: 0.85rem;
+  }
+
+  input[type='text'],
+  input[type='number'],
+  textarea,
+  select {
+    padding: 8px;
+  }
+
+  .horometro-panel {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .unfinished-block {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .reason-option {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .multi-select-header {
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .modal-box {
+    padding: 14px;
   }
 }
 </style>

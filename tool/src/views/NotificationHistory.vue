@@ -65,8 +65,8 @@
             <li v-for="item in filteredItems" :key="item.id" :class="[
               'history-item',
               item.read ? 'read' : 'unread',
-              expandedNotification === item.id ? 'expanded' : ''
-            ]" @click="toggleNotification(item.id)">
+              expandedNotification === String(item.id) ? 'expanded' : ''
+            ]" @click="goToNotification(item)">
 
               <!-- VISTA COMPACTA -->
               <div class="notification-row">
@@ -96,12 +96,22 @@
                     {{ formatSeverity(item.severity) }}
                   </span>
 
+                  <button
+                    v-if="!item.read && expandedNotification !== String(item.id)"
+                    type="button"
+                    class="mark-read-mini"
+                    title="Marcar como leída"
+                    @click.stop="markAsRead(item.id)"
+                  >
+                    <i class="bi bi-check2"></i>
+                  </button>
+
                 </div>
 
               </div>
 
               <!-- DETALLE -->
-              <div v-if="expandedNotification === item.id" class="notification-details">
+              <div v-if="expandedNotification === String(item.id)" class="notification-details">
 
                 <pre class="notification-text">{{ item.body }}</pre>
 
@@ -122,7 +132,8 @@
                   </span>
                 </div>
 
-                <button v-if="!item.read" type="button" class="mark-read-button" @click.stop="markAsRead(item.id)">
+                <button v-if="expandedNotification === String(item.id) && !item.read" type="button"
+                  class="mark-read-button" @click.stop="markAsRead(item.id)">
                   Marcar leída
                 </button>
 
@@ -155,7 +166,6 @@ export default {
       toDate: '',
       searchText: '',
       isLoading: false,
-
       expandedNotification: null
     }
   },
@@ -164,9 +174,7 @@ export default {
     filteredItems() {
       const query = this.searchText.trim().toLowerCase()
 
-      if (!query) {
-        return this.items
-      }
+      if (!query) return this.items
 
       return this.items.filter(item => {
         const title = String(item.title || '').toLowerCase()
@@ -184,6 +192,19 @@ export default {
     }
   },
 
+  watch: {
+    '$route.query.id': {
+      immediate: true,
+      handler(newId) {
+        const id = String(newId || '').trim()
+        if (!id) return
+
+        this.expandedNotification = id
+        this.markAsRead(id)
+      }
+    }
+  },
+
   methods: {
     authConfig() {
       return {
@@ -192,10 +213,54 @@ export default {
         }
       }
     },
-    toggleNotification(id) {
-      this.expandedNotification =
-        this.expandedNotification === id ? null : id
+
+    goToNotification(item) {
+      const id = String(item.id)
+      const isOpen = this.expandedNotification === id
+
+      if (isOpen) {
+        this.expandedNotification = null
+        return
+      }
+
+      this.expandedNotification = id
+
+      if (!item.read) {
+        this.markAsRead(id)
+      }
+
+      this.$router.push({
+        path: '/notifications-history',
+        query: { id }
+      })
     },
+
+    async markAsRead(id) {
+      try {
+        const parsedId = String(id || '').trim()
+        if (!parsedId) return
+
+        const target = this.items.find(i => String(i.id) === parsedId)
+        if (target?.read) return
+
+        await axios.post(
+          `${API_BASE_URL}/maintenance/notifications/history/read`,
+          { ids: [parsedId] },
+          this.authConfig()
+        )
+
+        this.items = this.items.map(item => ({
+          ...item,
+          read: String(item.id) === parsedId ? true : item.read
+        }))
+
+        this.summary.read += 1
+        this.summary.unread = Math.max(0, this.summary.unread - 1)
+      } catch (error) {
+        this.$notify.notifyApiError(error, 'No se pudo marcar como leída')
+      }
+    },
+
     buildHistoryQuery() {
       const params = new URLSearchParams()
 
@@ -203,16 +268,11 @@ export default {
         params.set('read', this.readFilter)
       }
 
-      if (this.fromDate) {
-        params.set('from', this.fromDate)
-      }
+      if (this.fromDate) params.set('from', this.fromDate)
+      if (this.toDate) params.set('to', this.toDate)
 
-      if (this.toDate) {
-        params.set('to', this.toDate)
-      }
-
-      const rawQuery = params.toString()
-      return rawQuery ? `?${rawQuery}` : ''
+      const raw = params.toString()
+      return raw ? `?${raw}` : ''
     },
 
     async loadHistory() {
@@ -224,59 +284,54 @@ export default {
           this.authConfig()
         )
 
-        this.items = Array.isArray(response.data?.items) ? response.data.items : []
+        this.items = Array.isArray(response.data?.items)
+          ? response.data.items
+          : []
+
         this.summary = response.data?.summary || {
           total: this.items.length,
-          read: this.items.filter(item => item.read).length,
-          unread: this.items.filter(item => !item.read).length
+          read: this.items.filter(i => i.read).length,
+          unread: this.items.filter(i => !i.read).length
         }
       } catch (error) {
-        this.$notify.notifyApiError(error, 'No se pudo cargar el historial de notificaciones')
+        this.$notify.notifyApiError(
+          error,
+          'No se pudo cargar el historial de notificaciones'
+        )
       } finally {
         this.isLoading = false
       }
     },
 
-    async markAsRead(notificationId) {
-      try {
-        await axios.post(
-          `${API_BASE_URL}/maintenance/notifications/history/read`,
-          {
-            ids: [notificationId]
-          },
-          this.authConfig()
-        )
-
-        this.items = this.items.map(item => item.id === notificationId ? { ...item, read: true } : item)
-        this.summary.read += 1
-        this.summary.unread = Math.max(0, this.summary.unread - 1)
-      } catch (error) {
-        this.$notify.notifyApiError(error, 'No se pudo marcar como leida')
-      }
-    },
-
     async markVisibleAsRead() {
-      const unreadVisibleIds = this.filteredItems.filter(item => !item.read).map(item => item.id)
+      const ids = this.filteredItems
+        .filter(i => !i.read)
+        .map(i => i.id)
 
-      if (!unreadVisibleIds.length) {
-        return
-      }
+      if (!ids.length) return
 
       try {
         await axios.post(
           `${API_BASE_URL}/maintenance/notifications/history/read`,
-          {
-            ids: unreadVisibleIds
-          },
+          { ids },
           this.authConfig()
         )
 
-        const unreadSet = new Set(unreadVisibleIds)
-        this.items = this.items.map(item => unreadSet.has(item.id) ? { ...item, read: true } : item)
-        this.summary.read += unreadVisibleIds.length
-        this.summary.unread = Math.max(0, this.summary.unread - unreadVisibleIds.length)
+        const set = new Set(ids)
+
+        this.items = this.items.map(item =>
+          set.has(item.id)
+            ? { ...item, read: true }
+            : item
+        )
+        this.expandedNotification = null
+        this.summary.read += ids.length
+        this.summary.unread = Math.max(0, this.summary.unread - ids.length)
       } catch (error) {
-        this.$notify.notifyApiError(error, 'No se pudieron marcar las notificaciones visibles')
+        this.$notify.notifyApiError(
+          error,
+          'No se pudieron marcar las notificaciones visibles'
+        )
       }
     },
 
@@ -287,11 +342,14 @@ export default {
           this.authConfig()
         )
 
-        this.items = this.items.map(item => ({ ...item, read: false }))
+        this.items = this.items.map(i => ({ ...i, read: false }))
         this.summary.read = 0
         this.summary.unread = this.items.length
       } catch (error) {
-        this.$notify.notifyApiError(error, 'No se pudo limpiar el estado de leidas')
+        this.$notify.notifyApiError(
+          error,
+          'No se pudo limpiar el estado de leídas'
+        )
       }
     },
 
@@ -305,7 +363,7 @@ export default {
     formatSeverity(value) {
       const map = {
         success: 'Exito',
-        warning: 'Atencion',
+        warning: 'Atención',
         error: 'Urgente',
         info: 'Info'
       }
@@ -315,13 +373,18 @@ export default {
   },
 
   mounted() {
-    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))'
+    const id = this.$route.query.id
 
-    // No cargar historial de notificaciones de mantenimiento para vendedores
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
-    if (user.role === 'vendedor') {
-      return
+    if (id) {
+      this.expandedNotification = String(id)
+      this.markAsRead(id)
     }
+
+    document.body.style.background = 'rgb(103, 111, 62)'
+    document.body.style.backgroundAttachment = 'fixed'
+
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    if (user.role === 'vendedor') return
 
     this.loadHistory()
   },
@@ -333,6 +396,12 @@ export default {
 </script>
 
 <style scoped>
+.container,
+.charts-section,
+.charts-grid,
+.chart-card {
+  min-width: 0;
+}
 .notification-history-page {
   min-height: 100vh;
   padding: 1rem;
@@ -416,6 +485,28 @@ export default {
   color: #94a3b8;
 }
 
+.mark-read-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid #a3b97a;
+  background: transparent;
+  color: #6b8a3a;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.18s, color 0.18s;
+  padding: 0;
+}
+
+.mark-read-mini:hover {
+  background: #6b8a3a;
+  color: #fff;
+  border-color: #6b8a3a;
+}
+
 .notification-details {
   margin-top: 1rem;
   padding-top: 1rem;
@@ -446,9 +537,9 @@ export default {
 
 .history-item {
   text-align: left;
-  border-radius: 16px;
-  padding: 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+  padding: 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.15);
   background: #ffffff;
   transition: all 0.2s ease;
 }
@@ -489,6 +580,14 @@ export default {
   width: 100%;
   display: flex;
   justify-content: center;
+  /* Anula el .container global de style.css (padding: 1.8rem; background;
+     border…), que de otro modo se filtra acá y angosta la tarjeta. */
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .notification-history-card {
@@ -526,8 +625,7 @@ export default {
 }
 
 .notification-history-filters button {
-  width: auto;
-  padding: 0.62rem 1.5rem;
+  width: fit-content;
 }
 
 .notification-history-summary article {
@@ -536,13 +634,18 @@ export default {
 }
 
 .notification-history-filters input,
-.notification-history-filters select,
+.notification-history-filters select {
+  border: 0;
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
 .notification-history-filters button,
 .ghost-button,
 .mark-read-button {
-  border: 0;
   border-radius: 12px;
-  padding: 0.62rem 0.8rem;
 }
 
 .notification-history-filters input,
@@ -591,7 +694,7 @@ export default {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.7rem;
+  gap: 0.3rem;
 }
 
 .history-item {
@@ -676,9 +779,15 @@ export default {
 }
 
 @media (max-width: 900px) {
+  .page-container {
+    padding: 0.5rem;
+  }
+
   .notification-history-card {
-    margin-top: 0.8rem;
-    margin-bottom: 5rem;
+    margin-top: 0.6rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 16px;
   }
 
   .notification-history-header {
@@ -690,16 +799,41 @@ export default {
     flex-wrap: wrap;
   }
 
+  .notification-history-actions button {
+    flex: 1 1 auto;
+    font-size: 0.78rem;
+  }
+
   .notification-history-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .notification-history-filters input,
+  .notification-history-filters select {
+    width: 100%;
+    flex: 1 1 140px;
   }
 
   .notification-history-filters button {
-    grid-column: span 2;
+    width: 100%;
+    flex-basis: 100%;
   }
 
   .notification-history-summary {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .notification-history-summary article {
+    padding: 0.6rem;
+  }
+
+  .notification-history-summary strong {
+    font-size: 1.15rem;
+  }
+
+  .history-item {
+    padding: 0.5rem;
   }
 }
 

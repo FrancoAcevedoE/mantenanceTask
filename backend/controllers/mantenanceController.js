@@ -4,8 +4,8 @@ import Machine from "../models/machineModels.js"
 import NotificationLog from "../models/notificationLogModel.js"
 import mongoose from "mongoose"
 import {
-    getMaintenanceNotificationsFeed,
     getMaintenanceNotificationSummary,
+    getMaintenanceNotificationsFeed,
     sendMaintenanceStatusAlert,
     sendMaintenanceSummaryNotification
 } from "../services/notificationService.js"
@@ -25,12 +25,12 @@ const normalizeSector = (value = "") =>
         .toLowerCase()
 
 const ALLOWED_UNFINISHED_REASONS = [
-"Tiempo de parada insuficiente.",
-"Falta de personal.",
-"Falta de repuestos (en el acto)",
-"Falta de repuestos (Mas de una semana).",
-"Falta de presupuesto.",
-"Otros"
+    "Tiempo de parada insuficiente.",
+    "Falta de personal.",
+    "Falta de repuestos (en el acto)",
+    "Falta de repuestos (Mas de una semana).",
+    "Falta de presupuesto.",
+    "Otros"
 ]
 
 const normalizeUnfinishedReason = (value = "") =>
@@ -41,6 +41,8 @@ const normalizeUnfinishedReason = (value = "") =>
 const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/
 const MAX_NOTIFICATION_READ_IDS = 300
 const MAX_NOTIFICATION_HISTORY_READ_IDS = 1200
+
+
 
 const normalizeNotificationReadIds = (rawIds) => {
     if (!Array.isArray(rawIds)) {
@@ -119,9 +121,9 @@ const getMonthEnd = (monthValue) => {
     return new Date(year, monthIndex + 1, 0, 23, 59, 59, 999)
 }
 
-export const newMaintenanceController = async (req,res)=>{
+export const newMaintenanceController = async (req, res) => {
 
-    try{
+    try {
 
         const data = {
             ...req.body,
@@ -132,7 +134,7 @@ export const newMaintenanceController = async (req,res)=>{
             ? req.user.id
             : data.clientId
 
-        const normalizedMachineParts = Array.isArray(data.machinePart) 
+        const normalizedMachineParts = Array.isArray(data.machinePart)
             ? data.machinePart.map(p => String(p || "").trim()).filter(p => p)
             : [String(data.machinePart || "").trim()].filter(p => p)
 
@@ -180,12 +182,12 @@ export const newMaintenanceController = async (req,res)=>{
 
         const client = await User.findOne({ _id: data.clientId, isDeleted: { $ne: true } })
 
-        if(!client || client.role !== "operario"){
+        if (!client || client.role !== "operario") {
             return res.status(404).json({
-                message:"Operario no encontrado"
+                message: "Operario no encontrado"
             })
         }
-console.log('paso 1')
+        console.log('paso 1')
         const additionalWorkerIds = Array.isArray(data.additionalWorkers) ? data.additionalWorkers : []
         const additionalWorkersSnapshots = []
 
@@ -204,12 +206,12 @@ console.log('paso 1')
 
         let status = "finished"
 
-        if(!data.machineRunning){
+        if (!data.machineRunning) {
             status = "stopped"
         }
-console.log('paso 2')
+        console.log('paso 2')
 
-        if(data.machineRunning && !data.jobFinished){
+        if (data.machineRunning && !data.jobFinished) {
             status = "pending"
         }
 
@@ -240,19 +242,36 @@ console.log('paso 2')
             data.unfinishedReason = ""
             data.unfinishedReasonCategory = ""
         }
-console.log('paso 3')
+        console.log('paso 3')
+console.log("MACHINE RECIBIDA:", data.machine)
 
-        const maintenance = new Maintenance({
-            ...data,
-            additionalWorkers: additionalWorkerIds,
-            clientSnapshot: toUserSnapshot(client),
-            additionalWorkersSnapshots,
-            reportedBy: req.user.id,
-            status
-        })
+// Buscar la máquina por ID
+const machineDoc = await Machine.findById(data.machine)
+
+if (!machineDoc) {
+    return res.status(404).json({
+        message: "Máquina no encontrada"
+    })
+}
+
+console.log("MACHINE ENCONTRADA:", machineDoc.name)
+
+// Guardar el nombre en lugar del ID
+data.machine = machineDoc.name
+
+const maintenance = new Maintenance({
+    ...data,
+    additionalWorkers: additionalWorkerIds,
+    clientSnapshot: toUserSnapshot(client),
+    additionalWorkersSnapshots,
+    reportedBy: req.user.id,
+    status
+})
 
         await maintenance.save()
-        sendMaintenanceStatusAlert(maintenance).catch(() => {})
+        console.log("MACHINE GUARDADA:", maintenance.machine)
+        console.log("machine:", maintenance.machine)
+        sendMaintenanceStatusAlert(maintenance).catch(() => { })
 
         await registerAuditEvent({
             req,
@@ -278,7 +297,7 @@ console.log('paso 3')
 
         res.json(maintenance)
 
-    }catch(error){
+    } catch (error) {
         console.error("Error en newMaintenanceController:", error);
         if (error?.name === "CastError" || error?.name === "ValidationError") {
             return res.status(400).json({
@@ -287,20 +306,15 @@ console.log('paso 3')
         }
 
         res.status(500).json({
-            message:"Error al registrar mantenimiento"
+            message: "Error al registrar mantenimiento"
         })
-
     }
-
 }
 
+export const finishMaintenance = async (req, res) => {
 
-export const finishMaintenance = async (req,res)=>{
-
-    try{
-
+    try {
         const additionalHours = Number(req.body.hoursWorked)
-
         if (!Number.isFinite(additionalHours) || additionalHours <= 0) {
             return res.status(400).json({
                 message: "Las horas adicionales deben ser un numero mayor a 0"
@@ -308,13 +322,11 @@ export const finishMaintenance = async (req,res)=>{
         }
 
         const maintenance = await Maintenance.findById(req.params.id)
-
         if (!maintenance) {
             return res.status(404).json({
                 message: "Mantenimiento no encontrado"
             })
         }
-
         maintenance.hoursWorked += additionalHours
         maintenance.jobFinished = true
         maintenance.machineRunning = true
@@ -322,7 +334,7 @@ export const finishMaintenance = async (req,res)=>{
         maintenance.updatedAt = new Date()
 
         await maintenance.save()
-
+console.log("MACHINE GUARDADA:", maintenance.machine)
         await registerAuditEvent({
             req,
             action: "MAINTENANCE_FINISHED",
@@ -339,33 +351,43 @@ export const finishMaintenance = async (req,res)=>{
                 additionalHours
             }
         })
-
         res.json(maintenance)
 
-    }catch(error){
-
+    } catch (error) {
         res.status(500).json({
-            message:"Error al terminar mantenimiento"
+            message: "Error al terminar mantenimiento"
         })
-
     }
-
 }
 
 
 
 
+const isObjectId = (val) => /^[a-f\d]{24}$/i.test(String(val || ""))
+
 export const historyController = async (req, res) => {
-
     try {
-
         const historyRaw = await Maintenance.find()
             .populate("clientId", "name role company")
             .populate("additionalWorkers", "name role company")
             .sort({ createdAt: -1 })
             .lean()
 
+        // Resolver IDs de máquinas en registros viejos
+        const oldMachineIds = [...new Set(
+            historyRaw.map(item => item.machine).filter(isObjectId)
+        )]
+        const machineIdToName = new Map()
+        if (oldMachineIds.length) {
+            const machines = await Machine.find({ _id: { $in: oldMachineIds } })
+                .select("name").lean()
+            machines.forEach(m => machineIdToName.set(String(m._id), m.name))
+        }
+
         const history = historyRaw.map((item) => {
+            const machineName = isObjectId(item.machine)
+                ? (machineIdToName.get(item.machine) || "(Máquina eliminada)")
+                : item.machine
             const hasClientPopulated = item.clientId && typeof item.clientId === "object"
             const fallbackClient = item.clientSnapshot?.name
                 ? {
@@ -390,387 +412,422 @@ export const historyController = async (req, res) => {
                             role: snapshot.role || "operario"
                         }))
                     : [])
-
             return {
                 ...item,
+                machine: machineName,
                 clientId: hasClientPopulated ? item.clientId : fallbackClient,
                 additionalWorkers
             }
         })
-
         res.json(history)
-
     } catch (error) {
-
         res.status(500).json({
             message: "Error al obtener historial"
         })
-
     }
 
 }
 
-export const dashboardController = async (req,res)=>{
+export const dashboardController = async (req, res) => {
+    try {
+        const requestedStartMonth = String(req.query.startMonth || "").trim()
+        const requestedEndMonth = String(req.query.endMonth || "").trim()
+        const now = new Date()
+        const defaultStartDate = new Date(now.getFullYear(), now.getMonth() - 11, 1, 0, 0, 0, 0)
+        const defaultEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+        const startDate = requestedStartMonth ? getMonthStart(requestedStartMonth) : defaultStartDate
+        const endDate = requestedEndMonth ? getMonthEnd(requestedEndMonth) : defaultEndDate
 
-try{
-
-const requestedStartMonth = String(req.query.startMonth || "").trim()
-const requestedEndMonth = String(req.query.endMonth || "").trim()
-
-const now = new Date()
-const defaultStartDate = new Date(now.getFullYear(), now.getMonth() - 11, 1, 0, 0, 0, 0)
-const defaultEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
-
-const startDate = requestedStartMonth ? getMonthStart(requestedStartMonth) : defaultStartDate
-const endDate = requestedEndMonth ? getMonthEnd(requestedEndMonth) : defaultEndDate
-
-if (!startDate || !endDate) {
-return res.status(400).json({
-message: "Periodo invalido. Usa formato YYYY-MM"
-})
-}
-
-if (startDate > endDate) {
-return res.status(400).json({
-message: "El periodo es invalido: inicio mayor que fin"
-})
-}
-
-const periodFilter = {
-createdAt: {
-$gte: startDate,
-$lte: endDate
-}
-}
-
-const totalMaintenances = await Maintenance.countDocuments(periodFilter)
-
-const machines = await Maintenance.distinct("machine", periodFilter)
-
-const maintenancesForOperarioBreakdown = await Maintenance.find(periodFilter)
-.select("clientId additionalWorkers")
-.populate("clientId", "name company")
-.populate("additionalWorkers", "name company")
-.lean()
-
-const operarioCountByLabel = new Map()
-const uniqueOperarioIds = new Set()
-
-for (const maintenance of maintenancesForOperarioBreakdown) {
-const participants = []
-
-if (maintenance?.clientId) {
-participants.push(maintenance.clientId)
-}
-
-if (Array.isArray(maintenance?.additionalWorkers)) {
-participants.push(...maintenance.additionalWorkers)
-}
-
-const maintenanceParticipantIds = new Set()
-
-for (const participant of participants) {
-if (!participant || !participant._id) continue
-
-const participantId = String(participant._id)
-
-if (maintenanceParticipantIds.has(participantId)) continue
-maintenanceParticipantIds.add(participantId)
-uniqueOperarioIds.add(participantId)
-
-const participantName = String(participant.name || "").trim()
-const participantCompany = String(participant.company || "").trim()
-
-if (!participantName) continue
-
-const label = participantCompany
-? `${participantName} - ${participantCompany}`
-: participantName
-
-operarioCountByLabel.set(label, (operarioCountByLabel.get(label) || 0) + 1)
-}
-}
-
-const operariosAttended = uniqueOperarioIds.size
-
-const recentMaintenances = await Maintenance.find(periodFilter)
-.populate("clientId", "name role")
-.sort({ createdAt: -1 })
-
-const pending = await Maintenance.countDocuments({
-...periodFilter,
-status:"pending"
-})
-
-const stopped = await Maintenance.countDocuments({
-...periodFilter,
-status:"stopped"
-})
-
-const statusBreakdownRaw = await Maintenance.aggregate([
-{
-$match: periodFilter
-},
-{
-$group: {
-_id: "$status",
-count: { $sum: 1 }
-}
-}
-])
-
-const operarioBreakdownRaw = [...operarioCountByLabel.entries()]
-.map(([operario, count]) => ({ _id: operario, count }))
-.sort((left, right) => right.count - left.count)
-.slice(0, 8)
-
-const sectorBreakdownRaw = await Maintenance.aggregate([
-{
-$match: periodFilter
-},
-{
-$addFields: {
-normalizedSector: {
-    $toLower: {
-        $trim: {
-            input: { $ifNull: ["$sector", ""] }
+        if (!startDate || !endDate) {
+            return res.status(400).json({
+                message: "Periodo invalido. Usa formato YYYY-MM"
+            })
         }
+
+        if (startDate > endDate) {
+            return res.status(400).json({
+                message: "El periodo es invalido: inicio mayor que fin"
+            })
+        }
+
+        const periodFilter = {
+            createdAt: {
+                $gte: startDate,
+                $lte: endDate
+            }
+        }
+        const [
+            totalMaintenances,
+            machines,
+            maintenancesForOperarioBreakdown,
+            recentMaintenancesRaw,
+            pending,
+            stopped,
+            statusBreakdownRaw,
+            sectorBreakdownRaw,
+            dailyRaw,
+            unfinishedReasonBreakdownRaw,
+            unfinishedOtherDetailsRaw,
+            allMachines,
+            latestMaintenances
+        ] = await Promise.all([
+            Maintenance.countDocuments(periodFilter),
+            Maintenance.distinct("machine", periodFilter),
+            Maintenance.find(periodFilter)
+                .select("clientId additionalWorkers")
+                .populate("clientId", "name company")
+                .populate("additionalWorkers", "name company")
+                .lean(),
+            Maintenance.find(periodFilter)
+                .populate("clientId", "name role")
+                .sort({ createdAt: -1 })
+                .lean(),
+            Maintenance.countDocuments({
+                ...periodFilter,
+                status: "pending"
+            }),
+            Maintenance.countDocuments({
+                ...periodFilter,
+                status: "stopped"
+            }),
+            Maintenance.aggregate([
+                {
+                    $match: periodFilter
+                },
+                {
+                    $group: {
+                        _id: "$status",
+                        count: { $sum: 1 }
+                    }
+                }
+            ]),
+            Maintenance.aggregate([
+                {
+                    $match: periodFilter
+                },
+                {
+                    $addFields: {
+                        normalizedSector: {
+                            $toLower: {
+                                $trim: {
+                                    input: { $ifNull: ["$sector", ""] }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    $match: {
+                        normalizedSector: { $nin: [""] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$normalizedSector",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { count: -1 }
+                },
+                {
+                    $limit: 8
+                }
+            ]),
+            Maintenance.aggregate([
+                {
+                    $match: periodFilter
+                },
+                {
+                    $addFields: {
+                        createdDay: {
+                            $dateToString: {
+                                format: "%Y-%m-%d",
+                                date: "$createdAt"
+                            }
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$createdDay",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { _id: 1 }
+                }
+            ]),
+            Maintenance.aggregate([
+                {
+                    $match: {
+                        ...periodFilter,
+                        unfinishedReason: { $nin: [null, ""] }
+                    }
+                },
+                {
+                    $addFields: {
+                        unfinishedReasonKey: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $ne: ["$unfinishedReasonCategory", null] },
+                                        { $ne: ["$unfinishedReasonCategory", ""] }
+                                    ]
+                                },
+                                "$unfinishedReasonCategory",
+                                "$unfinishedReason"
+                            ]
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$unfinishedReasonKey",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { count: -1 }
+                }
+            ]),
+            Maintenance.aggregate([
+                {
+                    $match: {
+                        ...periodFilter,
+                        unfinishedReasonCategory: "Otros",
+                        unfinishedReason: { $nin: [null, "", "Otros"] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$unfinishedReason",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { count: -1 }
+                },
+                {
+                    $limit: 5
+                }
+            ]),
+            Machine.find({
+                isDeleted: { $ne: true }
+            })
+                .select("name sector")
+                .sort({ sector: 1, name: 1 }),
+            Maintenance.aggregate([
+                {
+                    $sort: { createdAt: -1 }
+                },
+                {
+                    $group: {
+                        _id: "$machine",
+                        status: { $first: "$status" },
+                        unfinishedReason: { $first: "$unfinishedReason" },
+                        updatedAt: { $first: "$createdAt" }
+                    }
+                }
+            ])
+        ])
+
+        const operarioCountByLabel = new Map()
+        const uniqueOperarioIds = new Set()
+
+        for (const maintenance of maintenancesForOperarioBreakdown) {
+            const participants = []
+
+            if (maintenance?.clientId) {
+                participants.push(maintenance.clientId)
+            }
+
+            if (Array.isArray(maintenance?.additionalWorkers)) {
+                participants.push(...maintenance.additionalWorkers)
+            }
+
+            const maintenanceParticipantIds = new Set()
+
+            for (const participant of participants) {
+                if (!participant || !participant._id) continue
+
+                const participantId = String(participant._id)
+
+                if (maintenanceParticipantIds.has(participantId)) continue
+                maintenanceParticipantIds.add(participantId)
+                uniqueOperarioIds.add(participantId)
+
+                const participantName = String(participant.name || "").trim()
+                const participantCompany = String(participant.company || "").trim()
+
+                if (!participantName) continue
+
+                const label = participantCompany
+                    ? `${participantName} - ${participantCompany}`
+                    : participantName
+
+                operarioCountByLabel.set(label, (operarioCountByLabel.get(label) || 0) + 1)
+            }
+        }
+
+        const operariosAttended = uniqueOperarioIds.size
+
+        const recentOldIds = [...new Set(
+            recentMaintenancesRaw.map(item => item.machine).filter(isObjectId)
+        )]
+        const recentIdToName = new Map()
+        if (recentOldIds.length) {
+            const recentMachines = await Machine.find({ _id: { $in: recentOldIds } })
+                .select("name").lean()
+            recentMachines.forEach(m => recentIdToName.set(String(m._id), m.name))
+        }
+
+        const recentMaintenances = recentMaintenancesRaw.map(item => ({
+            ...item,
+            machine: isObjectId(item.machine)
+                ? (recentIdToName.get(item.machine) || "(Máquina eliminada)")
+                : item.machine
+        }))
+
+        const operarioBreakdownRaw = [...operarioCountByLabel.entries()]
+            .map(([operario, count]) => ({ _id: operario, count }))
+            .sort((left, right) => right.count - left.count)
+            .slice(0, 8)
+
+        const dailySeries = dailyRaw.map(item => ({
+            date: item._id,
+            count: item.count
+        }))
+
+        const statusBreakdown = statusBreakdownRaw.map(item => ({
+            status: item._id || "sin_estado",
+            count: item.count
+        }))
+
+        const operarioBreakdown = operarioBreakdownRaw
+            .filter(item => item && item._id)
+            .map(item => ({
+                operario: item._id,
+                count: item.count
+            }))
+
+        const sectorBreakdown = sectorBreakdownRaw.map(item => ({
+            sector: formatSectorLabel(item._id),
+            count: item.count
+        }))
+
+        const unfinishedReasonBreakdown = unfinishedReasonBreakdownRaw.map(item => ({
+            reason: item._id || "sin motivo",
+            count: item.count
+        }))
+
+        const unfinishedOtherDetailsTop = unfinishedOtherDetailsRaw.map(item => ({
+            detail: item._id,
+            count: item.count
+        }))
+
+        const unfinishedWithReasonTotal = unfinishedReasonBreakdown.reduce((accumulator, item) => {
+            return accumulator + item.count
+        }, 0)
+
+        const latestMaintenanceMap = new Map(
+            latestMaintenances.map(item => [item._id, item])
+        )
+
+        const machineStatusOverview = allMachines.map(machine => {
+            const latestStatus = latestMaintenanceMap.get(machine.name)
+                || latestMaintenanceMap.get(String(machine._id))
+            const currentStatus = latestStatus?.status || "ok"
+
+            return {
+                id: machine._id,
+                name: machine.name,
+                sector: formatSectorLabel(machine.sector || ""),
+                status: currentStatus,
+                unfinishedReason: latestStatus?.unfinishedReason || "",
+                indicator:
+                    currentStatus === "stopped"
+                        ? "red"
+                        : currentStatus === "pending"
+                            ? "yellow"
+                            : "green",
+                label:
+                    currentStatus === "stopped"
+                        ? "Detenida"
+                        : currentStatus === "pending"
+                            ? "Pendiente"
+                            : "Operativa",
+                updatedAt: latestStatus?.updatedAt || null
+            }
+        })
+
+        return res.json({
+            totalMaintenances,
+            machinesRegistered: machines.length,
+            operariosAttended,
+            pending,
+            stopped,
+            recentMaintenances,
+            charts: {
+                statusBreakdown,
+                operarioBreakdown,
+                sectorBreakdown,
+                dailySeries
+            },
+            unfinishedReasonSummary: {
+                totalWithReason: unfinishedWithReasonTotal,
+                reasons: unfinishedReasonBreakdown,
+                otherDetailsTop: unfinishedOtherDetailsTop
+            },
+            machineStatusOverview,
+            period: {
+                startMonth: formatMonth(startDate),
+                endMonth: formatMonth(endDate)
+            }
+        })
+
+    } catch (error) {
+        console.error("Error en dashboardController:", error)
+
+        return res.status(500).json({
+            message: "Error al obtener dashboard"
+        })
     }
 }
-}
-},
-{
-$match: {
-normalizedSector: { $nin: [""] }
-}
-},
-{
-$group: {
-_id: "$normalizedSector",
-count: { $sum: 1 }
-}
-},
-{
-$sort: { count: -1 }
-},
-{
-$limit: 8
-}
-])
 
-const dailyRaw = await Maintenance.aggregate([
-{
-$match: periodFilter
-},
-{
-$addFields: {
-createdDay: {
-$dateToString: {
-format: "%Y-%m-%d",
-date: "$createdAt"
-}
-}
-}
-},
-{
-$group: {
-_id: "$createdDay",
-count: { $sum: 1 }
-}
-},
-{
-$sort: { _id: 1 }
-}
-])
 
-const dailySeries = dailyRaw.map(item => ({
-date: item._id,
-count: item.count
-}))
 
-const statusBreakdown = statusBreakdownRaw.map(item => ({
-status: item._id || "sin_estado",
-count: item.count
-}))
 
-const operarioBreakdown = operarioBreakdownRaw
-.filter(item => item && item._id)
-.map(item => ({
-operario: item._id,
-count: item.count
-}))
 
-const sectorBreakdown = sectorBreakdownRaw.map(item => ({
-sector: formatSectorLabel(item._id),
-count: item.count
-}))
 
-const unfinishedReasonBreakdownRaw = await Maintenance.aggregate([
-{
-$match: {
-...periodFilter,
-unfinishedReason: { $nin: [null, ""] }
-}
-},
-{
-$addFields: {
-unfinishedReasonKey: {
-$cond: [
-{ $and: [
-{ $ne: ["$unfinishedReasonCategory", null] },
-{ $ne: ["$unfinishedReasonCategory", ""] }
-] },
-"$unfinishedReasonCategory",
-"$unfinishedReason"
-]
-}
-}
-},
-{
-$group: {
-_id: "$unfinishedReasonKey",
-count: { $sum: 1 }
-}
-},
-{
-$sort: { count: -1 }
-}
-])
 
-const unfinishedReasonBreakdown = unfinishedReasonBreakdownRaw.map(item => ({
-reason: item._id || "sin motivo",
-count: item.count
-}))
-
-const unfinishedOtherDetailsRaw = await Maintenance.aggregate([
-{
-$match: {
-...periodFilter,
-unfinishedReasonCategory: "Otros",
-unfinishedReason: { $nin: [null, "", "Otros"] }
-}
-},
-{
-$group: {
-_id: "$unfinishedReason",
-count: { $sum: 1 }
-}
-},
-{
-$sort: { count: -1 }
-},
-{
-$limit: 5
-}
-])
-
-const unfinishedOtherDetailsTop = unfinishedOtherDetailsRaw.map(item => ({
-detail: item._id,
-count: item.count
-}))
-
-const unfinishedWithReasonTotal = unfinishedReasonBreakdown.reduce((accumulator, item) => {
-return accumulator + item.count
-}, 0)
-
-const allMachines = await Machine.find({ isDeleted: { $ne: true } })
-.select("name sector")
-.sort({ sector: 1, name: 1 })
-
-const latestMachineStatusRaw = await Maintenance.aggregate([
-{
-$sort: { createdAt: -1 }
-},
-{
-$group: {
-_id: "$machine",
-status: { $first: "$status" },
-updatedAt: { $first: "$createdAt" }
-}
-}
-])
-
-const latestMachineStatusMap = new Map(
-latestMachineStatusRaw.map(item => [item._id, item])
-)
-
-const machineStatusOverview = allMachines.map(machine => {
-const latestStatus = latestMachineStatusMap.get(machine.name)
-const currentStatus = latestStatus?.status || "ok"
-
-return {
-id: machine._id,
-name: machine.name,
-sector: formatSectorLabel(machine.sector || ""),
-status: currentStatus,
-indicator: currentStatus === "stopped"
-? "red"
-: currentStatus === "pending"
-? "yellow"
-: "green",
-label: currentStatus === "stopped"
-? "Detenida"
-: currentStatus === "pending"
-? "Pendiente"
-: "Operativa",
-updatedAt: latestStatus?.updatedAt || null
-}
-})
-
-res.json({
-
-totalMaintenances,
-
-machinesRegistered:machines.length,
-
-operariosAttended,
-
-pending,
-
-stopped,
-
-recentMaintenances,
-
-charts: {
-statusBreakdown,
-operarioBreakdown,
-sectorBreakdown,
-dailySeries
-},
-unfinishedReasonSummary: {
-totalWithReason: unfinishedWithReasonTotal,
-reasons: unfinishedReasonBreakdown,
-otherDetailsTop: unfinishedOtherDetailsTop
-},
-machineStatusOverview,
-period: {
-startMonth: formatMonth(startDate),
-endMonth: formatMonth(endDate)
-}
-
-})
-
-}catch(error){
-
-res.status(500).json({
-message:"Error cargando dashboard"
-})
-
-}
-
-}
 
 export const notificationsController = async (req, res) => {
 
     try {
 
         const notificationsFeed = await getMaintenanceNotificationsFeed()
-        const user = await User.findById(req.user.id).select("notificationReadIds")
-        const persistedReadIds = normalizeNotificationReadIds(user?.notificationReadIds)
-        const activeNotificationIds = new Set((notificationsFeed.items || []).map(item => String(item.id || "").trim()))
-        const activeReadIds = persistedReadIds.filter(itemId => activeNotificationIds.has(itemId))
 
-        if (user && JSON.stringify(activeReadIds) !== JSON.stringify(persistedReadIds)) {
+        const user = await User.findById(req.user.id)
+            .select("notificationReadIds")
+
+        const persistedReadIds = normalizeNotificationReadIds(
+            user?.notificationReadIds
+        )
+
+        const activeNotificationIds = new Set(
+            (notificationsFeed.items || [])
+                .map(item => String(item.id || "").trim())
+        )
+
+        const activeReadIds = persistedReadIds.filter(
+            itemId => activeNotificationIds.has(itemId)
+        )
+
+        if (
+            user &&
+            JSON.stringify(activeReadIds) !== JSON.stringify(persistedReadIds)
+        ) {
             user.notificationReadIds = activeReadIds
             await user.save()
         }
@@ -791,13 +848,21 @@ export const notificationsController = async (req, res) => {
 
 }
 
+
+
+
+
 export const markNotificationsReadController = async (req, res) => {
+
     try {
-        const incomingReadIds = normalizeNotificationReadIds(req.body?.ids)
+
+        const incomingReadIds =
+            normalizeNotificationReadIds(req.body?.ids)
 
         if (!incomingReadIds.length) {
             return res.status(400).json({
-                message: "Debes enviar al menos un id de notificacion"
+                message:
+                    "Debes enviar al menos un id de notificacion"
             })
         }
 
@@ -816,15 +881,20 @@ export const markNotificationsReadController = async (req, res) => {
             ok: true,
             readIds: incomingReadIds
         })
+
     } catch (error) {
+
         res.status(500).json({
-            message: "Error al marcar notificaciones como leidas"
+            message:
+                "Error al marcar notificaciones como leidas"
         })
     }
 }
 
 export const clearNotificationReadsController = async (req, res) => {
+
     try {
+
         await User.updateOne(
             { _id: req.user.id },
             {
@@ -837,11 +907,16 @@ export const clearNotificationReadsController = async (req, res) => {
         res.json({
             ok: true
         })
+
     } catch (error) {
+
         res.status(500).json({
-            message: "Error al limpiar notificaciones leidas"
+            message:
+                "Error al limpiar notificaciones leidas"
         })
+
     }
+
 }
 
 export const notificationsHistoryController = async (req, res) => {
@@ -849,9 +924,8 @@ export const notificationsHistoryController = async (req, res) => {
         const readFilter = String(req.query.read || "all").trim().toLowerCase()
         const fromDateRaw = String(req.query.from || "").trim()
         const toDateRaw = String(req.query.to || "").trim()
-
+        
         const query = {}
-
         if (fromDateRaw || toDateRaw) {
             query.createdAt = {}
 
