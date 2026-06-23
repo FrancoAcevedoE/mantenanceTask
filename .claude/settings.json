@@ -46,7 +46,8 @@
       "Bash(curl -s http://localhost:3000/api/products)",
       "Bash(lsof -i :3000 -sTCP:LISTEN)",
       "Bash(lsof -i :5173 -sTCP:LISTEN)",
-      "Bash(node scripts/seedProducts.js)"
+      "Bash(node scripts/seedProducts.js)",
+      "Bash(xargs cat)"
     ]
   }
 }
