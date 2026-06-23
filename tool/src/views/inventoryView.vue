@@ -151,7 +151,7 @@
                       <td class="price-cell">
                         <span v-if="precioBase(p) !== null">
                           ${{ formatPrice(precioBase(p)) }}
-                          <span class="unit-label">/{{ p.unidadPrecio || 'm²' }}</span>
+                          <span class="unit-label">/{{ unitLabel(p.unidadPrecio) }}</span>
                         </span>
                         <span v-else class="muted">—</span>
                       </td>
@@ -199,7 +199,7 @@
                     <td class="price-cell">
                       <span v-if="precioBase(p) !== null">
                         ${{ formatPrice(precioBase(p)) }}
-                        <span class="unit-label">/{{ p.unidadPrecio || 'm²' }}</span>
+                        <span class="unit-label">/{{ unitLabel(p.unidadPrecio) }}</span>
                       </span>
                       <span v-else class="muted">—</span>
                     </td>
@@ -360,13 +360,18 @@ function sortIcon(key) {
   return sortDir.value === 'asc' ? 'bi bi-chevron-up' : 'bi bi-chevron-down'
 }
 
-// Precio unitario a mostrar en la tabla: siempre precioGrupoI como referencia.
-// pricePerM2 queda relegado a la vista de detalle del producto.
 function precioBase(p) {
   if (p.precioGrupoI != null) return p.precioGrupoI
   if (p.precioGrupoII != null) return p.precioGrupoII
   if (p.precioGrupoIII != null) return p.precioGrupoIII
+  if (p.pricePerM2 != null) return p.pricePerM2
   return null
+}
+
+function unitLabel(u) {
+  if (!u || u === 'm2') return 'm²'
+  if (u === 'ml') return 'ml'
+  return u
 }
 
 function formatPrice(n) {

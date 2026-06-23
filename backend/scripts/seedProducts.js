@@ -103,10 +103,87 @@ const descuentosLaminados = [
   },
 ]
 
+// ─── KARIPLAC MDP — tabla de descuentos ──────────────────────────────────────
+//
+//  Tabla original:
+//    10-25 hojas:   15% dto cantidad | 8% contado | 4% a 30 días f.f.
+//    26-50 hojas:   19%              | 8%         | 4%
+//    51-200 hojas:  23%              | 8%         | 4%
+//    >200 hojas:    27%              | 8%         | 4%
+
+const descuentosKariplacMDP = [
+  {
+    desdeHojas: 10,  hastaHojas: 25,
+    porcCantidad: 15, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(15, 8),   // 21.80%
+    porcCantidad30dias:  concat(15, 4),   // 18.40%
+  },
+  {
+    desdeHojas: 26,  hastaHojas: 50,
+    porcCantidad: 19, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(19, 8),   // 25.48%
+    porcCantidad30dias:  concat(19, 4),   // 22.24%
+  },
+  {
+    desdeHojas: 51,  hastaHojas: 200,
+    porcCantidad: 23, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(23, 8),   // 29.16%
+    porcCantidad30dias:  concat(23, 4),   // 26.08%
+  },
+  {
+    desdeHojas: 201, hastaHojas: null,
+    porcCantidad: 27, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(27, 8),   // 32.84%
+    porcCantidad30dias:  concat(27, 4),   // 29.92%
+  },
+]
+
+// ─── KARIPLAC MDF — tabla de descuentos ──────────────────────────────────────
+// Misma estructura que KARIPLAC MDP. Los productos espesor 15mm y 18mm estándar
+// tienen admiteDescuentos: false (aparecen como "sin descuento" en la planilla).
+
+const descuentosKariplacMDF = [
+  {
+    desdeHojas: 10,  hastaHojas: 25,
+    porcCantidad: 15, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(15, 8),
+    porcCantidad30dias:  concat(15, 4),
+  },
+  {
+    desdeHojas: 26,  hastaHojas: 50,
+    porcCantidad: 19, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(19, 8),
+    porcCantidad30dias:  concat(19, 4),
+  },
+  {
+    desdeHojas: 51,  hastaHojas: 200,
+    porcCantidad: 23, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(23, 8),
+    porcCantidad30dias:  concat(23, 4),
+  },
+  {
+    desdeHojas: 201, hastaHojas: null,
+    porcCantidad: 27, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(27, 8),
+    porcCantidad30dias:  concat(27, 4),
+  },
+]
+
 // ─── LAMINADOS DECORATIVOS — productos (25) ───────────────────────────────────
 
 // unidadPrecio = 'lámina' porque grupo I/II/III/escolares son precios POR UNIDAD (por lámina), no por m²
 // La columna "por m2" del Excel está separada y es pricePerM2 (vacía en casi todos estos productos)
+
+const KMD_LEYENDA = `Acabados: soft y mate (otros consultar)
+Pedido mínimo: 1 pallet por diseño
+Precios por M2
+Precios en dólares tipo de cambio vendedor Banco Nación
+Precios no incluyen IVA
+Forma de pago: Contado
+Precios sujetos a variaciones sin previo aviso
+Mercadería sobre camión en fábrica
+Nota: el tipo de cambio será el considerado al momento del cobro de la factura
+Si la variación es +/- 2% del valor facturado se emitirá la correspondiente NB o NC`
 
 const products = [
   // ── Contrachapa ────────────────────────────────────────────────────────────
@@ -148,7 +225,7 @@ const products = [
     code: 'LAM-005', grupo: 'LAMINADOS DECORATIVOS',
     name: 'Laminado Decorativo',
     tipo: 'Vertical', terminacion: null,
-    colors: ['5532', '5529', '5534', '5558'],
+    colors: ['5532 Gris Tiza', '5529 Platino', '5534 Almendra', '5558 Verde Claro'],
     dimensions: '1220 x 3060 mm', thicknesses: ['0.6'],
     precioGrupoI: 50.8, precioGrupoII: 56, precioGrupoIII: 61.1, precioEscolares: 48.3,
     unidadPrecio: 'lámina', comentario: '10 unidades por caja',
@@ -157,7 +234,7 @@ const products = [
     code: 'LAM-006', grupo: 'LAMINADOS DECORATIVOS',
     name: 'Laminado Decorativo',
     tipo: 'Karipol', terminacion: null,
-    colors: ['5532', '5529', '5534', '5558'],
+    colors: ['5532 Gris Tiza', '5529 Platino', '5534 Almendra', '5558 Verde Claro'],
     dimensions: '1220 x 3060 mm', thicknesses: ['0.8'],
     precioGrupoI: 61.1, precioGrupoII: 66.3, precioGrupoIII: 71.2, precioEscolares: 58.1,
     unidadPrecio: 'lámina', comentario: '10 unidades por caja',
@@ -202,7 +279,7 @@ const products = [
     code: 'LAM-011', grupo: 'LAMINADOS DECORATIVOS',
     name: 'Laminado Postformable',
     tipo: 'Vertical', terminacion: null,
-    colors: ['5532', '5529', '5534', '5558'],
+    colors: ['5532 Gris Tiza', '5529 Platino', '5534 Almendra', '5558 Verde Claro'],
     dimensions: '1220 x 3060 mm', thicknesses: ['0.6'],
     precioGrupoI: 59.3, precioGrupoII: 64.5, precioGrupoIII: 73.3, precioEscolares: 56.4,
     unidadPrecio: 'lámina', comentario: '10 unidades por caja',
@@ -211,7 +288,7 @@ const products = [
     code: 'LAM-012', grupo: 'LAMINADOS DECORATIVOS',
     name: 'Laminado Postformable',
     tipo: 'Karipol', terminacion: null,
-    colors: ['5532', '5529', '5534', '5558'],
+    colors: ['5532 Gris Tiza', '5529 Platino', '5534 Almendra', '5558 Verde Claro'],
     dimensions: '1220 x 3060 mm', thicknesses: ['0.8'],
     precioGrupoI: 69.6, precioGrupoII: 71.1, precioGrupoIII: 78.1, precioEscolares: 66.2,
     unidadPrecio: 'lámina', comentario: '10 unidades por caja',
@@ -278,7 +355,7 @@ const products = [
     code: 'LAM-019', grupo: 'LAMINADOS DECORATIVOS',
     name: 'Laminados rectos',
     tipo: null, terminacion: 'Brillante - texturizado - polipropileno',
-    colors: ['5532', '5505'], dimensions: '915 x 2440 mm', thicknesses: [],
+    colors: ['5532 Gris Tiza', '5505 Blanco'], dimensions: '915 x 2440 mm', thicknesses: [],
     unidadPrecio: 'lámina',
     comentario: '20% adicional al precio x m2 de la placa común, 10 unidades por caja',
     produccionMinima: 400,
@@ -287,7 +364,7 @@ const products = [
     code: 'LAM-020', grupo: 'LAMINADOS DECORATIVOS',
     name: 'Laminados rectos',
     tipo: null, terminacion: 'Brillante - texturizado - polipropileno',
-    colors: ['5100', '5161', '5132', '5120', '5123', '5126'],
+    colors: ['5100 Granito Negro', '5161 Granito Sierra Chica', '5132 Granito Gris', '5120 Gris Cráter', '5123 Verde Diamante', '5126 Azul Turquesa'],
     dimensions: '915 x 3060 mm', thicknesses: [],
     unidadPrecio: 'lámina',
     comentario: '20% adicional al precio x m2 de la placa común, 10 unidades por caja',
@@ -337,6 +414,299 @@ const products = [
     comentario: '20% adicional al precio x m2 de la placa común, 10 unidades por caja',
     produccionMinima: 50,
   },
+
+  // ─── KARIPLAC MDP ─────────────────────────────────────────────────────────────
+  // Precios por M2 (pricePerM2). Sin precios por grupo I/II/III.
+  // Espesores: 10 · 15 · 18 · 24 · 28 mm  ×  4 variantes de color/cara
+
+  // ── Espesor 10mm ──────────────────────────────────────────────────────────────
+  {
+    code: 'KMD-001', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 2 caras',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['10'],
+    pricePerM2: 12.9, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-002', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 1 cara',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['10'],
+    pricePerM2: 11.8, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-003', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['5520 Blanco Nube'], dimensions: '1850 x 2750 mm', thicknesses: ['10'],
+    pricePerM2: 14.5, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-004', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['Grupo 1, 2 y 3'], dimensions: '1850 x 2750 mm', thicknesses: ['10'],
+    pricePerM2: 16.5, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+
+  // ── Espesor 15mm ──────────────────────────────────────────────────────────────
+  {
+    code: 'KMD-005', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 2 caras',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['15'],
+    pricePerM2: 14.2, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-006', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 1 cara',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['15'],
+    pricePerM2: 13.1, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-007', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['5520 Blanco Nube'], dimensions: '1850 x 2750 mm', thicknesses: ['15'],
+    pricePerM2: 16.2, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-008', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['Grupo 1, 2 y 3'], dimensions: '1850 x 2750 mm', thicknesses: ['15'],
+    pricePerM2: 18.2, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+
+  // ── Espesor 18mm ──────────────────────────────────────────────────────────────
+  {
+    code: 'KMD-009', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 2 caras',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['18'],
+    pricePerM2: 15.5, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-010', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 1 cara',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['18'],
+    pricePerM2: 14.5, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-011', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['5520 Blanco Nube'], dimensions: '1850 x 2750 mm', thicknesses: ['18'],
+    pricePerM2: 17.5, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-012', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['Grupo 1, 2 y 3'], dimensions: '1850 x 2750 mm', thicknesses: ['18'],
+    pricePerM2: 19.7, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+
+  // ── Espesor 24mm ──────────────────────────────────────────────────────────────
+  {
+    code: 'KMD-013', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 2 caras',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['24'],
+    pricePerM2: 20.1, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-014', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 1 cara',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['24'],
+    pricePerM2: 19.1, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-015', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['5520 Blanco Nube'], dimensions: '1850 x 2750 mm', thicknesses: ['24'],
+    pricePerM2: 22.3, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-016', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['Grupo 1, 2 y 3'], dimensions: '1850 x 2750 mm', thicknesses: ['24'],
+    pricePerM2: 25.0, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+
+  // ── Espesor 28mm ──────────────────────────────────────────────────────────────
+  {
+    code: 'KMD-017', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 2 caras',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['28'],
+    pricePerM2: 24.7, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-018', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate 1 cara',
+    colors: ['5505 Blanco'], dimensions: '1850 x 2750 mm', thicknesses: ['28'],
+    pricePerM2: 23.7, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-019', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['5520 Blanco Nube'], dimensions: '1850 x 2750 mm', thicknesses: ['28'],
+    pricePerM2: 26.9, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMD-020', grupo: 'KARIPLAC MDP',
+    name: 'Kariplac Melamina',
+    tipo: 'MDP', terminacion: 'Soft y mate',
+    colors: ['Grupo 1, 2 y 3'], dimensions: '1850 x 2750 mm', thicknesses: ['28'],
+    pricePerM2: 29.6, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+
+  // ─── KARIPLAC MDF ─────────────────────────────────────────────────────────────
+  // Precios por M2. Espesores: 9 · 12 · 15 · 18 · 24 · 30 mm × 2 variantes color.
+  // Espesores 15mm y 18mm estándar: SIN DESCUENTO.
+  // Al final: variante Brasil (1850×2750mm, espesor 15 y 18) con precios condicionales en GI/GII.
+
+  // Colores comunes grupo 2 (maderas + neutros):
+  // 5093 Haya · 5095 Haya Cálido · 5067 Guatambú · 5094 Wengue · 5071 Caoba · 5534 Almendra · 5532 Gris Tiza
+
+  // ── Espesor 9mm ───────────────────────────────────────────────────────────────
+  {
+    code: 'KMF-001', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5520 Blanco Nube'], dimensions: '1830 x 3660 mm', thicknesses: ['9'],
+    pricePerM2: 11.7, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMF-002', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5093 Haya', '5095 Haya Cálido', '5067 Guatambú', '5094 Wengue', '5071 Caoba', '5534 Almendra', '5532 Gris Tiza'],
+    dimensions: '1830 x 3660 mm', thicknesses: ['9'],
+    pricePerM2: 12.3, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+
+  // ── Espesor 12mm ──────────────────────────────────────────────────────────────
+  {
+    code: 'KMF-003', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5520 Blanco Nube'], dimensions: '1830 x 3660 mm', thicknesses: ['12'],
+    pricePerM2: 12.3, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMF-004', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5093 Haya', '5095 Haya Cálido', '5067 Guatambú', '5094 Wengue', '5071 Caoba', '5534 Almendra', '5532 Gris Tiza'],
+    dimensions: '1830 x 3660 mm', thicknesses: ['12'],
+    pricePerM2: 13, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+
+  // ── Espesor 15mm — SIN DESCUENTO ─────────────────────────────────────────────
+  {
+    code: 'KMF-005', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5520 Blanco Nube'], dimensions: '1830 x 3660 mm', thicknesses: ['15'],
+    pricePerM2: 12.7, unidadPrecio: 'm2',
+    admiteDescuentos: false, comentario: `Sin descuento\n${KMD_LEYENDA}`,
+  },
+  {
+    code: 'KMF-006', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5093 Haya', '5095 Haya Cálido', '5067 Guatambú', '5094 Wengue', '5071 Caoba', '5534 Almendra', '5532 Gris Tiza'],
+    dimensions: '1830 x 3660 mm', thicknesses: ['15'],
+    pricePerM2: 14.5, unidadPrecio: 'm2',
+    admiteDescuentos: false, comentario: `Sin descuento\n${KMD_LEYENDA}`,
+  },
+
+  // ── Espesor 18mm — SIN DESCUENTO ─────────────────────────────────────────────
+  {
+    code: 'KMF-007', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5520 Blanco Nube'], dimensions: '1830 x 3660 mm', thicknesses: ['18'],
+    pricePerM2: 14.2, unidadPrecio: 'm2',
+    admiteDescuentos: false, comentario: `Sin descuento\n${KMD_LEYENDA}`,
+  },
+  {
+    code: 'KMF-008', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5093 Haya', '5095 Haya Cálido', '5067 Guatambú', '5094 Wengue', '5071 Caoba', '5534 Almendra', '5532 Gris Tiza'],
+    dimensions: '1830 x 3660 mm', thicknesses: ['18'],
+    pricePerM2: 16, unidadPrecio: 'm2',
+    admiteDescuentos: false, comentario: `Sin descuento\n${KMD_LEYENDA}`,
+  },
+
+  // ── Espesor 24mm ──────────────────────────────────────────────────────────────
+  {
+    code: 'KMF-009', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5520 Blanco Nube'], dimensions: '1830 x 3660 mm', thicknesses: ['24'],
+    pricePerM2: 22.3, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMF-010', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5093 Haya', '5095 Haya Cálido', '5067 Guatambú', '5094 Wengue', '5071 Caoba', '5534 Almendra', '5532 Gris Tiza'],
+    dimensions: '1830 x 3660 mm', thicknesses: ['24'],
+    pricePerM2: 23.5, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+
+  // ── Espesor 30mm ──────────────────────────────────────────────────────────────
+  {
+    code: 'KMF-011', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5520 Blanco Nube'], dimensions: '1830 x 3660 mm', thicknesses: ['30'],
+    pricePerM2: 27, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+  {
+    code: 'KMF-012', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina',
+    tipo: 'MDF', terminacion: 'Soft y mate (otros consultar)',
+    colors: ['5093 Haya', '5095 Haya Cálido', '5067 Guatambú', '5094 Wengue', '5071 Caoba', '5534 Almendra', '5532 Gris Tiza'],
+    dimensions: '1830 x 3660 mm', thicknesses: ['30'],
+    pricePerM2: 28.6, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
+  },
+
+  // ── Kariplac Melamina Brasil (MDF, 1850×2750mm) ───────────────────────────────
+  // Grupo I = precio comprando +de 3 paquetes
+  // Grupo II = precio por equipo completo (pallet)
+  // unidadPrecio: 'm2' — todos los precios son por m²
+  {
+    code: 'KMF-013', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina Brasil',
+    tipo: 'MDF', terminacion: 'Soft',
+    colors: ['5520 Blanco Nube'], dimensions: '1850 x 2750 mm', thicknesses: ['15'],
+    pricePerM2: 8.80, precioGrupoI: 8.30, precioGrupoII: 9.30,
+    unidadPrecio: 'm2',
+    produccionMinima: 1,
+    comentario: `44 hojas por pallet\nProducción mínima: 1 pallet\nPrecio GI: $8.30/m² (+de 3 paquetes)\nPrecio GII: $9.30/m² (equipo completo)\n${KMD_LEYENDA}`,
+  },
+  {
+    code: 'KMF-014', grupo: 'KARIPLAC MDF',
+    name: 'Kariplac Melamina Brasil',
+    tipo: 'MDF', terminacion: 'Soft',
+    colors: ['5520 Blanco Nube'], dimensions: '1850 x 2750 mm', thicknesses: ['18'],
+    pricePerM2: 10.40, precioGrupoI: 9.80, precioGrupoII: 7.80,
+    unidadPrecio: 'm2',
+    produccionMinima: 1,
+    comentario: `36 hojas por pallet\nProducción mínima: 1 pallet\nPrecio GI: $9.80/m² (+de 3 paquetes)\nPrecio GII: $7.80/m² (equipo completo)\n${KMD_LEYENDA}`,
+  },
 ]
 
 // ─── Seed ─────────────────────────────────────────────────────────────────────
@@ -361,17 +731,24 @@ async function seed() {
     }
   }
 
-  console.log('\nGuardando tabla de descuentos del grupo...')
-  await ProductGroup.findOneAndUpdate(
-    { nombre: 'LAMINADOS DECORATIVOS' },
-    { $set: { nombre: 'LAMINADOS DECORATIVOS', descuentos: descuentosLaminados } },
-    { upsert: true }
-  )
-  console.log('  ✓ LAMINADOS DECORATIVOS — descuentos guardados')
-  console.log('\n  Resumen concatenaciones:')
-  for (const t of descuentosLaminados) {
-    const rango = t.hastaHojas ? `${t.desdeHojas}–${t.hastaHojas}` : `>${t.desdeHojas - 1}`
-    console.log(`    ${rango.padEnd(10)} ${String(t.porcCantidad).padStart(6)}% cant | +contado: ${t.porcCantidadContado}% | +30días: ${t.porcCantidad30dias}%`)
+  console.log('\nGuardando tablas de descuentos...')
+
+  const grupos = [
+    { nombre: 'LAMINADOS DECORATIVOS', descuentos: descuentosLaminados },
+    { nombre: 'KARIPLAC MDP', descuentos: descuentosKariplacMDP },
+    { nombre: 'KARIPLAC MDF', descuentos: descuentosKariplacMDF },
+  ]
+  for (const g of grupos) {
+    await ProductGroup.findOneAndUpdate(
+      { nombre: g.nombre },
+      { $set: g },
+      { upsert: true }
+    )
+    console.log(`  ✓ ${g.nombre} — descuentos guardados`)
+    for (const t of g.descuentos) {
+      const rango = t.hastaHojas ? `${t.desdeHojas}–${t.hastaHojas}` : `>${t.desdeHojas - 1}`
+      console.log(`    ${rango.padEnd(10)} ${String(t.porcCantidad).padStart(6)}% cant | +contado: ${t.porcCantidadContado}% | +30días: ${t.porcCantidad30dias}%`)
+    }
   }
 
   console.log(`\nCompletado: ${ok} productos, ${errors} errores`)

@@ -124,7 +124,7 @@
             </div>
             <div v-if="product.comentario" class="detail-item full-width">
               <span class="di-label">Comentario</span>
-              <span class="di-value">{{ product.comentario }}</span>
+              <span class="di-value comment-text">{{ product.comentario }}</span>
             </div>
           </div>
 
@@ -339,6 +339,7 @@ function stockClass(stock) {
 
 .di-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted); }
 .di-value { font-size: 0.95rem; font-weight: 600; color: var(--color-text); }
+.comment-text { white-space: pre-line; font-size: 0.88rem; font-weight: 400; line-height: 1.6; }
 .di-value.mono { font-family: 'Courier New', monospace; }
 
 .full-width { grid-column: 1 / -1; }
