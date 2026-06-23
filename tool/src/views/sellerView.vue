@@ -153,19 +153,28 @@
                         @keydown.escape="activeSearchIdx = -1"
                       />
                     </div>
-                    <input
-                      v-model="item.nombre"
-                      type="text"
-                      placeholder="o escribir nombre manual"
-                      class="psw-manual"
-                    />
                   </div>
                   <div v-else class="selected-product">
-                    <span class="sp-name">{{ item.nombre }}</span>
-                    <span class="sp-code">{{ item.codigo }}</span>
-                    <button class="sp-clear" @click="clearProduct(idx)" title="Quitar producto">
-                      <i class="bi bi-x"></i>
-                    </button>
+                    <div class="sp-body">
+                      <div class="sp-top">
+                        <span class="sp-name">{{ item.nombre }}</span>
+                        <button class="sp-clear" @click="clearProduct(idx)" title="Quitar producto">
+                          <i class="bi bi-x"></i>
+                        </button>
+                      </div>
+                      <div class="sp-details">
+                        <code class="sp-code">{{ item.codigo }}</code>
+                        <span v-if="item.tipo" class="sp-tag">{{ item.tipo }}</span>
+                        <span v-if="item.terminacion" class="sp-tag sp-tag--italic">{{ item.terminacion }}</span>
+                      </div>
+                      <div v-if="item._espesores?.length > 1" class="sp-espesor-wrap">
+                        <label class="sp-espesor-label">Espesor</label>
+                        <select v-model="item.espesor" class="sel-small">
+                          <option v-for="e in item._espesores" :key="e" :value="e">{{ e }}mm</option>
+                        </select>
+                      </div>
+                      <span v-else-if="item.espesor" class="sp-tag sp-tag--espesor">{{ item.espesor }}mm</span>
+                    </div>
                   </div>
                 </td>
 
@@ -180,7 +189,7 @@
                 <!-- Cantidad -->
                 <td class="col-qty">
                   <input v-model.number="item.cantidad" type="number" min="0" step="0.01"
-                    class="input-num" @input="recalc(idx)" />
+                    class="input-num" @input="recalc(idx)" @focus="$event.target.select()" />
                 </td>
 
                 <!-- Unidad -->
@@ -219,7 +228,7 @@
                   <div class="input-prefix-wrap">
                     <span class="input-prefix">$</span>
                     <input v-model.number="item.precioUnitario" type="number" min="0" step="0.01"
-                      class="input-num has-prefix" @input="recalc(idx)" />
+                      class="input-num has-prefix" @input="recalc(idx)" @focus="$event.target.select()" />
                   </div>
                   <span v-if="item._basePrice && item._discountPct > 0" class="base-price-hint">
                     base: {{ fmtMoney(item._basePrice) }}
@@ -343,6 +352,9 @@
           <td class="pi-product">
             <span class="pi-name">{{ item.nombre }}</span>
             <span v-if="item.codigo" class="pi-code">{{ item.codigo }}</span>
+            <span v-if="item.tipo || item.terminacion || item.espesor" class="pi-meta">
+              {{ [item.tipo, item.terminacion, item.espesor ? item.espesor + 'mm' : ''].filter(Boolean).join(' · ') }}
+            </span>
           </td>
           <td class="pi-color">{{ item.color || '—' }}</td>
           <td class="pi-qty">{{ item.cantidad }}</td>
@@ -464,6 +476,7 @@ function emptyItem() {
     _productId: '',
     _search: '',
     _colors: [],
+    _espesores: [],
     _basePrice: 0,
     _discountPct: 0,
     _discountLabel: 'Sin descuento',
@@ -471,6 +484,9 @@ function emptyItem() {
     // campos del backend
     nombre: '',
     codigo: '',
+    tipo: '',
+    terminacion: '',
+    espesor: '',
     color: '',
     cantidad: 1,
     unidad: 'unidad',
@@ -503,12 +519,16 @@ function editQuote(q) {
         _productId: it.productoId || '',
         _search: '',
         _colors: prod?.colors || [],
+        _espesores: prod?.thicknesses || [],
         _basePrice: prod ? (prod.precioGrupoI ?? prod.pricePerM2 ?? 0) : 0,
         _discountPct: 0,
         _discountLabel: it.discountLabel || 'Sin descuento',
         _groupDescuentos: grupo?.descuentos || [],
         nombre: it.nombre || '',
         codigo: it.codigo || '',
+        tipo: it.tipo || '',
+        terminacion: it.terminacion || '',
+        espesor: it.espesor || '',
         color: it.color || '',
         cantidad: it.cantidad ?? 1,
         unidad: it.unidad || 'unidad',
@@ -608,8 +628,12 @@ function selectResult(idx, p) {
   item._search = ''
   item.nombre = p.name
   item.codigo = p.code || ''
+  item.tipo = p.tipo || ''
+  item.terminacion = p.terminacion || ''
   item._colors = p.colors || []
   item.color = item._colors.length ? item._colors[0] : ''
+  item._espesores = p.thicknesses || []
+  item.espesor = item._espesores.length ? item._espesores[0] : ''
   item.unidad = p.unidadPrecio || 'unidad'
 
   const base = p.precioGrupoI ?? p.pricePerM2 ?? 0
@@ -677,10 +701,13 @@ function buildPayload() {
       productoId: it._productId || null,
       nombre: it.nombre,
       codigo: it.codigo,
+      tipo: it.tipo || '',
+      terminacion: it.terminacion || '',
+      espesor: it.espesor || '',
       color: it.color,
-      cantidad: it.cantidad,
+      cantidad: Number(it.cantidad) || 0,
       unidad: it.unidad,
-      precioUnitario: it.precioUnitario,
+      precioUnitario: Number(it.precioUnitario) || 0,
       descripcion: it.descripcion,
       subtotal: it.subtotal,
       discountLabel: it._discountLabel !== 'Sin descuento' ? it._discountLabel : '',
@@ -829,7 +856,7 @@ function hasCliente(q) {
 .items-scroll { overflow-x: auto; border: 1px solid rgba(107,142,58,0.14); border-radius: 12px; }
 .items-table { width: 100%; border-collapse: collapse; min-width: 1060px; font-size: 0.83rem; }
 .items-table thead th { background: rgba(240,245,233,0.97); padding: 0.45rem 0.6rem; font-size: 0.71rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); font-weight: 700; text-align: left; white-space: nowrap; }
-.item-row td { padding: 0.35rem 0.45rem; border-top: 1px solid rgba(107,142,58,0.08); vertical-align: top; }
+.item-row td { padding: 0.35rem 0.45rem; border-top: 1px solid rgba(107,142,58,0.08); vertical-align: middle; }
 
 .col-producto { min-width: 220px; }
 .col-color  { min-width: 95px; }
@@ -842,19 +869,26 @@ function hasCliente(q) {
 .col-del    { width: 34px; text-align: center; }
 
 /* ── Buscador de producto ── */
-.psw { display: flex; flex-direction: column; gap: 0.25rem; }
+.psw { display: flex; flex-direction: column; }
 .psw-input-wrap { position: relative; }
 .psw-icon { position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--color-muted); pointer-events: none; }
 .psw-input { width: 100%; padding: 0.3rem 0.4rem 0.3rem 1.6rem; font-size: 0.8rem; border: 1px solid rgba(107,142,58,0.25); border-radius: 7px; background: #fff; box-sizing: border-box; }
 .psw-input:focus { outline: none; border-color: var(--color-primary, #6b8e3a); box-shadow: 0 0 0 2px rgba(107,142,58,0.12); }
-.psw-manual { width: 100%; padding: 0.28rem 0.4rem; font-size: 0.78rem; border: 1px dashed rgba(107,142,58,0.3); border-radius: 7px; background: rgba(107,142,58,0.03); color: var(--color-muted); box-sizing: border-box; }
-.psw-manual:focus { outline: none; border-color: rgba(107,142,58,0.5); background: #fff; color: var(--color-text); }
 
 /* ── Producto seleccionado ── */
-.selected-product { display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.25rem 0; }
+.selected-product { padding: 0.15rem 0; }
+.sp-body { display: flex; flex-direction: column; gap: 0.2rem; }
+.sp-top { display: flex; align-items: flex-start; gap: 0.3rem; }
 .sp-name { font-size: 0.82rem; font-weight: 600; line-height: 1.3; flex: 1; }
-.sp-code { font-size: 0.7rem; color: var(--color-muted); background: rgba(107,142,58,0.1); padding: 0.1rem 0.4rem; border-radius: 4px; white-space: nowrap; align-self: flex-start; margin-top: 0.15rem; }
-.sp-clear { background: none; border: none; padding: 0.1rem 0.25rem; cursor: pointer; color: var(--color-muted); border-radius: 4px; line-height: 1; font-size: 1rem; }
+.sp-details { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+.sp-code { font-size: 0.68rem; color: var(--color-muted); background: rgba(107,142,58,0.1); padding: 0.08rem 0.35rem; border-radius: 4px; white-space: nowrap; font-family: monospace; }
+.sp-tag { font-size: 0.68rem; color: var(--color-muted); white-space: nowrap; }
+.sp-tag--italic { font-style: italic; }
+.sp-tag--espesor { font-weight: 700; color: var(--color-primary, #6b8e3a); background: rgba(107,142,58,0.1); padding: 0.05rem 0.3rem; border-radius: 4px; }
+.sp-espesor-wrap { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.1rem; }
+.sp-espesor-label { font-size: 0.67rem; color: var(--color-muted); white-space: nowrap; }
+.sp-espesor-wrap .sel-small { width: auto; min-width: 72px; padding: 0.2rem 0.3rem; font-size: 0.75rem; }
+.sp-clear { background: none; border: none; padding: 0.1rem 0.2rem; cursor: pointer; color: var(--color-muted); border-radius: 4px; line-height: 1; font-size: 0.95rem; flex-shrink: 0; }
 .sp-clear:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
 
 /* ── Descuento ── */
@@ -964,6 +998,7 @@ function hasCliente(q) {
 
   .pi-name { display: block; font-weight: 600; }
   .pi-code { display: block; font-size: 8pt; color: #777; }
+  .pi-meta { display: block; font-size: 7.5pt; color: #888; font-style: italic; }
   .pi-product { min-width: 130px; }
   .pi-color  { width: 70px; }
   .pi-qty    { width: 40px; text-align: right; }
