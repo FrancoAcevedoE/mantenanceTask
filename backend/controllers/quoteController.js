@@ -19,8 +19,8 @@ export const createQuote = async (req, res) => {
       items: calcItems(items),
       descripcionGeneral: descripcionGeneral || '',
       validezDias: validezDias ?? 7,
-      sellerId: req.user._id,
-      vendedor: req.user.name,
+      sellerId: req.user.id,
+      vendedor: req.user.name || '',
     })
     await quote.save()
     await registerAuditEvent({
@@ -39,7 +39,7 @@ export const createQuote = async (req, res) => {
 
 export const getQuotes = async (req, res) => {
   try {
-    const filter = req.user.role === 'admin' ? {} : { sellerId: req.user._id }
+    const filter = req.user.role === 'admin' ? {} : { sellerId: req.user.id }
     const quotes = await Quote.find(filter).sort({ createdAt: -1 })
     res.json(quotes)
   } catch (error) {
