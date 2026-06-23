@@ -61,8 +61,9 @@
             </div>
 
             <div class="kp-card-foot">
-              <span class="kp-badge" :class="`kp-badge--${client.estado || 'activo'}`">
-                {{ client.estado || 'activo' }}
+              <span class="kp-tipo" :class="`kp-tipo--${client.tipoCliente || 'potencial'}`">
+                <i :class="client.tipoCliente === 'normal' ? 'bi bi-person-check-fill' : 'bi bi-star-fill'"></i>
+                {{ client.tipoCliente === 'normal' ? 'Cliente' : 'Pot.' }}
               </span>
               <span class="kp-date">{{ fmtDate(client.createdAt) }}</span>
             </div>
@@ -306,7 +307,10 @@ async function onDrop(stageKey) {
   gap: 0.25rem;
 }
 
-.kp-badge {
+.kp-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   font-size: 0.58rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -315,8 +319,8 @@ async function onDrop(stageKey) {
   border-radius: 999px;
 }
 
-.kp-badge--activo   { background: rgba(34,197,94,.12); color: #16a34a; }
-.kp-badge--inactivo { background: rgba(239,68,68,.12); color: #dc2626; }
+.kp-tipo--potencial { background: rgba(245,158,11,.14); color: #b45309; }
+.kp-tipo--normal    { background: rgba(34,197,94,.14);  color: #16a34a; }
 
 .kp-date {
   font-size: 0.6rem;

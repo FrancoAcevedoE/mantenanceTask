@@ -31,6 +31,7 @@ const quoteSchema = new mongoose.Schema({
   items: { type: [itemSchema], default: [] },
   descripcionGeneral: { type: String, default: '' },
   validezDias: { type: Number, default: 7 },
+  clienteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', default: null },
   sellerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   vendedor: { type: String, default: '' },
   estado: {

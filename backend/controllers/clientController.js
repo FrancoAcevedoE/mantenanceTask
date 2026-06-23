@@ -4,7 +4,7 @@ export const createClient = async (req, res) => {
   try {
     const {
       razonSocial, nombreComercial, contactoPrincipal,
-      telefono, email, direccion, observaciones, estado, pipelineEstado,
+      cuitCuil, telefono, telefonos, email, direccion, observaciones, estado, pipelineEstado,
       lugar, latitud, longitud
     } = req.body
 
@@ -13,16 +13,23 @@ export const createClient = async (req, res) => {
       return res.status(400).json({ message: "La razón social es obligatoria" })
     }
 
+    const cleanTelefonos = Array.isArray(telefonos)
+      ? telefonos.filter(t => (t.numero || '').trim())
+      : []
+
     const client = await Client.create({
       razonSocial: displayName,
       nombreComercial: (nombreComercial || '').trim(),
       contactoPrincipal: (contactoPrincipal || '').trim(),
+      cuitCuil: (cuitCuil || '').trim(),
       telefono: (telefono || '').trim(),
+      telefonos: cleanTelefonos,
       email: (email || '').trim(),
       direccion: (direccion || '').trim(),
       observaciones: observaciones || '',
       estado: estado || 'activo',
       pipelineEstado: pipelineEstado || 'nuevo_lead',
+      tipoCliente: req.body.tipoCliente || 'potencial',
       lugar: (lugar || '').trim(),
       latitud: latitud != null ? Number(latitud) : null,
       longitud: longitud != null ? Number(longitud) : null,
@@ -56,6 +63,7 @@ export const getClients = async (req, res) => {
         { contactoPrincipal: rx },
         { email: rx },
         { telefono: rx },
+        { 'telefonos.numero': rx },
         { name: rx },
         { company: rx },
       ]
@@ -82,7 +90,7 @@ export const updateClient = async (req, res) => {
   try {
     const {
       razonSocial, nombreComercial, contactoPrincipal,
-      telefono, email, direccion, observaciones, estado, pipelineEstado,
+      cuitCuil, telefono, telefonos, email, direccion, observaciones, estado, pipelineEstado,
       lugar, latitud, longitud
     } = req.body
 
@@ -90,7 +98,13 @@ export const updateClient = async (req, res) => {
     if (razonSocial !== undefined) update.razonSocial = razonSocial.trim()
     if (nombreComercial !== undefined) update.nombreComercial = nombreComercial.trim()
     if (contactoPrincipal !== undefined) update.contactoPrincipal = contactoPrincipal.trim()
+    if (cuitCuil !== undefined) update.cuitCuil = cuitCuil.trim()
     if (telefono !== undefined) update.telefono = telefono.trim()
+    if (telefonos !== undefined) {
+      update.telefonos = Array.isArray(telefonos)
+        ? telefonos.filter(t => (t.numero || '').trim())
+        : []
+    }
     if (email !== undefined) update.email = email.trim()
     if (direccion !== undefined) update.direccion = direccion.trim()
     if (observaciones !== undefined) update.observaciones = observaciones
@@ -99,6 +113,7 @@ export const updateClient = async (req, res) => {
     if (lugar !== undefined) update.lugar = lugar.trim()
     if (latitud !== undefined) update.latitud = latitud != null ? Number(latitud) : null
     if (longitud !== undefined) update.longitud = longitud != null ? Number(longitud) : null
+    if (req.body.tipoCliente !== undefined) update.tipoCliente = req.body.tipoCliente
 
     const client = await Client.findByIdAndUpdate(
       req.params.id,

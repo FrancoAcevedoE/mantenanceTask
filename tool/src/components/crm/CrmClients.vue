@@ -60,7 +60,17 @@
           <div v-if="c.contactoPrincipal" class="cc-field">
             <i class="bi bi-person"></i><span>{{ c.contactoPrincipal }}</span>
           </div>
-          <div v-if="c.telefono" class="cc-field">
+          <div v-if="c.cuitCuil" class="cc-field">
+            <i class="bi bi-credit-card-2-front"></i><span>{{ c.cuitCuil }}</span>
+          </div>
+          <template v-if="c.telefonos?.length">
+            <div v-for="(t, i) in c.telefonos" :key="i" class="cc-field">
+              <i class="bi bi-telephone"></i>
+              <span>{{ t.numero }}</span>
+              <span class="cc-sector">{{ t.sector }}</span>
+            </div>
+          </template>
+          <div v-else-if="c.telefono" class="cc-field">
             <i class="bi bi-telephone"></i><span>{{ c.telefono }}</span>
           </div>
           <div v-if="c.email" class="cc-field cc-field--trunc">
@@ -79,6 +89,10 @@
         </div>
 
         <div class="cc-card-foot">
+          <span class="cc-tipo" :class="`cc-tipo--${c.tipoCliente || 'potencial'}`">
+            <i :class="c.tipoCliente === 'normal' ? 'bi bi-person-check-fill' : 'bi bi-star-fill'"></i>
+            {{ c.tipoCliente === 'normal' ? 'Cliente' : 'Potencial' }}
+          </span>
           <span class="cc-badge" :class="`cc-badge--${c.estado || 'activo'}`">
             {{ c.estado || 'activo' }}
           </span>
@@ -114,15 +128,34 @@
                 <input v-model="form.contactoPrincipal" placeholder="Nombre del contacto" />
               </div>
               <div class="cm-field">
-                <label>Teléfono</label>
-                <input v-model="form.telefono" placeholder="+54 351 555-0000" type="tel" />
+                <label>CUIL / CUIT</label>
+                <input v-model="form.cuitCuil" placeholder="20-12345678-9" />
               </div>
             </div>
-            <div class="cm-row">
-              <div class="cm-field">
-                <label>Email</label>
-                <input v-model="form.email" placeholder="contacto@empresa.com" type="email" />
+            <!-- ── Teléfonos múltiples ── -->
+            <div class="cm-field">
+              <label>Teléfonos</label>
+              <div class="cm-phones">
+                <div v-for="(t, i) in form.telefonos" :key="i" class="cm-phone-row">
+                  <select v-model="t.sector" class="cm-phone-sector">
+                    <option v-for="s in SECTORES" :key="s" :value="s">{{ s }}</option>
+                  </select>
+                  <input v-model="t.numero" type="tel" placeholder="+54 351 555-0000" class="cm-phone-num" />
+                  <button type="button" class="cm-phone-del" :disabled="form.telefonos.length === 1"
+                    @click="form.telefonos.splice(i, 1)" title="Quitar">
+                    <i class="bi bi-x"></i>
+                  </button>
+                </div>
+                <button type="button" class="cm-phone-add" @click="form.telefonos.push({ numero: '', sector: 'General' })">
+                  <i class="bi bi-plus-circle"></i> Agregar teléfono
+                </button>
               </div>
+            </div>
+            <div class="cm-field">
+              <label>Email</label>
+              <input v-model="form.email" placeholder="contacto@empresa.com" type="email" />
+            </div>
+            <div class="cm-row">
               <div class="cm-field">
                 <label>Estado</label>
                 <select v-model="form.estado">
@@ -130,18 +163,36 @@
                   <option value="inactivo">Inactivo</option>
                 </select>
               </div>
-            </div>
-            <div class="cm-row">
               <div class="cm-field">
                 <label>Etapa en pipeline</label>
                 <select v-model="form.pipelineEstado">
                   <option v-for="s in STAGES" :key="s.key" :value="s.key">{{ s.label }}</option>
                 </select>
               </div>
-              <div class="cm-field">
-                <label>Observaciones</label>
-                <input v-model="form.observaciones" placeholder="Notas sobre el cliente" />
+            </div>
+            <div class="cm-field">
+              <label>Observaciones</label>
+              <input v-model="form.observaciones" placeholder="Notas sobre el cliente" />
+            </div>
+
+            <!-- ── Tipo de cliente ── -->
+            <div class="cm-field">
+              <label>Tipo de cliente</label>
+              <div class="cm-tipo-row">
+                <button type="button"
+                  :class="['cm-tipo-opt', { 'cm-tipo-opt--sel cm-tipo-opt--pot': form.tipoCliente === 'potencial' }]"
+                  @click="form.tipoCliente = 'potencial'">
+                  <i class="bi bi-star-fill"></i> Potencial
+                </button>
+                <button type="button"
+                  :class="['cm-tipo-opt', { 'cm-tipo-opt--sel cm-tipo-opt--cli': form.tipoCliente === 'normal' }]"
+                  @click="form.tipoCliente = 'normal'">
+                  <i class="bi bi-person-check-fill"></i> Cliente
+                </button>
               </div>
+              <p class="cm-tipo-hint">
+                Se convierte automáticamente a <strong>Cliente</strong> cuando una cotización asociada pasa a <em>Ganada</em>.
+              </p>
             </div>
 
             <!-- ── Ubicación ── -->
@@ -273,10 +324,14 @@ function initials(name) {
   return (name || '?').split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('')
 }
 
+const SECTORES = ['General', 'Compras', 'Ventas', 'Facturación', 'Administración', 'Logística', 'Gerencia', 'Soporte']
+
 const emptyForm = () => ({
   razonSocial: '', nombreComercial: '', contactoPrincipal: '',
-  telefono: '', email: '', direccion: '', observaciones: '',
+  cuitCuil: '', telefonos: [{ numero: '', sector: 'General' }],
+  email: '', direccion: '', observaciones: '',
   estado: 'activo', pipelineEstado: 'nuevo_lead',
+  tipoCliente: 'potencial',
   lugar: '', latitud: null, longitud: null,
 })
 
@@ -291,7 +346,8 @@ const filtered = computed(() => {
     list = list.filter(c =>
       rx.test(c.razonSocial) || rx.test(c.nombreComercial) ||
       rx.test(c.contactoPrincipal) || rx.test(c.email) ||
-      rx.test(c.telefono) || rx.test(c.name)
+      rx.test(c.telefono) || rx.test(c.name) ||
+      (c.telefonos || []).some(t => rx.test(t.numero))
     )
   }
   return list
@@ -311,12 +367,16 @@ function openEdit(c) {
     razonSocial:      c.razonSocial || c.name || '',
     nombreComercial:  c.nombreComercial || c.company || '',
     contactoPrincipal: c.contactoPrincipal || '',
-    telefono:         c.telefono || '',
+    cuitCuil:         c.cuitCuil || '',
+    telefonos:        c.telefonos?.length
+      ? c.telefonos.map(t => ({ numero: t.numero || '', sector: t.sector || 'General' }))
+      : (c.telefono ? [{ numero: c.telefono, sector: 'General' }] : [{ numero: '', sector: 'General' }]),
     email:            c.email || '',
     direccion:        c.direccion || '',
     observaciones:    c.observaciones || '',
     estado:           c.estado || 'activo',
     pipelineEstado:   c.pipelineEstado || 'nuevo_lead',
+    tipoCliente:      c.tipoCliente || 'potencial',
     lugar:            c.lugar || '',
     latitud:          c.latitud ?? null,
     longitud:         c.longitud ?? null,
@@ -578,6 +638,19 @@ function clearLocation() {
 
 .cc-field--trunc span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+.cc-sector {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(107,142,58,.1);
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
 .cc-map-link {
   color: #3b82f6;
   font-size: 0.75rem;
@@ -598,6 +671,22 @@ function clearLocation() {
   gap: 0.3rem;
 }
 
+/* ── Tipo badge en card ── */
+.cc-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+}
+
+.cc-tipo--potencial { background: rgba(245,158,11,.12); color: #b45309; }
+.cc-tipo--normal    { background: rgba(34,197,94,.12);  color: #16a34a; }
+
 .cc-badge {
   font-size: 0.62rem;
   font-weight: 700;
@@ -607,7 +696,7 @@ function clearLocation() {
   border-radius: 999px;
 }
 
-.cc-badge--activo   { background: rgba(34,197,94,.12); color: #16a34a; }
+.cc-badge--activo   { background: rgba(107,142,58,.1);  color: var(--color-primary); }
 .cc-badge--inactivo { background: rgba(239,68,68,.12); color: #dc2626; }
 
 .cc-stage {
@@ -616,6 +705,59 @@ function clearLocation() {
   padding: 0.18rem 0.55rem;
   border-radius: 999px;
   text-transform: none;
+}
+
+/* ── Tipo toggle en formulario ── */
+.cm-tipo-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cm-tipo-opt {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(107,142,58,.07);
+  color: var(--color-muted);
+  border: 2px solid transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: none;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cm-tipo-opt:hover:not(.cm-tipo-opt--sel) {
+  background: rgba(107,142,58,.13);
+  color: var(--color-text);
+  transform: none;
+}
+
+.cm-tipo-opt--pot {
+  background: rgba(245,158,11,.12);
+  color: #b45309;
+  border-color: rgba(245,158,11,.35);
+}
+
+.cm-tipo-opt--cli {
+  background: rgba(34,197,94,.12);
+  color: #16a34a;
+  border-color: rgba(34,197,94,.35);
+}
+
+.cm-tipo-hint {
+  font-size: 0.68rem;
+  color: var(--color-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.4;
+  margin-top: 0.3rem;
+  font-style: italic;
 }
 
 /* ── Modal ── */
@@ -706,6 +848,62 @@ function clearLocation() {
 .cm-field textarea { min-height: 70px; }
 
 .cm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+
+/* ── Multi-phone ── */
+.cm-phones { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.cm-phone-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 28px;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.cm-phone-sector {
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  width: 100%;
+}
+
+.cm-phone-num {
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  width: 100%;
+}
+
+.cm-phone-del {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  padding: 0;
+  font-size: 0.85rem;
+  background: rgba(239,68,68,.1);
+  color: #ef4444;
+  box-shadow: none;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.cm-phone-del:hover:not(:disabled) { background: rgba(239,68,68,.2); transform: none; }
+.cm-phone-del:disabled { opacity: 0.3; cursor: default; }
+
+.cm-phone-add {
+  align-self: flex-start;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  background: rgba(107,142,58,.08);
+  color: var(--color-primary);
+  border-radius: 8px;
+  box-shadow: none;
+  display: flex; align-items: center; gap: 0.35rem;
+  border: 1px dashed rgba(107,142,58,.3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.cm-phone-add:hover { background: rgba(107,142,58,.15); transform: none; }
 
 /* ── Map ── */
 .cm-map-actions {

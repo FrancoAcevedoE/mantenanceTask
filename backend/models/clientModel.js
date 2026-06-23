@@ -7,7 +7,12 @@ const clientSchema = new mongoose.Schema({
   razonSocial: { type: String, trim: true, default: '' },
   nombreComercial: { type: String, trim: true, default: '' },
   contactoPrincipal: { type: String, trim: true, default: '' },
+  cuitCuil: { type: String, trim: true, default: '' },
   telefono: { type: String, trim: true, default: '' },
+  telefonos: [{
+    numero: { type: String, trim: true, default: '' },
+    sector: { type: String, trim: true, default: 'General' },
+  }],
   email: { type: String, trim: true, default: '' },
   direccion: { type: String, trim: true, default: '' },
   observaciones: { type: String, default: '' },
@@ -24,6 +29,11 @@ const clientSchema = new mongoose.Schema({
   lugar: { type: String, default: '' },
   latitud: { type: Number, default: null },
   longitud: { type: Number, default: null },
+  tipoCliente: {
+    type: String,
+    enum: ['potencial', 'normal'],
+    default: 'potencial'
+  },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
   createdBy: { type: String, default: '' },

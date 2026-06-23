@@ -1,4 +1,5 @@
 import Quote from "../models/quoteModel.js"
+import Client from "../models/clientModel.js"
 import { registerAuditEvent } from "../services/auditService.js"
 
 function calcItems(items = []) {
@@ -10,19 +11,65 @@ function calcItems(items = []) {
   }))
 }
 
+// Cuando una cotización pasa a "aceptada", convierte al cliente de potencial → normal
+async function upgradeClientOnWin(clienteData, clienteId) {
+  try {
+    const patch = { tipoCliente: 'normal', pipelineEstado: 'ganado' }
+
+    // 1. Link directo por clienteId (más preciso)
+    if (clienteId) {
+      await Client.findByIdAndUpdate(clienteId, { $set: patch })
+      return
+    }
+
+    // 2. Fallback: match por email
+    const email = (clienteData?.email || '').trim()
+    if (email) {
+      const escaped = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const hit = await Client.findOneAndUpdate(
+        { email: new RegExp(`^${escaped}$`, 'i') },
+        { $set: patch }
+      )
+      if (hit) return
+    }
+
+    // 3. Fallback: match por nombre de empresa o razón social
+    const empresa = (clienteData?.empresa || clienteData?.nombre || '').trim()
+    if (empresa) {
+      const escaped = empresa.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      await Client.findOneAndUpdate(
+        { $or: [
+          { razonSocial:     new RegExp(`^${escaped}$`, 'i') },
+          { nombreComercial: new RegExp(`^${escaped}$`, 'i') },
+          { name:            new RegExp(`^${escaped}$`, 'i') },
+        ]},
+        { $set: patch }
+      )
+    }
+  } catch (err) {
+    console.error('[upgradeClientOnWin] Error al actualizar cliente:', err.message)
+  }
+}
+
 export const createQuote = async (req, res) => {
   try {
-    const { titulo, cliente, items, descripcionGeneral, validezDias } = req.body
+    const { titulo, cliente, items, descripcionGeneral, validezDias, clienteId } = req.body
     const quote = new Quote({
       titulo,
       cliente: cliente || {},
       items: calcItems(items),
       descripcionGeneral: descripcionGeneral || '',
       validezDias: validezDias ?? 7,
+      clienteId: clienteId || null,
       sellerId: req.user.id,
       vendedor: req.user.name || '',
     })
     await quote.save()
+
+    if (quote.estado === 'aceptada') {
+      await upgradeClientOnWin(quote.cliente, clienteId)
+    }
+
     await registerAuditEvent({
       action: "CREATE_QUOTE",
       entity: "Quote",
@@ -59,7 +106,12 @@ export const getQuoteById = async (req, res) => {
 
 export const updateQuote = async (req, res) => {
   try {
-    const { titulo, cliente, items, descripcionGeneral, validezDias, estado } = req.body
+    const { titulo, cliente, items, descripcionGeneral, validezDias, estado, clienteId } = req.body
+
+    // Leer estado anterior para detectar el cambio a "aceptada"
+    const existing = await Quote.findById(req.params.id).lean()
+    if (!existing) return res.status(404).json({ message: "Cotización no encontrada" })
+
     const update = {
       titulo,
       cliente: cliente || {},
@@ -69,8 +121,20 @@ export const updateQuote = async (req, res) => {
       estado,
       updatedAt: new Date(),
     }
+    if (clienteId !== undefined) update.clienteId = clienteId || null
+
     const quote = await Quote.findByIdAndUpdate(req.params.id, { $set: update }, { new: true })
-    if (!quote) return res.status(404).json({ message: "Cotización no encontrada" })
+
+    // Auto-upgrade cliente cuando la cotización se marca como ganada
+    const wasNotAccepted = existing.estado !== 'aceptada'
+    const isNowAccepted  = estado === 'aceptada'
+    if (wasNotAccepted && isNowAccepted) {
+      await upgradeClientOnWin(
+        update.cliente,
+        clienteId ?? existing.clienteId
+      )
+    }
+
     res.json(quote)
   } catch (error) {
     res.status(500).json({ message: "Error al actualizar cotización", error: error.message })
