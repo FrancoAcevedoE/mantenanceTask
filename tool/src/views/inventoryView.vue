@@ -136,8 +136,11 @@
                       <td><code class="code-badge">{{ p.code }}</code></td>
                       <td class="desc-cell">
                         <span class="desc-name">{{ p.name }}</span>
-                        <span v-if="p.tipo" class="desc-meta">{{ p.tipo }}</span>
-                        <span v-if="p.terminacion" class="desc-meta desc-terminacion">{{ p.terminacion }}</span>
+                        <div v-if="p.tipo || p.terminacion" class="desc-meta-row">
+                          <span v-if="p.tipo" class="desc-meta">{{ p.tipo }}</span>
+                          <span v-if="p.tipo && p.terminacion" class="desc-meta-sep">·</span>
+                          <span v-if="p.terminacion" class="desc-meta desc-terminacion">{{ p.terminacion }}</span>
+                        </div>
                         <span v-if="p.thicknesses?.length" class="desc-espesor">{{ p.thicknesses.join(' · ') }}</span>
                       </td>
                       <td>
@@ -398,14 +401,14 @@ function colorStyle(colorName) {
 </script>
 
 <style scoped>
-.topbar { margin-bottom: 1.2rem; }
+.topbar { margin-bottom: 0.6rem; }
 
 .toolbar-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .toolbar-actions a { text-decoration: none; }
@@ -433,19 +436,21 @@ function colorStyle(colorName) {
 
 .inv-layout {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 1.25rem;
+  grid-template-columns: 190px 1fr;
+  gap: 0.85rem;
   align-items: start;
 }
 
 .inv-sidebar {
   background: rgba(107, 142, 58, 0.06);
   border: 1px solid rgba(107, 142, 58, 0.14);
-  border-radius: 20px;
-  padding: 1.1rem;
+  border-radius: 16px;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.55rem;
+  position: sticky;
+  top: 0;
 }
 
 .filter-header {
@@ -477,9 +482,9 @@ function colorStyle(colorName) {
 }
 
 .filter-group select {
-  padding: 0.55rem 0.85rem;
-  font-size: 0.83rem;
-  border-radius: 12px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+  border-radius: 10px;
 }
 
 .filter-count {
@@ -508,7 +513,9 @@ function colorStyle(colorName) {
 .selection-bar a { text-decoration: none; }
 
 .table-scroll {
+  max-height: 200dvh;
   overflow-x: auto;
+  overflow-y: auto;
   border-radius: 16px;
   border: 1px solid rgba(107, 142, 58, 0.14);
 }
@@ -516,12 +523,17 @@ function colorStyle(colorName) {
 .inv-table { min-width: 800px; }
 
 .inv-table thead th {
-  background: rgba(107, 142, 58, 0.08);
-  font-size: 0.78rem;
-  padding: 0.85rem 0.9rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(240, 245, 233, 0.97);
+  backdrop-filter: blur(4px);
+  font-size: 0.75rem;
+  padding: 0.5rem 0.7rem;
   white-space: nowrap;
 }
 
+.inv-table tbody td { padding: 0.4rem 0.7rem; vertical-align: middle; }
 .inv-table tbody tr:hover { background: rgba(107, 142, 58, 0.04); }
 .inv-table tbody tr.selected { background: rgba(107, 142, 58, 0.1); }
 
@@ -581,42 +593,55 @@ function colorStyle(colorName) {
 }
 
 .desc-cell {
-  min-width: 200px;
-  max-width: 300px;
+  min-width: 160px;
+  max-width: 260px;
 }
 
 .desc-name {
   display: block;
-  font-weight: 500;
-  font-size: 0.88rem;
+  font-weight: 600;
+  font-size: 0.82rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+/* tipo · terminacion en una sola fila */
+.desc-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  overflow: hidden;
 }
 
 .desc-meta {
-  display: block;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--color-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
-.desc-terminacion {
-  font-style: italic;
+.desc-meta-sep {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  opacity: 0.5;
+  flex-shrink: 0;
 }
+
+.desc-terminacion { font-style: italic; }
 
 .desc-espesor {
   display: inline-block;
-  margin-top: 0.2rem;
-  font-size: 0.7rem;
-  font-weight: 600;
+  margin-top: 0.15rem;
+  font-size: 0.67rem;
+  font-weight: 700;
   background: rgba(107, 142, 58, 0.1);
   color: var(--color-primary, #6b8e3a);
-  padding: 0.1rem 0.45rem;
-  border-radius: 6px;
+  padding: 0.05rem 0.4rem;
+  border-radius: 5px;
   letter-spacing: 0.03em;
 }
 

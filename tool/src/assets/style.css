@@ -167,15 +167,12 @@ select {
 }
 
 .page-container {
-  min-height: 100vh;
-  padding: 2rem 1rem 3rem;
+  padding: 0.35rem 0.35rem 0.75rem;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   background: rgb(103, 111, 62);
   border-radius: 20px;
-  overflow: hidden;
-  /* subtle shadow to separate from background */
   box-shadow: 0 10px 30px rgba(7, 14, 10, 0.08);
 }
 
@@ -196,7 +193,7 @@ select {
 .container {
   width: min(98vw, 1400px);
   margin: 0 auto;
-  padding: 1.8rem;
+  padding: 0.8rem 1.2rem 1.2rem;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -789,7 +786,7 @@ select {
 
 @media (max-width: 768px) {
   .page-container {
-    padding: 1rem 0.8rem 4.5rem;
+    padding: 0.5rem 0.35rem 1rem;
   }
 
   .login-box {

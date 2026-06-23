@@ -66,6 +66,7 @@
                 <option value="ml">Por metro lineal</option>
                 <option value="kit">Por kit</option>
                 <option value="caja">Por caja</option>
+                <option value="placa">Por placa</option>
               </select>
             </div>
 

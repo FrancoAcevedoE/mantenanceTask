@@ -132,7 +132,11 @@ body.bg-app,
 body.bg-dashboard,
 body.bg-notifications { background: rgb(103, 111, 62); }
 
-html, body, #app { min-height: 100vh; }
+html, body, #app {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
 
 html, body {
   overflow-x: hidden;
@@ -156,12 +160,12 @@ body {
 /* ── Contenido principal ── */
 
 main.app-content {
-  display: block;
   flex: 1;
   min-width: 0;
-  min-height: 100vh;
-  padding: 1rem;
+  height: 100vh;
+  padding: 0.2rem 0.35rem 0.35rem;
   background: transparent;
+  overflow-y: auto;
   overflow-x: hidden;
 }
 

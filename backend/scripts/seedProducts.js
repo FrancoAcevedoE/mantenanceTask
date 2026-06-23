@@ -56,6 +56,41 @@ function concat(a, b) {
   return Math.round((1 - (1 - a / 100) * (1 - b / 100)) * 10000) / 100
 }
 
+// ─── KARIPLAC H y MAX — tabla de descuentos ──────────────────────────────────
+//
+//  Tabla original:
+//    1-30 hojas:    15% dto cantidad | 8% contado | 4% a 30 días f.f.
+//    31-60 hojas:   19%              | 8%         | 4%
+//    61-150 hojas:  23%              | 8%         | 4%
+//    >150 hojas:    27%              | 8%         | 4%
+
+const descuentosKariplacHyMAX = [
+  {
+    desdeHojas: 1,   hastaHojas: 30,
+    porcCantidad: 15, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(15, 8),   // 21.80%
+    porcCantidad30dias:  concat(15, 4),   // 18.40%
+  },
+  {
+    desdeHojas: 31,  hastaHojas: 60,
+    porcCantidad: 19, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(19, 8),   // 25.48%
+    porcCantidad30dias:  concat(19, 4),   // 22.24%
+  },
+  {
+    desdeHojas: 61,  hastaHojas: 150,
+    porcCantidad: 23, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(23, 8),   // 29.16%
+    porcCantidad30dias:  concat(23, 4),   // 26.08%
+  },
+  {
+    desdeHojas: 151, hastaHojas: null,
+    porcCantidad: 27, porcContado: 8, porc30dias: 4,
+    porcCantidadContado: concat(27, 8),   // 32.84%
+    porcCantidad30dias:  concat(27, 4),   // 29.92%
+  },
+]
+
 // ─── LAMINADOS DECORATIVOS — tabla de descuentos ──────────────────────────────
 //
 //  Tabla original:
@@ -173,6 +208,15 @@ const descuentosKariplacMDF = [
 
 // unidadPrecio = 'lámina' porque grupo I/II/III/escolares son precios POR UNIDAD (por lámina), no por m²
 // La columna "por m2" del Excel está separada y es pricePerM2 (vacía en casi todos estos productos)
+
+const KHM_LEYENDA = `Film Protector: hoja / 2,5
+Medidas: 1,22 x 3,05 mts.
+Precios por placa
+Precios en dólares tipo de cambio vendedor Banco Nación
+Precios no incluyen IVA
+Forma de pago: Ver descuento por forma de pago
+Precios sujetos a variaciones sin previo aviso
+Mercadería sobre camión en fábrica`
 
 const KMD_LEYENDA = `Acabados: soft y mate (otros consultar)
 Pedido mínimo: 1 pallet por diseño
@@ -569,6 +613,131 @@ const products = [
     pricePerM2: 29.6, unidadPrecio: 'm2', comentario: KMD_LEYENDA,
   },
 
+  // ─── KARIPLAC H y MAX ─────────────────────────────────────────────────────────
+  // Precios por placa (precioGrupoI = precio base).
+  // chapadur Doble Faz: GI = Terminación 1 (brillante/semimate), GII = Terminación 2 (Textura).
+  // x m2 siempre "-" → pricePerM2: null.
+
+  // ── Kariplac H · Espesor 3mm ──────────────────────────────────────────────────
+  {
+    code: 'KHM-001', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac H',
+    tipo: 'chapadur Compensado', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['3'],
+    precioGrupoI: 68.3, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-002', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac H',
+    tipo: 'chapadur Pizarrón', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['3'],
+    precioGrupoI: 79.8, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-003', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac H',
+    tipo: 'chapadur Doble Faz', terminacion: 'Grupo 1: Brillante/semimate / Grupo 2: Textura',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['3'],
+    precioGrupoI: 81.9, precioGrupoII: 88.2, unidadPrecio: 'placa',
+    comentario: `GI: $81.9/placa (Terminación brillante/semimate)\nGII: $88.2/placa (Terminación Textura)\n${KHM_LEYENDA}`,
+  },
+
+  // ── Kariplac H · Espesor 6mm ──────────────────────────────────────────────────
+  {
+    code: 'KHM-004', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac H',
+    tipo: 'chapadur Compensado', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['6'],
+    precioGrupoI: 99.8, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-005', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac H',
+    tipo: 'chapadur Pizarrón', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['6'],
+    precioGrupoI: 112.4, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-006', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac H',
+    tipo: 'chapadur Doble Faz', terminacion: 'Grupo 1: Brillante/semimate / Grupo 2: Textura',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['6'],
+    precioGrupoI: 113.4, precioGrupoII: 120.8, unidadPrecio: 'placa',
+    comentario: `GI: $113.4/placa (Terminación brillante/semimate)\nGII: $120.8/placa (Terminación Textura)\n${KHM_LEYENDA}`,
+  },
+
+  // ── Kariplac MAX · Espesor 9mm ────────────────────────────────────────────────
+  {
+    code: 'KHM-007', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac MAX',
+    tipo: 'chapadur Compensado', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['9'],
+    precioGrupoI: 135.5, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-008', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac MAX',
+    tipo: 'chapadur Pizarrón', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['9'],
+    precioGrupoI: 149.1, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-009', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac MAX',
+    tipo: 'chapadur Doble Faz', terminacion: 'Grupo 1: Brillante/semimate / Grupo 2: Textura',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['9'],
+    precioGrupoI: 150.2, precioGrupoII: 157.5, unidadPrecio: 'placa',
+    comentario: `GI: $150.2/placa (Terminación brillante/semimate)\nGII: $157.5/placa (Terminación Textura)\n${KHM_LEYENDA}`,
+  },
+
+  // ── Kariplac MAX · Espesor 12mm ───────────────────────────────────────────────
+  {
+    code: 'KHM-010', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac MAX',
+    tipo: 'chapadur Compensado', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['12'],
+    precioGrupoI: 163.8, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-011', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac MAX',
+    tipo: 'chapadur Pizarrón', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['12'],
+    precioGrupoI: 175.4, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-012', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac MAX',
+    tipo: 'chapadur Doble Faz', terminacion: 'Grupo 1: Brillante/semimate / Grupo 2: Textura',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['12'],
+    precioGrupoI: 177.5, precioGrupoII: 184.8, unidadPrecio: 'placa',
+    comentario: `GI: $177.5/placa (Terminación brillante/semimate)\nGII: $184.8/placa (Terminación Textura)\n${KHM_LEYENDA}`,
+  },
+
+  // ── Kariplac MAX · Espesor 15mm ───────────────────────────────────────────────
+  {
+    code: 'KHM-013', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac MAX',
+    tipo: 'chapadur Compensado', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['15'],
+    precioGrupoI: 214.2, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-014', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac MAX',
+    tipo: 'chapadur Pizarrón', terminacion: 'Brillante/semimate',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['15'],
+    precioGrupoI: 224.7, unidadPrecio: 'placa', comentario: KHM_LEYENDA,
+  },
+  {
+    code: 'KHM-015', grupo: 'KARIPLAC H y MAX',
+    name: 'Kariplac MAX',
+    tipo: 'chapadur Doble Faz', terminacion: 'Grupo 1: Brillante/semimate / Grupo 2: Textura',
+    colors: ['Todos'], dimensions: '1220 x 3050 mm', thicknesses: ['15'],
+    precioGrupoI: 227.9, precioGrupoII: 234.2, unidadPrecio: 'placa',
+    comentario: `GI: $227.9/placa (Terminación brillante/semimate)\nGII: $234.2/placa (Terminación Textura)\n${KHM_LEYENDA}`,
+  },
+
   // ─── KARIPLAC MDF ─────────────────────────────────────────────────────────────
   // Precios por M2. Espesores: 9 · 12 · 15 · 18 · 24 · 30 mm × 2 variantes color.
   // Espesores 15mm y 18mm estándar: SIN DESCUENTO.
@@ -737,6 +906,7 @@ async function seed() {
     { nombre: 'LAMINADOS DECORATIVOS', descuentos: descuentosLaminados },
     { nombre: 'KARIPLAC MDP', descuentos: descuentosKariplacMDP },
     { nombre: 'KARIPLAC MDF', descuentos: descuentosKariplacMDF },
+    { nombre: 'KARIPLAC H y MAX', descuentos: descuentosKariplacHyMAX },
   ]
   for (const g of grupos) {
     await ProductGroup.findOneAndUpdate(
