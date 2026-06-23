@@ -5,39 +5,31 @@
     <div class="cc-toolbar">
       <div class="cc-search-box">
         <i class="bi bi-search cc-search-ico"></i>
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Buscar cliente..."
-          class="cc-search"
-        />
+        <input v-model="search" type="text" placeholder="Buscar cliente..." class="cc-search" />
       </div>
-
       <select v-model="filterEstado" class="cc-select">
-        <option value="">Todos los estados</option>
+        <option value="">Todos</option>
         <option value="activo">Activos</option>
         <option value="inactivo">Inactivos</option>
       </select>
-
       <select v-model="filterPipeline" class="cc-select">
         <option value="">Todas las etapas</option>
         <option v-for="s in STAGES" :key="s.key" :value="s.key">{{ s.label }}</option>
       </select>
-
       <button class="cc-btn-add" @click="openNew">
         <i class="bi bi-person-plus-fill"></i> Nuevo cliente
       </button>
     </div>
 
     <!-- Loading -->
-    <div v-if="crmStore.loadingClients" class="cc-loading">
+    <div v-if="crmStore.loadingClients" class="cc-state">
       <div class="crm-spinner"></div>
     </div>
 
     <!-- Empty -->
-    <div v-else-if="!filtered.length" class="cc-empty">
-      <i class="bi bi-person-x" style="font-size:2.5rem;color:var(--color-muted)"></i>
-      <p>{{ search || filterEstado || filterPipeline ? 'Sin resultados para los filtros aplicados' : 'No hay clientes registrados' }}</p>
+    <div v-else-if="!filtered.length" class="cc-state">
+      <i class="bi bi-person-x" style="font-size:2rem;color:var(--color-muted)"></i>
+      <p>{{ search || filterEstado || filterPipeline ? 'Sin resultados' : 'No hay clientes registrados' }}</p>
       <button v-if="!search && !filterEstado && !filterPipeline" @click="openNew">
         <i class="bi bi-person-plus-fill"></i> Agregar primer cliente
       </button>
@@ -66,25 +58,32 @@
 
         <div class="cc-card-body">
           <div v-if="c.contactoPrincipal" class="cc-field">
-            <i class="bi bi-person"></i> {{ c.contactoPrincipal }}
+            <i class="bi bi-person"></i><span>{{ c.contactoPrincipal }}</span>
           </div>
           <div v-if="c.telefono" class="cc-field">
-            <i class="bi bi-telephone"></i> {{ c.telefono }}
+            <i class="bi bi-telephone"></i><span>{{ c.telefono }}</span>
           </div>
-          <div v-if="c.email" class="cc-field cc-field--email">
-            <i class="bi bi-envelope"></i> {{ c.email }}
+          <div v-if="c.email" class="cc-field cc-field--trunc">
+            <i class="bi bi-envelope"></i><span>{{ c.email }}</span>
           </div>
-          <div v-if="c.direccion" class="cc-field">
-            <i class="bi bi-geo-alt"></i> {{ c.direccion }}
+          <div v-if="c.lugar || c.direccion" class="cc-field cc-field--trunc">
+            <i class="bi bi-geo-alt-fill" style="color:#3b82f6"></i>
+            <span>{{ c.lugar || c.direccion }}</span>
+            <a
+              v-if="c.latitud && c.longitud"
+              :href="`https://www.openstreetmap.org/?mlat=${c.latitud}&mlon=${c.longitud}&zoom=16`"
+              target="_blank" rel="noopener" class="cc-map-link" title="Ver en mapa">
+              <i class="bi bi-map-fill"></i>
+            </a>
           </div>
         </div>
 
-        <div class="cc-card-footer">
+        <div class="cc-card-foot">
           <span class="cc-badge" :class="`cc-badge--${c.estado || 'activo'}`">
             {{ c.estado || 'activo' }}
           </span>
-          <span v-if="c.pipelineEstado" class="cc-stage-pill"
-            :style="{ background: stageColor(c.pipelineEstado) + '1a', color: stageColor(c.pipelineEstado) }">
+          <span v-if="c.pipelineEstado" class="cc-stage"
+            :style="{ background: stageColor(c.pipelineEstado)+'18', color: stageColor(c.pipelineEstado) }">
             {{ stageLabel(c.pipelineEstado) }}
           </span>
         </div>
@@ -95,12 +94,12 @@
     <Teleport to="body">
       <div v-if="showModal" class="crm-backdrop" @click.self="closeModal">
         <div class="crm-modal">
-          <div class="crm-modal-header">
+          <div class="crm-modal-hd">
             <h2>{{ editing ? 'Editar cliente' : 'Nuevo cliente' }}</h2>
             <button class="crm-close" @click="closeModal"><i class="bi bi-x-lg"></i></button>
           </div>
 
-          <div class="crm-modal-body">
+          <div class="crm-modal-bd">
             <div class="cm-field">
               <label>Razón social *</label>
               <input v-model="form.razonSocial" placeholder="Ej: Distribuidora ABC S.A." />
@@ -125,33 +124,79 @@
                 <input v-model="form.email" placeholder="contacto@empresa.com" type="email" />
               </div>
               <div class="cm-field">
-                <label>Dirección</label>
-                <input v-model="form.direccion" placeholder="Calle 123, Ciudad" />
-              </div>
-            </div>
-            <div class="cm-row">
-              <div class="cm-field">
                 <label>Estado</label>
                 <select v-model="form.estado">
                   <option value="activo">Activo</option>
                   <option value="inactivo">Inactivo</option>
                 </select>
               </div>
+            </div>
+            <div class="cm-row">
               <div class="cm-field">
                 <label>Etapa en pipeline</label>
                 <select v-model="form.pipelineEstado">
                   <option v-for="s in STAGES" :key="s.key" :value="s.key">{{ s.label }}</option>
                 </select>
               </div>
+              <div class="cm-field">
+                <label>Observaciones</label>
+                <input v-model="form.observaciones" placeholder="Notas sobre el cliente" />
+              </div>
             </div>
+
+            <!-- ── Ubicación ── -->
+            <div class="cm-section-title">
+              <i class="bi bi-geo-alt-fill"></i> Ubicación
+            </div>
+
             <div class="cm-field">
-              <label>Observaciones</label>
-              <textarea v-model="form.observaciones" placeholder="Notas sobre el cliente..." rows="3"></textarea>
+              <label>Dirección</label>
+              <input v-model="form.direccion" placeholder="Calle 123, Ciudad, Provincia" />
             </div>
+
+            <div class="cm-map-actions">
+              <button type="button" class="secondary-button cm-map-btn"
+                :disabled="geocoding" @click="geocodeAddress">
+                <i class="bi bi-search"></i>
+                {{ geocoding ? 'Buscando...' : 'Buscar en mapa' }}
+              </button>
+              <button type="button" class="secondary-button cm-map-btn"
+                :disabled="geocoding" @click="useMyLocation">
+                <i class="bi bi-crosshair"></i>
+                Mi ubicación
+              </button>
+              <button v-if="form.latitud" type="button" class="secondary-button cm-map-btn cm-map-btn--clear"
+                @click="clearLocation">
+                <i class="bi bi-x-circle"></i> Quitar
+              </button>
+            </div>
+
+            <p v-if="geoError" class="cm-geo-error">{{ geoError }}</p>
+
+            <!-- Map preview (iframe OpenStreetMap, sin dependencias) -->
+            <div v-if="form.latitud && form.longitud" class="cm-map-preview">
+              <iframe
+                :src="`https://www.openstreetmap.org/export/embed.html?bbox=${form.longitud-0.006},${form.latitud-0.006},${form.longitud+0.006},${form.latitud+0.006}&layer=mapnik&marker=${form.latitud},${form.longitud}`"
+                class="cm-map-iframe"
+                frameborder="0"
+                loading="lazy"
+                title="Mapa de ubicación"
+              ></iframe>
+              <div class="cm-map-coords">
+                <i class="bi bi-geo-alt-fill" style="color:#3b82f6"></i>
+                {{ Number(form.latitud).toFixed(5) }}, {{ Number(form.longitud).toFixed(5) }}
+                <a :href="`https://www.openstreetmap.org/?mlat=${form.latitud}&mlon=${form.longitud}&zoom=16`"
+                  target="_blank" rel="noopener" class="cm-map-open">
+                  <i class="bi bi-box-arrow-up-right"></i> Abrir mapa
+                </a>
+              </div>
+              <div v-if="form.lugar" class="cm-map-lugar">{{ form.lugar }}</div>
+            </div>
+
             <p v-if="formError" class="cm-error">{{ formError }}</p>
           </div>
 
-          <div class="crm-modal-footer">
+          <div class="crm-modal-ft">
             <button class="secondary-button" @click="closeModal">Cancelar</button>
             <button :disabled="saving" @click="saveClient">
               <div v-if="saving" class="btn-spin"></div>
@@ -166,17 +211,16 @@
     <Teleport to="body">
       <div v-if="deleting" class="crm-backdrop" @click.self="deleting = null">
         <div class="crm-modal crm-modal--sm">
-          <div class="crm-modal-header">
+          <div class="crm-modal-hd">
             <h2>Eliminar cliente</h2>
             <button class="crm-close" @click="deleting = null"><i class="bi bi-x-lg"></i></button>
           </div>
-          <div class="crm-modal-body">
-            <p class="del-confirm-txt">
+          <div class="crm-modal-bd">
+            <p class="del-txt">
               ¿Eliminás a <strong>{{ deleting.razonSocial || deleting.name }}</strong>?
-              Esta acción puede revertirse desde la base de datos.
             </p>
           </div>
-          <div class="crm-modal-footer">
+          <div class="crm-modal-ft">
             <button class="secondary-button" @click="deleting = null">Cancelar</button>
             <button class="danger-button" :disabled="saving" @click="doDelete">
               <div v-if="saving" class="btn-spin"></div>
@@ -204,6 +248,8 @@ const editing        = ref(null)
 const saving         = ref(false)
 const formError      = ref('')
 const deleting       = ref(null)
+const geocoding      = ref(false)
+const geoError       = ref('')
 
 const STAGES = [
   { key: 'nuevo_lead',         label: 'Nuevo Lead',         color: '#3b82f6' },
@@ -231,6 +277,7 @@ const emptyForm = () => ({
   razonSocial: '', nombreComercial: '', contactoPrincipal: '',
   telefono: '', email: '', direccion: '', observaciones: '',
   estado: 'activo', pipelineEstado: 'nuevo_lead',
+  lugar: '', latitud: null, longitud: null,
 })
 
 const form = ref(emptyForm())
@@ -254,6 +301,7 @@ function openNew() {
   editing.value = null
   form.value = emptyForm()
   formError.value = ''
+  geoError.value = ''
   showModal.value = true
 }
 
@@ -269,8 +317,12 @@ function openEdit(c) {
     observaciones:    c.observaciones || '',
     estado:           c.estado || 'activo',
     pipelineEstado:   c.pipelineEstado || 'nuevo_lead',
+    lugar:            c.lugar || '',
+    latitud:          c.latitud ?? null,
+    longitud:         c.longitud ?? null,
   }
   formError.value = ''
+  geoError.value = ''
   showModal.value = true
 }
 
@@ -309,152 +361,192 @@ async function doDelete() {
     saving.value = false
   }
 }
+
+// ── Geocodificación con Nominatim (OpenStreetMap, sin API key) ──
+async function geocodeAddress() {
+  const addr = form.value.direccion.trim()
+  if (!addr) { geoError.value = 'Escribí una dirección primero'; return }
+  geocoding.value = true
+  geoError.value = ''
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`,
+      { headers: { 'Accept-Language': 'es' } }
+    )
+    const data = await res.json()
+    if (!data.length) { geoError.value = 'No se encontró esa dirección'; return }
+    form.value.latitud  = parseFloat(data[0].lat)
+    form.value.longitud = parseFloat(data[0].lon)
+    form.value.lugar    = data[0].display_name || addr
+  } catch {
+    geoError.value = 'Error al buscar en el mapa'
+  } finally {
+    geocoding.value = false
+  }
+}
+
+function useMyLocation() {
+  if (!navigator.geolocation) { geoError.value = 'El navegador no soporta geolocalización'; return }
+  geocoding.value = true
+  geoError.value = ''
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      form.value.latitud  = pos.coords.latitude
+      form.value.longitud = pos.coords.longitude
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`,
+          { headers: { 'Accept-Language': 'es' } }
+        )
+        const data = await res.json()
+        form.value.lugar = data.display_name || ''
+        if (!form.value.direccion.trim()) form.value.direccion = data.display_name || ''
+      } catch { /* reverse geocoding opcional */ }
+      geocoding.value = false
+    },
+    (err) => {
+      geoError.value = 'No se pudo obtener la ubicación'
+      console.warn('Geolocation error:', err.message)
+      geocoding.value = false
+    },
+    { timeout: 10000, enableHighAccuracy: true }
+  )
+}
+
+function clearLocation() {
+  form.value.latitud  = null
+  form.value.longitud = null
+  form.value.lugar    = ''
+}
 </script>
 
 <style scoped>
-.cc-wrap { position: relative; }
+.cc-wrap { position: relative; min-width: 0; overflow: hidden; }
 
 /* ── Toolbar ── */
 .cc-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.6rem;
   align-items: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
-.cc-search-box {
-  position: relative;
-  flex: 1;
-  min-width: 180px;
-}
+.cc-search-box { position: relative; flex: 1; min-width: 150px; }
 
 .cc-search-ico {
   position: absolute;
-  left: 0.85rem;
+  left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   pointer-events: none;
 }
 
 .cc-search {
   width: 100%;
-  padding: 0.65rem 1rem 0.65rem 2.3rem;
-  border-radius: 12px;
-  border: 1px solid var(--border-soft);
-  background: rgba(255,255,255,0.95);
-  font-size: 0.85rem;
+  padding: 0.55rem 0.9rem 0.55rem 2.1rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
 }
 
 .cc-select {
-  padding: 0.65rem 1rem;
-  border-radius: 12px;
-  font-size: 0.83rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
   width: auto;
-  min-width: 150px;
+  min-width: 130px;
 }
 
 .cc-btn-add {
-  padding: 0.65rem 1.1rem;
-  font-size: 0.83rem;
-  border-radius: 12px;
+  padding: 0.55rem 1rem;
+  font-size: 0.8rem;
+  border-radius: 10px;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-/* ── Empty ── */
-.cc-loading,
-.cc-empty {
+/* ── State: loading / empty ── */
+.cc-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  min-height: 220px;
+  gap: 0.75rem;
+  min-height: 180px;
   color: var(--color-muted);
 }
 
-.cc-empty p { text-transform: uppercase; font-size: 0.82rem; letter-spacing: 0.06em; }
+.cc-state p { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
 
 /* ── Grid ── */
 .cc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem;
 }
 
+/* ── Card ── */
 .cc-card {
-  background: rgba(255,255,255,0.95);
-  border-radius: 18px;
+  background: rgba(255,255,255,.96);
+  border-radius: 14px;
   border: 1px solid rgba(107,142,58,.1);
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 10px rgba(42,53,32,.07);
-  transition: box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(42,53,32,.07);
+  overflow: hidden;
+  transition: box-shadow 0.18s, transform 0.18s;
+  min-width: 0;
 }
 
-.cc-card:hover {
-  box-shadow: 0 6px 22px rgba(42,53,32,.13);
-  transform: translateY(-2px);
-}
+.cc-card:hover { box-shadow: 0 5px 18px rgba(42,53,32,.13); transform: translateY(-2px); }
 
 .cc-card-top {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem 1rem 0.5rem;
+  gap: 0.6rem;
+  padding: 0.75rem 0.75rem 0.35rem;
 }
 
 .cc-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 700;
-  font-family: 'Poppins', sans-serif;
-  flex-shrink: 0;
-  text-transform: uppercase;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0.85rem; font-weight: 700;
+  flex-shrink: 0; text-transform: uppercase;
 }
 
 .cc-card-head { flex: 1; min-width: 0; }
 
 .cc-razon {
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 700;
   color: var(--color-text);
   text-transform: none;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cc-comercial {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-muted);
   text-transform: none;
-  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cc-card-actions {
-  display: flex;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
+.cc-card-actions { display: flex; gap: 0.2rem; flex-shrink: 0; }
 
 .cc-ico-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 26px; height: 26px;
+  border-radius: 7px;
   padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
   box-shadow: none;
 }
 
@@ -465,56 +557,63 @@ async function doDelete() {
 
 .cc-card-body {
   flex: 1;
-  padding: 0.5rem 1rem 0.75rem;
+  padding: 0.3rem 0.75rem 0.6rem;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 
 .cc-field {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  font-size: 0.78rem;
+  gap: 0.35rem;
+  font-size: 0.75rem;
   color: var(--color-text);
   text-transform: none;
+  min-width: 0;
 }
 
-.cc-field i { color: var(--color-muted); font-size: 0.8rem; flex-shrink: 0; }
+.cc-field i { color: var(--color-muted); font-size: 0.75rem; flex-shrink: 0; }
+.cc-field span { flex: 1; min-width: 0; }
 
-.cc-field--email {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.cc-field--trunc span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.cc-map-link {
+  color: #3b82f6;
+  font-size: 0.75rem;
+  text-decoration: none;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
-.cc-card-footer {
-  padding: 0.65rem 1rem;
+.cc-map-link:hover { color: #2563eb; }
+
+.cc-card-foot {
+  padding: 0.45rem 0.75rem;
   border-top: 1px solid rgba(107,142,58,.08);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 
 .cc-badge {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.22rem 0.65rem;
+  letter-spacing: 0.05em;
+  padding: 0.18rem 0.55rem;
   border-radius: 999px;
 }
 
-.cc-badge--activo   { background: rgba(34,197,94,.12);  color: #16a34a; }
-.cc-badge--inactivo { background: rgba(239,68,68,.12);  color: #dc2626; }
+.cc-badge--activo   { background: rgba(34,197,94,.12); color: #16a34a; }
+.cc-badge--inactivo { background: rgba(239,68,68,.12); color: #dc2626; }
 
-.cc-stage-pill {
-  font-size: 0.68rem;
+.cc-stage {
+  font-size: 0.62rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 0.22rem 0.65rem;
+  padding: 0.18rem 0.55rem;
   border-radius: 999px;
   text-transform: none;
 }
@@ -533,7 +632,7 @@ async function doDelete() {
 
 .crm-modal {
   background: #fff;
-  border-radius: 22px;
+  border-radius: 20px;
   width: min(560px, 100%);
   max-height: 92vh;
   overflow-y: auto;
@@ -542,85 +641,172 @@ async function doDelete() {
   flex-direction: column;
 }
 
-.crm-modal--sm { width: min(400px, 100%); }
+.crm-modal--sm { width: min(380px, 100%); }
 
-.crm-modal-header {
+.crm-modal-hd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem 1rem;
+  padding: 1rem 1.25rem 0.85rem;
   border-bottom: 1px solid rgba(107,142,58,.12);
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
 }
 
-.crm-modal-header h2 {
-  font-size: 1.05rem;
-  text-transform: uppercase;
-}
+.crm-modal-hd h2 { font-size: 1rem; text-transform: uppercase; }
 
 .crm-close {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 30px; height: 30px;
+  border-radius: 8px;
   background: rgba(107,142,58,.1);
   color: var(--color-text);
-  padding: 0;
-  font-size: 0.85rem;
-  box-shadow: none;
+  padding: 0; font-size: 0.8rem; box-shadow: none;
 }
 
-.crm-modal-body {
-  padding: 1.25rem 1.5rem;
+.crm-modal-bd {
+  padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.7rem;
   flex: 1;
 }
 
-.cm-field { display: flex; flex-direction: column; gap: 0.35rem; }
+.cm-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(107,142,58,.12);
+  margin-top: 0.15rem;
+}
+
+.cm-field { display: flex; flex-direction: column; gap: 0.28rem; }
 
 .cm-field label {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-muted);
 }
 
-.cm-field input,
-.cm-field select,
-.cm-field textarea {
-  padding: 0.6rem 0.9rem;
-  border-radius: 12px;
-  font-size: 0.85rem;
+.cm-field input, .cm-field select, .cm-field textarea {
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.83rem;
 }
 
-.cm-field textarea { min-height: 80px; }
+.cm-field textarea { min-height: 70px; }
 
-.cm-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.85rem;
+.cm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+
+/* ── Map ── */
+.cm-map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cm-map-btn {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.78rem;
+  border-radius: 8px;
+}
+
+.cm-map-btn--clear {
+  background: rgba(239,68,68,.1);
+  color: #dc2626;
+  border-color: rgba(239,68,68,.2);
+}
+
+.cm-geo-error {
+  font-size: 0.78rem;
+  color: #dc2626;
+  background: rgba(239,68,68,.08);
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.cm-map-preview {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(107,142,58,.15);
+}
+
+.cm-map-iframe {
+  width: 100%;
+  height: 190px;
+  display: block;
+  border: none;
+}
+
+.cm-map-coords {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  text-transform: none;
+  background: rgba(107,142,58,.04);
+  flex-wrap: wrap;
+}
+
+.cm-map-open {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.cm-map-open:hover { text-decoration: underline; }
+
+.cm-map-lugar {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.7rem;
+  color: var(--color-text);
+  text-transform: none;
+  background: #fff;
+  border-top: 1px solid rgba(107,142,58,.08);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cm-error {
   color: #dc2626;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   text-transform: none;
   background: rgba(239,68,68,.08);
   border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.7rem;
   letter-spacing: 0;
 }
 
-.crm-modal-footer {
-  padding: 1rem 1.5rem 1.25rem;
+.crm-modal-ft {
+  padding: 0.85rem 1.25rem 1rem;
   border-top: 1px solid rgba(107,142,58,.1);
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: 0.65rem;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
 }
 
-.del-confirm-txt {
+.del-txt {
   text-transform: none;
   font-size: 0.88rem;
   color: var(--color-text);
@@ -628,9 +814,9 @@ async function doDelete() {
   line-height: 1.5;
 }
 
-/* ── Spinner ── */
+/* ── Spinners ── */
 .crm-spinner {
-  width: 32px; height: 32px;
+  width: 28px; height: 28px;
   border: 3px solid rgba(107,142,58,.2);
   border-top-color: var(--color-primary);
   border-radius: 50%;
@@ -638,7 +824,7 @@ async function doDelete() {
 }
 
 .btn-spin {
-  width: 16px; height: 16px;
+  width: 14px; height: 14px;
   border: 2px solid rgba(255,255,255,.4);
   border-top-color: #fff;
   border-radius: 50%;
@@ -647,8 +833,7 @@ async function doDelete() {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Responsive ── */
-@media (max-width: 640px) {
+@media (max-width: 560px) {
   .cm-row { grid-template-columns: 1fr; }
   .cc-toolbar { flex-direction: column; align-items: stretch; }
 }

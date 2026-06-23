@@ -4,7 +4,8 @@ export const createClient = async (req, res) => {
   try {
     const {
       razonSocial, nombreComercial, contactoPrincipal,
-      telefono, email, direccion, observaciones, estado, pipelineEstado
+      telefono, email, direccion, observaciones, estado, pipelineEstado,
+      lugar, latitud, longitud
     } = req.body
 
     const displayName = (razonSocial || '').trim()
@@ -22,6 +23,9 @@ export const createClient = async (req, res) => {
       observaciones: observaciones || '',
       estado: estado || 'activo',
       pipelineEstado: pipelineEstado || 'nuevo_lead',
+      lugar: (lugar || '').trim(),
+      latitud: latitud != null ? Number(latitud) : null,
+      longitud: longitud != null ? Number(longitud) : null,
       createdBy: req.user?.name || '',
     })
 
@@ -78,7 +82,8 @@ export const updateClient = async (req, res) => {
   try {
     const {
       razonSocial, nombreComercial, contactoPrincipal,
-      telefono, email, direccion, observaciones, estado, pipelineEstado
+      telefono, email, direccion, observaciones, estado, pipelineEstado,
+      lugar, latitud, longitud
     } = req.body
 
     const update = {}
@@ -91,6 +96,9 @@ export const updateClient = async (req, res) => {
     if (observaciones !== undefined) update.observaciones = observaciones
     if (estado !== undefined) update.estado = estado
     if (pipelineEstado !== undefined) update.pipelineEstado = pipelineEstado
+    if (lugar !== undefined) update.lugar = lugar.trim()
+    if (latitud !== undefined) update.latitud = latitud != null ? Number(latitud) : null
+    if (longitud !== undefined) update.longitud = longitud != null ? Number(longitud) : null
 
     const client = await Client.findByIdAndUpdate(
       req.params.id,

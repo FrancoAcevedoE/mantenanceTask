@@ -21,6 +21,9 @@ const clientSchema = new mongoose.Schema({
     enum: ['nuevo_lead', 'contactado', 'cotizacion_enviada', 'negociacion', 'ganado', 'perdido'],
     default: 'nuevo_lead'
   },
+  lugar: { type: String, default: '' },
+  latitud: { type: Number, default: null },
+  longitud: { type: Number, default: null },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
   createdBy: { type: String, default: '' },

@@ -58,6 +58,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   padding-bottom: 1.5rem;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .topbar {

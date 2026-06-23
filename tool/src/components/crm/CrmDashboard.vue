@@ -192,20 +192,21 @@ onMounted(async () => {
 /* ── Stat grid ── */
 .dash-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
 }
 
 .dash-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.65rem;
   background: rgba(255,255,255,0.9);
-  border-radius: 18px;
-  padding: 1.1rem 1.2rem;
-  box-shadow: 0 2px 12px rgba(42,53,32,.09);
+  border-radius: 14px;
+  padding: 0.75rem 0.85rem;
+  box-shadow: 0 2px 10px rgba(42,53,32,.08);
   border: 1px solid rgba(107,142,58,.1);
+  min-width: 0;
 }
 
 .dash-card--green {
@@ -214,48 +215,54 @@ onMounted(async () => {
 }
 
 .dash-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
+  font-size: 1rem;
   flex-shrink: 0;
 }
 
-.dash-info { min-width: 0; }
+.dash-info { min-width: 0; flex: 1; }
 
 .dash-value {
-  font-size: 1.9rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text);
   line-height: 1;
   font-family: 'Poppins', sans-serif;
   text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.dash-value--sm { font-size: 1.3rem; }
+.dash-value--sm { font-size: 1rem; }
 
 .dash-label {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   color: var(--color-muted);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-top: 0.25rem;
+  letter-spacing: 0.05em;
+  margin-top: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Bottom ── */
 .dash-bottom {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .dash-panel {
   background: rgba(255,255,255,0.9);
-  border-radius: 18px;
-  padding: 1.2rem;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
   border: 1px solid rgba(107,142,58,.1);
 }
 
@@ -428,8 +435,12 @@ onMounted(async () => {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Responsive ── */
+@media (max-width: 1024px) {
+  .dash-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
 @media (max-width: 768px) {
-  .dash-grid { grid-template-columns: 1fr 1fr; }
+  .dash-grid { grid-template-columns: repeat(2, 1fr); }
   .dash-bottom { grid-template-columns: 1fr; }
 }
 
