@@ -5,6 +5,8 @@ function calcItems(items = []) {
   return items.map(item => ({
     ...item,
     subtotal: Number(((item.cantidad || 0) * (item.precioUnitario || 0)).toFixed(2)),
+    discountLabel: item.discountLabel || '',
+    discountPct: item.discountPct || 0,
   }))
 }
 

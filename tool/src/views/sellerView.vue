@@ -29,27 +29,19 @@
           <table class="inv-table">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Título</th>
-                <th>Cliente</th>
-                <th>Fecha</th>
-                <th>Válida hasta</th>
-                <th>Total</th>
-                <th>Estado</th>
-                <th></th>
+                <th>#</th><th>Título</th><th>Cliente</th><th>Fecha</th>
+                <th>Válida hasta</th><th>Total</th><th>Estado</th><th></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="q in quotes" :key="q._id">
-                <td class="num-cell">#{{ String(q.numero).padStart(4, '0') }}</td>
+                <td class="num-cell">#{{ String(q.numero).padStart(4,'0') }}</td>
                 <td class="title-cell">{{ q.titulo }}</td>
                 <td class="client-cell">{{ q.cliente?.nombre || '—' }}</td>
                 <td class="date-cell">{{ fmtDate(q.createdAt) }}</td>
                 <td class="date-cell">{{ validezFecha(q.createdAt, q.validezDias) }}</td>
                 <td class="price-cell">{{ fmtMoney(totalCotizacion(q)) }}</td>
-                <td>
-                  <span :class="['badge-estado', q.estado]">{{ labelEstado(q.estado) }}</span>
-                </td>
+                <td><span :class="['badge-estado', q.estado]">{{ labelEstado(q.estado) }}</span></td>
                 <td class="actions-cell">
                   <button class="icon-btn" title="Imprimir" @click="openPrint(q)"><i class="bi bi-printer"></i></button>
                   <button class="icon-btn" title="Editar" @click="editQuote(q)"><i class="bi bi-pencil"></i></button>
@@ -64,7 +56,6 @@
       <!-- ── FORMULARIO ───────────────────────────────────────────────── -->
       <div v-if="activeTab === 'form'" class="quote-form">
 
-        <!-- Header del form -->
         <div class="form-section-title">
           {{ editingId ? `Editando cotización #${String(form.numero || '').padStart(4,'0')}` : 'Nueva cotización' }}
         </div>
@@ -128,6 +119,7 @@
                 <th class="col-color">Color</th>
                 <th class="col-qty">Cant.</th>
                 <th class="col-unit">Unidad</th>
+                <th class="col-disc">Descuento</th>
                 <th class="col-price">Precio unit.</th>
                 <th class="col-desc">Descripción</th>
                 <th class="col-sub">Subtotal</th>
@@ -136,41 +128,64 @@
             </thead>
             <tbody>
               <tr v-for="(item, idx) in form.items" :key="idx" class="item-row">
-                <!-- Selector de producto -->
+
+                <!-- ── Producto: búsqueda SKU / nombre ── -->
                 <td class="col-producto">
-                  <select v-model="item._productId" @change="onProductSelect(idx)" class="sel-producto">
-                    <option value="">— Manual —</option>
-                    <optgroup v-for="grupo in productGroups" :key="grupo" :label="grupo">
-                      <option
-                        v-for="p in productsByGrupo[grupo]"
-                        :key="p._id"
-                        :value="p._id"
-                      >{{ p.name }}{{ p.thicknesses?.length ? ' · ' + p.thicknesses.join('/') + 'mm' : '' }} ({{ p.code }})</option>
-                    </optgroup>
-                  </select>
-                  <input
+                  <div
                     v-if="!item._productId"
-                    v-model="item.nombre"
-                    type="text"
-                    placeholder="Nombre del material"
-                    class="manual-name"
-                  />
-                  <span v-else class="item-code">{{ item.codigo }}</span>
+                    class="psw"
+                    :id="`psw-${idx}`"
+                  >
+                    <div class="psw-input-wrap">
+                      <i class="bi bi-search psw-icon"></i>
+                      <input
+                        v-model="item._search"
+                        type="text"
+                        placeholder="SKU o nombre…"
+                        class="psw-input"
+                        autocomplete="off"
+                        @focus="openSearch(idx)"
+                        @input="onSearchInput(idx)"
+                        @blur="closeSearch(idx)"
+                        @keydown.down.prevent="navDown"
+                        @keydown.up.prevent="navUp"
+                        @keydown.enter.prevent="navEnter(idx)"
+                        @keydown.escape="activeSearchIdx = -1"
+                      />
+                    </div>
+                    <input
+                      v-model="item.nombre"
+                      type="text"
+                      placeholder="o escribir nombre manual"
+                      class="psw-manual"
+                    />
+                  </div>
+                  <div v-else class="selected-product">
+                    <span class="sp-name">{{ item.nombre }}</span>
+                    <span class="sp-code">{{ item.codigo }}</span>
+                    <button class="sp-clear" @click="clearProduct(idx)" title="Quitar producto">
+                      <i class="bi bi-x"></i>
+                    </button>
+                  </div>
                 </td>
+
                 <!-- Color -->
                 <td class="col-color">
-                  <select v-if="item._colors?.length > 1" v-model="item.color" class="sel-color">
+                  <select v-if="item._colors?.length > 1" v-model="item.color" class="sel-small">
                     <option v-for="c in item._colors" :key="c" :value="c">{{ c }}</option>
                   </select>
-                  <input v-else v-model="item.color" type="text" placeholder="Color" class="input-color" />
+                  <input v-else v-model="item.color" type="text" placeholder="Color" class="input-small" />
                 </td>
+
                 <!-- Cantidad -->
                 <td class="col-qty">
-                  <input v-model.number="item.cantidad" type="number" min="0" step="0.01" class="input-num" @input="recalc(idx)" />
+                  <input v-model.number="item.cantidad" type="number" min="0" step="0.01"
+                    class="input-num" @input="recalc(idx)" />
                 </td>
+
                 <!-- Unidad -->
                 <td class="col-unit">
-                  <select v-model="item.unidad" class="sel-unit">
+                  <select v-model="item.unidad" class="sel-small">
                     <option value="unidad">unidad</option>
                     <option value="m2">m²</option>
                     <option value="ml">ml</option>
@@ -180,24 +195,50 @@
                     <option value="caja">caja</option>
                   </select>
                 </td>
+
+                <!-- Descuento -->
+                <td class="col-disc">
+                  <select
+                    v-model="item._discountLabel"
+                    @change="onDiscountChange(idx)"
+                    class="sel-disc"
+                    :disabled="!item._groupDescuentos?.length && !item._productId"
+                    :title="!item._groupDescuentos?.length ? 'Este producto no tiene tabla de descuentos' : ''"
+                  >
+                    <option
+                      v-for="opt in discountOptions(item._groupDescuentos)"
+                      :key="opt.label"
+                      :value="opt.label"
+                    >{{ opt.label }}</option>
+                  </select>
+                  <span v-if="item._discountPct > 0" class="disc-badge">-{{ fmtPct(item._discountPct) }}%</span>
+                </td>
+
                 <!-- Precio unitario -->
                 <td class="col-price">
                   <div class="input-prefix-wrap">
                     <span class="input-prefix">$</span>
-                    <input v-model.number="item.precioUnitario" type="number" min="0" step="0.01" class="input-num has-prefix" @input="recalc(idx)" />
+                    <input v-model.number="item.precioUnitario" type="number" min="0" step="0.01"
+                      class="input-num has-prefix" @input="recalc(idx)" />
                   </div>
+                  <span v-if="item._basePrice && item._discountPct > 0" class="base-price-hint">
+                    base: {{ fmtMoney(item._basePrice) }}
+                  </span>
                 </td>
+
                 <!-- Descripción -->
                 <td class="col-desc">
-                  <input v-model="item.descripcion" type="text" placeholder="Observaciones…" class="input-desc" />
+                  <input v-model="item.descripcion" type="text" placeholder="Observaciones…" class="input-small" />
                 </td>
+
                 <!-- Subtotal -->
-                <td class="col-sub subtotal-cell">
-                  {{ fmtMoney(item.subtotal || 0) }}
-                </td>
-                <!-- Eliminar fila -->
+                <td class="col-sub subtotal-cell">{{ fmtMoney(item.subtotal || 0) }}</td>
+
+                <!-- Eliminar -->
                 <td class="col-del">
-                  <button class="del-row-btn" @click="removeItem(idx)" title="Quitar"><i class="bi bi-x-lg"></i></button>
+                  <button class="del-row-btn" @click="removeItem(idx)" title="Quitar">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -214,15 +255,16 @@
           <span class="total-value">{{ fmtMoney(totalForm) }}</span>
         </div>
 
-        <!-- Descripción general -->
+        <!-- Notas -->
         <div class="field">
           <label>Notas / Condiciones</label>
-          <textarea v-model="form.descripcionGeneral" rows="3" placeholder="Observaciones generales, condiciones de pago, plazo de entrega…"></textarea>
+          <textarea v-model="form.descripcionGeneral" rows="3"
+            placeholder="Observaciones generales, condiciones de pago, plazo de entrega…"></textarea>
         </div>
 
         <!-- Footer -->
         <div class="form-footer">
-          <button class="primary-button" :disabled="saving" @click="saveQuote">
+          <button class="primary-button" :disabled="saving" @click="saveQuote()">
             <i class="bi" :class="saving ? 'bi-hourglass-split' : 'bi-floppy2'"></i>
             {{ saving ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Crear cotización' }}
           </button>
@@ -236,7 +278,29 @@
     </div>
   </div>
 
-  <!-- ── Layout de impresión (sólo visible al imprimir) ──────────────── -->
+  <!-- ── Dropdown de búsqueda (Teleport → body, evita clipping) ──────── -->
+  <Teleport to="body">
+    <div
+      v-if="activeSearchIdx >= 0 && searchResults.length"
+      class="psw-portal"
+      :style="portalStyle"
+    >
+      <div
+        v-for="(p, pi) in searchResults"
+        :key="p._id"
+        class="psw-option"
+        :class="{ 'psw-option--active': pi === navIdx }"
+        @mousedown.prevent="selectResult(activeSearchIdx, p)"
+      >
+        <span class="pso-code">{{ p.code }}</span>
+        <span class="pso-name">{{ p.name }}</span>
+        <span class="pso-grupo">{{ p.grupo }}</span>
+        <span v-if="p.thicknesses?.length" class="pso-esp">{{ p.thicknesses.join(' · ') }}mm</span>
+      </div>
+    </div>
+  </Teleport>
+
+  <!-- ── Layout de impresión ─────────────────────────────────────────── -->
   <div v-if="quoteToPrint" class="print-doc">
     <div class="print-header">
       <img src="/karikal.png" alt="Karikal" class="print-logo" />
@@ -253,7 +317,6 @@
 
     <div class="print-titulo">{{ quoteToPrint.titulo }}</div>
 
-    <!-- Cliente (si hay datos) -->
     <div v-if="hasCliente(quoteToPrint)" class="print-client-box">
       <div class="print-section-label">DESTINATARIO</div>
       <div v-if="quoteToPrint.cliente.nombre" class="print-client-name">{{ quoteToPrint.cliente.nombre }}</div>
@@ -262,7 +325,6 @@
       <div v-if="quoteToPrint.cliente.telefono" class="print-client-detail">{{ quoteToPrint.cliente.telefono }}</div>
     </div>
 
-    <!-- Tabla de items -->
     <table class="print-items">
       <thead>
         <tr>
@@ -270,6 +332,7 @@
           <th class="pi-color">Color</th>
           <th class="pi-qty">Cant.</th>
           <th class="pi-unit">Unidad</th>
+          <th class="pi-disc">Descuento</th>
           <th class="pi-price">Precio unit.</th>
           <th class="pi-desc">Descripción</th>
           <th class="pi-sub">Subtotal</th>
@@ -284,6 +347,7 @@
           <td class="pi-color">{{ item.color || '—' }}</td>
           <td class="pi-qty">{{ item.cantidad }}</td>
           <td class="pi-unit">{{ item.unidad }}</td>
+          <td class="pi-disc">{{ item.discountLabel || '—' }}</td>
           <td class="pi-price">{{ fmtMoney(item.precioUnitario) }}</td>
           <td class="pi-desc">{{ item.descripcion || '' }}</td>
           <td class="pi-sub">{{ fmtMoney(item.subtotal) }}</td>
@@ -291,13 +355,12 @@
       </tbody>
       <tfoot>
         <tr class="print-total-row">
-          <td colspan="6" class="print-total-label">TOTAL</td>
+          <td colspan="7" class="print-total-label">TOTAL</td>
           <td class="print-total-value">{{ fmtMoney(totalCotizacion(quoteToPrint)) }}</td>
         </tr>
       </tfoot>
     </table>
 
-    <!-- Notas -->
     <div v-if="quoteToPrint.descripcionGeneral" class="print-notes">
       <div class="print-section-label">NOTAS Y CONDICIONES</div>
       <p class="print-notes-text">{{ quoteToPrint.descripcionGeneral }}</p>
@@ -307,7 +370,6 @@
       Oferta válida por {{ quoteToPrint.validezDias }} días a partir de la fecha de emisión.
       Precios en dólares. No incluyen IVA.
     </div>
-
     <div class="print-footer">
       Cotización generada por {{ quoteToPrint.vendedor }} — {{ fmtDate(quoteToPrint.createdAt) }}
     </div>
@@ -324,7 +386,7 @@ import { API_BASE_URL } from '@/utils/api'
 const productsStore = useProductsStore()
 const toast = useToast()
 
-// ── Estado ────────────────────────────────────────────────────────────────────
+// ── Estado global ─────────────────────────────────────────────────────────────
 const activeTab = ref('list')
 const quotes = ref([])
 const loadingQuotes = ref(false)
@@ -332,27 +394,21 @@ const saving = ref(false)
 const editingId = ref(null)
 const showCliente = ref(false)
 const quoteToPrint = ref(null)
-
 const form = ref(newFormState())
 
-// ── Productos ─────────────────────────────────────────────────────────────────
-const productGroups = computed(() => productsStore.uniqueGrupos)
-const productsByGrupo = computed(() => {
-  const map = {}
-  for (const g of productGroups.value) {
-    map[g] = productsStore.products.filter(p => p.grupo === g)
-  }
-  return map
-})
+// ── Grupos de descuento ───────────────────────────────────────────────────────
+const grupos = ref([])  // [{ nombre, descuentos: [...] }]
 
-// ── Totales ───────────────────────────────────────────────────────────────────
+// ── Estado del buscador ───────────────────────────────────────────────────────
+const activeSearchIdx = ref(-1)
+const searchResults = ref([])
+const navIdx = ref(-1)
+const portalStyle = ref({})
+
+// ── Computed ──────────────────────────────────────────────────────────────────
 const totalForm = computed(() =>
   form.value.items.reduce((s, i) => s + (i.subtotal || 0), 0)
 )
-
-function totalCotizacion(q) {
-  return (q.items || []).reduce((s, i) => s + (i.subtotal || 0), 0)
-}
 
 // ── Auth header ───────────────────────────────────────────────────────────────
 function authH() {
@@ -367,6 +423,7 @@ onMounted(async () => {
     await Promise.all([
       loadQuotes(),
       productsStore.products.length ? Promise.resolve() : productsStore.fetchProducts(),
+      loadGrupos(),
     ])
   } finally {
     loadingQuotes.value = false
@@ -376,6 +433,15 @@ onMounted(async () => {
 async function loadQuotes() {
   const { data } = await axios.get(`${API_BASE_URL}/quotes`, authH())
   quotes.value = Array.isArray(data) ? data : []
+}
+
+async function loadGrupos() {
+  try {
+    const { data } = await axios.get(`${API_BASE_URL}/product-groups`, authH())
+    grupos.value = Array.isArray(data) ? data : []
+  } catch (e) {
+    console.error('Error loading product groups', e)
+  }
 }
 
 // ── Formulario ────────────────────────────────────────────────────────────────
@@ -394,8 +460,15 @@ function newFormState() {
 
 function emptyItem() {
   return {
+    // campos UI (no se envían al backend)
     _productId: '',
+    _search: '',
     _colors: [],
+    _basePrice: 0,
+    _discountPct: 0,
+    _discountLabel: 'Sin descuento',
+    _groupDescuentos: [],
+    // campos del backend
     nombre: '',
     codigo: '',
     color: '',
@@ -422,21 +495,28 @@ function editQuote(q) {
     fecha: q.createdAt,
     validezDias: q.validezDias ?? 7,
     estado: q.estado || 'borrador',
-    cliente: { ...{ nombre: '', empresa: '', email: '', telefono: '' }, ...(q.cliente || {}) },
-    items: (q.items || []).map(it => ({
-      _productId: it.productoId || '',
-      _colors: it.productoId
-        ? (productsStore.getById(it.productoId)?.colors || [])
-        : [],
-      nombre: it.nombre || '',
-      codigo: it.codigo || '',
-      color: it.color || '',
-      cantidad: it.cantidad ?? 1,
-      unidad: it.unidad || 'unidad',
-      precioUnitario: it.precioUnitario ?? 0,
-      descripcion: it.descripcion || '',
-      subtotal: it.subtotal ?? 0,
-    })),
+    cliente: { nombre: '', empresa: '', email: '', telefono: '', ...(q.cliente || {}) },
+    items: (q.items || []).map(it => {
+      const prod = it.productoId ? productsStore.getById(it.productoId) : null
+      const grupo = prod ? grupos.value.find(g => g.nombre === prod.grupo) : null
+      return {
+        _productId: it.productoId || '',
+        _search: '',
+        _colors: prod?.colors || [],
+        _basePrice: prod ? (prod.precioGrupoI ?? prod.pricePerM2 ?? 0) : 0,
+        _discountPct: 0,
+        _discountLabel: it.discountLabel || 'Sin descuento',
+        _groupDescuentos: grupo?.descuentos || [],
+        nombre: it.nombre || '',
+        codigo: it.codigo || '',
+        color: it.color || '',
+        cantidad: it.cantidad ?? 1,
+        unidad: it.unidad || 'unidad',
+        precioUnitario: it.precioUnitario ?? 0,
+        descripcion: it.descripcion || '',
+        subtotal: it.subtotal ?? 0,
+      }
+    }),
     descripcionGeneral: q.descripcionGeneral || '',
   }
   showCliente.value = !!(q.cliente?.nombre || q.cliente?.empresa)
@@ -446,11 +526,10 @@ function editQuote(q) {
 function cancelForm() {
   activeTab.value = 'list'
   editingId.value = null
+  activeSearchIdx.value = -1
 }
 
-function addItem() {
-  form.value.items.push(emptyItem())
-}
+function addItem() { form.value.items.push(emptyItem()) }
 
 function removeItem(idx) {
   form.value.items.splice(idx, 1)
@@ -462,27 +541,128 @@ function recalc(idx) {
   item.subtotal = Number(((item.cantidad || 0) * (item.precioUnitario || 0)).toFixed(2))
 }
 
-function onProductSelect(idx) {
-  const item = form.value.items[idx]
-  const pid = item._productId
-  if (!pid) {
-    item.nombre = ''
-    item.codigo = ''
-    item.color = ''
-    item._colors = []
-    item.precioUnitario = 0
-    item.unidad = 'unidad'
-    recalc(idx)
-    return
+// ── Búsqueda de producto por SKU / nombre ────────────────────────────────────
+function filteredBySearch(search) {
+  const q = (search || '').toLowerCase().trim()
+  if (!q) return []
+  return productsStore.products.filter(p =>
+    (p.code || '').toLowerCase().includes(q) ||
+    (p.name || '').toLowerCase().includes(q)
+  ).slice(0, 10)
+}
+
+function openSearch(idx) {
+  activeSearchIdx.value = idx
+  navIdx.value = -1
+  updateResults(idx)
+  positionPortal(idx)
+}
+
+function closeSearch(idx) {
+  // setTimeout para que mousedown en opción se procese antes del blur
+  setTimeout(() => {
+    if (activeSearchIdx.value === idx) {
+      activeSearchIdx.value = -1
+      navIdx.value = -1
+    }
+  }, 160)
+}
+
+function onSearchInput(idx) {
+  activeSearchIdx.value = idx
+  navIdx.value = -1
+  updateResults(idx)
+  positionPortal(idx)
+}
+
+function updateResults(idx) {
+  searchResults.value = filteredBySearch(form.value.items[idx]._search)
+}
+
+function positionPortal(idx) {
+  const el = document.getElementById(`psw-${idx}`)
+  if (!el) return
+  const r = el.getBoundingClientRect()
+  portalStyle.value = {
+    position: 'fixed',
+    top: r.bottom + 4 + 'px',
+    left: r.left + 'px',
+    width: Math.max(r.width, 340) + 'px',
+    zIndex: 9999,
   }
-  const p = productsStore.getById(pid)
-  if (!p) return
+}
+
+function navDown() { navIdx.value = Math.min(navIdx.value + 1, searchResults.value.length - 1) }
+function navUp()   { navIdx.value = Math.max(navIdx.value - 1, 0) }
+function navEnter(idx) {
+  if (navIdx.value >= 0 && searchResults.value[navIdx.value]) {
+    selectResult(idx, searchResults.value[navIdx.value])
+  }
+}
+
+function selectResult(idx, p) {
+  activeSearchIdx.value = -1
+  navIdx.value = -1
+  const item = form.value.items[idx]
+  item._productId = p._id
+  item._search = ''
   item.nombre = p.name
   item.codigo = p.code || ''
   item._colors = p.colors || []
   item.color = item._colors.length ? item._colors[0] : ''
   item.unidad = p.unidadPrecio || 'unidad'
-  item.precioUnitario = p.precioGrupoI ?? p.pricePerM2 ?? 0
+
+  const base = p.precioGrupoI ?? p.pricePerM2 ?? 0
+  item._basePrice = base
+  item._discountPct = 0
+  item._discountLabel = 'Sin descuento'
+  item.precioUnitario = base
+
+  const grupo = grupos.value.find(g => g.nombre === p.grupo)
+  item._groupDescuentos = grupo?.descuentos || []
+
+  recalc(idx)
+}
+
+function clearProduct(idx) {
+  const item = form.value.items[idx]
+  Object.assign(item, emptyItem())
+}
+
+// ── Descuentos ────────────────────────────────────────────────────────────────
+function discountOptions(descuentos) {
+  const opts = [{ label: 'Sin descuento', pct: 0 }]
+  if (!descuentos?.length) return opts
+  for (const t of descuentos) {
+    const from = t.desdeHojas
+    const to = t.hastaHojas
+    const range = to != null ? `${from}–${to} uds.` : `+${from - 1} uds.`
+    if (t.porcCantidad) {
+      opts.push({ label: `${range} · ${t.porcCantidad}% (cantidad)`, pct: t.porcCantidad })
+    }
+    if (t.porcCantidadContado) {
+      opts.push({
+        label: `${range} · ${fmtPct(t.porcCantidadContado)}% (cant.+contado)`,
+        pct: t.porcCantidadContado,
+      })
+    }
+    if (t.porcCantidad30dias) {
+      opts.push({
+        label: `${range} · ${fmtPct(t.porcCantidad30dias)}% (cant.+30días)`,
+        pct: t.porcCantidad30dias,
+      })
+    }
+  }
+  return opts
+}
+
+function onDiscountChange(idx) {
+  const item = form.value.items[idx]
+  const opts = discountOptions(item._groupDescuentos)
+  const selected = opts.find(o => o.label === item._discountLabel)
+  const pct = selected?.pct ?? 0
+  item._discountPct = pct
+  item.precioUnitario = Number((item._basePrice * (1 - pct / 100)).toFixed(2))
   recalc(idx)
 }
 
@@ -503,6 +683,8 @@ function buildPayload() {
       precioUnitario: it.precioUnitario,
       descripcion: it.descripcion,
       subtotal: it.subtotal,
+      discountLabel: it._discountLabel !== 'Sin descuento' ? it._discountLabel : '',
+      discountPct: it._discountPct || 0,
     })),
     descripcionGeneral: form.value.descripcionGeneral,
   }
@@ -547,7 +729,6 @@ async function saveAndPrint() {
   }
 }
 
-// ── Imprimir cotización existente ────────────────────────────────────────────
 async function openPrint(q) {
   quoteToPrint.value = q
   await nextTick()
@@ -571,27 +752,24 @@ function fmtDate(d) {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
-
 function validezFecha(createdAt, dias = 7) {
   if (!createdAt) return '—'
   const d = new Date(createdAt)
   d.setDate(d.getDate() + (dias || 7))
   return fmtDate(d.toISOString())
 }
-
 function fmtMoney(v) {
   if (v == null || isNaN(v)) return '—'
-  return '$ ' + Number(v).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return '$ ' + Number(v).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
-
-const ESTADO_LABELS = {
-  borrador: 'Borrador',
-  enviada: 'Enviada',
-  aceptada: 'Aceptada',
-  rechazada: 'Rechazada',
+function fmtPct(v) {
+  return Number(v).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
 }
+function totalCotizacion(q) {
+  return (q.items || []).reduce((s, i) => s + (i.subtotal || 0), 0)
+}
+const ESTADO_LABELS = { borrador: 'Borrador', enviada: 'Enviada', aceptada: 'Aceptada', rechazada: 'Rechazada' }
 function labelEstado(e) { return ESTADO_LABELS[e] || e }
-
 function hasCliente(q) {
   return !!(q.cliente?.nombre || q.cliente?.empresa || q.cliente?.email || q.cliente?.telefono)
 }
@@ -623,7 +801,7 @@ function hasCliente(q) {
 /* ── Badges estado ── */
 .badge-estado { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 0.18rem 0.55rem; border-radius: 999px; }
 .badge-estado.borrador { background: rgba(107,142,58,0.1); color: #557030; }
-.badge-estado.enviada { background: rgba(59,130,246,0.12); color: #1d4ed8; }
+.badge-estado.enviada  { background: rgba(59,130,246,0.12); color: #1d4ed8; }
 .badge-estado.aceptada { background: rgba(16,185,129,0.12); color: #065f46; }
 .badge-estado.rechazada { background: rgba(239,68,68,0.12); color: #991b1b; }
 
@@ -637,89 +815,123 @@ function hasCliente(q) {
 .form-section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-primary, #6b8e3a); padding-bottom: 0.4rem; border-bottom: 1px solid rgba(107,142,58,0.18); }
 .section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted); margin-top: 0.3rem; }
 
-/* Grid de campos */
 .form-grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.85rem; }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
 .field.full { grid-column: 1 / -1; }
 .field label { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--color-muted); }
 .disabled-input { background: rgba(0,0,0,0.04); cursor: default; }
 
-/* Colapsible cliente */
 .collapsible-header { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--color-text); padding: 0.45rem 0; user-select: none; }
 .collapsible-body { padding-top: 0.25rem; }
 .optional-tag { font-size: 0.78rem; font-weight: 400; color: var(--color-muted); font-style: italic; }
 
-/* Tabla items */
+/* ── Tabla items ── */
 .items-scroll { overflow-x: auto; border: 1px solid rgba(107,142,58,0.14); border-radius: 12px; }
-.items-table { width: 100%; border-collapse: collapse; min-width: 860px; font-size: 0.83rem; }
-.items-table thead th { background: rgba(240,245,233,0.97); padding: 0.45rem 0.6rem; font-size: 0.71rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); font-weight: 700; text-align: left; }
-.item-row td { padding: 0.3rem 0.4rem; border-top: 1px solid rgba(107,142,58,0.08); vertical-align: middle; }
+.items-table { width: 100%; border-collapse: collapse; min-width: 1060px; font-size: 0.83rem; }
+.items-table thead th { background: rgba(240,245,233,0.97); padding: 0.45rem 0.6rem; font-size: 0.71rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); font-weight: 700; text-align: left; white-space: nowrap; }
+.item-row td { padding: 0.35rem 0.45rem; border-top: 1px solid rgba(107,142,58,0.08); vertical-align: top; }
 
-.col-producto { min-width: 200px; }
-.col-color { min-width: 100px; }
-.col-qty { width: 70px; }
-.col-unit { width: 90px; }
-.col-price { width: 110px; }
-.col-desc { min-width: 140px; }
-.col-sub { width: 100px; text-align: right; }
-.col-del { width: 36px; text-align: center; }
+.col-producto { min-width: 220px; }
+.col-color  { min-width: 95px; }
+.col-qty    { width: 68px; }
+.col-unit   { width: 80px; }
+.col-disc   { min-width: 190px; }
+.col-price  { min-width: 120px; }
+.col-desc   { min-width: 130px; }
+.col-sub    { width: 100px; text-align: right; }
+.col-del    { width: 34px; text-align: center; }
 
-.sel-producto { width: 100%; font-size: 0.8rem; }
-.manual-name { width: 100%; margin-top: 0.25rem; font-size: 0.8rem; }
-.item-code { display: block; font-size: 0.7rem; color: var(--color-muted); margin-top: 0.15rem; }
-.sel-color, .sel-unit { width: 100%; font-size: 0.8rem; }
-.input-color { width: 100%; font-size: 0.8rem; }
+/* ── Buscador de producto ── */
+.psw { display: flex; flex-direction: column; gap: 0.25rem; }
+.psw-input-wrap { position: relative; }
+.psw-icon { position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--color-muted); pointer-events: none; }
+.psw-input { width: 100%; padding: 0.3rem 0.4rem 0.3rem 1.6rem; font-size: 0.8rem; border: 1px solid rgba(107,142,58,0.25); border-radius: 7px; background: #fff; box-sizing: border-box; }
+.psw-input:focus { outline: none; border-color: var(--color-primary, #6b8e3a); box-shadow: 0 0 0 2px rgba(107,142,58,0.12); }
+.psw-manual { width: 100%; padding: 0.28rem 0.4rem; font-size: 0.78rem; border: 1px dashed rgba(107,142,58,0.3); border-radius: 7px; background: rgba(107,142,58,0.03); color: var(--color-muted); box-sizing: border-box; }
+.psw-manual:focus { outline: none; border-color: rgba(107,142,58,0.5); background: #fff; color: var(--color-text); }
+
+/* ── Producto seleccionado ── */
+.selected-product { display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.25rem 0; }
+.sp-name { font-size: 0.82rem; font-weight: 600; line-height: 1.3; flex: 1; }
+.sp-code { font-size: 0.7rem; color: var(--color-muted); background: rgba(107,142,58,0.1); padding: 0.1rem 0.4rem; border-radius: 4px; white-space: nowrap; align-self: flex-start; margin-top: 0.15rem; }
+.sp-clear { background: none; border: none; padding: 0.1rem 0.25rem; cursor: pointer; color: var(--color-muted); border-radius: 4px; line-height: 1; font-size: 1rem; }
+.sp-clear:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+/* ── Descuento ── */
+.sel-disc { width: 100%; font-size: 0.78rem; padding: 0.28rem 0.4rem; border: 1px solid rgba(107,142,58,0.2); border-radius: 7px; }
+.sel-disc:disabled { opacity: 0.45; cursor: not-allowed; }
+.disc-badge { display: inline-block; margin-top: 0.25rem; font-size: 0.7rem; font-weight: 700; color: #fff; background: #6b8e3a; border-radius: 4px; padding: 0.1rem 0.35rem; }
+.base-price-hint { display: block; font-size: 0.69rem; color: var(--color-muted); margin-top: 0.2rem; text-decoration: line-through; }
+
+/* ── Campos genéricos en tabla ── */
+.sel-small, .input-small { width: 100%; font-size: 0.8rem; padding: 0.3rem 0.4rem; }
 .input-num { width: 100%; font-size: 0.82rem; }
-.input-desc { width: 100%; font-size: 0.8rem; }
-.subtotal-cell { font-weight: 700; font-size: 0.82rem; white-space: nowrap; }
+.subtotal-cell { font-weight: 700; font-size: 0.82rem; white-space: nowrap; padding-top: 0.55rem !important; }
 
 .input-prefix-wrap { position: relative; }
 .input-prefix { position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--color-muted); pointer-events: none; }
 .has-prefix { padding-left: 1.3rem !important; }
 
-.del-row-btn { background: none; border: none; padding: 0.2rem 0.35rem; border-radius: 6px; cursor: pointer; color: #dc2626; opacity: 0.6; transition: opacity 0.15s, background 0.15s; }
+.del-row-btn { background: none; border: none; padding: 0.2rem 0.3rem; border-radius: 6px; cursor: pointer; color: #dc2626; opacity: 0.5; transition: opacity 0.15s, background 0.15s; margin-top: 0.3rem; }
 .del-row-btn:hover { opacity: 1; background: rgba(239,68,68,0.08); }
 
-.add-row-btn { align-self: flex-start; background: none; border: 1px dashed rgba(107,142,58,0.4); color: var(--color-primary, #6b8e3a); border-radius: 8px; padding: 0.4rem 0.85rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s; display: flex; align-items: center; gap: 0.4rem; }
+.add-row-btn { align-self: flex-start; background: none; border: 1px dashed rgba(107,142,58,0.4); color: var(--color-primary, #6b8e3a); border-radius: 8px; padding: 0.4rem 0.85rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: background 0.15s, border-color 0.15s; }
 .add-row-btn:hover { background: rgba(107,142,58,0.07); border-color: rgba(107,142,58,0.7); }
 
-/* Total */
+/* ── Total ── */
 .total-row { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; padding: 0.6rem 0.85rem; background: rgba(107,142,58,0.07); border-radius: 10px; }
 .total-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted); }
 .total-value { font-size: 1.1rem; font-weight: 800; color: var(--color-primary, #6b8e3a); }
 
-/* Footer form */
+/* ── Footer form ── */
 .form-footer { display: flex; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(107,142,58,0.12); }
 
-/* ── IMPRESIÓN ── */
+/* ── Print doc: oculto en pantalla ── */
 .print-doc { display: none; }
 </style>
 
+<!-- ── Portal del buscador (global, fuera del scoped) ── -->
 <style>
-/* ── Media print (global para afectar App.vue) ── */
+.psw-portal {
+  background: #fff;
+  border: 1px solid rgba(107,142,58,0.25);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.psw-option {
+  display: grid;
+  grid-template-columns: 90px 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid rgba(107,142,58,0.07);
+  font-size: 0.82rem;
+}
+.psw-option:last-child { border-bottom: none; }
+.psw-option:hover, .psw-option--active { background: rgba(107,142,58,0.08); }
+.pso-code { font-weight: 700; font-size: 0.77rem; color: var(--color-primary, #6b8e3a); white-space: nowrap; font-family: monospace; }
+.pso-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pso-grupo { font-size: 0.72rem; color: var(--color-muted); white-space: nowrap; }
+.pso-esp { font-size: 0.7rem; font-weight: 700; background: rgba(107,142,58,0.12); color: #557030; padding: 0.1rem 0.35rem; border-radius: 4px; white-space: nowrap; }
+</style>
+
+<!-- ── Media print (global para afectar App.vue) ── -->
+<style>
 @media print {
-  /* Ocultar toda la interfaz */
   .no-print,
   .sidebar,
   .mobile-toggle,
   .sidebar-backdrop,
   .notification-bell-container { display: none !important; }
 
-  /* Resetear el layout fijo */
-  html, body, #app {
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
+  html, body, #app { height: auto !important; max-height: none !important; overflow: visible !important; }
+  main.app-content { margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
 
-  main.app-content {
-    margin: 0 !important;
-    padding: 0 !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  /* Mostrar el doc de impresión */
   .print-doc {
     display: block !important;
     font-family: 'Inter', Arial, sans-serif;
@@ -729,70 +941,22 @@ function hasCliente(q) {
     line-height: 1.5;
   }
 
-  /* Header impresión */
-  .print-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 1.2rem;
-    border-bottom: 2px solid #5a7a2a;
-    padding-bottom: 0.9rem;
-    gap: 1rem;
-  }
-
+  .print-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.2rem; border-bottom: 2px solid #5a7a2a; padding-bottom: 0.9rem; gap: 1rem; }
   .print-logo { height: 70px; width: auto; object-fit: contain; }
-
   .print-company { text-align: right; }
-
-  .print-doc-title {
-    font-size: 20pt;
-    font-weight: 800;
-    color: #5a7a2a;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.4rem;
-  }
-
+  .print-doc-title { font-size: 20pt; font-weight: 800; color: #5a7a2a; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
   .print-meta-table { font-size: 9pt; border-collapse: collapse; }
   .print-meta-table td { padding: 0.05rem 0.4rem; }
   .print-meta-table td:first-child { color: #666; text-align: right; }
 
-  /* Título cotización */
-  .print-titulo {
-    font-size: 13pt;
-    font-weight: 700;
-    margin: 0.8rem 0 0.6rem;
-    color: #222;
-  }
+  .print-titulo { font-size: 13pt; font-weight: 700; margin: 0.8rem 0 0.6rem; color: #222; }
 
-  /* Destinatario */
-  .print-client-box {
-    background: #f5f7f0;
-    border: 1px solid #d4dfc8;
-    border-radius: 6px;
-    padding: 0.6rem 0.9rem;
-    margin-bottom: 0.9rem;
-  }
-
-  .print-section-label {
-    font-size: 7.5pt;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #5a7a2a;
-    margin-bottom: 0.3rem;
-  }
-
+  .print-client-box { background: #f5f7f0; border: 1px solid #d4dfc8; border-radius: 6px; padding: 0.6rem 0.9rem; margin-bottom: 0.9rem; }
+  .print-section-label { font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #5a7a2a; margin-bottom: 0.3rem; }
   .print-client-name { font-weight: 700; font-size: 10.5pt; }
   .print-client-detail { font-size: 9pt; color: #444; }
 
-  /* Tabla items */
-  .print-items {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 0.9rem;
-    font-size: 9pt;
-  }
-
+  .print-items { width: 100%; border-collapse: collapse; margin-bottom: 0.9rem; font-size: 9pt; }
   .print-items thead tr { background: #5a7a2a; color: #fff; }
   .print-items thead th { padding: 0.4rem 0.6rem; text-align: left; font-weight: 700; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.05em; }
   .print-items tbody tr:nth-child(even) { background: #f9fbf6; }
@@ -800,40 +964,23 @@ function hasCliente(q) {
 
   .pi-name { display: block; font-weight: 600; }
   .pi-code { display: block; font-size: 8pt; color: #777; }
-  .pi-product { min-width: 140px; }
-  .pi-color { width: 80px; }
-  .pi-qty { width: 45px; text-align: right; }
-  .pi-unit { width: 55px; }
-  .pi-price { width: 75px; text-align: right; }
-  .pi-desc { color: #555; }
-  .pi-sub { width: 80px; text-align: right; font-weight: 600; }
+  .pi-product { min-width: 130px; }
+  .pi-color  { width: 70px; }
+  .pi-qty    { width: 40px; text-align: right; }
+  .pi-unit   { width: 50px; }
+  .pi-disc   { width: 100px; font-size: 8pt; color: #555; }
+  .pi-price  { width: 75px; text-align: right; }
+  .pi-desc   { color: #555; }
+  .pi-sub    { width: 80px; text-align: right; font-weight: 600; }
 
   .print-total-row { background: #5a7a2a !important; color: #fff; }
   .print-total-label { text-align: right; font-weight: 700; font-size: 10pt; padding: 0.45rem 0.6rem; }
   .print-total-value { text-align: right; font-weight: 800; font-size: 11pt; padding: 0.45rem 0.6rem; white-space: nowrap; }
 
-  /* Notas */
   .print-notes { margin-bottom: 0.8rem; }
   .print-notes-text { font-size: 9pt; color: #444; white-space: pre-line; margin: 0.3rem 0 0; }
 
-  /* Validez */
-  .print-validity {
-    font-size: 8.5pt;
-    color: #555;
-    border-top: 1px solid #d4dfc8;
-    padding-top: 0.5rem;
-    margin-bottom: 0.5rem;
-    font-style: italic;
-  }
-
-  /* Footer impresión */
-  .print-footer {
-    font-size: 8pt;
-    color: #888;
-    text-align: right;
-    border-top: 1px solid #e0e0e0;
-    padding-top: 0.4rem;
-    margin-top: 0.4rem;
-  }
+  .print-validity { font-size: 8.5pt; color: #555; border-top: 1px solid #d4dfc8; padding-top: 0.5rem; margin-bottom: 0.5rem; font-style: italic; }
+  .print-footer { font-size: 8pt; color: #888; text-align: right; border-top: 1px solid #e0e0e0; padding-top: 0.4rem; margin-top: 0.4rem; }
 }
 </style>

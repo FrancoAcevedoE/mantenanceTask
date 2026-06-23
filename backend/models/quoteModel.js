@@ -10,6 +10,8 @@ const itemSchema = new mongoose.Schema({
   precioUnitario: { type: Number, default: 0, min: 0 },
   descripcion: { type: String, default: '' },
   subtotal: { type: Number, default: 0 },
+  discountLabel: { type: String, default: '' },
+  discountPct: { type: Number, default: 0 },
 }, { _id: false })
 
 const clienteSchema = new mongoose.Schema({
