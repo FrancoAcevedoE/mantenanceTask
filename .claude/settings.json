@@ -47,7 +47,8 @@
       "Bash(lsof -i :3000 -sTCP:LISTEN)",
       "Bash(lsof -i :5173 -sTCP:LISTEN)",
       "Bash(node scripts/seedProducts.js)",
-      "Bash(xargs cat)"
+      "Bash(xargs cat)",
+      "Bash(MONGODB_URI=\"mongodb+srv://dbTool:Powerade3121@cluster0.ihztqvq.mongodb.net/mantenanceDB?retryWrites=true&w=majority\" node scripts/seedProducts.js)"
     ]
   }
 }

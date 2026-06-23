@@ -11,18 +11,22 @@
         inputmode="numeric"
         maxlength="8"
         placeholder="DNI"
+        @keyup.enter="$refs.passwordInput.focus()"
       />
 
       <input
+        ref="passwordInput"
         v-model="password"
         type="password"
         inputmode="numeric"
         maxlength="4"
         placeholder="Contraseña"
+        @keyup.enter="login"
       />
 
-      <button @click="login">
-        Ingresar
+      <button @click="login" :disabled="loading" class="login-btn">
+        <span v-if="loading" class="btn-spinner"></span>
+        <span v-else>Ingresar</span>
       </button>
 
       <p v-if="error" class="error">
@@ -75,6 +79,7 @@ export default {
       dni:"",
       password:"",
       error:null,
+      loading: false,
       pwaUrl: PWA_URL,
       qrUrl: ""
     }
@@ -82,6 +87,8 @@ export default {
 
   methods:{
     async login(){
+      if (this.loading) return
+
       this.dni = this.dni.replace(/\D/g, "").slice(0, 8)
       this.password = this.password.replace(/\D/g, "").slice(0, 4)
 
@@ -95,8 +102,9 @@ export default {
         return
       }
 
+      this.loading = true
+      this.error = null
       try{
-        this.error = null
         const response = await axios.post(`${API_BASE_URL}/users/login`,{
           dni:this.dni,
           password:this.password
@@ -112,7 +120,9 @@ export default {
       catch(err){
         this.error = null
         this.$notify.notifyApiError(err, "Usuario o contraseña incorrectos")
-
+      }
+      finally{
+        this.loading = false
       }
 
     }
@@ -340,6 +350,34 @@ input:focus {
   text-align: center;
 
   line-height: 1.3;
+}
+
+/* =========================
+   LOGIN BUTTON
+========================= */
+
+.login-btn {
+  position: relative;
+  min-height: 44px;
+}
+
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* =========================
