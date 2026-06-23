@@ -39,13 +39,12 @@ const quoteSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 })
 
-quoteSchema.pre('save', async function (next) {
+quoteSchema.pre('save', async function () {
   if (this.isNew && !this.numero) {
     const last = await this.constructor.findOne({}, { numero: 1 }, { sort: { numero: -1 } })
     this.numero = last ? last.numero + 1 : 1
   }
   this.updatedAt = new Date()
-  next()
 })
 
 export default mongoose.model("Quote", quoteSchema)
