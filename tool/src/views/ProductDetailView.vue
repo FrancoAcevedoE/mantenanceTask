@@ -45,37 +45,50 @@
             <span v-if="product.grupo" class="grupo-badge">{{ product.grupo }}</span>
           </div>
 
-          <div class="detail-price-row">
-            <div class="price-card">
-              <span class="price-label">Precio por m²</span>
-              <span class="price-value">${{ formatPrice(product.pricePerM2) }}</span>
-            </div>
-            <div class="stock-card" :class="stockClass(product.stock)">
-              <span class="price-label">Stock</span>
-              <span class="price-value">{{ product.stock ?? 0 }}</span>
+          <!-- Precios -->
+          <div class="prices-section">
+            <h4 class="section-label">Precios <span class="unit-note">(por {{ product.unidadPrecio || 'm²' }})</span></h4>
+            <div class="detail-price-row">
+              <div v-if="product.precioGrupoI != null" class="price-card">
+                <span class="price-label">Grupo I</span>
+                <span class="price-value">${{ formatPrice(product.precioGrupoI) }}</span>
+              </div>
+              <div v-if="product.precioGrupoII != null" class="price-card">
+                <span class="price-label">Grupo II</span>
+                <span class="price-value">${{ formatPrice(product.precioGrupoII) }}</span>
+              </div>
+              <div v-if="product.precioGrupoIII != null" class="price-card">
+                <span class="price-label">Grupo III</span>
+                <span class="price-value">${{ formatPrice(product.precioGrupoIII) }}</span>
+              </div>
+              <div v-if="product.precioEscolares != null" class="price-card price-card--school">
+                <span class="price-label">Escolares</span>
+                <span class="price-value">${{ formatPrice(product.precioEscolares) }}</span>
+              </div>
+              <div v-if="product.pricePerM2 != null" class="price-card price-card--m2">
+                <span class="price-label">Por m²</span>
+                <span class="price-value">${{ formatPrice(product.pricePerM2) }}</span>
+              </div>
+              <div class="stock-card" :class="stockClass(product.stock)">
+                <span class="price-label">Stock</span>
+                <span class="price-value">{{ product.stock ?? 0 }}</span>
+              </div>
             </div>
           </div>
 
+          <!-- Atributos -->
           <div class="detail-grid">
             <div class="detail-item">
               <span class="di-label">Código</span>
-              <span class="di-value">{{ product.code || '—' }}</span>
+              <span class="di-value mono">{{ product.code || '—' }}</span>
             </div>
             <div class="detail-item">
               <span class="di-label">Descripción</span>
               <span class="di-value">{{ product.name || '—' }}</span>
             </div>
             <div class="detail-item">
-              <span class="di-label">Color</span>
-              <span class="di-value">{{ product.colors?.[0] || '—' }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="di-label">Código color</span>
-              <span class="di-value">{{ product.colorCode || '—' }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="di-label">Textura</span>
-              <span class="di-value">{{ product.textura || '—' }}</span>
+              <span class="di-label">Tipo</span>
+              <span class="di-value">{{ product.tipo || '—' }}</span>
             </div>
             <div class="detail-item">
               <span class="di-label">Terminación</span>
@@ -90,23 +103,28 @@
               <span class="di-value">{{ product.thicknesses?.join(', ') || '—' }}</span>
             </div>
             <div class="detail-item">
-              <span class="di-label">m² por placa</span>
-              <span class="di-value">{{ product.m2PerPlaca ?? '—' }}</span>
+              <span class="di-label">Unidad precio</span>
+              <span class="di-value">{{ product.unidadPrecio || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="di-label">Producción mínima</span>
+              <span class="di-value">{{ product.produccionMinima ?? '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="di-label">Admite descuentos</span>
+              <span class="di-value">
+                <span :class="product.admiteDescuentos ? 'badge-yes' : 'badge-no'">
+                  {{ product.admiteDescuentos ? 'Sí' : 'No' }}
+                </span>
+              </span>
             </div>
             <div class="detail-item">
               <span class="di-label">Grupo</span>
               <span class="di-value">{{ product.grupo || '—' }}</span>
             </div>
-          </div>
-
-          <!-- Discounts -->
-          <div v-if="product.discounts?.length" class="discounts-section">
-            <h4 class="section-label">Descuentos por volumen</h4>
-            <div class="discounts-grid">
-              <div v-for="d in product.discounts" :key="d._id" class="discount-card">
-                <span class="disc-qty">≥ {{ d.quantity }} m²</span>
-                <span class="disc-pct">{{ d.discountPercent }}% off</span>
-              </div>
+            <div v-if="product.comentario" class="detail-item full-width">
+              <span class="di-label">Comentario</span>
+              <span class="di-value">{{ product.comentario }}</span>
             </div>
           </div>
 
@@ -279,9 +297,12 @@ function stockClass(stock) {
   flex-wrap: wrap;
 }
 
+.prices-section { display: flex; flex-direction: column; gap: 0.6rem; }
+.unit-note { font-size: 0.75rem; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--color-muted); }
+
 .price-card, .stock-card {
-  flex: 1 1 140px;
-  padding: 1rem 1.2rem;
+  flex: 1 1 120px;
+  padding: 0.9rem 1.1rem;
   border-radius: 18px;
   border: 1px solid rgba(107,142,58,0.16);
   background: rgba(107,142,58,0.07);
@@ -289,6 +310,9 @@ function stockClass(stock) {
   flex-direction: column;
   gap: 0.25rem;
 }
+
+.price-card--school { background: rgba(59,130,246,0.07); border-color: rgba(59,130,246,0.18); }
+.price-card--m2 { background: rgba(107,142,58,0.04); border-color: rgba(107,142,58,0.1); }
 
 .stock-card--ok { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.2); }
 .stock-card--warning { background: rgba(234,179,8,0.08); border-color: rgba(234,179,8,0.25); }
@@ -315,6 +339,29 @@ function stockClass(stock) {
 
 .di-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted); }
 .di-value { font-size: 0.95rem; font-weight: 600; color: var(--color-text); }
+.di-value.mono { font-family: 'Courier New', monospace; }
+
+.full-width { grid-column: 1 / -1; }
+
+.badge-yes {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(34,197,94,0.12);
+  color: #15803d;
+}
+
+.badge-no {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(239,68,68,0.12);
+  color: #b91c1c;
+}
 
 .discounts-grid {
   display: flex;

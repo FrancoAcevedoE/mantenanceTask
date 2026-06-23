@@ -35,15 +35,10 @@ export const useProductsStore = defineStore('products', () => {
     loading.value = true
     error.value = null
     try {
-      const token = localStorage.getItem('token')
-      console.log('[products store] fetching, token exists:', !!token)
       const { data } = await axios.get(`${API_BASE_URL}/products`, authHeader())
-      console.log('[products store] response type:', typeof data, Array.isArray(data) ? data.length + ' items' : data)
       products.value = Array.isArray(data) ? data : []
     } catch (err) {
-      const msg = err.response?.data?.message || err.message
-      console.error('[products store] fetch error:', err.response?.status, msg)
-      error.value = msg
+      error.value = err.response?.data?.message || err.message
     } finally {
       loading.value = false
     }

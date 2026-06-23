@@ -103,13 +103,12 @@
                     Código <i :class="sortIcon('code')"></i>
                   </th>
                   <th @click="sortBy('name')" class="sortable">
-                    Descripción <i :class="sortIcon('name')"></i>
+                    Descripción / Tipo / Terminación / Espesor <i :class="sortIcon('name')"></i>
                   </th>
                   <th>Color</th>
                   <th>Medida</th>
-                  <th>Espesor</th>
-                  <th @click="sortBy('pricePerM2')" class="sortable">
-                    Precio/m² <i :class="sortIcon('pricePerM2')"></i>
+                  <th @click="sortBy('precioGrupoI')" class="sortable">
+                    Precio unitario <i :class="sortIcon('precioGrupoI')"></i>
                   </th>
                   <th @click="sortBy('stock')" class="sortable">
                     Stock <i :class="sortIcon('stock')"></i>
@@ -118,60 +117,114 @@
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  v-for="p in paged"
-                  :key="p._id"
-                  :class="{ selected: store.selectedIds.includes(p._id) }"
-                >
-                  <td>
-                    <input
-                      type="checkbox"
-                      :checked="store.selectedIds.includes(p._id)"
-                      @change="store.toggleSelect(p._id)"
-                    />
-                  </td>
-                  <td><code class="code-badge">{{ p.code }}</code></td>
-                  <td class="desc-cell">{{ p.name }}</td>
-                  <td>
-                    <span v-if="p.colors?.length" class="color-chip">
-                      <span class="color-dot" :style="colorStyle(p.colors[0])"></span>
-                      {{ p.colors[0] }}
-                    </span>
-                    <span v-else class="muted">—</span>
-                  </td>
-                  <td>{{ p.dimensions || '—' }}</td>
-                  <td>{{ p.thicknesses?.[0] || '—' }}</td>
-                  <td class="price-cell">${{ formatPrice(p.pricePerM2) }}</td>
-                  <td>
-                    <span :class="stockBadge(p.stock)">{{ p.stock ?? 0 }}</span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <router-link :to="`/product/${p._id}`">
-                        <button class="btn-sm secondary-button"><i class="bi bi-eye"></i></button>
-                      </router-link>
-                      <router-link :to="`/product/${p._id}/edit`">
-                        <button class="btn-sm secondary-button"><i class="bi bi-pencil"></i></button>
-                      </router-link>
-                      <button
-                        class="btn-sm"
-                        :class="store.selectedIds.includes(p._id) ? 'btn-selected' : 'secondary-button'"
-                        @click="store.toggleSelect(p._id)"
-                      >
-                        <i :class="store.selectedIds.includes(p._id) ? 'bi bi-check-square' : 'bi bi-square'"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="paged.length === 0">
-                  <td colspan="9" class="empty-row">Sin resultados para los filtros aplicados.</td>
-                </tr>
+                <!-- Vista agrupada: sin filtro de grupo ni búsqueda -->
+                <template v-if="showGrouped">
+                  <template v-for="group in groupedFiltered" :key="group.grupo">
+                    <tr class="group-header-row">
+                      <td colspan="9" class="group-header-cell">
+                        <i class="bi bi-layers group-icon"></i>
+                        <span class="group-header-label">{{ group.grupo }}</span>
+                        <span class="group-count">{{ group.items.length }} producto{{ group.items.length !== 1 ? 's' : '' }}</span>
+                      </td>
+                    </tr>
+                    <tr
+                      v-for="p in group.items"
+                      :key="p._id"
+                      :class="{ selected: store.selectedIds.includes(p._id) }"
+                    >
+                      <td><input type="checkbox" :checked="store.selectedIds.includes(p._id)" @change="store.toggleSelect(p._id)" /></td>
+                      <td><code class="code-badge">{{ p.code }}</code></td>
+                      <td class="desc-cell">
+                        <span class="desc-name">{{ p.name }}</span>
+                        <span v-if="p.tipo" class="desc-meta">{{ p.tipo }}</span>
+                        <span v-if="p.terminacion" class="desc-meta desc-terminacion">{{ p.terminacion }}</span>
+                        <span v-if="p.thicknesses?.length" class="desc-espesor">{{ p.thicknesses.join(' · ') }}</span>
+                      </td>
+                      <td>
+                        <span v-if="p.colors?.length" class="color-chip">
+                          <span class="color-dot" :style="colorStyle(p.colors[0])"></span>
+                          {{ p.colors[0] }}
+                        </span>
+                        <span v-else class="muted">—</span>
+                      </td>
+                      <td>{{ p.dimensions || '—' }}</td>
+                      <td class="price-cell">
+                        <span v-if="precioBase(p) !== null">
+                          ${{ formatPrice(precioBase(p)) }}
+                          <span class="unit-label">/{{ p.unidadPrecio || 'm²' }}</span>
+                        </span>
+                        <span v-else class="muted">—</span>
+                      </td>
+                      <td><span :class="stockBadge(p.stock)">{{ p.stock ?? 0 }}</span></td>
+                      <td>
+                        <div class="action-buttons">
+                          <router-link :to="`/product/${p._id}`">
+                            <button class="btn-sm secondary-button"><i class="bi bi-eye"></i></button>
+                          </router-link>
+                          <router-link :to="`/product/${p._id}/edit`">
+                            <button class="btn-sm secondary-button"><i class="bi bi-pencil"></i></button>
+                          </router-link>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                  <tr v-if="groupedFiltered.length === 0">
+                    <td colspan="8" class="empty-row">Sin resultados para los filtros aplicados.</td>
+                  </tr>
+                </template>
+
+                <!-- Vista plana paginada: con filtro o búsqueda activos -->
+                <template v-else>
+                  <tr
+                    v-for="p in paged"
+                    :key="p._id"
+                    :class="{ selected: store.selectedIds.includes(p._id) }"
+                  >
+                    <td><input type="checkbox" :checked="store.selectedIds.includes(p._id)" @change="store.toggleSelect(p._id)" /></td>
+                    <td><code class="code-badge">{{ p.code }}</code></td>
+                    <td class="desc-cell">
+                      <span class="desc-name">{{ p.name }}</span>
+                      <span v-if="p.tipo" class="desc-meta">{{ p.tipo }}</span>
+                      <span v-if="p.terminacion" class="desc-meta desc-terminacion">{{ p.terminacion }}</span>
+                      <span v-if="p.thicknesses?.length" class="desc-espesor">{{ p.thicknesses.join(' · ') }}</span>
+                    </td>
+                    <td>
+                      <span v-if="p.colors?.length" class="color-chip">
+                        <span class="color-dot" :style="colorStyle(p.colors[0])"></span>
+                        {{ p.colors[0] }}
+                      </span>
+                      <span v-else class="muted">—</span>
+                    </td>
+                    <td>{{ p.dimensions || '—' }}</td>
+                    <td class="price-cell">
+                      <span v-if="precioBase(p) !== null">
+                        ${{ formatPrice(precioBase(p)) }}
+                        <span class="unit-label">/{{ p.unidadPrecio || 'm²' }}</span>
+                      </span>
+                      <span v-else class="muted">—</span>
+                    </td>
+                    <td><span :class="stockBadge(p.stock)">{{ p.stock ?? 0 }}</span></td>
+                    <td>
+                      <div class="action-buttons">
+                        <router-link :to="`/product/${p._id}`">
+                          <button class="btn-sm secondary-button"><i class="bi bi-eye"></i></button>
+                        </router-link>
+                        <router-link :to="`/product/${p._id}/edit`">
+                          <button class="btn-sm secondary-button"><i class="bi bi-pencil"></i></button>
+                        </router-link>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="paged.length === 0">
+                    <td colspan="8" class="empty-row">Sin resultados para los filtros aplicados.</td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
 
-          <!-- Pagination -->
-          <div class="pagination" v-if="totalPages > 1">
+          <!-- Pagination: solo en vista plana -->
+          <div class="pagination" v-if="!showGrouped && totalPages > 1">
             <button class="secondary-button" :disabled="page === 1" @click="page--">
               <i class="bi bi-chevron-left"></i>
             </button>
@@ -209,6 +262,13 @@ const filters = ref({
   espesor: ''
 })
 
+const GRUPO_ORDER = [
+  'Laminado Decorativo', 'Kariplac MDP', 'Kariplac MDF', 'Kariplac H y MAX',
+  'Kompak', 'Kompak Unicolor', 'Acustik', 'Top Floor Pisos', 'Top Wall',
+  'Top Kit / Solid / Table', 'Coverwall', 'Top Box', 'Panel Expositor / Top Rack',
+  'Karystyle', 'Kariform'
+]
+
 onMounted(() => {
   if (!store.products.length) store.fetchProducts()
 })
@@ -226,8 +286,13 @@ const filtered = computed(() => {
     list = list.filter(p =>
       p.code?.toLowerCase().includes(q) ||
       p.name?.toLowerCase().includes(q) ||
+      p.tipo?.toLowerCase().includes(q) ||
+      p.terminacion?.toLowerCase().includes(q) ||
+      p.grupo?.toLowerCase().includes(q) ||
+      p.dimensions?.toLowerCase().includes(q) ||
+      p.comentario?.toLowerCase().includes(q) ||
       p.colors?.some(c => c.toLowerCase().includes(q)) ||
-      p.dimensions?.toLowerCase().includes(q)
+      p.thicknesses?.some(t => t.toLowerCase().includes(q))
     )
   }
 
@@ -246,23 +311,40 @@ const filtered = computed(() => {
   })
 })
 
+// Mostrar vista agrupada cuando no hay filtro de grupo ni búsqueda activa
+const showGrouped = computed(() => !filters.value.grupo && !search.value.trim())
+
+const groupedFiltered = computed(() => {
+  const map = {}
+  for (const p of filtered.value) {
+    const g = p.grupo || 'Sin grupo'
+    if (!map[g]) map[g] = []
+    map[g].push(p)
+  }
+  const ordered = GRUPO_ORDER.filter(g => map[g]).map(g => ({ grupo: g, items: map[g] }))
+  const extra = Object.keys(map).filter(g => !GRUPO_ORDER.includes(g)).map(g => ({ grupo: g, items: map[g] }))
+  return [...ordered, ...extra]
+})
+
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
 const paged = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize))
 
 watch(filtered, () => { page.value = 1 })
 
-const allSelected = computed(() =>
-  paged.value.length > 0 && paged.value.every(p => store.selectedIds.includes(p._id))
-)
+const allSelected = computed(() => {
+  const rows = showGrouped.value ? filtered.value : paged.value
+  return rows.length > 0 && rows.every(p => store.selectedIds.includes(p._id))
+})
 
 function toggleAll() {
+  const rows = showGrouped.value ? filtered.value : paged.value
   if (allSelected.value) {
-    paged.value.forEach(p => {
+    rows.forEach(p => {
       const idx = store.selectedIds.indexOf(p._id)
       if (idx !== -1) store.selectedIds.splice(idx, 1)
     })
   } else {
-    paged.value.forEach(p => {
+    rows.forEach(p => {
       if (!store.selectedIds.includes(p._id)) store.selectedIds.push(p._id)
     })
   }
@@ -276,6 +358,15 @@ function sortBy(key) {
 function sortIcon(key) {
   if (sortKey.value !== key) return 'bi bi-chevron-expand text-muted'
   return sortDir.value === 'asc' ? 'bi bi-chevron-up' : 'bi bi-chevron-down'
+}
+
+// Precio unitario a mostrar en la tabla: siempre precioGrupoI como referencia.
+// pricePerM2 queda relegado a la vista de detalle del producto.
+function precioBase(p) {
+  if (p.precioGrupoI != null) return p.precioGrupoI
+  if (p.precioGrupoII != null) return p.precioGrupoII
+  if (p.precioGrupoIII != null) return p.precioGrupoIII
+  return null
 }
 
 function formatPrice(n) {
@@ -429,6 +520,46 @@ function colorStyle(colorName) {
 .inv-table tbody tr:hover { background: rgba(107, 142, 58, 0.04); }
 .inv-table tbody tr.selected { background: rgba(107, 142, 58, 0.1); }
 
+/* Group header rows */
+.group-header-row {
+  background: rgba(107, 142, 58, 0.1) !important;
+}
+
+.group-header-row:hover {
+  background: rgba(107, 142, 58, 0.13) !important;
+}
+
+.group-header-cell {
+  padding: 0.65rem 1rem !important;
+  border-top: 2px solid rgba(107, 142, 58, 0.25);
+}
+
+.group-header-cell:first-child {
+  border-top-left-radius: 0;
+}
+
+.group-icon {
+  color: var(--color-primary, #6b8e3a);
+  margin-right: 0.5rem;
+  font-size: 0.88rem;
+}
+
+.group-header-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-primary, #6b8e3a);
+}
+
+.group-count {
+  margin-left: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
 .sortable { cursor: pointer; user-select: none; }
 .sortable:hover { background: rgba(107, 142, 58, 0.12); }
 
@@ -445,10 +576,43 @@ function colorStyle(colorName) {
 }
 
 .desc-cell {
-  max-width: 240px;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.desc-name {
+  display: block;
+  font-weight: 500;
+  font-size: 0.88rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.desc-meta {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.desc-terminacion {
+  font-style: italic;
+}
+
+.desc-espesor {
+  display: inline-block;
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(107, 142, 58, 0.1);
+  color: var(--color-primary, #6b8e3a);
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
 }
 
 .color-chip {
@@ -460,6 +624,13 @@ function colorStyle(colorName) {
 }
 
 .price-cell { font-weight: 600; white-space: nowrap; }
+
+.unit-label {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--color-muted);
+  margin-left: 1px;
+}
 
 .badge {
   display: inline-block;
@@ -484,6 +655,7 @@ function colorStyle(colorName) {
   color: #fff !important;
 }
 
+.action-buttons { display: flex; gap: 0.35rem; }
 .action-buttons a { text-decoration: none; }
 
 .muted { color: var(--color-muted); }

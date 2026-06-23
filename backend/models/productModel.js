@@ -21,14 +21,54 @@ const productSchema = new mongoose.Schema({
     }],
     pricePerM2: {
         type: Number,
-        required: true
+        default: null
     },
     discounts: [{
         quantity: Number, // min quantity for discount
         discountPercent: Number
     }],
     image: {
-        type: String // path to image
+        type: String
+    },
+    grupo: {
+        type: String
+    },
+    tipo: {
+        type: String
+    },
+    terminacion: {
+        type: String
+    },
+    precioGrupoI: {
+        type: Number
+    },
+    precioGrupoII: {
+        type: Number
+    },
+    precioGrupoIII: {
+        type: Number
+    },
+    precioEscolares: {
+        type: Number
+    },
+    unidadPrecio: {
+        type: String,
+        default: 'm2'
+    },
+    comentario: {
+        type: String
+    },
+    produccionMinima: {
+        type: Number,
+        default: null
+    },
+    admiteDescuentos: {
+        type: Boolean,
+        default: true
+    },
+    stock: {
+        type: Number,
+        default: 0
     },
     createdAt: {
         type: Date,

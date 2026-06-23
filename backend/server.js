@@ -27,6 +27,7 @@ import clientRoutes from './routes/clientRoutes.js'
 import maintenanceRoutes from "./routes/mantenanceRoutes.js"
 import machineRoutes from "./routes/machineRoutes.js"
 import productRoutes from "./routes/productRoutes.js"
+import productGroupRoutes from "./routes/productGroupRoutes.js"
 import quoteRoutes from "./routes/quoteRoutes.js"
 import User from "./models/userModels.js"
 
@@ -126,6 +127,7 @@ app.use("/api/users", userRoutes)
 app.use("/api/maintenance", maintenanceRoutes)
 app.use("/api/machines", machineRoutes)
 app.use("/api/products", productRoutes)
+app.use("/api/product-groups", productGroupRoutes)
 app.use("/api/quotes", quoteRoutes)
 
 app.get("/api/health", (req, res) => {
