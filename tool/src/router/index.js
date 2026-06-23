@@ -13,6 +13,7 @@ import ProductEditView from '@/views/ProductEditView.vue'
 import BulkPriceUpdateView from '@/views/BulkPriceUpdateView.vue'
 import StockManagementView from '@/views/StockManagementView.vue'
 import InventoryDashboardView from '@/views/InventoryDashboardView.vue'
+import CrmView from '@/views/CrmView.vue'
 
 const getStoredUser = () => {
   try {
@@ -73,6 +74,9 @@ const router = createRouter({
     },
     {
       path: '/inv-dashboard', name: 'InventoryDashboard', component: InventoryDashboardView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+    },
+    {
+      path: '/crm', name: 'CRM', component: CrmView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
     }
 
   ]
