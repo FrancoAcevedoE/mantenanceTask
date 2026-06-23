@@ -188,7 +188,7 @@
 
                 <!-- Cantidad -->
                 <td class="col-qty">
-                  <input v-model.number="item.cantidad" type="number" min="0" step="0.01"
+                  <input v-model.number="item.cantidad" type="number" min="1" step="1"
                     class="input-num" @input="recalc(idx)" @focus="$event.target.select()" />
                 </td>
 

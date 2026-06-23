@@ -8,7 +8,7 @@ const itemSchema = new mongoose.Schema({
   terminacion: { type: String, default: '' },
   espesor: { type: String, default: '' },
   color: { type: String, default: '' },
-  cantidad: { type: Number, default: 1, min: 0 },
+  cantidad: { type: Number, default: 1, min: 1 },
   unidad: { type: String, default: 'unidad' },
   precioUnitario: { type: Number, default: 0, min: 0 },
   descripcion: { type: String, default: '' },
