@@ -19,10 +19,13 @@
     </div>
 
     <div class="crm-body">
-      <CrmDashboard v-if="activeTab === 'dashboard'" />
-      <CrmClients   v-else-if="activeTab === 'clientes'" />
-      <CrmPipeline  v-else-if="activeTab === 'pipeline'" />
+      <CrmDashboard  v-if="activeTab === 'dashboard'" />
+      <CrmClients    v-else-if="activeTab === 'clientes'" />
+      <CrmPipeline   v-else-if="activeTab === 'pipeline'" />
       <CrmActivities v-else-if="activeTab === 'actividades'" />
+      <div v-else-if="activeTab === 'cotizaciones'" class="crm-quotes-wrap">
+        <SellerView />
+      </div>
     </div>
   </div>
 </template>
@@ -34,16 +37,18 @@ import CrmDashboard   from '@/components/crm/CrmDashboard.vue'
 import CrmClients     from '@/components/crm/CrmClients.vue'
 import CrmPipeline    from '@/components/crm/CrmPipeline.vue'
 import CrmActivities  from '@/components/crm/CrmActivities.vue'
+import SellerView     from '@/views/sellerView.vue'
 
 const activeTab = ref('dashboard')
 const crmStore  = useCrmStore()
 
 const tabs = computed(() => [
-  { key: 'dashboard',   label: 'Dashboard',   icon: 'bi bi-speedometer2' },
-  { key: 'clientes',    label: 'Clientes',    icon: 'bi bi-people-fill',
+  { key: 'dashboard',    label: 'Dashboard',    icon: 'bi bi-speedometer2' },
+  { key: 'clientes',     label: 'Clientes',     icon: 'bi bi-people-fill',
     badge: crmStore.visibleClients.length || null },
-  { key: 'pipeline',   label: 'Pipeline',    icon: 'bi bi-kanban-fill' },
-  { key: 'actividades', label: 'Actividades', icon: 'bi bi-clock-history',
+  { key: 'pipeline',    label: 'Pipeline',     icon: 'bi bi-kanban-fill' },
+  { key: 'cotizaciones', label: 'Cotizaciones', icon: 'bi bi-file-earmark-text-fill' },
+  { key: 'actividades',  label: 'Actividades',  icon: 'bi bi-clock-history',
     badge: crmStore.pendingActivitiesCount || null, badgeClass: 'crm-tab-badge--warn' },
 ])
 
@@ -57,6 +62,7 @@ onMounted(() => {
   min-height: calc(100vh - 1rem);
   display: flex;
   flex-direction: column;
+  padding-top: 0.4rem;
   padding-bottom: 1.5rem;
   max-width: 100%;
   overflow-x: hidden;
@@ -136,4 +142,8 @@ onMounted(() => {
 .crm-tab-badge--warn { background: #f59e0b; }
 
 .crm-body { flex: 1; }
+
+/* strip the extra page-container / container nesting from sellerView when embedded */
+.crm-quotes-wrap :deep(.page-container) { background: none; padding: 0; }
+.crm-quotes-wrap :deep(.container)      { padding: 1rem 1.25rem; max-width: none; }
 </style>

@@ -1,6 +1,14 @@
 <template>
   <div class="crm-dash">
 
+    <!-- Report trigger -->
+    <div class="dash-actions">
+      <button class="dash-report-btn" @click="showReport = true">
+        <i class="bi bi-file-earmark-bar-graph-fill"></i>
+        Reportes
+      </button>
+    </div>
+
     <!-- Stat cards -->
     <div class="dash-grid">
       <div class="dash-card">
@@ -74,11 +82,13 @@
         </div>
         <div class="pipeline-bars">
           <div v-for="st in STAGES" :key="st.key" class="pb-col">
-            <div class="pb-bar-track">
-              <div
-                class="pb-bar-fill"
-                :style="{ height: barH(st.key), background: st.color }"
-              ></div>
+            <div class="pb-bar-wrap">
+              <div class="pb-bar-track">
+                <div
+                  class="pb-bar-fill"
+                  :style="{ height: barH(st.key), background: st.color }"
+                ></div>
+              </div>
             </div>
             <div class="pb-count" :style="{ color: st.color }">{{ stageN(st.key) }}</div>
             <div class="pb-name">{{ st.shortLabel }}</div>
@@ -124,6 +134,8 @@
     <div v-if="loading" class="dash-overlay">
       <div class="crm-spinner"></div>
     </div>
+
+    <CrmReportBuilder v-if="showReport" :quotes="quotes" @close="showReport = false" />
   </div>
 </template>
 
@@ -132,10 +144,12 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 import { useCrmStore } from '@/stores/crm'
+import CrmReportBuilder from './CrmReportBuilder.vue'
 
-const crmStore = useCrmStore()
-const quotes   = ref([])
-const loading  = ref(false)
+const crmStore     = useCrmStore()
+const quotes       = ref([])
+const loading      = ref(false)
+const showReport   = ref(false)
 
 const STAGES = [
   { key: 'nuevo_lead',        label: 'Nuevo Lead',          shortLabel: 'Lead',    color: '#3b82f6' },
@@ -189,6 +203,36 @@ onMounted(async () => {
 <style scoped>
 .crm-dash { position: relative; }
 
+/* ── Actions bar ── */
+.dash-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.dash-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: rgba(107,142,58,.1);
+  color: var(--color-primary);
+  border: 1.5px solid rgba(107,142,58,.25);
+  box-shadow: none;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 0.18s, border-color 0.18s, transform 0.15s;
+}
+
+.dash-report-btn:hover {
+  background: rgba(107,142,58,.18);
+  border-color: rgba(107,142,58,.45);
+  transform: translateY(-1px);
+}
+
 /* ── Stat grid ── */
 .dash-grid {
   display: grid;
@@ -199,11 +243,11 @@ onMounted(async () => {
 
 .dash-card {
   display: flex;
-  align-items: center;
-  gap: 0.65rem;
+  align-items: flex-start;
+  gap: 0.6rem;
   background: rgba(255,255,255,0.9);
   border-radius: 14px;
-  padding: 0.75rem 0.85rem;
+  padding: 0.7rem 0.75rem;
   box-shadow: 0 2px 10px rgba(42,53,32,.08);
   border: 1px solid rgba(107,142,58,.1);
   min-width: 0;
@@ -215,41 +259,39 @@ onMounted(async () => {
 }
 
 .dash-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.95rem;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .dash-info { min-width: 0; flex: 1; }
 
 .dash-value {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--color-text);
-  line-height: 1;
+  line-height: 1.1;
   font-family: 'Poppins', sans-serif;
   text-transform: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-all;
 }
 
-.dash-value--sm { font-size: 1rem; }
+.dash-value--sm { font-size: 0.95rem; }
 
 .dash-label {
   font-size: 0.62rem;
   color: var(--color-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-top: 0.2rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 0.25rem;
+  line-height: 1.35;
+  white-space: normal;
 }
 
 /* ── Bottom ── */
@@ -281,10 +323,9 @@ onMounted(async () => {
 /* ── Pipeline bar chart ── */
 .pipeline-bars {
   display: flex;
-  align-items: flex-end;
-  gap: 0.6rem;
-  height: 88px;
-  margin-bottom: 0.5rem;
+  align-items: flex-end;   /* alinea columnas desde abajo para que barras crezcan hacia arriba */
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .pb-col {
@@ -292,12 +333,20 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.pb-bar-wrap {
+  width: 100%;
+  height: 72px;           /* altura máxima del gráfico — fija y en el padre */
+  display: flex;
+  align-items: flex-end;  /* barra crece desde abajo */
 }
 
 .pb-bar-track {
   width: 100%;
-  height: 72px;
+  height: 100%;
   display: flex;
   align-items: flex-end;
   background: rgba(107,142,58,.06);
@@ -307,24 +356,30 @@ onMounted(async () => {
 
 .pb-bar-fill {
   width: 100%;
-  border-radius: 6px;
-  transition: height 0.4s ease;
+  border-radius: 4px;
+  transition: height 0.45s ease;
   min-height: 4px;
 }
 
 .pb-count {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   font-family: 'Poppins', sans-serif;
   text-transform: none;
+  line-height: 1.2;
 }
 
 .pb-name {
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   color: var(--color-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.2;
 }
 
 .stage-legend {

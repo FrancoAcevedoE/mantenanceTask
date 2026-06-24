@@ -9,9 +9,14 @@
           <h2 class="page-title">Cotizaciones</h2>
         </div>
         <div class="topbar-right">
-          <button v-if="activeTab === 'list'" class="primary-button" @click="startNew">
-            <i class="bi bi-plus-lg"></i> Nueva cotización
-          </button>
+          <template v-if="activeTab === 'list'">
+            <button class="ghost-button" @click="showPrintEditor = true">
+              <i class="bi bi-pencil-square"></i> Editar impresión
+            </button>
+            <button class="primary-button" @click="startNew">
+              <i class="bi bi-plus-lg"></i> Nueva cotización
+            </button>
+          </template>
           <button v-else class="ghost-button" @click="cancelForm">
             <i class="bi bi-arrow-left"></i> Volver al historial
           </button>
@@ -93,7 +98,33 @@
         <div v-if="showCliente" class="form-grid-2 collapsible-body">
           <div class="field">
             <label>Nombre</label>
-            <input v-model="form.cliente.nombre" type="text" placeholder="Nombre del contacto" />
+            <div style="position:relative">
+              <input
+                v-model="form.cliente.nombre"
+                type="text"
+                placeholder="Nombre del contacto"
+                autocomplete="off"
+                @focus="crmDropOpen = true"
+                @input="crmDropOpen = true"
+                @blur="() => setTimeout(() => { crmDropOpen = false }, 160)"
+              />
+              <div v-if="crmDropOpen && crmResults.length" class="crm-cp-drop">
+                <div
+                  v-for="c in crmResults"
+                  :key="c._id"
+                  class="crm-cp-opt"
+                  @mousedown.prevent="selectCrmClient(c)"
+                >
+                  <span class="crm-cp-opt-main">{{ c.razonSocial || c.nombreComercial || c.name || c.contactoPrincipal }}</span>
+                  <span class="crm-cp-opt-sub">{{ [c.nombreComercial, c.contactoPrincipal, c.email].filter(Boolean).join(' · ') }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="form.clienteId" class="crm-linked-badge">
+              <i class="bi bi-person-check-fill"></i>
+              <span>{{ form._crmClientLabel }}</span>
+              <button class="sp-clear" title="Desvincular" @click="clearCrmClient"><i class="bi bi-x"></i></button>
+            </div>
           </div>
           <div class="field">
             <label>Empresa</label>
@@ -309,17 +340,152 @@
     </div>
   </Teleport>
 
+  <!-- ── Editor de plantilla de impresión ─────────────────────────────── -->
+  <Teleport to="body">
+    <div v-if="showPrintEditor" class="pe-backdrop" @click.self="showPrintEditor = false">
+      <div class="pe-modal">
+        <div class="pe-hd">
+          <i class="bi bi-pencil-square"></i>
+          <span>Editar plantilla de impresión</span>
+          <button class="pe-close" @click="showPrintEditor = false"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        <div class="pe-body">
+          <div class="pe-cols">
+
+            <!-- Formulario -->
+            <div class="pe-form">
+              <div class="pe-sec-label">Logo de empresa</div>
+              <div class="pe-logo-row">
+                <div class="pe-logo-thumb">
+                  <img v-if="pt.logo" :src="pt.logo" alt="Logo" class="pe-logo-img" />
+                  <span v-else class="pe-logo-ph"><i class="bi bi-image" style="font-size:1.6rem;opacity:.3"></i></span>
+                </div>
+                <div class="pe-logo-btns">
+                  <label class="secondary-button pe-upload-lbl">
+                    <i class="bi bi-upload"></i> Subir imagen
+                    <input type="file" accept="image/*" style="display:none" @change="onLogoFile" />
+                  </label>
+                  <button v-if="pt.logo" class="ghost-button" @click="pt.logo = ''">
+                    <i class="bi bi-trash3"></i> Quitar
+                  </button>
+                </div>
+              </div>
+
+              <div class="pe-sec-label">Datos de la empresa</div>
+              <div class="pe-fields">
+                <div class="pe-field pe-field--full">
+                  <label>Razón social</label>
+                  <input v-model="pt.razonSocial" type="text" placeholder="Mi Empresa S.A." maxlength="120" />
+                </div>
+                <div class="pe-field pe-field--full">
+                  <label>Dirección</label>
+                  <input v-model="pt.direccion" type="text" placeholder="Av. Corrientes 1234, Piso 3" maxlength="150" />
+                </div>
+                <div class="pe-field pe-field--full">
+                  <label>Ciudad / Provincia</label>
+                  <input v-model="pt.ciudad" type="text" placeholder="Buenos Aires, CABA" maxlength="100" />
+                </div>
+                <div class="pe-field">
+                  <label>Teléfono</label>
+                  <input v-model="pt.telefono" type="text" placeholder="+54 11 0000-0000" maxlength="40" />
+                </div>
+                <div class="pe-field">
+                  <label>Email</label>
+                  <input v-model="pt.email" type="email" placeholder="info@empresa.com" maxlength="100" />
+                </div>
+                <div class="pe-field">
+                  <label>Sitio web</label>
+                  <input v-model="pt.web" type="text" placeholder="www.empresa.com" maxlength="100" />
+                </div>
+                <div class="pe-field">
+                  <label>CUIT</label>
+                  <input v-model="pt.cuit" type="text" placeholder="30-12345678-9" maxlength="13"
+                    @input="pt.cuit = pt.cuit.replace(/[^\d-]/g,'').slice(0,13)" />
+                </div>
+              </div>
+
+              <div class="pe-sec-label">Texto de condiciones</div>
+              <div class="pe-field pe-field--full">
+                <textarea v-model="pt.condiciones" rows="3"
+                  placeholder="Oferta válida por {dias} días a partir de la fecha de emisión. Precios en dólares. No incluyen IVA." />
+                <span class="pe-hint">Usá <code>{dias}</code> para insertar los días de validez de cada cotización.</span>
+              </div>
+
+              <div class="pe-sec-label">Pie de página</div>
+              <div class="pe-field pe-field--full">
+                <textarea v-model="pt.piePagina" rows="2"
+                  placeholder="Texto adicional al pie (contacto, datos bancarios, etc.)" />
+              </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="pe-preview">
+              <div class="pe-preview-label">Vista previa del encabezado</div>
+              <div class="pe-preview-doc">
+                <div class="pe-prev-header">
+                  <div class="pe-prev-left">
+                    <img v-if="pt.logo" :src="pt.logo" alt="Logo" class="pe-prev-logo" />
+                    <div v-else class="pe-prev-logo-ph"><i class="bi bi-image"></i><br>Logo</div>
+                    <div v-if="pt.razonSocial" class="pe-prev-company-name">{{ pt.razonSocial }}</div>
+                    <div v-if="pt.direccion" class="pe-prev-detail">{{ pt.direccion }}</div>
+                    <div v-if="pt.ciudad" class="pe-prev-detail">{{ pt.ciudad }}</div>
+                    <div v-if="pt.telefono" class="pe-prev-detail">{{ pt.telefono }}</div>
+                    <div v-if="pt.email" class="pe-prev-detail">{{ pt.email }}</div>
+                    <div v-if="pt.web" class="pe-prev-detail">{{ pt.web }}</div>
+                    <div v-if="pt.cuit" class="pe-prev-detail">CUIT: {{ pt.cuit }}</div>
+                  </div>
+                  <div class="pe-prev-right">
+                    <div class="pe-prev-title">COTIZACIÓN</div>
+                    <div class="pe-prev-meta-row"><span>N°</span><strong>#0001</strong></div>
+                    <div class="pe-prev-meta-row"><span>Fecha</span>{{ new Date().toLocaleDateString('es-AR') }}</div>
+                  </div>
+                </div>
+                <div v-if="pt.condiciones || pt.piePagina" class="pe-prev-footer-area">
+                  <div v-if="pt.condiciones" class="pe-prev-conditions">
+                    {{ pt.condiciones.replace('{dias}', '7') }}
+                  </div>
+                  <div v-if="pt.piePagina" class="pe-prev-pie">{{ pt.piePagina }}</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="pe-ft">
+          <button class="ghost-button" @click="showPrintEditor = false">Cancelar</button>
+          <button class="primary-button" @click="savePt">
+            <i class="bi bi-floppy2"></i> Guardar plantilla
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
+
   <!-- ── Layout de impresión ─────────────────────────────────────────── -->
   <div v-if="quoteToPrint" class="print-doc">
     <div class="print-header">
-      <img src="/karikal.png" alt="Karikal" class="print-logo" />
+      <div class="print-left">
+        <img v-if="pt.logo" :src="pt.logo" alt="Logo" class="print-logo" />
+        <img v-else src="/karikal.png" alt="Logo" class="print-logo" />
+        <div v-if="pt.razonSocial" class="print-company-name">{{ pt.razonSocial }}</div>
+        <div v-if="pt.direccion" class="print-company-detail">{{ pt.direccion }}</div>
+        <div v-if="pt.ciudad" class="print-company-detail">{{ pt.ciudad }}</div>
+        <div v-if="pt.telefono" class="print-company-detail">{{ pt.telefono }}</div>
+        <div v-if="pt.email" class="print-company-detail">{{ pt.email }}</div>
+        <div v-if="pt.web" class="print-company-detail">{{ pt.web }}</div>
+        <div v-if="pt.cuit" class="print-company-detail">CUIT: {{ pt.cuit }}</div>
+      </div>
       <div class="print-company">
         <div class="print-doc-title">COTIZACIÓN</div>
         <table class="print-meta-table">
-          <tr><td>N°</td><td><strong>#{{ String(quoteToPrint.numero).padStart(4,'0') }}</strong></td></tr>
-          <tr><td>Fecha</td><td>{{ fmtDate(quoteToPrint.createdAt) }}</td></tr>
-          <tr><td>Válida hasta</td><td>{{ validezFecha(quoteToPrint.createdAt, quoteToPrint.validezDias) }}</td></tr>
-          <tr><td>Vendedor</td><td>{{ quoteToPrint.vendedor }}</td></tr>
+          <tbody>
+            <tr><td>N°</td><td><strong>#{{ String(quoteToPrint.numero).padStart(4,'0') }}</strong></td></tr>
+            <tr><td>Fecha</td><td>{{ fmtDate(quoteToPrint.createdAt) }}</td></tr>
+            <tr><td>Válida hasta</td><td>{{ validezFecha(quoteToPrint.createdAt, quoteToPrint.validezDias) }}</td></tr>
+            <tr><td>Vendedor</td><td>{{ quoteToPrint.vendedor }}</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -379,11 +545,11 @@
     </div>
 
     <div class="print-validity">
-      Oferta válida por {{ quoteToPrint.validezDias }} días a partir de la fecha de emisión.
-      Precios en dólares. No incluyen IVA.
+      {{ (pt.condiciones || 'Oferta válida por {dias} días a partir de la fecha de emisión. Precios en dólares. No incluyen IVA.').replace('{dias}', String(quoteToPrint.validezDias)) }}
     </div>
     <div class="print-footer">
-      Cotización generada por {{ quoteToPrint.vendedor }} — {{ fmtDate(quoteToPrint.createdAt) }}
+      <div v-if="pt.piePagina" class="print-footer-extra">{{ pt.piePagina }}</div>
+      <div>Cotización generada por {{ quoteToPrint.vendedor }} — {{ fmtDate(quoteToPrint.createdAt) }}</div>
     </div>
   </div>
 </template>
@@ -392,10 +558,12 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import axios from 'axios'
 import { useProductsStore } from '@/stores/products'
+import { useCrmStore } from '@/stores/crm'
 import { useToast } from 'vue-toastification'
 import { API_BASE_URL } from '@/utils/api'
 
 const productsStore = useProductsStore()
+const crmStore = useCrmStore()
 const toast = useToast()
 
 // ── Estado global ─────────────────────────────────────────────────────────────
@@ -407,6 +575,34 @@ const editingId = ref(null)
 const showCliente = ref(false)
 const quoteToPrint = ref(null)
 const form = ref(newFormState())
+
+// ── Plantilla de impresión ────────────────────────────────────────────────────
+const PT_KEY = 'printTemplate'
+const showPrintEditor = ref(false)
+
+function defaultPt() {
+  return { logo: '', razonSocial: '', direccion: '', ciudad: '', telefono: '', email: '', web: '', cuit: '', condiciones: '', piePagina: '' }
+}
+const pt = ref(defaultPt())
+
+function loadPt() {
+  try {
+    const raw = localStorage.getItem(PT_KEY)
+    if (raw) pt.value = { ...defaultPt(), ...JSON.parse(raw) }
+  } catch {}
+}
+function savePt() {
+  localStorage.setItem(PT_KEY, JSON.stringify(pt.value))
+  showPrintEditor.value = false
+  toast.success('Plantilla de impresión guardada.')
+}
+function onLogoFile(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = ev => { pt.value.logo = ev.target.result }
+  reader.readAsDataURL(file)
+}
 
 // ── Grupos de descuento ───────────────────────────────────────────────────────
 const grupos = ref([])  // [{ nombre, descuentos: [...] }]
@@ -430,12 +626,14 @@ function authH() {
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(async () => {
+  loadPt()
   loadingQuotes.value = true
   try {
     await Promise.all([
       loadQuotes(),
       productsStore.products.length ? Promise.resolve() : productsStore.fetchProducts(),
       loadGrupos(),
+      crmStore.clients.length ? Promise.resolve() : crmStore.fetchClients(),
     ])
   } finally {
     loadingQuotes.value = false
@@ -456,6 +654,43 @@ async function loadGrupos() {
   }
 }
 
+// ── CRM client picker ─────────────────────────────────────────────────────────
+const crmDropOpen = ref(false)
+
+const crmResults = computed(() => {
+  const q = (form.value.cliente?.nombre || '').trim().toLowerCase()
+  if (!q || q.length < 2) return []
+  return crmStore.clients.filter(c =>
+    [c.razonSocial, c.nombreComercial, c.contactoPrincipal, c.email, c.name]
+      .some(f => f && f.toLowerCase().includes(q))
+  ).slice(0, 8)
+})
+
+function selectCrmClient(c) {
+  const firstPhone = c.telefonos?.[0]?.numero || c.telefono || ''
+  form.value.clienteId = c._id
+  form.value._crmClientLabel = c.razonSocial || c.nombreComercial || c.contactoPrincipal || c.name || ''
+  form.value.cliente = {
+    nombre:   c.contactoPrincipal || c.name || '',
+    empresa:  c.razonSocial || c.nombreComercial || c.company || '',
+    email:    c.email || '',
+    telefono: firstPhone,
+  }
+  showCliente.value = true
+  crmDropOpen.value = false
+}
+
+function clearCrmClient() {
+  form.value.clienteId = null
+  form.value._crmClientLabel = ''
+}
+
+function crmLabelFor(id) {
+  if (!id) return ''
+  const c = crmStore.clients.find(x => String(x._id) === String(id))
+  return c ? (c.razonSocial || c.nombreComercial || c.contactoPrincipal || '') : ''
+}
+
 // ── Formulario ────────────────────────────────────────────────────────────────
 function newFormState() {
   return {
@@ -464,6 +699,8 @@ function newFormState() {
     fecha: new Date().toISOString(),
     validezDias: 7,
     estado: 'borrador',
+    clienteId: null,
+    _crmClientLabel: '',
     cliente: { nombre: '', empresa: '', email: '', telefono: '' },
     items: [emptyItem()],
     descripcionGeneral: '',
@@ -511,6 +748,8 @@ function editQuote(q) {
     fecha: q.createdAt,
     validezDias: q.validezDias ?? 7,
     estado: q.estado || 'borrador',
+    clienteId: q.clienteId || null,
+    _crmClientLabel: crmLabelFor(q.clienteId),
     cliente: { nombre: '', empresa: '', email: '', telefono: '', ...(q.cliente || {}) },
     items: (q.items || []).map(it => {
       const prod = it.productoId ? productsStore.getById(it.productoId) : null
@@ -539,7 +778,8 @@ function editQuote(q) {
     }),
     descripcionGeneral: q.descripcionGeneral || '',
   }
-  showCliente.value = !!(q.cliente?.nombre || q.cliente?.empresa)
+  const cl = q.cliente || {}
+  showCliente.value = !!(cl.nombre || cl.empresa || cl.email || cl.telefono)
   activeTab.value = 'form'
 }
 
@@ -695,6 +935,7 @@ function buildPayload() {
   return {
     titulo: form.value.titulo,
     cliente: form.value.cliente,
+    clienteId: form.value.clienteId || null,
     validezDias: form.value.validezDias,
     estado: form.value.estado,
     items: form.value.items.map(it => ({
@@ -898,13 +1139,29 @@ function hasCliente(q) {
 .base-price-hint { display: block; font-size: 0.69rem; color: var(--color-muted); margin-top: 0.2rem; text-decoration: line-through; }
 
 /* ── Campos genéricos en tabla ── */
-.sel-small, .input-small { width: 100%; font-size: 0.8rem; padding: 0.3rem 0.4rem; }
-.input-num { width: 100%; font-size: 0.82rem; }
-.subtotal-cell { font-weight: 700; font-size: 0.82rem; white-space: nowrap; padding-top: 0.55rem !important; }
+.sel-small, .input-small {
+  width: 100%; font-size: 0.82rem; padding: 0.38rem 0.55rem;
+  border: 1px solid rgba(107,142,58,0.22); border-radius: 7px;
+  background: #fff; box-sizing: border-box;
+}
+.sel-small:focus, .input-small:focus {
+  outline: none; border-color: var(--color-primary, #6b8e3a);
+  box-shadow: 0 0 0 2px rgba(107,142,58,0.12);
+}
+.input-num {
+  width: 100%; font-size: 0.82rem; padding: 0.38rem 0.55rem;
+  border: 1px solid rgba(107,142,58,0.22); border-radius: 7px;
+  background: #fff; box-sizing: border-box;
+}
+.input-num:focus {
+  outline: none; border-color: var(--color-primary, #6b8e3a);
+  box-shadow: 0 0 0 2px rgba(107,142,58,0.12);
+}
+.subtotal-cell { font-weight: 700; font-size: 0.82rem; white-space: nowrap; }
 
 .input-prefix-wrap { position: relative; }
-.input-prefix { position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--color-muted); pointer-events: none; }
-.has-prefix { padding-left: 1.3rem !important; }
+.input-prefix { position: absolute; left: 0.55rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--color-muted); pointer-events: none; }
+.has-prefix { padding-left: 1.4rem !important; }
 
 .del-row-btn { background: none; border: none; padding: 0.2rem 0.3rem; border-radius: 6px; cursor: pointer; color: #dc2626; opacity: 0.5; transition: opacity 0.15s, background 0.15s; margin-top: 0.3rem; }
 .del-row-btn:hover { opacity: 1; background: rgba(239,68,68,0.08); }
@@ -920,8 +1177,124 @@ function hasCliente(q) {
 /* ── Footer form ── */
 .form-footer { display: flex; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(107,142,58,0.12); }
 
+/* ── Selector cliente CRM ── */
+.crm-linked-badge {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  margin-top: 0.3rem; padding: 0.25rem 0.6rem;
+  background: rgba(107,142,58,0.1); border: 1px solid rgba(107,142,58,0.22);
+  border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+  color: var(--color-primary, #6b8e3a);
+}
+.crm-cp-drop {
+  position: absolute; left: 0; right: 0; top: 100%; margin-top: 3px;
+  background: #fff; border: 1px solid rgba(107,142,58,0.25);
+  border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 500; max-height: 240px; overflow-y: auto;
+}
+.crm-cp-opt {
+  display: flex; flex-direction: column; gap: 0.1rem;
+  padding: 0.5rem 0.75rem; cursor: pointer; border-bottom: 1px solid rgba(107,142,58,0.07);
+  transition: background 0.1s;
+}
+.crm-cp-opt:last-child { border-bottom: none; }
+.crm-cp-opt:hover { background: rgba(107,142,58,0.07); }
+.crm-cp-opt-main { font-weight: 600; font-size: 0.84rem; }
+.crm-cp-opt-sub  { font-size: 0.72rem; color: var(--color-muted); }
+
 /* ── Print doc: oculto en pantalla ── */
 .print-doc { display: none; }
+
+/* ── Editor de plantilla de impresión ── */
+.pe-backdrop {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 1.5rem 1rem; overflow-y: auto;
+}
+.pe-modal {
+  background: #fff; border-radius: 16px;
+  width: 100%; max-width: 900px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 3rem);
+}
+.pe-hd {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 1rem 1.25rem; border-bottom: 1px solid rgba(107,142,58,0.14);
+  font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+}
+.pe-hd span { flex: 1; }
+.pe-close {
+  background: none; border: none; cursor: pointer; padding: 0.3rem 0.5rem;
+  border-radius: 8px; color: var(--color-muted); font-size: 1rem;
+}
+.pe-close:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+.pe-body { flex: 1; min-height: 0; overflow-y: auto; padding: 1.25rem; }
+.pe-cols {
+  display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;
+}
+@media (max-width: 700px) { .pe-cols { grid-template-columns: 1fr; } }
+
+.pe-form { display: flex; flex-direction: column; gap: 0.75rem; }
+.pe-sec-label {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--color-primary, #6b8e3a);
+  padding-bottom: 0.25rem; border-bottom: 1px solid rgba(107,142,58,0.15);
+  margin-top: 0.25rem;
+}
+.pe-logo-row { display: flex; align-items: center; gap: 0.85rem; }
+.pe-logo-thumb {
+  width: 80px; height: 60px; border-radius: 8px;
+  border: 1.5px dashed rgba(107,142,58,0.35);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  background: rgba(107,142,58,0.03);
+}
+.pe-logo-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+.pe-logo-ph { color: var(--color-muted); }
+.pe-logo-btns { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.pe-upload-lbl { cursor: pointer; }
+.pe-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.pe-field { display: flex; flex-direction: column; gap: 0.25rem; }
+.pe-field--full { grid-column: 1 / -1; }
+.pe-field label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
+.pe-field input, .pe-field textarea {
+  padding: 0.4rem 0.65rem; font-size: 0.85rem;
+  border: 1px solid rgba(107,142,58,0.25); border-radius: 8px;
+  background: #fff; width: 100%; box-sizing: border-box;
+}
+.pe-field input:focus, .pe-field textarea:focus {
+  outline: none; border-color: var(--color-primary, #6b8e3a);
+  box-shadow: 0 0 0 2px rgba(107,142,58,0.12);
+}
+.pe-field textarea { resize: vertical; font-family: inherit; }
+.pe-hint { font-size: 0.72rem; color: var(--color-muted); margin-top: 0.2rem; }
+.pe-hint code { background: rgba(107,142,58,0.12); padding: 0.05rem 0.3rem; border-radius: 4px; font-size: 0.7rem; }
+
+/* Preview */
+.pe-preview { display: flex; flex-direction: column; gap: 0.6rem; }
+.pe-preview-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted); }
+.pe-preview-doc {
+  border: 1.5px solid rgba(107,142,58,0.2); border-radius: 10px;
+  padding: 0.85rem; font-size: 0.72rem; color: #222;
+  background: #fafbf7;
+}
+.pe-prev-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; border-bottom: 1.5px solid #5a7a2a; padding-bottom: 0.6rem; margin-bottom: 0.6rem; }
+.pe-prev-left { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; }
+.pe-prev-logo { max-height: 44px; width: auto; object-fit: contain; margin-bottom: 0.25rem; }
+.pe-prev-logo-ph { width: 52px; height: 38px; border: 1px dashed rgba(107,142,58,0.4); border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--color-muted); margin-bottom: 0.2rem; }
+.pe-prev-company-name { font-weight: 700; font-size: 0.8rem; }
+.pe-prev-detail { font-size: 0.67rem; color: #555; }
+.pe-prev-right { text-align: right; flex-shrink: 0; }
+.pe-prev-title { font-size: 1rem; font-weight: 800; color: #5a7a2a; letter-spacing: 0.06em; margin-bottom: 0.25rem; }
+.pe-prev-meta-row { font-size: 0.67rem; color: #555; display: flex; gap: 0.35rem; justify-content: flex-end; }
+.pe-prev-footer-area { border-top: 1px solid #d4dfc8; padding-top: 0.5rem; margin-top: 0.5rem; }
+.pe-prev-conditions { font-size: 0.67rem; color: #555; font-style: italic; margin-bottom: 0.2rem; }
+.pe-prev-pie { font-size: 0.67rem; color: #777; }
+
+.pe-ft {
+  display: flex; justify-content: flex-end; gap: 0.75rem;
+  padding: 0.9rem 1.25rem; border-top: 1px solid rgba(107,142,58,0.12); flex-shrink: 0;
+}
 </style>
 
 <!-- ── Portal del buscador (global, fuera del scoped) ── -->
@@ -976,7 +1349,10 @@ function hasCliente(q) {
   }
 
   .print-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.2rem; border-bottom: 2px solid #5a7a2a; padding-bottom: 0.9rem; gap: 1rem; }
-  .print-logo { height: 70px; width: auto; object-fit: contain; }
+  .print-left { display: flex; flex-direction: column; gap: 0.15rem; }
+  .print-logo { height: 70px; width: auto; object-fit: contain; margin-bottom: 0.3rem; }
+  .print-company-name { font-weight: 700; font-size: 10.5pt; }
+  .print-company-detail { font-size: 8.5pt; color: #555; }
   .print-company { text-align: right; }
   .print-doc-title { font-size: 20pt; font-weight: 800; color: #5a7a2a; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
   .print-meta-table { font-size: 9pt; border-collapse: collapse; }
@@ -1016,6 +1392,7 @@ function hasCliente(q) {
   .print-notes-text { font-size: 9pt; color: #444; white-space: pre-line; margin: 0.3rem 0 0; }
 
   .print-validity { font-size: 8.5pt; color: #555; border-top: 1px solid #d4dfc8; padding-top: 0.5rem; margin-bottom: 0.5rem; font-style: italic; }
-  .print-footer { font-size: 8pt; color: #888; text-align: right; border-top: 1px solid #e0e0e0; padding-top: 0.4rem; margin-top: 0.4rem; }
+  .print-footer { font-size: 8pt; color: #888; border-top: 1px solid #e0e0e0; padding-top: 0.4rem; margin-top: 0.4rem; }
+  .print-footer-extra { font-size: 8.5pt; color: #555; margin-bottom: 0.25rem; text-align: left; }
 }
 </style>

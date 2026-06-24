@@ -64,7 +64,7 @@
             <i class="bi bi-credit-card-2-front"></i><span>{{ c.cuitCuil }}</span>
           </div>
           <template v-if="c.telefonos?.length">
-            <div v-for="(t, i) in c.telefonos" :key="i" class="cc-field">
+            <div v-for="(t, i) in c.telefonos.slice(0, 2)" :key="i" class="cc-field">
               <i class="bi bi-telephone"></i>
               <span>{{ t.numero }}</span>
               <span class="cc-sector">{{ t.sector }}</span>
@@ -116,20 +116,25 @@
           <div class="crm-modal-bd">
             <div class="cm-field">
               <label>Razón social *</label>
-              <input v-model="form.razonSocial" placeholder="Ej: Distribuidora ABC S.A." />
+              <input v-model="form.razonSocial" placeholder="Ej: Distribuidora ABC S.A."
+                maxlength="100" />
             </div>
             <div class="cm-field">
               <label>Nombre comercial</label>
-              <input v-model="form.nombreComercial" placeholder="Ej: ABC Distribuidora" />
+              <input v-model="form.nombreComercial" placeholder="Ej: ABC Distribuidora"
+                maxlength="100" />
             </div>
             <div class="cm-row">
               <div class="cm-field">
                 <label>Contacto principal</label>
-                <input v-model="form.contactoPrincipal" placeholder="Nombre del contacto" />
+                <input v-model="form.contactoPrincipal" placeholder="Nombre del contacto"
+                  maxlength="100" />
               </div>
               <div class="cm-field">
                 <label>CUIL / CUIT</label>
-                <input v-model="form.cuitCuil" placeholder="20-12345678-9" />
+                <input v-model="form.cuitCuil" placeholder="20-12345678-9"
+                  maxlength="13"
+                  @input="form.cuitCuil = form.cuitCuil.replace(/[^\d-]/g, '').slice(0, 13)" />
               </div>
             </div>
             <!-- ── Teléfonos múltiples ── -->
@@ -140,7 +145,9 @@
                   <select v-model="t.sector" class="cm-phone-sector">
                     <option v-for="s in SECTORES" :key="s" :value="s">{{ s }}</option>
                   </select>
-                  <input v-model="t.numero" type="tel" placeholder="+54 351 555-0000" class="cm-phone-num" />
+                  <input v-model="t.numero" type="tel" placeholder="+54 351 555-0000"
+                    class="cm-phone-num" maxlength="20"
+                    @input="t.numero = t.numero.replace(/[^\d\s\+\-\(\)]/g, '').slice(0, 20)" />
                   <button type="button" class="cm-phone-del" :disabled="form.telefonos.length === 1"
                     @click="form.telefonos.splice(i, 1)" title="Quitar">
                     <i class="bi bi-x"></i>
@@ -153,7 +160,8 @@
             </div>
             <div class="cm-field">
               <label>Email</label>
-              <input v-model="form.email" placeholder="contacto@empresa.com" type="email" />
+              <input v-model="form.email" placeholder="contacto@empresa.com" type="email"
+                maxlength="100" />
             </div>
             <div class="cm-row">
               <div class="cm-field">
@@ -172,7 +180,7 @@
             </div>
             <div class="cm-field">
               <label>Observaciones</label>
-              <input v-model="form.observaciones" placeholder="Notas sobre el cliente" />
+              <input v-model="form.observaciones" placeholder="Notas sobre el cliente" maxlength="300" />
             </div>
 
             <!-- ── Tipo de cliente ── -->
@@ -202,7 +210,7 @@
 
             <div class="cm-field">
               <label>Dirección</label>
-              <input v-model="form.direccion" placeholder="Calle 123, Ciudad, Provincia" />
+              <input v-model="form.direccion" placeholder="Calle 123, Ciudad, Provincia" maxlength="200" />
             </div>
 
             <div class="cm-map-actions">
@@ -634,9 +642,13 @@ function clearLocation() {
 }
 
 .cc-field i { color: var(--color-muted); font-size: 0.75rem; flex-shrink: 0; }
-.cc-field span { flex: 1; min-width: 0; }
-
-.cc-field--trunc span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-field span {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .cc-sector {
   flex-shrink: 0;
