@@ -251,7 +251,26 @@
                       :value="opt.label"
                     >{{ opt.label }}</option>
                   </select>
-                  <span v-if="item._discountPct > 0" class="disc-badge">-{{ fmtPct(item._discountPct) }}%</span>
+                  <div class="disc-manual">
+                    <input
+                      v-model.number="item._discountPct"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      placeholder="0"
+                      class="disc-pct-input"
+                      @change="onManualDiscount(idx)"
+                      @focus="$event.target.select()"
+                    />
+                    <span class="disc-pct-sym">%</span>
+                    <button
+                      v-if="item._discountPct > 0"
+                      class="disc-clear-btn"
+                      title="Quitar descuento"
+                      @click="clearDiscount(idx)"
+                    ><i class="bi bi-x-lg"></i></button>
+                  </div>
                 </td>
 
                 <!-- Precio unitario -->
@@ -901,20 +920,15 @@ function discountOptions(descuentos) {
     const from = t.desdeHojas
     const to = t.hastaHojas
     const range = to != null ? `${from}–${to} uds.` : `+${from - 1} uds.`
+    const prefix = t.nota?.trim() || range
     if (t.porcCantidad) {
-      opts.push({ label: `${range} · ${t.porcCantidad}% (cantidad)`, pct: t.porcCantidad })
+      opts.push({ label: `${prefix} · ${fmtPct(t.porcCantidad)}%`, pct: t.porcCantidad })
     }
     if (t.porcCantidadContado) {
-      opts.push({
-        label: `${range} · ${fmtPct(t.porcCantidadContado)}% (cant.+contado)`,
-        pct: t.porcCantidadContado,
-      })
+      opts.push({ label: `${prefix} · ${fmtPct(t.porcCantidadContado)}% (contado)`, pct: t.porcCantidadContado })
     }
     if (t.porcCantidad30dias) {
-      opts.push({
-        label: `${range} · ${fmtPct(t.porcCantidad30dias)}% (cant.+30días)`,
-        pct: t.porcCantidad30dias,
-      })
+      opts.push({ label: `${prefix} · ${fmtPct(t.porcCantidad30dias)}% (30 días)`, pct: t.porcCantidad30dias })
     }
   }
   return opts
@@ -926,7 +940,24 @@ function onDiscountChange(idx) {
   const selected = opts.find(o => o.label === item._discountLabel)
   const pct = selected?.pct ?? 0
   item._discountPct = pct
-  item.precioUnitario = Number((item._basePrice * (1 - pct / 100)).toFixed(2))
+  if (item._basePrice > 0) item.precioUnitario = Number((item._basePrice * (1 - pct / 100)).toFixed(2))
+  recalc(idx)
+}
+
+function onManualDiscount(idx) {
+  const item = form.value.items[idx]
+  const pct = Math.max(0, Math.min(100, Number(item._discountPct) || 0))
+  item._discountPct = pct
+  item._discountLabel = pct > 0 ? `Manual · ${fmtPct(pct)}%` : 'Sin descuento'
+  if (item._basePrice > 0) item.precioUnitario = Number((item._basePrice * (1 - pct / 100)).toFixed(2))
+  recalc(idx)
+}
+
+function clearDiscount(idx) {
+  const item = form.value.items[idx]
+  item._discountPct = 0
+  item._discountLabel = 'Sin descuento'
+  if (item._basePrice > 0) item.precioUnitario = item._basePrice
   recalc(idx)
 }
 
@@ -1135,7 +1166,16 @@ function hasCliente(q) {
 /* ── Descuento ── */
 .sel-disc { width: 100%; font-size: 0.78rem; padding: 0.28rem 0.4rem; border: 1px solid rgba(107,142,58,0.2); border-radius: 7px; }
 .sel-disc:disabled { opacity: 0.45; cursor: not-allowed; }
-.disc-badge { display: inline-block; margin-top: 0.25rem; font-size: 0.7rem; font-weight: 700; color: #fff; background: #6b8e3a; border-radius: 4px; padding: 0.1rem 0.35rem; }
+.disc-manual { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.3rem; }
+.disc-pct-input {
+  width: 54px; font-size: 0.82rem; padding: 0.3rem 0.35rem;
+  border: 1px solid rgba(107,142,58,0.22); border-radius: 7px;
+  text-align: right; box-sizing: border-box; background: #fff;
+}
+.disc-pct-input:focus { outline: none; border-color: var(--color-primary,#6b8e3a); box-shadow: 0 0 0 2px rgba(107,142,58,0.12); }
+.disc-pct-sym { font-size: 0.75rem; color: var(--color-muted); flex-shrink: 0; }
+.disc-clear-btn { background: none; border: none; cursor: pointer; padding: 0.15rem 0.25rem; color: var(--color-muted); border-radius: 4px; font-size: 0.78rem; line-height: 1; flex-shrink: 0; }
+.disc-clear-btn:hover { color: #dc2626; background: rgba(239,68,68,0.1); }
 .base-price-hint { display: block; font-size: 0.69rem; color: var(--color-muted); margin-top: 0.2rem; text-decoration: line-through; }
 
 /* ── Campos genéricos en tabla ── */
@@ -1329,6 +1369,12 @@ function hasCliente(q) {
 
 <!-- ── Media print (global para afectar App.vue) ── -->
 <style>
+/* Elimina encabezado/pie del navegador (título, URL, fecha, n° de página) y el reborde */
+@page {
+  size: A4;
+  margin: 0;
+}
+
 @media print {
   .no-print,
   .sidebar,
