@@ -1335,10 +1335,16 @@ function hasCliente(q) {
   .mobile-toggle,
   .sidebar-backdrop,
   .notification-bell-container,
-  .notification-shell { display: none !important; }
+  .notification-shell,
+  .crm-tabs-bar,
+  .topbar { display: none !important; }
 
   html, body, #app { height: auto !important; max-height: none !important; overflow: visible !important; }
-  main.app-content { margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
+
+  /* eliminar margen del sidebar y centrado del container */
+  main.app-content,
+  .with-nav { margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
+  .crm-wrap, .container { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
 
   .print-doc {
     display: block !important;
