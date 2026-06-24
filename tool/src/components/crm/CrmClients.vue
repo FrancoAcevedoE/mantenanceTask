@@ -294,8 +294,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCrmStore } from '@/stores/crm'
+
+const props = defineProps({ pendingEdit: { type: Object, default: null } })
+
+onMounted(() => { if (props.pendingEdit) openEdit(props.pendingEdit) })
 
 const crmStore = useCrmStore()
 
@@ -311,12 +315,11 @@ const geocoding      = ref(false)
 const geoError       = ref('')
 
 const STAGES = [
-  { key: 'nuevo_lead',         label: 'Nuevo Lead',         color: '#3b82f6' },
-  { key: 'contactado',         label: 'Contactado',          color: '#8b5cf6' },
-  { key: 'cotizacion_enviada', label: 'Cotización Enviada',  color: '#f59e0b' },
-  { key: 'negociacion',        label: 'Negociación',         color: '#6366f1' },
-  { key: 'ganado',             label: 'Ganado',              color: '#22c55e' },
-  { key: 'perdido',            label: 'Perdido',             color: '#ef4444' },
+  { key: 'nuevo_lead',         label: 'Nuevo Lead',  color: '#3b82f6' },
+  { key: 'contactado',         label: 'Contactado',  color: '#8b5cf6' },
+  { key: 'cotizacion_enviada', label: 'Cotizado',    color: '#f59e0b' },
+  { key: 'ganado',             label: 'Ganado',      color: '#22c55e' },
+  { key: 'perdido',            label: 'Perdido',     color: '#ef4444' },
 ]
 
 const STAGE_MAP = Object.fromEntries(STAGES.map(s => [s.key, s]))

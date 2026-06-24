@@ -20,8 +20,8 @@
 
     <div class="crm-body">
       <CrmDashboard  v-if="activeTab === 'dashboard'" />
-      <CrmClients    v-else-if="activeTab === 'clientes'" />
-      <CrmPipeline   v-else-if="activeTab === 'pipeline'" />
+      <CrmClients    v-else-if="activeTab === 'clientes'" :pending-edit="pendingEdit" />
+      <CrmPipeline   v-else-if="activeTab === 'pipeline'" @edit-client="onEditClient" />
       <CrmActivities v-else-if="activeTab === 'actividades'" />
       <div v-else-if="activeTab === 'cotizaciones'" class="crm-quotes-wrap">
         <SellerView />
@@ -39,14 +39,21 @@ import CrmPipeline    from '@/components/crm/CrmPipeline.vue'
 import CrmActivities  from '@/components/crm/CrmActivities.vue'
 import SellerView     from '@/views/sellerView.vue'
 
-const activeTab = ref('dashboard')
-const crmStore  = useCrmStore()
+const activeTab  = ref('dashboard')
+const pendingEdit = ref(null)
+const crmStore   = useCrmStore()
+
+function onEditClient(client) {
+  pendingEdit.value = client
+  activeTab.value = 'clientes'
+  setTimeout(() => { pendingEdit.value = null }, 400)
+}
 
 const tabs = computed(() => [
   { key: 'dashboard',    label: 'Dashboard',    icon: 'bi bi-speedometer2' },
   { key: 'clientes',     label: 'Clientes',     icon: 'bi bi-people-fill',
     badge: crmStore.visibleClients.length || null },
-  { key: 'pipeline',    label: 'Pipeline',     icon: 'bi bi-kanban-fill' },
+  { key: 'pipeline',    label: 'Nuevos Clientes', icon: 'bi bi-kanban-fill' },
   { key: 'cotizaciones', label: 'Cotizaciones', icon: 'bi bi-file-earmark-text-fill' },
   { key: 'actividades',  label: 'Actividades',  icon: 'bi bi-clock-history',
     badge: crmStore.pendingActivitiesCount || null, badgeClass: 'crm-tab-badge--warn' },

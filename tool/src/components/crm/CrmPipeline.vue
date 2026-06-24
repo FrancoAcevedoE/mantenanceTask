@@ -5,9 +5,9 @@
     <div class="kp-header">
       <div class="kp-hint">
         <i class="bi bi-arrows-move"></i>
-        <span>Arrastrá tarjetas para cambiar etapa</span>
+        <span>Arrastrá para cambiar etapa</span>
       </div>
-      <span class="kp-total">{{ crmStore.visibleClients.length }} clientes</span>
+      <span class="kp-total">{{ nuevosClientes.length }} nuevos clientes</span>
     </div>
 
     <!-- Kanban board — siempre 6 columnas iguales, sin scroll lateral de página -->
@@ -27,14 +27,14 @@
           <i :class="stage.icon" :style="{ color: stage.color }"></i>
           <span class="kp-col-name">{{ stage.label }}</span>
           <span class="kp-col-cnt" :style="{ background: stage.color + '22', color: stage.color }">
-            {{ (crmStore.clientsByStage[stage.key] || []).length }}
+            {{ (clientsByStage[stage.key] || []).length }}
           </span>
         </div>
 
         <!-- Cards -->
         <div class="kp-col-body">
           <div
-            v-for="client in crmStore.clientsByStage[stage.key] || []"
+            v-for="client in clientsByStage[stage.key] || []"
             :key="client._id"
             class="kp-card"
             :class="{ 'kp-card--drag': draggingId === client._id }"
@@ -53,6 +53,11 @@
                 <div class="kp-card-name">{{ client.razonSocial || client.name || '—' }}</div>
                 <div v-if="client.nombreComercial" class="kp-card-sub">{{ client.nombreComercial }}</div>
               </div>
+              <button
+                class="kp-edit-btn"
+                title="Editar cliente"
+                @click.stop="emit('edit-client', client)"
+              ><i class="bi bi-pencil"></i></button>
             </div>
 
             <div v-if="client.contactoPrincipal || client.telefono" class="kp-card-meta">
@@ -73,7 +78,7 @@
             </div>
           </div>
 
-          <div v-if="!(crmStore.clientsByStage[stage.key] || []).length" class="kp-empty-col">
+          <div v-if="!(clientsByStage[stage.key] || []).length" class="kp-empty-col">
             <i class="bi bi-inbox"></i>
           </div>
         </div>
@@ -84,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useCrmStore } from '@/stores/crm'
 
 const crmStore = useCrmStore()
@@ -93,13 +98,27 @@ const draggingId    = ref(null)
 const dragOver      = ref(null)
 const touchClientId = ref(null)
 
+// Solo clientes potenciales (nuevos)
+const nuevosClientes = computed(() =>
+  crmStore.visibleClients.filter(c => c.tipoCliente === 'potencial')
+)
+
+const clientsByStage = computed(() => {
+  const map = {}
+  for (const s of STAGES) {
+    map[s.key] = nuevosClientes.value.filter(c => c.pipelineEstado === s.key)
+  }
+  return map
+})
+
+const emit = defineEmits(['edit-client'])
+
 const STAGES = [
-  { key: 'nuevo_lead',         label: 'Nuevo Lead',   icon: 'bi bi-person-plus-fill',      color: '#3b82f6' },
-  { key: 'contactado',         label: 'Contactado',    icon: 'bi bi-telephone-fill',         color: '#8b5cf6' },
-  { key: 'cotizacion_enviada', label: 'Propuesta',     icon: 'bi bi-file-earmark-text-fill', color: '#f59e0b' },
-  { key: 'negociacion',        label: 'Negociación',   icon: 'bi bi-chat-dots-fill',         color: '#6366f1' },
-  { key: 'ganado',             label: 'Ganado',        icon: 'bi bi-trophy-fill',            color: '#22c55e' },
-  { key: 'perdido',            label: 'Perdido',       icon: 'bi bi-x-circle-fill',          color: '#ef4444' },
+  { key: 'nuevo_lead',         label: 'Nuevo Lead',  icon: 'bi bi-person-plus-fill',      color: '#3b82f6' },
+  { key: 'contactado',         label: 'Contactado',  icon: 'bi bi-telephone-fill',         color: '#8b5cf6' },
+  { key: 'cotizacion_enviada', label: 'Cotizado',    icon: 'bi bi-file-earmark-text-fill', color: '#f59e0b' },
+  { key: 'ganado',             label: 'Ganado',      icon: 'bi bi-trophy-fill',            color: '#22c55e' },
+  { key: 'perdido',            label: 'Perdido',     icon: 'bi bi-x-circle-fill',          color: '#ef4444' },
 ]
 
 const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#f59e0b','#6366f1','#22c55e','#ec4899','#6b8e3a','#ef4444']
@@ -277,6 +296,16 @@ async function onDrop(stageKey) {
 .kp-card--drag { opacity: 0.4; transform: scale(0.96); }
 
 .kp-card-top { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
+
+.kp-edit-btn {
+  background: none; border: none; cursor: pointer;
+  padding: 0.2rem 0.3rem; border-radius: 6px;
+  color: var(--color-muted); font-size: 0.75rem;
+  flex-shrink: 0; opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+.kp-card:hover .kp-edit-btn { opacity: 1; }
+.kp-edit-btn:hover { background: rgba(107,142,58,0.12); color: var(--color-primary, #6b8e3a); }
 
 .kp-av {
   width: 28px; height: 28px;
