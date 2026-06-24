@@ -1334,7 +1334,8 @@ function hasCliente(q) {
   .sidebar,
   .mobile-toggle,
   .sidebar-backdrop,
-  .notification-bell-container { display: none !important; }
+  .notification-bell-container,
+  .notification-shell { display: none !important; }
 
   html, body, #app { height: auto !important; max-height: none !important; overflow: visible !important; }
   main.app-content { margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
