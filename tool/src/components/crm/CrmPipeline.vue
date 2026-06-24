@@ -17,6 +17,7 @@
         :key="stage.key"
         class="kp-col"
         :class="{ 'kp-col--over': dragOver === stage.key }"
+        :data-stage="stage.key"
         @dragover.prevent="onDragOver(stage.key)"
         @dragleave="onDragLeave"
         @drop="onDrop(stage.key)"
@@ -40,6 +41,9 @@
             draggable="true"
             @dragstart="onDragStart(client)"
             @dragend="onDragEnd"
+            @touchstart.passive="onTouchStart(client)"
+            @touchmove.prevent="onTouchMove"
+            @touchend="onTouchEnd"
           >
             <div class="kp-card-top">
               <div class="kp-av" :style="{ background: avatarColor(client.razonSocial || client.name || '') }">
@@ -85,8 +89,9 @@ import { useCrmStore } from '@/stores/crm'
 
 const crmStore = useCrmStore()
 
-const draggingId = ref(null)
-const dragOver   = ref(null)
+const draggingId    = ref(null)
+const dragOver      = ref(null)
+const touchClientId = ref(null)
 
 const STAGES = [
   { key: 'nuevo_lead',         label: 'Nuevo Lead',   icon: 'bi bi-person-plus-fill',      color: '#3b82f6' },
@@ -111,6 +116,29 @@ function onDragStart(client) { draggingId.value = client._id }
 function onDragOver(key)     { dragOver.value = key }
 function onDragLeave()       { dragOver.value = null }
 function onDragEnd()         { draggingId.value = null; dragOver.value = null }
+
+// ── Touch drag (mobile) ──────────────────────────────────────────────────────
+function onTouchStart(client) {
+  touchClientId.value = client._id
+}
+
+function onTouchMove(event) {
+  if (!touchClientId.value) return
+  if (!draggingId.value) draggingId.value = touchClientId.value
+  const touch = event.touches[0]
+  const el = document.elementFromPoint(touch.clientX, touch.clientY)
+  const colEl = el?.closest('[data-stage]')
+  dragOver.value = colEl?.dataset.stage || null
+}
+
+function onTouchEnd() {
+  const stageKey = dragOver.value
+  const clientId = draggingId.value
+  touchClientId.value = null
+  dragOver.value      = null
+  draggingId.value    = null
+  if (clientId && stageKey) onDrop(stageKey)
+}
 
 async function onDrop(stageKey) {
   dragOver.value = null
@@ -340,12 +368,13 @@ async function onDrop(stageKey) {
   font-size: 1.2rem;
 }
 
-/* ── Mobile: 3 columnas ── */
+/* ── Mobile: 2 columnas por fila ── */
 @media (max-width: 640px) {
   .kp-board {
-    grid-template-columns: repeat(3, minmax(130px, 1fr));
-    overflow-x: auto;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
   }
+  .kp-col { max-height: 55vh; }
   .kp-wrap { overflow: visible; }
 }
 </style>

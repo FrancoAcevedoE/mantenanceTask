@@ -1398,7 +1398,7 @@ function hasCliente(q) {
   .print-notes { margin-bottom: 0.8rem; }
   .print-notes-text { font-size: 9pt; color: #444; white-space: pre-line; margin: 0.3rem 0 0; }
 
-  .print-validity { font-size: 8.5pt; color: #555; border-top: 1px solid #d4dfc8; padding-top: 0.5rem; margin-bottom: 0.5rem; font-style: italic; }
+  .print-validity { font-size: 8.5pt; color: #555; border-top: 1px solid #d4dfc8; padding-top: 0.5rem; margin-bottom: 0.5rem; font-style: italic; white-space: pre-line; }
   .print-footer { font-size: 8pt; color: #888; border-top: 1px solid #e0e0e0; padding-top: 0.4rem; margin-top: 0.4rem; }
   .print-footer-extra { font-size: 8.5pt; color: #555; margin-bottom: 0.25rem; text-align: left; }
 }
