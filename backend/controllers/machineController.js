@@ -213,7 +213,7 @@ export const updateInstructionsController = async (req, res) => {
     const machine = await Machine.findOneAndUpdate(
       { _id: id, isDeleted: { $ne: true } },
       { instructions },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     if (!machine) {
@@ -255,7 +255,7 @@ export const updateMachinePartsController = async (req, res) => {
     const machine = await Machine.findOneAndUpdate(
       { _id: id, isDeleted: { $ne: true } },
       { machineParts: normalizedMachineParts },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     if (!machine) {
@@ -295,7 +295,7 @@ export const updateSectorController = async (req, res) => {
     const machine = await Machine.findOneAndUpdate(
       { _id: id, isDeleted: { $ne: true } },
       { sector: normalizedSector },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     if (!machine) {
@@ -330,7 +330,7 @@ export const updateNameController = async (req, res) => {
     const machine = await Machine.findOneAndUpdate(
       { _id: id, isDeleted: { $ne: true } },
       { name },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     if (!machine) {
@@ -449,7 +449,7 @@ export const deleteMachineController = async (req, res) => {
           deletedBy: String(req.user?.id || "")
         }
       },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     if (!machine) {
@@ -530,7 +530,7 @@ export const restoreMachineController = async (req, res) => {
           deletedBy: ""
         }
       },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     await registerAuditEvent({

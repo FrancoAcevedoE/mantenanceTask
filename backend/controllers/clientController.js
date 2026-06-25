@@ -132,7 +132,7 @@ export const deleteClient = async (req, res) => {
     const client = await Client.findByIdAndUpdate(
       req.params.id,
       { $set: { isDeleted: true, deletedAt: new Date() } },
-      { new: true }
+      { returnDocument: 'after' }
     )
     if (!client) return res.status(404).json({ message: "Cliente no encontrado" })
     res.json({ message: "Cliente eliminado correctamente" })

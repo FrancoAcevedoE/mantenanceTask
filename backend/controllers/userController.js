@@ -336,7 +336,7 @@ export const deleteUser = async (req, res) => {
                     deletedBy: String(req.user?.id || "")
                 }
             },
-            { new: true }
+            { returnDocument: 'after' }
         )
 
         if (!user) {
@@ -439,7 +439,7 @@ export const restoreUser = async (req, res) => {
                     deletedBy: ""
                 }
             },
-            { new: true }
+            { returnDocument: 'after' }
         )
 
         await registerAuditEvent({

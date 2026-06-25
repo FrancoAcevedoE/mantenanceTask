@@ -83,7 +83,7 @@ export const updateProductController = async (req, res) => {
         if (updates.espesor) updates.thicknesses = [updates.espesor]
         if (updates.precio != null) updates.precioGrupoI = updates.precio
 
-        const product = await Product.findByIdAndUpdate(id, updates, { new: true })
+        const product = await Product.findByIdAndUpdate(id, updates, { returnDocument: 'after' })
 
         if (!product) {
             return res.status(404).json({ message: "Product not found" })

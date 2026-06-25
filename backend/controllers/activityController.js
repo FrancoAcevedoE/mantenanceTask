@@ -70,7 +70,7 @@ export const updateActivity = async (req, res) => {
     const activity = await Activity.findByIdAndUpdate(
       req.params.id,
       { $set: update },
-      { new: true }
+      { returnDocument: 'after' }
     )
     if (!activity) return res.status(404).json({ message: "Actividad no encontrada" })
     res.json(activity)

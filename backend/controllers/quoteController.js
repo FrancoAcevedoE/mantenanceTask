@@ -123,7 +123,7 @@ export const updateQuote = async (req, res) => {
     }
     if (clienteId !== undefined) update.clienteId = clienteId || null
 
-    const quote = await Quote.findByIdAndUpdate(req.params.id, { $set: update }, { new: true })
+    const quote = await Quote.findByIdAndUpdate(req.params.id, { $set: update }, { returnDocument: 'after' })
 
     // Auto-upgrade cliente cuando la cotización se marca como ganada
     const wasNotAccepted = existing.estado !== 'aceptada'
