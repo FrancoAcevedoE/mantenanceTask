@@ -120,14 +120,13 @@ onBeforeUnmount(() => { notificationsStore.stop() })
     </button>
   </aside>
 
-  <main :class="['app-content', { 'with-nav': showNav }]">
+  <main :class="['app-content', { 'with-nav': showNav, 'nav-open': showNav && mobileOpen }]">
     <router-view />
   </main>
 </template>
 
 <style>
 :root {
-  --sidebar-w: 60px;
   --sidebar-w-open: 240px;
 }
 
@@ -171,28 +170,71 @@ main.app-content {
   background: transparent;
   overflow-y: auto;
   overflow-x: hidden;
+  transition: margin-left 0.25s ease;
 }
 
 main.app-content.with-nav {
-  margin-left: var(--sidebar-w);
+  margin-left: 0;
 }
 
-/* ── Sidebar: sin fondo, transparente ── */
+main.app-content.nav-open {
+  margin-left: var(--sidebar-w-open);
+}
+
+/* ── Hamburger toggle — siempre visible ── */
+
+.mobile-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0.65rem;
+  left: 0.65rem;
+  z-index: 1100;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.93);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  color: var(--color-text, #2d3d24);
+  padding: 0;
+}
+
+.mobile-toggle i { font-size: 1.5rem; }
+.mobile-toggle:hover { transform: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18); }
+
+/* ── Backdrop ── */
+
+.sidebar-backdrop {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* ── Sidebar: drawer que se desliza desde la izquierda ── */
 
 .sidebar {
   position: fixed;
   top: 0;
-  left: 0;
+  left: calc(-1 * var(--sidebar-w-open));
   height: 100vh;
-  width: var(--sidebar-w);
+  width: var(--sidebar-w-open);
   z-index: 1000;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 1rem 0.5rem 1rem;
-  background: transparent;
-  overflow: visible;
+  padding: 4rem 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  transition: left 0.25s ease;
 }
+
+.sidebar--open { left: 0; }
 
 /* ── Nav links ── */
 
@@ -207,18 +249,19 @@ main.app-content.with-nav {
 }
 
 .sidebar-nav a {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  width: 100%;
   gap: 0;
   padding: 0.7rem 0.6rem;
   border-radius: 14px;
-  color: rgba(255, 255, 255, 0.82);
+  color: #767676;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.9rem;
   white-space: nowrap;
   background: transparent;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, padding 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sidebar-nav a i {
@@ -229,65 +272,55 @@ main.app-content.with-nav {
 }
 
 .sidebar-nav a:hover {
-  background: rgba(255, 255, 255, 0.93);
-  color: #2d3d24;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
-  transform: scale(1.05);
-  padding: 0.75rem 0.85rem;
+  background: rgba(107, 142, 58, 0.1);
+  color: var(--color-text, #2d3d24);
+  box-shadow: none;
 }
 
 .sidebar-nav a.router-link-active {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
+  background: rgba(107, 142, 58, 0.16);
+  color: #2c2c2c;
 }
 
 .sidebar-nav a.router-link-active:hover {
-  background: rgba(255, 255, 255, 0.93);
-  color: #2d3d24;
+  background: rgba(107, 142, 58, 0.2);
+  color: #2c2c2c;
 }
 
-/* ── Labels: se despliegan individualmente en hover ── */
+/* ── Labels: siempre visibles en el drawer ── */
 
 .nav-label {
-  max-width: 0;
-  opacity: 0;
-  overflow: hidden;
-  margin-left: 0;
-  transition: max-width 0.25s ease, opacity 0.18s ease, margin-left 0.22s ease;
-}
-
-.sidebar-nav a:hover .nav-label,
-.sidebar-logout:hover .nav-label {
-  max-width: 160px;
+  max-width: none;
+  flex: 1;
+  overflow: visible;
   opacity: 1;
   margin-left: 0.75rem;
+  white-space: nowrap;
 }
 
 /* ── Logout ── */
 
 .sidebar-logout {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  width: 100%;
   gap: 0;
   padding: 0.7rem 0.6rem;
   border-radius: 14px;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.82);
+  color: #767676;
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
   white-space: nowrap;
   box-shadow: none;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, padding 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .sidebar-logout:hover {
-  background: rgba(220, 38, 38, 0.88);
-  color: #fff;
-  transform: scale(1.05);
-  padding: 0.75rem 0.85rem;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
 }
 
 .sidebar-logout i {
@@ -297,108 +330,10 @@ main.app-content.with-nav {
   text-align: center;
 }
 
-/* ── Mobile toggle ── */
-
-.mobile-toggle { display: none; }
-.sidebar-backdrop { display: none; }
-
-/* ── Responsive ≤768px: drawer con fondo ── */
-
+/* ── Mobile: no desplazar contenido, solo overlay ── */
 @media (max-width: 768px) {
-  main.app-content.with-nav {
+  main.app-content.nav-open {
     margin-left: 0;
-    padding-top: 4rem;
-  }
-
-  .mobile-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    top: 0.65rem;
-    left: 0.65rem;
-    z-index: 1100;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.93);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-    cursor: pointer;
-    color: var(--color-text, #2d3d24);
-    padding: 0;
-  }
-
-  .mobile-toggle i { font-size: 1.5rem; }
-  .mobile-toggle:hover { transform: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18); }
-
-  .sidebar-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-    background: rgba(0, 0, 0, 0.45);
-  }
-
-  /* Drawer fuera de pantalla por defecto */
-  .sidebar {
-    left: calc(-1 * var(--sidebar-w-open));
-    width: var(--sidebar-w-open);
-    background: rgba(255, 255, 255, 0.97);
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
-    overflow: hidden;
-    padding-top: 1rem;
-    transition: left 0.25s ease;
-    align-items: flex-start;
-  }
-
-  .sidebar--open { left: 0; }
-
-  /* En móvil los items ocupan todo el ancho del drawer */
-  .sidebar-nav a {
-    display: flex;
-    width: 100%;
-    color: #767676;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .sidebar-nav a:hover {
-    background: rgba(107, 142, 58, 0.1);
-    color: var(--color-text, #2d3d24);
-    box-shadow: none;
-  }
-
-  .sidebar-nav a.router-link-active {
-    background: rgba(107, 142, 58, 0.16);
-    color: #2c2c2c;
-  }
-
-  .sidebar-nav a.router-link-active:hover {
-    background: rgba(107, 142, 58, 0.2);
-    color: #2c2c2c;
-  }
-
-  /* Labels siempre visibles en el drawer */
-  .sidebar .nav-label {
-    max-width: none;
-    flex: 1;
-    overflow: visible;
-    opacity: 1;
-    margin-left: 0.75rem;
-    white-space: nowrap;
-  }
-
-  .sidebar-logout {
-    display: flex;
-    width: 100%;
-    color: #767676;
-    background: transparent;
-  }
-
-  .sidebar-logout:hover {
-    background: rgba(220, 38, 38, 0.1);
-    color: #dc2626;
   }
 }
 </style>

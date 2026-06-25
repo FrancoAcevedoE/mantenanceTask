@@ -7,6 +7,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "backfill:maintenance-snapshots": "node scripts/backfillMaintenanceSnapshots.js",
+    "seed:products": "node scripts/seedProducts.js",
+    "seed:kariplak": "node scripts/seedKariplak.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
