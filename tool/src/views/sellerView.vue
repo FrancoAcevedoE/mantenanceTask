@@ -778,7 +778,7 @@ function editQuote(q) {
         _search: '',
         _colors: prod?.colors || [],
         _espesores: prod?.thicknesses || [],
-        _basePrice: prod ? (prod.precioGrupoI ?? prod.pricePerM2 ?? 0) : 0,
+        _basePrice: prod ? (prod.precio ?? prod.precioGrupoI ?? prod.pricePerM2 ?? 0) : 0,
         _discountPct: 0,
         _discountLabel: it.discountLabel || 'Sin descuento',
         _groupDescuentos: grupo?.descuentos || [],
@@ -895,7 +895,7 @@ function selectResult(idx, p) {
   item.espesor = item._espesores.length ? item._espesores[0] : ''
   item.unidad = p.unidadPrecio || 'unidad'
 
-  const base = p.precioGrupoI ?? p.pricePerM2 ?? 0
+  const base = p.precio ?? p.precioGrupoI ?? p.pricePerM2 ?? 0
   item._basePrice = base
   item._discountPct = 0
   item._discountLabel = 'Sin descuento'

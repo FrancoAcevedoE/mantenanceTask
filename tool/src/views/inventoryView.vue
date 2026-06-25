@@ -15,6 +15,9 @@
           <button class="secondary-button" @click="filtersOpen = !filtersOpen">
             <i class="bi bi-funnel"></i> Filtros
           </button>
+          <router-link to="/product/new">
+            <button class="primary-button"><i class="bi bi-plus-lg"></i> Nuevo producto</button>
+          </router-link>
           <router-link to="/inv-dashboard">
             <button class="secondary-button"><i class="bi bi-bar-chart-line"></i> Dashboard</button>
           </router-link>
@@ -266,7 +269,7 @@ const filters = ref({
 })
 
 const GRUPO_ORDER = [
-  'Laminado Decorativo', 'Kariplac MDP', 'Kariplac MDF', 'Kariplac H y MAX',
+  'LAMINADOS DECORATIVOS', 'KARIPLAC MDP', 'KARIPLAC MDF', 'KARIPLAK H', 'KARIPLAK MAX',
   'Kompak', 'Kompak Unicolor', 'Acustik', 'Top Floor Pisos', 'Top Wall',
   'Top Kit / Solid / Table', 'Coverwall', 'Top Box', 'Panel Expositor / Top Rack',
   'Karystyle', 'Kariform'
@@ -364,6 +367,7 @@ function sortIcon(key) {
 }
 
 function precioBase(p) {
+  if (p.precio != null) return p.precio
   if (p.precioGrupoI != null) return p.precioGrupoI
   if (p.precioGrupoII != null) return p.precioGrupoII
   if (p.precioGrupoIII != null) return p.precioGrupoIII

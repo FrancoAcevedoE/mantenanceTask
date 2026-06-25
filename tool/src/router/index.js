@@ -8,6 +8,7 @@ import Dashboard from '@/views/Dashboard.vue'
 import NotificationHistory from '@/views/NotificationHistory.vue'
 import sellerView from '@/views/sellerView.vue'
 import inventoryView from '@/views/inventoryView.vue'
+import ProductCreateView from '@/views/ProductCreateView.vue'
 import ProductDetailView from '@/views/ProductDetailView.vue'
 import ProductEditView from '@/views/ProductEditView.vue'
 import BulkPriceUpdateView from '@/views/BulkPriceUpdateView.vue'
@@ -59,6 +60,9 @@ const router = createRouter({
     },
     {
       path: '/inventory', name: 'InventoryView', component: inventoryView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+    },
+    {
+      path: '/product/new', name: 'ProductCreate', component: ProductCreateView, meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
       path: '/product/:id', name: 'ProductDetail', component: ProductDetailView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
