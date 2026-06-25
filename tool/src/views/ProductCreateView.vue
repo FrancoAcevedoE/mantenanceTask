@@ -17,9 +17,10 @@
           <!-- SKU -->
           <div class="section-title">SKU</div>
           <div class="sku-preview">
-            <span class="sku-label">SKU generado:</span>
+            <span class="sku-label">SKU base:</span>
             <code class="sku-code">{{ skuPreview || '—' }}</code>
-            <span v-if="form.colorMode === 'todos'" class="sku-hint">(sin color — se completa en cotizacion)</span>
+            <span v-if="form.variantes.length > 1" class="sku-hint">(+ terminacion del tipo en cotizacion)</span>
+            <span v-if="form.colorMode === 'todos' || form.selectedColors.length > 1" class="sku-hint">(+ color en cotizacion)</span>
           </div>
           <div class="form-grid">
             <div class="field" :class="{ error: errors.prefijo }">
@@ -27,11 +28,6 @@
               <input v-model="form.prefijo" type="text" maxlength="3" placeholder="Ej: LKH"
                      @input="form.prefijo = form.prefijo.toUpperCase()" />
               <span class="field-error" v-if="errors.prefijo">{{ errors.prefijo }}</span>
-            </div>
-            <div class="field">
-              <label>Terminacion (para SKU)</label>
-              <input v-model="form.terminacion" type="text" placeholder="Ej: SE, BR, TE"
-                     @input="form.terminacion = form.terminacion.toUpperCase()" />
             </div>
             <div class="field" :class="{ error: errors.nomenclaturaMedida }">
               <label>Nomenclatura medida (3 numeros) *</label>
@@ -67,10 +63,6 @@
               </div>
             </div>
             <div class="field">
-              <label>Tipo</label>
-              <input v-model="form.tipo" type="text" placeholder="Ej: Compensado, Liso..." />
-            </div>
-            <div class="field">
               <label>Espesor</label>
               <input v-model="form.espesor" type="text" placeholder="Ej: 3, 6, 0.6..." />
             </div>
@@ -83,26 +75,19 @@
           <!-- Color -->
           <div class="section-title">Color</div>
           <div class="form-grid">
-            <div class="field">
+            <div class="field full">
               <label>Modo de color</label>
               <select v-model="form.colorMode">
                 <option value="todos">TODOS (todos los colores disponibles)</option>
-                <option value="especifico">Color especifico</option>
+                <option value="especifico">Colores especificos</option>
               </select>
             </div>
-
-            <template v-if="form.colorMode === 'especifico'">
-              <div class="field">
-                <label>Codigo de color</label>
-                <input v-model="form.color" type="text" placeholder="Ej: 5505" />
-              </div>
-            </template>
           </div>
 
-          <!-- Color selector cuando es TODOS - preview -->
+          <!-- TODOS: preview de colores -->
           <div v-if="form.colorMode === 'todos'" class="color-catalog-preview">
             <div class="color-group-section" v-for="g in [1,2,3]" :key="g">
-              <div class="color-group-header">Grupo {{ ['I','II','III'][g-1] }} ({{ colorsByGroup(g).length }} colores)</div>
+              <div class="color-group-header">Grupo {{ romanNum(g) }} ({{ colorsByGroup(g).length }} colores)</div>
               <div class="color-chips-row">
                 <span v-for="c in colorsByGroup(g).slice(0, 8)" :key="c.code" class="color-chip-sm">
                   {{ c.code }} {{ c.name }}
@@ -111,6 +96,29 @@
                   +{{ colorsByGroup(g).length - 8 }} mas
                 </span>
               </div>
+            </div>
+          </div>
+
+          <!-- ESPECIFICO: checkboxes por grupo -->
+          <div v-if="form.colorMode === 'especifico'" class="color-catalog-select">
+            <div class="color-group-section" v-for="g in [1,2,3]" :key="g">
+              <div class="color-group-header">
+                <span>Grupo {{ romanNum(g) }}</span>
+                <button type="button" class="btn-link" @click="toggleGroup(g)">
+                  {{ isGroupAllSelected(g) ? 'Deseleccionar' : 'Seleccionar todo' }}
+                </button>
+              </div>
+              <div class="color-check-grid">
+                <label v-for="c in colorsByGroup(g)" :key="c.code" class="color-check-item"
+                       :class="{ checked: form.selectedColors.includes(c.code) }">
+                  <input type="checkbox" :value="c.code" v-model="form.selectedColors" />
+                  <span class="color-check-code">{{ c.code }}</span>
+                  <span class="color-check-name">{{ c.name }}</span>
+                </label>
+              </div>
+            </div>
+            <div v-if="form.selectedColors.length" class="color-selection-count">
+              {{ form.selectedColors.length }} color{{ form.selectedColors.length !== 1 ? 'es' : '' }} seleccionado{{ form.selectedColors.length !== 1 ? 's' : '' }}
             </div>
           </div>
 
@@ -130,8 +138,8 @@
             </div>
           </div>
 
-          <!-- Precio -->
-          <div class="section-title">Precio</div>
+          <!-- Tipos y Precios -->
+          <div class="section-title">Tipos y precios</div>
           <div class="form-grid">
             <div class="field">
               <label>Unidad de precio</label>
@@ -141,41 +149,60 @@
                 <option value="m2">Por m2</option>
               </select>
             </div>
-
-            <template v-if="form.colorMode === 'todos'">
-              <div class="field">
-                <label>Precio Grupo I</label>
-                <div class="input-prefix-wrap">
-                  <span class="input-prefix">$</span>
-                  <input v-model.number="form.precioGrupoI" type="number" min="0" step="0.01" placeholder="0.00" class="has-prefix" />
-                </div>
-              </div>
-              <div class="field">
-                <label>Precio Grupo II</label>
-                <div class="input-prefix-wrap">
-                  <span class="input-prefix">$</span>
-                  <input v-model.number="form.precioGrupoII" type="number" min="0" step="0.01" placeholder="0.00" class="has-prefix" />
-                </div>
-              </div>
-              <div class="field">
-                <label>Precio Grupo III</label>
-                <div class="input-prefix-wrap">
-                  <span class="input-prefix">$</span>
-                  <input v-model.number="form.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0.00" class="has-prefix" />
-                </div>
-              </div>
-            </template>
-
-            <template v-else>
-              <div class="field">
-                <label>Precio</label>
-                <div class="input-prefix-wrap">
-                  <span class="input-prefix">$</span>
-                  <input v-model.number="form.precio" type="number" min="0" step="0.01" placeholder="0.00" class="has-prefix" />
-                </div>
-              </div>
-            </template>
           </div>
+          <p class="hint">Cada fila es un tipo/terminacion del producto con sus precios por grupo de color.</p>
+          <div class="variantes-table-wrap">
+            <table class="variantes-table">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Terminacion (SKU)</th>
+                  <th>$ Grupo I</th>
+                  <th>$ Grupo II</th>
+                  <th>$ Grupo III</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(v, i) in form.variantes" :key="i">
+                  <td>
+                    <input v-model="v.tipo" type="text" placeholder="Ej: Brillante" class="input-sm" />
+                  </td>
+                  <td>
+                    <input v-model="v.terminacion" type="text" placeholder="Ej: BR" class="input-sm input-code"
+                           @input="v.terminacion = v.terminacion.toUpperCase()" maxlength="4" />
+                  </td>
+                  <td>
+                    <div class="pct-input-wrap">
+                      <span class="input-prefix-inline">$</span>
+                      <input v-model.number="v.precioGrupoI" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                    </div>
+                  </td>
+                  <td>
+                    <div class="pct-input-wrap">
+                      <span class="input-prefix-inline">$</span>
+                      <input v-model.number="v.precioGrupoII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                    </div>
+                  </td>
+                  <td>
+                    <div class="pct-input-wrap">
+                      <span class="input-prefix-inline">$</span>
+                      <input v-model.number="v.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                    </div>
+                  </td>
+                  <td>
+                    <button type="button" class="btn-icon-danger" @click="removeVariante(i)"
+                            v-if="form.variantes.length > 1" title="Quitar">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <button type="button" class="secondary-button add-row-btn" @click="addVariante">
+            <i class="bi bi-plus"></i> Agregar tipo
+          </button>
 
           <!-- Comercial -->
           <div class="section-title">Comercial</div>
@@ -193,12 +220,65 @@
           </div>
 
           <!-- Imagen -->
-          <div class="section-title">Imagen</div>
-          <div class="field full">
-            <label>URL de imagen</label>
-            <input v-model="form.image" type="url" placeholder="https://..." />
-            <div v-if="form.image" class="img-preview">
-              <img :src="form.image" alt="preview" @error="form.image = ''" />
+          <div class="section-title">Imagen del producto</div>
+          <div class="form-grid">
+            <div class="field">
+              <label>URL de imagen</label>
+              <input v-model="form.image" type="url" placeholder="https://..." />
+            </div>
+            <div class="field">
+              <label>o subir archivo</label>
+              <div class="upload-row">
+                <label class="upload-btn">
+                  <i class="bi bi-upload"></i> Elegir imagen
+                  <input type="file" accept="image/*" hidden @change="uploadFile($event, 'image')" />
+                </label>
+                <span v-if="uploading.image" class="upload-status"><i class="bi bi-hourglass-split"></i> Subiendo...</span>
+              </div>
+            </div>
+          </div>
+          <div v-if="form.image" class="img-preview">
+            <img :src="resolveUrl(form.image)" alt="preview" @error="form.image = ''" />
+          </div>
+
+          <!-- Archivos adjuntos -->
+          <div class="section-title">Archivos adjuntos</div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Catalogo</label>
+              <div class="upload-row">
+                <label class="upload-btn">
+                  <i class="bi bi-file-earmark-pdf"></i> Subir catalogo
+                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" hidden @change="uploadFile($event, 'catalogo')" />
+                </label>
+                <span v-if="uploading.catalogo" class="upload-status"><i class="bi bi-hourglass-split"></i> Subiendo...</span>
+              </div>
+              <div v-if="form.catalogo" class="file-attached">
+                <a :href="resolveUrl(form.catalogo)" target="_blank" class="file-link">
+                  <i class="bi bi-file-earmark-check"></i> Ver catalogo
+                </a>
+                <button type="button" class="btn-icon-danger" @click="form.catalogo = ''" title="Quitar">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Ficha tecnica</label>
+              <div class="upload-row">
+                <label class="upload-btn">
+                  <i class="bi bi-file-earmark-pdf"></i> Subir ficha tecnica
+                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" hidden @change="uploadFile($event, 'fichaTecnica')" />
+                </label>
+                <span v-if="uploading.fichaTecnica" class="upload-status"><i class="bi bi-hourglass-split"></i> Subiendo...</span>
+              </div>
+              <div v-if="form.fichaTecnica" class="file-attached">
+                <a :href="resolveUrl(form.fichaTecnica)" target="_blank" class="file-link">
+                  <i class="bi bi-file-earmark-check"></i> Ver ficha tecnica
+                </a>
+                <button type="button" class="btn-icon-danger" @click="form.fichaTecnica = ''" title="Quitar">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -235,34 +315,68 @@ const grupos = ref([])
 const colorCatalog = ref([])
 const showNewGrupo = ref(false)
 const newGrupoName = ref('')
+const uploading = ref({ image: false, catalogo: false, fichaTecnica: false })
+
+function resolveUrl(path) {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return `${API_BASE_URL.replace('/api', '')}${path}`
+}
+
+async function uploadFile(event, field) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  uploading.value[field] = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const { data } = await axios.post(`${API_BASE_URL}/upload`, fd, {
+      ...authHeader(),
+      headers: { ...authHeader().headers, 'Content-Type': 'multipart/form-data' },
+    })
+    form.value[field] = data.url
+    toast.success(`Archivo subido: ${file.name}`)
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Error al subir archivo')
+  } finally {
+    uploading.value[field] = false
+    event.target.value = ''
+  }
+}
+
+function emptyVariante() {
+  return { tipo: '', terminacion: '', precioGrupoI: null, precioGrupoII: null, precioGrupoIII: null }
+}
+
+function addVariante() { form.value.variantes.push(emptyVariante()) }
+function removeVariante(i) { form.value.variantes.splice(i, 1) }
 
 const form = ref({
   prefijo: '',
   name: '',
   grupo: '',
-  tipo: '',
   espesor: '',
   detalle: '',
-  terminacion: '',
   color: '',
   colorMode: 'todos',
+  selectedColors: [],
   medida: '',
   nomenclaturaMedida: '',
   admiteDescuentos: true,
   comentario: '',
   image: '',
-  precio: null,
-  precioGrupoI: null,
-  precioGrupoII: null,
-  precioGrupoIII: null,
+  catalogo: '',
+  fichaTecnica: '',
   unidadPrecio: 'hoja',
+  variantes: [emptyVariante()],
 })
 
 const skuPreview = computed(() => {
-  const { prefijo, color, terminacion, nomenclaturaMedida, colorMode } = form.value
-  const colorPart = colorMode === 'todos' ? '' : color
-  if (!prefijo && !colorPart && !terminacion && !nomenclaturaMedida) return ''
-  return `${prefijo}${colorPart}${terminacion}${nomenclaturaMedida}`
+  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, variantes } = form.value
+  const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
+  const termPart = variantes.length === 1 ? (variantes[0].terminacion || '') : ''
+  if (!prefijo && !colorPart && !termPart && !nomenclaturaMedida) return ''
+  return `${prefijo}${colorPart}${termPart}${nomenclaturaMedida}`
 })
 
 const m2Calc = computed(() => {
@@ -277,6 +391,25 @@ const m2Calc = computed(() => {
 
 function colorsByGroup(g) {
   return colorCatalog.value.filter(c => c.grupoColor === g)
+}
+
+function romanNum(g) {
+  return ['I', 'II', 'III'][g - 1]
+}
+
+function isGroupAllSelected(g) {
+  const codes = colorsByGroup(g).map(c => c.code)
+  return codes.length > 0 && codes.every(c => form.value.selectedColors.includes(c))
+}
+
+function toggleGroup(g) {
+  const codes = colorsByGroup(g).map(c => c.code)
+  if (isGroupAllSelected(g)) {
+    form.value.selectedColors = form.value.selectedColors.filter(c => !codes.includes(c))
+  } else {
+    const toAdd = codes.filter(c => !form.value.selectedColors.includes(c))
+    form.value.selectedColors.push(...toAdd)
+  }
 }
 
 function onNomenclatura() {
@@ -327,7 +460,18 @@ async function save() {
   if (!validate()) return
   saving.value = true
   try {
-    await store.createProduct({ ...form.value })
+    const payload = { ...form.value }
+    if (payload.colorMode === 'especifico' && payload.selectedColors.length === 1) {
+      payload.color = payload.selectedColors[0]
+    }
+    if (payload.variantes.length === 1) {
+      payload.tipo = payload.variantes[0].tipo
+      payload.terminacion = payload.variantes[0].terminacion
+      payload.precioGrupoI = payload.variantes[0].precioGrupoI
+      payload.precioGrupoII = payload.variantes[0].precioGrupoII
+      payload.precioGrupoIII = payload.variantes[0].precioGrupoIII
+    }
+    await store.createProduct(payload)
     toast.success('Producto creado correctamente.')
     router.push('/inventory')
   } catch (err) {
@@ -447,6 +591,143 @@ async function save() {
   color: var(--color-primary, #6b8e3a);
 }
 
+.color-catalog-select {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 0.75rem;
+  background: rgba(107,142,58,0.04);
+  border: 1px solid rgba(107,142,58,0.12);
+  border-radius: 12px;
+}
+
+.color-catalog-select .color-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--color-primary, #6b8e3a);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.color-check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.3rem;
+}
+
+.color-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+}
+
+.color-check-item:hover { background: rgba(107,142,58,0.08); }
+.color-check-item.checked { background: rgba(107,142,58,0.12); border-color: rgba(107,142,58,0.25); }
+
+.color-check-item input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary, #6b8e3a);
+  flex-shrink: 0;
+}
+
+.color-check-code { font-weight: 700; min-width: 35px; }
+.color-check-name { color: var(--color-muted); font-weight: 400; }
+
+.color-selection-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-primary, #6b8e3a);
+  text-align: right;
+  padding-top: 0.3rem;
+  border-top: 1px solid rgba(107,142,58,0.12);
+}
+
+.hint { font-size: 0.78rem; color: var(--color-muted); margin: 0; }
+
+.variantes-table-wrap { overflow-x: auto; margin-top: 0.5rem; }
+
+.variantes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.variantes-table th {
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  white-space: nowrap;
+}
+
+.variantes-table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  vertical-align: middle;
+}
+
+.input-sm {
+  width: 100%;
+  min-width: 100px;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.12);
+  font-size: 0.82rem;
+}
+
+.input-code { max-width: 70px; text-align: center; font-weight: 700; letter-spacing: 0.05em; }
+
+.input-num-sm {
+  width: 80px;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.12);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.pct-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.input-prefix-inline { font-size: 0.82rem; font-weight: 600; color: var(--color-muted); }
+
+.btn-icon-danger {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+.btn-icon-danger:hover { background: rgba(220,38,38,0.1); }
+
+.add-row-btn { align-self: flex-start; margin-top: 0.4rem; }
+
 .m2-display {
   padding: 0.65rem 1rem;
   background: rgba(107,142,58,0.06);
@@ -488,4 +769,42 @@ textarea { resize: vertical; min-height: 60px; font-family: inherit; font-size: 
   border-top: 1px solid rgba(107,142,58,0.12);
 }
 .form-footer a { text-decoration: none; }
+
+.upload-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 1px dashed rgba(107,142,58,0.35);
+  background: rgba(107,142,58,0.06);
+  color: var(--color-primary, #6b8e3a);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.upload-btn:hover { background: rgba(107,142,58,0.14); border-style: solid; }
+
+.upload-status { font-size: 0.78rem; color: var(--color-muted); }
+
+.file-attached {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-primary, #6b8e3a);
+  text-decoration: none;
+}
+.file-link:hover { text-decoration: underline; }
 </style>

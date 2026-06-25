@@ -16,7 +16,7 @@
         <!-- Left panel -->
         <aside class="detail-aside">
           <div class="product-image-wrap">
-            <img v-if="product.image" :src="product.image" :alt="product.name" class="product-img" />
+            <img v-if="product.image" :src="resolveUrl(product.image)" :alt="product.name" class="product-img" />
             <div v-else class="no-image"><i class="bi bi-image" style="font-size:3rem;color:var(--color-muted)"></i></div>
           </div>
 
@@ -128,6 +128,42 @@
             </div>
           </div>
 
+          <!-- Variantes -->
+          <div v-if="product.variantes?.length > 1" class="variantes-section">
+            <h4 class="section-label">Tipos / Variantes</h4>
+            <table class="variantes-detail-table">
+              <thead>
+                <tr>
+                  <th>Tipo</th><th>Terminacion</th><th>$ Grupo I</th><th>$ Grupo II</th><th>$ Grupo III</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(v, i) in product.variantes" :key="i">
+                  <td>{{ v.tipo }}</td>
+                  <td class="mono">{{ v.terminacion }}</td>
+                  <td>${{ formatPrice(v.precioGrupoI) }}</td>
+                  <td>${{ formatPrice(v.precioGrupoII) }}</td>
+                  <td>${{ formatPrice(v.precioGrupoIII) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Archivos -->
+          <div v-if="product.catalogo || product.fichaTecnica" class="files-section">
+            <h4 class="section-label">Archivos adjuntos</h4>
+            <div class="files-row">
+              <a v-if="product.catalogo" :href="resolveUrl(product.catalogo)" target="_blank" class="file-card">
+                <i class="bi bi-file-earmark-pdf"></i>
+                <span>Catalogo</span>
+              </a>
+              <a v-if="product.fichaTecnica" :href="resolveUrl(product.fichaTecnica)" target="_blank" class="file-card">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Ficha tecnica</span>
+              </a>
+            </div>
+          </div>
+
           <div class="detail-actions">
             <router-link :to="`/product/${product._id}/edit`">
               <button><i class="bi bi-pencil"></i> Editar producto</button>
@@ -146,6 +182,7 @@
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProductsStore } from '@/stores/products'
+import { API_BASE_URL } from '@/utils/api'
 import InventorySubNav from '@/components/InventorySubNav.vue'
 
 const route = useRoute()
@@ -156,6 +193,12 @@ const product = computed(() => store.getById(route.params.id))
 onMounted(() => {
   if (!store.products.length) store.fetchProducts()
 })
+
+function resolveUrl(path) {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return `${API_BASE_URL.replace('/api', '')}${path}`
+}
 
 function formatPrice(n) {
   return (n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -391,6 +434,49 @@ function stockClass(stock) {
 }
 
 .detail-actions a { text-decoration: none; }
+
+.variantes-section { margin-top: 0.5rem; }
+
+.variantes-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin-top: 0.5rem;
+}
+.variantes-detail-table th {
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+.variantes-detail-table td {
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.files-section { margin-top: 0.5rem; }
+.files-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+
+.file-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(107,142,58,0.2);
+  background: rgba(107,142,58,0.06);
+  color: var(--color-primary, #6b8e3a);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.file-card:hover { background: rgba(107,142,58,0.14); border-color: rgba(107,142,58,0.4); }
+.file-card i { font-size: 1.2rem; }
 
 @media (max-width: 800px) {
   .detail-layout { grid-template-columns: 1fr; }

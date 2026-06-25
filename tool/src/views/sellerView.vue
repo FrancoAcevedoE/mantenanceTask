@@ -147,6 +147,7 @@
             <thead>
               <tr>
                 <th class="col-producto">Producto</th>
+                <th class="col-tipo">Tipo</th>
                 <th class="col-color">Color</th>
                 <th class="col-qty">Cant.</th>
                 <th class="col-unit">Unidad</th>
@@ -209,31 +210,41 @@
                   </div>
                 </td>
 
+                <!-- Tipo -->
+                <td class="col-tipo">
+                  <template v-if="item._variantes?.length > 1">
+                    <select v-model="item.tipo" class="sel-small" @change="onTipoChange(idx)">
+                      <option value="">Seleccionar tipo</option>
+                      <option v-for="v in item._variantes" :key="v.terminacion" :value="v.tipo">
+                        {{ v.tipo }} ({{ v.terminacion }})
+                      </option>
+                    </select>
+                  </template>
+                  <span v-else-if="item.tipo" class="tipo-label">{{ item.tipo }}</span>
+                </td>
+
                 <!-- Color -->
                 <td class="col-color">
-                  <template v-if="item._colorMode === 'todos'">
+                  <template v-if="item._colorMode === 'todos' || (item._selectedColors?.length > 1)">
                     <select v-model="item.color" class="sel-small" @change="onColorChange(idx)">
                       <option value="">Seleccionar color</option>
-                      <optgroup label="Grupo I">
-                        <option v-for="c in colorOptionsGrouped().g1" :key="c.code" :value="c.code">
+                      <optgroup label="Grupo I" v-if="colorOptionsForItem(item).g1.length">
+                        <option v-for="c in colorOptionsForItem(item).g1" :key="c.code" :value="c.code">
                           {{ c.code }} — {{ c.name }}
                         </option>
                       </optgroup>
-                      <optgroup label="Grupo II">
-                        <option v-for="c in colorOptionsGrouped().g2" :key="c.code" :value="c.code">
+                      <optgroup label="Grupo II" v-if="colorOptionsForItem(item).g2.length">
+                        <option v-for="c in colorOptionsForItem(item).g2" :key="c.code" :value="c.code">
                           {{ c.code }} — {{ c.name }}
                         </option>
                       </optgroup>
-                      <optgroup label="Grupo III">
-                        <option v-for="c in colorOptionsGrouped().g3" :key="c.code" :value="c.code">
+                      <optgroup label="Grupo III" v-if="colorOptionsForItem(item).g3.length">
+                        <option v-for="c in colorOptionsForItem(item).g3" :key="c.code" :value="c.code">
                           {{ c.code }} — {{ c.name }}
                         </option>
                       </optgroup>
                     </select>
                   </template>
-                  <select v-else-if="item._colors?.length > 1" v-model="item.color" class="sel-small">
-                    <option v-for="c in item._colors" :key="c" :value="c">{{ c }}</option>
-                  </select>
                   <input v-else v-model="item.color" type="text" placeholder="Color" class="input-small" />
                 </td>
 
@@ -702,39 +713,66 @@ async function loadColors() {
   } catch { /* ignore */ }
 }
 
-function colorOptionsGrouped() {
-  const g1 = colorCatalog.value.filter(c => c.grupoColor === 1)
-  const g2 = colorCatalog.value.filter(c => c.grupoColor === 2)
-  const g3 = colorCatalog.value.filter(c => c.grupoColor === 3)
-  return { g1, g2, g3 }
+function colorOptionsForItem(item) {
+  const allowed = item._colorMode === 'todos' ? null : (item._selectedColors || [])
+  const catalog = colorCatalog.value
+  const filter = (g) => {
+    const byGroup = catalog.filter(c => c.grupoColor === g)
+    return allowed ? byGroup.filter(c => allowed.includes(c.code)) : byGroup
+  }
+  return { g1: filter(1), g2: filter(2), g3: filter(3) }
 }
 
-function onColorChange(idx) {
-  const item = form.value.items[idx]
-  if (!item._colorMode || item._colorMode !== 'todos') return
+function getActiveVariante(item) {
+  if (!item._variantes?.length) return null
+  if (item._variantes.length === 1) return item._variantes[0]
+  return item._variantes.find(v => v.tipo === item.tipo) || null
+}
 
-  const sel = colorCatalog.value.find(c => c.code === item.color)
-  if (!sel) return
+function rebuildSkuAndPrice(item, prod) {
+  const prefijo = prod.prefijo || ''
+  const nom = prod.nomenclaturaMedida || ''
+  const vari = getActiveVariante(item)
+  const term = vari?.terminacion || item.terminacion || prod.terminacion || ''
+  const colorSel = colorCatalog.value.find(c => c.code === item.color)
+  const colorPart = colorSel ? colorSel.code : ''
+
+  item.codigo = `${prefijo}${colorPart}${term}${nom}`
+
+  if (colorSel) {
+    const src = vari || prod
+    let base = 0
+    if (colorSel.grupoColor === 1) base = src.precioGrupoI ?? 0
+    else if (colorSel.grupoColor === 2) base = src.precioGrupoII ?? 0
+    else if (colorSel.grupoColor === 3) base = src.precioGrupoIII ?? 0
+    item._basePrice = base
+    item.precioUnitario = base
+  }
+
+  item._discountPct = 0
+  item._discountLabel = 'Sin descuento'
+}
+
+function onTipoChange(idx) {
+  const item = form.value.items[idx]
+  const vari = getActiveVariante(item)
+  if (vari) item.terminacion = vari.terminacion || ''
 
   const prod = item._productId ? productsStore.getById(item._productId) : null
   if (!prod) return
 
-  // Completar SKU con código de color
-  const prefijo = prod.prefijo || ''
-  const term = prod.terminacion || ''
-  const nom = prod.nomenclaturaMedida || ''
-  item.codigo = `${prefijo}${sel.code}${term}${nom}`
+  rebuildSkuAndPrice(item, prod)
+  recalc(idx)
+}
 
-  // Cambiar precio según grupo del color
-  let base = 0
-  if (sel.grupoColor === 1) base = prod.precioGrupoI ?? 0
-  else if (sel.grupoColor === 2) base = prod.precioGrupoII ?? 0
-  else if (sel.grupoColor === 3) base = prod.precioGrupoIII ?? 0
+function onColorChange(idx) {
+  const item = form.value.items[idx]
+  if (!item._colorMode && !item._selectedColors?.length && !item._variantes?.length) return
 
-  item._basePrice = base
-  item._discountPct = 0
-  item._discountLabel = 'Sin descuento'
-  item.precioUnitario = base
+  const prod = item._productId ? productsStore.getById(item._productId) : null
+  if (!prod) return
+
+  rebuildSkuAndPrice(item, prod)
   recalc(idx)
 }
 
@@ -802,6 +840,8 @@ function emptyItem() {
     _discountLabel: 'Sin descuento',
     _groupDescuentos: [],
     _colorMode: 'especifico',
+    _selectedColors: [],
+    _variantes: [],
     nombre: '',
     codigo: '',
     tipo: '',
@@ -847,6 +887,8 @@ function editQuote(q) {
         _discountLabel: it.discountLabel || 'Sin descuento',
         _groupDescuentos: grupo?.descuentos || [],
         _colorMode: prod?.colorMode || 'especifico',
+        _selectedColors: prod?.selectedColors || [],
+        _variantes: prod?.variantes || [],
         nombre: it.nombre || '',
         codigo: it.codigo || '',
         tipo: it.tipo || '',
@@ -955,18 +997,33 @@ function selectResult(idx, p) {
   item.tipo = p.tipo || ''
   item.terminacion = p.terminacion || ''
   item._colorMode = p.colorMode || 'especifico'
+  item._selectedColors = p.selectedColors || []
+  item._variantes = p.variantes || []
   item._espesores = p.thicknesses || []
   item.espesor = item._espesores.length ? item._espesores[0] : ''
   item.unidad = p.unidadPrecio || 'unidad'
 
-  if (p.colorMode === 'todos') {
+  if (item._variantes.length === 1) {
+    item.tipo = item._variantes[0].tipo || p.tipo || ''
+    item.terminacion = item._variantes[0].terminacion || p.terminacion || ''
+  } else if (item._variantes.length > 1) {
+    item.tipo = ''
+    item.terminacion = ''
+  } else {
+    item.tipo = p.tipo || ''
+    item.terminacion = p.terminacion || ''
+  }
+
+  const needsColorSelection = p.colorMode === 'todos' || (p.selectedColors?.length > 1)
+  const needsTipoSelection = item._variantes.length > 1
+  if (needsColorSelection || needsTipoSelection) {
     item._colors = []
-    item.color = ''
+    item.color = needsColorSelection ? '' : (p.selectedColors?.length === 1 ? p.selectedColors[0] : '')
     item._basePrice = 0
     item.precioUnitario = 0
   } else {
     item._colors = p.colors || []
-    item.color = item._colors.length ? item._colors[0] : ''
+    item.color = p.selectedColors?.length === 1 ? p.selectedColors[0] : (item._colors.length ? item._colors[0] : '')
     const base = p.precio ?? p.precioGrupoI ?? p.pricePerM2 ?? 0
     item._basePrice = base
     item.precioUnitario = base
@@ -1205,7 +1262,10 @@ function hasCliente(q) {
 .item-row td { padding: 0.35rem 0.45rem; border-top: 1px solid rgba(107,142,58,0.08); vertical-align: middle; }
 
 .col-producto { min-width: 220px; }
+.col-tipo   { min-width: 110px; }
 .col-color  { min-width: 95px; }
+
+.tipo-label { font-size: 0.78rem; font-weight: 500; color: var(--color-text); }
 .col-qty    { width: 68px; }
 .col-unit   { width: 80px; }
 .col-disc   { min-width: 190px; }

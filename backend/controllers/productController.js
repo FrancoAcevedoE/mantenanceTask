@@ -15,35 +15,47 @@ export const createProductController = async (req, res) => {
     try {
         const body = req.body
         const colorMode = body.colorMode || 'especifico'
-        const colorPart = colorMode === 'todos' ? '' : (body.color || '')
-        const code = body.code || `${body.prefijo || ''}${colorPart}${body.terminacion || ''}${body.nomenclaturaMedida || ''}`
+        const selectedColors = body.selectedColors || []
+        const variantes = body.variantes || []
+        const hasMultipleColors = colorMode === 'todos' || selectedColors.length !== 1
+        const hasMultipleTypes = variantes.length > 1
+        const colorPart = hasMultipleColors ? '' : (body.color || selectedColors[0] || '')
+        const termPart = hasMultipleTypes ? '' : (body.terminacion || variantes[0]?.terminacion || '')
+        const code = body.code || `${body.prefijo || ''}${colorPart}${termPart}${body.nomenclaturaMedida || ''}`
         const m2 = calcM2(body.medida)
 
+        const colorsArray = colorMode === 'todos' ? ['TODOS'] : selectedColors.length ? selectedColors : (body.color ? [body.color] : [])
+
+        const firstVar = variantes[0] || {}
         const product = new Product({
             name: body.name,
             code,
             prefijo: body.prefijo,
-            tipo: body.tipo,
+            tipo: hasMultipleTypes ? 'VARIOS' : (body.tipo || firstVar.tipo || ''),
             espesor: body.espesor,
             detalle: body.detalle,
-            terminacion: body.terminacion,
-            color: colorMode === 'todos' ? 'TODOS' : body.color,
+            terminacion: hasMultipleTypes ? '' : (body.terminacion || firstVar.terminacion || ''),
+            color: colorMode === 'todos' ? 'TODOS' : (selectedColors.length === 1 ? selectedColors[0] : 'VARIOS'),
             colorMode,
+            selectedColors,
+            variantes,
             medida: body.medida,
             dimensions: body.medida,
             nomenclaturaMedida: body.nomenclaturaMedida,
             m2,
             grupo: body.grupo,
             image: body.image,
-            precio: colorMode === 'todos' ? null : body.precio,
+            catalogo: body.catalogo,
+            fichaTecnica: body.fichaTecnica,
+            precio: body.precio ?? null,
             unidadPrecio: body.unidadPrecio,
             admiteDescuentos: body.admiteDescuentos ?? true,
             comentario: body.comentario,
-            colors: colorMode === 'todos' ? ['TODOS'] : (body.color ? [body.color] : []),
+            colors: colorsArray,
             thicknesses: body.espesor ? [body.espesor] : [],
-            precioGrupoI: body.precioGrupoI ?? body.precio,
-            precioGrupoII: body.precioGrupoII ?? null,
-            precioGrupoIII: body.precioGrupoIII ?? null,
+            precioGrupoI: body.precioGrupoI ?? firstVar.precioGrupoI ?? null,
+            precioGrupoII: body.precioGrupoII ?? firstVar.precioGrupoII ?? null,
+            precioGrupoIII: body.precioGrupoIII ?? firstVar.precioGrupoIII ?? null,
         })
 
         await product.save()
