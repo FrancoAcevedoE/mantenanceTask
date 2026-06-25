@@ -14,6 +14,7 @@ const productSchema = new mongoose.Schema({
     variantes: [{
         tipo: String,
         terminacion: String,
+        precioGeneral: Number,
         precioGrupoI: Number,
         precioGrupoII: Number,
         precioGrupoIII: Number,
@@ -26,6 +27,7 @@ const productSchema = new mongoose.Schema({
     catalogo: { type: String },
     fichaTecnica: { type: String },
     precio: { type: Number },
+    precioGeneral: { type: Number },
     unidadPrecio: { type: String, default: 'hoja' },
     admiteDescuentos: { type: Boolean, default: true },
     comentario: { type: String },

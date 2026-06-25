@@ -157,6 +157,7 @@
                 <tr>
                   <th>Tipo</th>
                   <th>Terminacion (SKU)</th>
+                  <th>$ General</th>
                   <th>$ Grupo I</th>
                   <th>$ Grupo II</th>
                   <th>$ Grupo III</th>
@@ -171,6 +172,12 @@
                   <td>
                     <input v-model="v.terminacion" type="text" placeholder="Ej: BR" class="input-sm input-code"
                            @input="v.terminacion = v.terminacion.toUpperCase()" maxlength="4" />
+                  </td>
+                  <td>
+                    <div class="pct-input-wrap">
+                      <span class="input-prefix-inline">$</span>
+                      <input v-model.number="v.precioGeneral" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                    </div>
                   </td>
                   <td>
                     <div class="pct-input-wrap">
@@ -345,7 +352,7 @@ async function uploadFile(event, field) {
 }
 
 function emptyVariante() {
-  return { tipo: '', terminacion: '', precioGrupoI: null, precioGrupoII: null, precioGrupoIII: null }
+  return { tipo: '', terminacion: '', precioGeneral: null, precioGrupoI: null, precioGrupoII: null, precioGrupoIII: null }
 }
 
 function addVariante() { form.value.variantes.push(emptyVariante()) }
@@ -467,6 +474,7 @@ async function save() {
     if (payload.variantes.length === 1) {
       payload.tipo = payload.variantes[0].tipo
       payload.terminacion = payload.variantes[0].terminacion
+      payload.precioGeneral = payload.variantes[0].precioGeneral
       payload.precioGrupoI = payload.variantes[0].precioGrupoI
       payload.precioGrupoII = payload.variantes[0].precioGrupoII
       payload.precioGrupoIII = payload.variantes[0].precioGrupoIII

@@ -739,14 +739,18 @@ function rebuildSkuAndPrice(item, prod) {
 
   item.codigo = `${prefijo}${colorPart}${term}${nom}`
 
+  const src = vari || prod
   if (colorSel) {
-    const src = vari || prod
     let base = 0
-    if (colorSel.grupoColor === 1) base = src.precioGrupoI ?? 0
-    else if (colorSel.grupoColor === 2) base = src.precioGrupoII ?? 0
-    else if (colorSel.grupoColor === 3) base = src.precioGrupoIII ?? 0
+    if (colorSel.grupoColor === 1) base = src.precioGrupoI ?? src.precioGeneral ?? 0
+    else if (colorSel.grupoColor === 2) base = src.precioGrupoII ?? src.precioGeneral ?? 0
+    else if (colorSel.grupoColor === 3) base = src.precioGrupoIII ?? src.precioGeneral ?? 0
+    else base = src.precioGeneral ?? 0
     item._basePrice = base
     item.precioUnitario = base
+  } else if (src.precioGeneral) {
+    item._basePrice = src.precioGeneral
+    item.precioUnitario = src.precioGeneral
   }
 
   item._discountPct = 0

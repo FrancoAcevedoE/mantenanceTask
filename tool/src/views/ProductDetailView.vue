@@ -134,13 +134,14 @@
             <table class="variantes-detail-table">
               <thead>
                 <tr>
-                  <th>Tipo</th><th>Terminacion</th><th>$ Grupo I</th><th>$ Grupo II</th><th>$ Grupo III</th>
+                  <th>Tipo</th><th>Terminacion</th><th>$ General</th><th>$ Grupo I</th><th>$ Grupo II</th><th>$ Grupo III</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(v, i) in product.variantes" :key="i">
                   <td>{{ v.tipo }}</td>
                   <td class="mono">{{ v.terminacion }}</td>
+                  <td>{{ v.precioGeneral != null ? '$' + formatPrice(v.precioGeneral) : '—' }}</td>
                   <td>${{ formatPrice(v.precioGrupoI) }}</td>
                   <td>${{ formatPrice(v.precioGrupoII) }}</td>
                   <td>${{ formatPrice(v.precioGrupoIII) }}</td>

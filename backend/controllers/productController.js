@@ -48,6 +48,7 @@ export const createProductController = async (req, res) => {
             catalogo: body.catalogo,
             fichaTecnica: body.fichaTecnica,
             precio: body.precio ?? null,
+            precioGeneral: body.precioGeneral ?? firstVar.precioGeneral ?? null,
             unidadPrecio: body.unidadPrecio,
             admiteDescuentos: body.admiteDescuentos ?? true,
             comentario: body.comentario,
