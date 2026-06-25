@@ -150,12 +150,13 @@
               </select>
             </div>
           </div>
-          <p class="hint">Cada fila es un tipo/terminacion del producto con sus precios por grupo de color.</p>
+          <p class="hint">Cada fila es una combinacion de tipo + terminacion con sus precios por grupo de color.</p>
           <div class="variantes-table-wrap">
             <table class="variantes-table">
               <thead>
                 <tr>
                   <th>Tipo</th>
+                  <th>Tipo de terminacion</th>
                   <th>Terminacion (SKU)</th>
                   <th>$ General</th>
                   <th>$ Grupo I</th>
@@ -167,7 +168,10 @@
               <tbody>
                 <tr v-for="(v, i) in form.variantes" :key="i">
                   <td>
-                    <input v-model="v.tipo" type="text" placeholder="Ej: Brillante" class="input-sm" />
+                    <input v-model="v.tipoProducto" type="text" placeholder="Ej: Compensado" class="input-sm" />
+                  </td>
+                  <td>
+                    <input v-model="v.tipoTerminacion" type="text" placeholder="Ej: Brillante" class="input-sm" />
                   </td>
                   <td>
                     <input v-model="v.terminacion" type="text" placeholder="Ej: BR" class="input-sm input-code"
@@ -208,7 +212,7 @@
             </table>
           </div>
           <button type="button" class="secondary-button add-row-btn" @click="addVariante">
-            <i class="bi bi-plus"></i> Agregar tipo
+            <i class="bi bi-plus"></i> Agregar variante
           </button>
 
           <!-- Comercial -->
@@ -352,7 +356,7 @@ async function uploadFile(event, field) {
 }
 
 function emptyVariante() {
-  return { tipo: '', terminacion: '', precioGeneral: null, precioGrupoI: null, precioGrupoII: null, precioGrupoIII: null }
+  return { tipoProducto: '', tipoTerminacion: '', terminacion: '', precioGeneral: null, precioGrupoI: null, precioGrupoII: null, precioGrupoIII: null }
 }
 
 function addVariante() { form.value.variantes.push(emptyVariante()) }
@@ -472,12 +476,14 @@ async function save() {
       payload.color = payload.selectedColors[0]
     }
     if (payload.variantes.length === 1) {
-      payload.tipo = payload.variantes[0].tipo
-      payload.terminacion = payload.variantes[0].terminacion
-      payload.precioGeneral = payload.variantes[0].precioGeneral
-      payload.precioGrupoI = payload.variantes[0].precioGrupoI
-      payload.precioGrupoII = payload.variantes[0].precioGrupoII
-      payload.precioGrupoIII = payload.variantes[0].precioGrupoIII
+      const v0 = payload.variantes[0]
+      payload.tipo = v0.tipoProducto
+      payload.tipoTerminacion = v0.tipoTerminacion
+      payload.terminacion = v0.terminacion
+      payload.precioGeneral = v0.precioGeneral
+      payload.precioGrupoI = v0.precioGrupoI
+      payload.precioGrupoII = v0.precioGrupoII
+      payload.precioGrupoIII = v0.precioGrupoIII
     }
     await store.createProduct(payload)
     toast.success('Producto creado correctamente.')

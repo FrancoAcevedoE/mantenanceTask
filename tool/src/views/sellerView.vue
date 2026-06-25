@@ -213,14 +213,16 @@
                 <!-- Tipo -->
                 <td class="col-tipo">
                   <template v-if="item._variantes?.length > 1">
-                    <select v-model="item.tipo" class="sel-small" @change="onTipoChange(idx)">
-                      <option value="">Seleccionar tipo</option>
-                      <option v-for="v in item._variantes" :key="v.terminacion" :value="v.tipo">
-                        {{ v.tipo }} ({{ v.terminacion }})
+                    <select v-model="item._varianteIdx" class="sel-small" @change="onTipoChange(idx)">
+                      <option :value="-1">Seleccionar tipo</option>
+                      <option v-for="(v, vi) in item._variantes" :key="vi" :value="vi">
+                        {{ [v.tipoProducto, v.tipoTerminacion].filter(Boolean).join(' / ') || v.terminacion }}
                       </option>
                     </select>
                   </template>
-                  <span v-else-if="item.tipo" class="tipo-label">{{ item.tipo }}</span>
+                  <span v-else-if="item.tipo || item.tipoTerminacion" class="tipo-label">
+                    {{ [item.tipo, item.tipoTerminacion].filter(Boolean).join(' / ') }}
+                  </span>
                 </td>
 
                 <!-- Color -->
@@ -568,8 +570,8 @@
           <td class="pi-product">
             <span class="pi-name">{{ item.nombre }}</span>
             <span v-if="item.codigo" class="pi-code">{{ item.codigo }}</span>
-            <span v-if="item.tipo || item.terminacion || item.espesor" class="pi-meta">
-              {{ [item.tipo, item.terminacion, item.espesor ? item.espesor + 'mm' : ''].filter(Boolean).join(' · ') }}
+            <span v-if="item.tipo || item.tipoTerminacion || item.terminacion || item.espesor" class="pi-meta">
+              {{ [item.tipo, item.tipoTerminacion, item.terminacion, item.espesor ? item.espesor + 'mm' : ''].filter(Boolean).join(' · ') }}
             </span>
           </td>
           <td class="pi-color">{{ item.color || '—' }}</td>
@@ -726,7 +728,10 @@ function colorOptionsForItem(item) {
 function getActiveVariante(item) {
   if (!item._variantes?.length) return null
   if (item._variantes.length === 1) return item._variantes[0]
-  return item._variantes.find(v => v.tipo === item.tipo) || null
+  if (item._varianteIdx >= 0 && item._varianteIdx < item._variantes.length) {
+    return item._variantes[item._varianteIdx]
+  }
+  return null
 }
 
 function rebuildSkuAndPrice(item, prod) {
@@ -760,7 +765,11 @@ function rebuildSkuAndPrice(item, prod) {
 function onTipoChange(idx) {
   const item = form.value.items[idx]
   const vari = getActiveVariante(item)
-  if (vari) item.terminacion = vari.terminacion || ''
+  if (vari) {
+    item.tipo = vari.tipoProducto || ''
+    item.tipoTerminacion = vari.tipoTerminacion || ''
+    item.terminacion = vari.terminacion || ''
+  }
 
   const prod = item._productId ? productsStore.getById(item._productId) : null
   if (!prod) return
@@ -846,9 +855,11 @@ function emptyItem() {
     _colorMode: 'especifico',
     _selectedColors: [],
     _variantes: [],
+    _varianteIdx: -1,
     nombre: '',
     codigo: '',
     tipo: '',
+    tipoTerminacion: '',
     terminacion: '',
     espesor: '',
     color: '',
@@ -893,9 +904,11 @@ function editQuote(q) {
         _colorMode: prod?.colorMode || 'especifico',
         _selectedColors: prod?.selectedColors || [],
         _variantes: prod?.variantes || [],
+        _varianteIdx: it._varianteIdx ?? (prod?.variantes?.length === 1 ? 0 : -1),
         nombre: it.nombre || '',
         codigo: it.codigo || '',
         tipo: it.tipo || '',
+        tipoTerminacion: it.tipoTerminacion || '',
         terminacion: it.terminacion || '',
         espesor: it.espesor || '',
         color: it.color || '',
@@ -998,23 +1011,26 @@ function selectResult(idx, p) {
   item._search = ''
   item.nombre = p.name
   item.codigo = p.code || ''
-  item.tipo = p.tipo || ''
-  item.terminacion = p.terminacion || ''
   item._colorMode = p.colorMode || 'especifico'
   item._selectedColors = p.selectedColors || []
   item._variantes = p.variantes || []
+  item._varianteIdx = -1
   item._espesores = p.thicknesses || []
   item.espesor = item._espesores.length ? item._espesores[0] : ''
   item.unidad = p.unidadPrecio || 'unidad'
 
   if (item._variantes.length === 1) {
-    item.tipo = item._variantes[0].tipo || p.tipo || ''
+    item._varianteIdx = 0
+    item.tipo = item._variantes[0].tipoProducto || p.tipo || ''
+    item.tipoTerminacion = item._variantes[0].tipoTerminacion || p.tipoTerminacion || ''
     item.terminacion = item._variantes[0].terminacion || p.terminacion || ''
   } else if (item._variantes.length > 1) {
     item.tipo = ''
+    item.tipoTerminacion = ''
     item.terminacion = ''
   } else {
     item.tipo = p.tipo || ''
+    item.tipoTerminacion = p.tipoTerminacion || ''
     item.terminacion = p.terminacion || ''
   }
 

@@ -11,8 +11,10 @@ const productSchema = new mongoose.Schema({
     color: { type: String },
     colorMode: { type: String, default: 'especifico' },
     selectedColors: [{ type: String }],
+    tipoTerminacion: { type: String },
     variantes: [{
-        tipo: String,
+        tipoProducto: String,
+        tipoTerminacion: String,
         terminacion: String,
         precioGeneral: Number,
         precioGrupoI: Number,
