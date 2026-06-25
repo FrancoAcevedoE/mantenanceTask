@@ -57,6 +57,12 @@ export const useProductsStore = defineStore('products', () => {
     return data.product
   }
 
+  async function deleteAllProducts() {
+    const { data } = await axios.delete(`${API_BASE_URL}/products/all`, authHeader())
+    products.value = []
+    return data
+  }
+
   function getById(id) {
     return products.value.find(p => p._id === id) || null
   }
@@ -79,6 +85,6 @@ export const useProductsStore = defineStore('products', () => {
     products, loading, error, selectedIds,
     totalProducts, totalStock, inventoryValue, noStockProducts, lowStockProducts,
     uniqueGrupos, uniqueColors, uniqueMedidas, uniqueEspesores, uniqueTerminaciones, uniqueTexturas,
-    fetchProducts, updateProduct, createProduct, getById, toggleSelect, selectAll, clearSelection
+    fetchProducts, updateProduct, createProduct, deleteAllProducts, getById, toggleSelect, selectAll, clearSelection
   }
 })

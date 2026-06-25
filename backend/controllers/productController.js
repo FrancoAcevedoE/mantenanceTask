@@ -1,4 +1,5 @@
 import Product from "../models/productModel.js"
+import AuditLog from "../models/auditLogModel.js"
 import { registerAuditEvent } from "../services/auditService.js"
 
 function calcM2(medida) {
@@ -43,11 +44,12 @@ export const createProductController = async (req, res) => {
         await product.save()
 
         await registerAuditEvent({
+            req,
             action: "CREATE_PRODUCT",
-            entity: "Product",
+            entityType: "Product",
             entityId: product._id,
-            details: `Product ${product.name} (${code}) created`,
-            performedBy: req.user?.name || "System"
+            description: `Producto creado: ${product.name} (${code})`,
+            metadata: { code, name: product.name, grupo: product.grupo, precio: product.precio }
         })
 
         res.status(201).json({ message: "Product created successfully", product })
@@ -90,11 +92,11 @@ export const updateProductController = async (req, res) => {
         }
 
         await registerAuditEvent({
+            req,
             action: "UPDATE_PRODUCT",
-            entity: "Product",
+            entityType: "Product",
             entityId: product._id,
-            details: `Product ${product.name} updated`,
-            performedBy: req.user?.name || "System"
+            description: `Producto actualizado: ${product.name}`,
         })
 
         res.json({ message: "Product updated successfully", product })
@@ -115,16 +117,51 @@ export const deleteProductController = async (req, res) => {
         }
 
         await registerAuditEvent({
+            req,
             action: "DELETE_PRODUCT",
-            entity: "Product",
+            entityType: "Product",
             entityId: product._id,
-            details: `Product ${product.name} deleted`,
-            performedBy: req.user?.name || "System"
+            description: `Producto eliminado: ${product.name} (${product.code})`,
+            metadata: { code: product.code, name: product.name, grupo: product.grupo }
         })
 
         res.json({ message: "Product deleted successfully" })
     } catch (error) {
         console.error("Error deleting product:", error)
         res.status(500).json({ message: "Error deleting product", error: error.message })
+    }
+}
+
+export const deleteAllProductsController = async (req, res) => {
+    try {
+        const count = await Product.countDocuments()
+        await Product.deleteMany({})
+
+        await registerAuditEvent({
+            req,
+            action: "DELETE_ALL_PRODUCTS",
+            entityType: "Product",
+            entityId: "",
+            description: `Se vaciaron todos los productos (${count} eliminados)`,
+            metadata: { count }
+        })
+
+        res.json({ message: `${count} productos eliminados` })
+    } catch (error) {
+        console.error("Error deleting all products:", error)
+        res.status(500).json({ message: "Error deleting products", error: error.message })
+    }
+}
+
+export const getProductAuditLogController = async (req, res) => {
+    try {
+        const logs = await AuditLog.find({
+            entityType: "Product"
+        }).sort({ createdAt: -1 }).limit(200).lean()
+
+        res.json(logs)
+    } catch (error) {
+        console.error("Error fetching product audit logs:", error)
+        res.status(500).json({ message: "Error fetching audit logs", error: error.message })
     }
 }

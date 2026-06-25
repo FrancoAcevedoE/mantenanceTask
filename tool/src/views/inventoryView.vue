@@ -18,6 +18,9 @@
           <router-link to="/product/new">
             <button class="primary-button"><i class="bi bi-plus-lg"></i> Nuevo producto</button>
           </router-link>
+          <button class="danger-button" @click="deleteAll">
+            <i class="bi bi-trash"></i> Vaciar
+          </button>
           <router-link to="/inv-dashboard">
             <button class="secondary-button"><i class="bi bi-bar-chart-line"></i> Dashboard</button>
           </router-link>
@@ -248,9 +251,11 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useProductsStore } from '@/stores/products'
+import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
 
 const store = useProductsStore()
+const toast = useToast()
 
 const search = ref('')
 const filtersOpen = ref(false)
@@ -282,6 +287,16 @@ onMounted(() => {
 function clearFilters() {
   Object.keys(filters.value).forEach(k => (filters.value[k] = ''))
   search.value = ''
+}
+
+async function deleteAll() {
+  if (!confirm('¿Estas seguro de eliminar TODOS los productos? Esta accion no se puede deshacer.')) return
+  try {
+    const res = await store.deleteAllProducts()
+    toast.success(res.message || 'Productos eliminados')
+  } catch {
+    toast.error('Error al vaciar productos')
+  }
 }
 
 const filtered = computed(() => {
