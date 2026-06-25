@@ -211,7 +211,27 @@
 
                 <!-- Color -->
                 <td class="col-color">
-                  <select v-if="item._colors?.length > 1" v-model="item.color" class="sel-small">
+                  <template v-if="item._colorMode === 'todos'">
+                    <select v-model="item.color" class="sel-small" @change="onColorChange(idx)">
+                      <option value="">Seleccionar color</option>
+                      <optgroup label="Grupo I">
+                        <option v-for="c in colorOptionsGrouped().g1" :key="c.code" :value="c.code">
+                          {{ c.code }} — {{ c.name }}
+                        </option>
+                      </optgroup>
+                      <optgroup label="Grupo II">
+                        <option v-for="c in colorOptionsGrouped().g2" :key="c.code" :value="c.code">
+                          {{ c.code }} — {{ c.name }}
+                        </option>
+                      </optgroup>
+                      <optgroup label="Grupo III">
+                        <option v-for="c in colorOptionsGrouped().g3" :key="c.code" :value="c.code">
+                          {{ c.code }} — {{ c.name }}
+                        </option>
+                      </optgroup>
+                    </select>
+                  </template>
+                  <select v-else-if="item._colors?.length > 1" v-model="item.color" class="sel-small">
                     <option v-for="c in item._colors" :key="c" :value="c">{{ c }}</option>
                   </select>
                   <input v-else v-model="item.color" type="text" placeholder="Color" class="input-small" />
@@ -625,6 +645,7 @@ function onLogoFile(e) {
 
 // ── Grupos de descuento ───────────────────────────────────────────────────────
 const grupos = ref([])  // [{ nombre, descuentos: [...] }]
+const colorCatalog = ref([])  // catálogo de colores para productos con colorMode: 'todos'
 
 // ── Estado del buscador ───────────────────────────────────────────────────────
 const activeSearchIdx = ref(-1)
@@ -652,6 +673,7 @@ onMounted(async () => {
       loadQuotes(),
       productsStore.products.length ? Promise.resolve() : productsStore.fetchProducts(),
       loadGrupos(),
+      loadColors(),
       crmStore.clients.length ? Promise.resolve() : crmStore.fetchClients(),
     ])
   } finally {
@@ -671,6 +693,49 @@ async function loadGrupos() {
   } catch (e) {
     console.error('Error loading product groups', e)
   }
+}
+
+async function loadColors() {
+  try {
+    const { data } = await axios.get(`${API_BASE_URL}/colors`, authH())
+    colorCatalog.value = Array.isArray(data) ? data : []
+  } catch { /* ignore */ }
+}
+
+function colorOptionsGrouped() {
+  const g1 = colorCatalog.value.filter(c => c.grupoColor === 1)
+  const g2 = colorCatalog.value.filter(c => c.grupoColor === 2)
+  const g3 = colorCatalog.value.filter(c => c.grupoColor === 3)
+  return { g1, g2, g3 }
+}
+
+function onColorChange(idx) {
+  const item = form.value.items[idx]
+  if (!item._colorMode || item._colorMode !== 'todos') return
+
+  const sel = colorCatalog.value.find(c => c.code === item.color)
+  if (!sel) return
+
+  const prod = item._productId ? productsStore.getById(item._productId) : null
+  if (!prod) return
+
+  // Completar SKU con código de color
+  const prefijo = prod.prefijo || ''
+  const term = prod.terminacion || ''
+  const nom = prod.nomenclaturaMedida || ''
+  item.codigo = `${prefijo}${sel.code}${term}${nom}`
+
+  // Cambiar precio según grupo del color
+  let base = 0
+  if (sel.grupoColor === 1) base = prod.precioGrupoI ?? 0
+  else if (sel.grupoColor === 2) base = prod.precioGrupoII ?? 0
+  else if (sel.grupoColor === 3) base = prod.precioGrupoIII ?? 0
+
+  item._basePrice = base
+  item._discountPct = 0
+  item._discountLabel = 'Sin descuento'
+  item.precioUnitario = base
+  recalc(idx)
 }
 
 // ── CRM client picker ─────────────────────────────────────────────────────────
@@ -728,7 +793,6 @@ function newFormState() {
 
 function emptyItem() {
   return {
-    // campos UI (no se envían al backend)
     _productId: '',
     _search: '',
     _colors: [],
@@ -737,7 +801,7 @@ function emptyItem() {
     _discountPct: 0,
     _discountLabel: 'Sin descuento',
     _groupDescuentos: [],
-    // campos del backend
+    _colorMode: 'especifico',
     nombre: '',
     codigo: '',
     tipo: '',
@@ -782,6 +846,7 @@ function editQuote(q) {
         _discountPct: 0,
         _discountLabel: it.discountLabel || 'Sin descuento',
         _groupDescuentos: grupo?.descuentos || [],
+        _colorMode: prod?.colorMode || 'especifico',
         nombre: it.nombre || '',
         codigo: it.codigo || '',
         tipo: it.tipo || '',
@@ -889,17 +954,26 @@ function selectResult(idx, p) {
   item.codigo = p.code || ''
   item.tipo = p.tipo || ''
   item.terminacion = p.terminacion || ''
-  item._colors = p.colors || []
-  item.color = item._colors.length ? item._colors[0] : ''
+  item._colorMode = p.colorMode || 'especifico'
   item._espesores = p.thicknesses || []
   item.espesor = item._espesores.length ? item._espesores[0] : ''
   item.unidad = p.unidadPrecio || 'unidad'
 
-  const base = p.precio ?? p.precioGrupoI ?? p.pricePerM2 ?? 0
-  item._basePrice = base
+  if (p.colorMode === 'todos') {
+    item._colors = []
+    item.color = ''
+    item._basePrice = 0
+    item.precioUnitario = 0
+  } else {
+    item._colors = p.colors || []
+    item.color = item._colors.length ? item._colors[0] : ''
+    const base = p.precio ?? p.precioGrupoI ?? p.pricePerM2 ?? 0
+    item._basePrice = base
+    item.precioUnitario = base
+  }
+
   item._discountPct = 0
   item._discountLabel = 'Sin descuento'
-  item.precioUnitario = base
 
   const grupo = grupos.value.find(g => g.nombre === p.grupo)
   item._groupDescuentos = grupo?.descuentos || []

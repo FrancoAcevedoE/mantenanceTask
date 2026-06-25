@@ -16,6 +16,10 @@
       <i class="bi bi-tags"></i>
       <span>Precios masivos</span>
     </router-link>
+    <router-link to="/product-groups" :class="{ active: isActive('/product-groups') }">
+      <i class="bi bi-collection"></i>
+      <span>Grupos</span>
+    </router-link>
     <router-link to="/product-log" :class="{ active: isActive('/product-log') }">
       <i class="bi bi-journal-text"></i>
       <span>Registro</span>

@@ -30,6 +30,7 @@ import productRoutes from "./routes/productRoutes.js"
 import productGroupRoutes from "./routes/productGroupRoutes.js"
 import quoteRoutes from "./routes/quoteRoutes.js"
 import activityRoutes from "./routes/activityRoutes.js"
+import colorRoutes from "./routes/colorRoutes.js"
 import User from "./models/userModels.js"
 
 console.log("[server] imported routes and models")
@@ -131,6 +132,7 @@ app.use("/api/products", productRoutes)
 app.use("/api/product-groups", productGroupRoutes)
 app.use("/api/quotes", quoteRoutes)
 app.use("/api/activities", activityRoutes)
+app.use("/api/colors", colorRoutes)
 
 app.get("/api/health", (req, res) => {
   const mongoStateMap = {

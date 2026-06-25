@@ -9,6 +9,7 @@ const productSchema = new mongoose.Schema({
     detalle: { type: String },
     terminacion: { type: String },
     color: { type: String },
+    colorMode: { type: String, default: 'especifico' },
     medida: { type: String },
     nomenclaturaMedida: { type: String },
     m2: { type: Number },

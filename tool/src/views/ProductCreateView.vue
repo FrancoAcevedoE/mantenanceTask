@@ -19,6 +19,7 @@
           <div class="sku-preview">
             <span class="sku-label">SKU generado:</span>
             <code class="sku-code">{{ skuPreview || '—' }}</code>
+            <span v-if="form.colorMode === 'todos'" class="sku-hint">(sin color — se completa en cotizacion)</span>
           </div>
           <div class="form-grid">
             <div class="field" :class="{ error: errors.prefijo }">
@@ -28,10 +29,6 @@
               <span class="field-error" v-if="errors.prefijo">{{ errors.prefijo }}</span>
             </div>
             <div class="field">
-              <label>Codigo color (para SKU)</label>
-              <input v-model="form.color" type="text" placeholder="Ej: 5505" />
-            </div>
-            <div class="field">
               <label>Terminacion (para SKU)</label>
               <input v-model="form.terminacion" type="text" placeholder="Ej: SE, BR, TE"
                      @input="form.terminacion = form.terminacion.toUpperCase()" />
@@ -39,8 +36,7 @@
             <div class="field" :class="{ error: errors.nomenclaturaMedida }">
               <label>Nomenclatura medida (3 numeros) *</label>
               <input v-model="form.nomenclaturaMedida" type="text" maxlength="3"
-                     placeholder="Ej: 410"
-                     @input="onNomenclatura" />
+                     placeholder="Ej: 410" @input="onNomenclatura" />
               <span class="field-error" v-if="errors.nomenclaturaMedida">{{ errors.nomenclaturaMedida }}</span>
             </div>
           </div>
@@ -55,10 +51,20 @@
             </div>
             <div class="field">
               <label>Grupo</label>
-              <select v-model="form.grupo">
-                <option value="">Sin grupo</option>
-                <option v-for="g in grupos" :key="g" :value="g">{{ g }}</option>
-              </select>
+              <div class="grupo-row">
+                <select v-model="form.grupo" class="grupo-select">
+                  <option value="">Sin grupo</option>
+                  <option v-for="g in grupos" :key="g" :value="g">{{ g }}</option>
+                </select>
+                <button type="button" class="btn-sm secondary-button" @click="showNewGrupo = !showNewGrupo"
+                        title="Crear grupo">
+                  <i class="bi bi-plus"></i>
+                </button>
+              </div>
+              <div v-if="showNewGrupo" class="new-grupo-row">
+                <input v-model="newGrupoName" type="text" placeholder="Nombre del nuevo grupo" />
+                <button type="button" class="btn-sm" @click="createGrupo" :disabled="!newGrupoName.trim()">Crear</button>
+              </div>
             </div>
             <div class="field">
               <label>Tipo</label>
@@ -71,6 +77,40 @@
             <div class="field full">
               <label>Detalle</label>
               <textarea v-model="form.detalle" rows="2" placeholder="Descripcion adicional del producto..."></textarea>
+            </div>
+          </div>
+
+          <!-- Color -->
+          <div class="section-title">Color</div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Modo de color</label>
+              <select v-model="form.colorMode">
+                <option value="todos">TODOS (todos los colores disponibles)</option>
+                <option value="especifico">Color especifico</option>
+              </select>
+            </div>
+
+            <template v-if="form.colorMode === 'especifico'">
+              <div class="field">
+                <label>Codigo de color</label>
+                <input v-model="form.color" type="text" placeholder="Ej: 5505" />
+              </div>
+            </template>
+          </div>
+
+          <!-- Color selector cuando es TODOS - preview -->
+          <div v-if="form.colorMode === 'todos'" class="color-catalog-preview">
+            <div class="color-group-section" v-for="g in [1,2,3]" :key="g">
+              <div class="color-group-header">Grupo {{ ['I','II','III'][g-1] }} ({{ colorsByGroup(g).length }} colores)</div>
+              <div class="color-chips-row">
+                <span v-for="c in colorsByGroup(g).slice(0, 8)" :key="c.code" class="color-chip-sm">
+                  {{ c.code }} {{ c.name }}
+                </span>
+                <span v-if="colorsByGroup(g).length > 8" class="color-chip-sm more">
+                  +{{ colorsByGroup(g).length - 8 }} mas
+                </span>
+              </div>
             </div>
           </div>
 
@@ -94,13 +134,6 @@
           <div class="section-title">Precio</div>
           <div class="form-grid">
             <div class="field">
-              <label>Precio</label>
-              <div class="input-prefix-wrap">
-                <span class="input-prefix">$</span>
-                <input v-model.number="form.precio" type="number" min="0" step="0.01" placeholder="0.00" class="has-prefix" />
-              </div>
-            </div>
-            <div class="field">
               <label>Unidad de precio</label>
               <select v-model="form.unidadPrecio">
                 <option value="hoja">Por hoja</option>
@@ -108,6 +141,40 @@
                 <option value="m2">Por m2</option>
               </select>
             </div>
+
+            <template v-if="form.colorMode === 'todos'">
+              <div class="field">
+                <label>Precio Grupo I</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">$</span>
+                  <input v-model.number="form.precioGrupoI" type="number" min="0" step="0.01" placeholder="0.00" class="has-prefix" />
+                </div>
+              </div>
+              <div class="field">
+                <label>Precio Grupo II</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">$</span>
+                  <input v-model.number="form.precioGrupoII" type="number" min="0" step="0.01" placeholder="0.00" class="has-prefix" />
+                </div>
+              </div>
+              <div class="field">
+                <label>Precio Grupo III</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">$</span>
+                  <input v-model.number="form.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0.00" class="has-prefix" />
+                </div>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="field">
+                <label>Precio</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">$</span>
+                  <input v-model.number="form.precio" type="number" min="0" step="0.01" placeholder="0.00" class="has-prefix" />
+                </div>
+              </div>
+            </template>
           </div>
 
           <!-- Comercial -->
@@ -165,6 +232,9 @@ const toast = useToast()
 const saving = ref(false)
 const errors = ref({})
 const grupos = ref([])
+const colorCatalog = ref([])
+const showNewGrupo = ref(false)
+const newGrupoName = ref('')
 
 const form = ref({
   prefijo: '',
@@ -175,19 +245,24 @@ const form = ref({
   detalle: '',
   terminacion: '',
   color: '',
+  colorMode: 'todos',
   medida: '',
   nomenclaturaMedida: '',
   admiteDescuentos: true,
   comentario: '',
   image: '',
   precio: null,
+  precioGrupoI: null,
+  precioGrupoII: null,
+  precioGrupoIII: null,
   unidadPrecio: 'hoja',
 })
 
 const skuPreview = computed(() => {
-  const { prefijo, color, terminacion, nomenclaturaMedida } = form.value
-  if (!prefijo && !color && !terminacion && !nomenclaturaMedida) return ''
-  return `${prefijo}${color}${terminacion}${nomenclaturaMedida}`
+  const { prefijo, color, terminacion, nomenclaturaMedida, colorMode } = form.value
+  const colorPart = colorMode === 'todos' ? '' : color
+  if (!prefijo && !colorPart && !terminacion && !nomenclaturaMedida) return ''
+  return `${prefijo}${colorPart}${terminacion}${nomenclaturaMedida}`
 })
 
 const m2Calc = computed(() => {
@@ -200,6 +275,10 @@ const m2Calc = computed(() => {
   return null
 })
 
+function colorsByGroup(g) {
+  return colorCatalog.value.filter(c => c.grupoColor === g)
+}
+
 function onNomenclatura() {
   form.value.nomenclaturaMedida = form.value.nomenclaturaMedida.replace(/\D/g, '').slice(0, 3)
 }
@@ -211,10 +290,29 @@ function authHeader() {
 
 onMounted(async () => {
   try {
-    const { data } = await axios.get(`${API_BASE_URL}/product-groups`, authHeader())
-    grupos.value = (Array.isArray(data) ? data : []).map(g => g.nombre)
+    const [groupsRes, colorsRes] = await Promise.all([
+      axios.get(`${API_BASE_URL}/product-groups`, authHeader()),
+      axios.get(`${API_BASE_URL}/colors`, authHeader()),
+    ])
+    grupos.value = (Array.isArray(groupsRes.data) ? groupsRes.data : []).map(g => g.nombre)
+    colorCatalog.value = Array.isArray(colorsRes.data) ? colorsRes.data : []
   } catch { /* ignore */ }
 })
+
+async function createGrupo() {
+  const nombre = newGrupoName.value.trim().toUpperCase()
+  if (!nombre) return
+  try {
+    await axios.post(`${API_BASE_URL}/product-groups`, { nombre, descuentos: [] }, authHeader())
+    grupos.value.push(nombre)
+    form.value.grupo = nombre
+    newGrupoName.value = ''
+    showNewGrupo.value = false
+    toast.success(`Grupo "${nombre}" creado`)
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Error al crear grupo')
+  }
+}
 
 function validate() {
   const e = {}
@@ -290,19 +388,63 @@ async function save() {
   background: rgba(107,142,58,0.08);
   border-radius: 12px;
   margin-bottom: 0.25rem;
+  flex-wrap: wrap;
 }
 
-.sku-label {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-muted);
+.sku-label { font-size: 0.82rem; font-weight: 600; color: var(--color-muted); }
+.sku-code { font-size: 1.1rem; font-weight: 700; color: var(--color-text, #2d3d24); letter-spacing: 0.05em; }
+.sku-hint { font-size: 0.75rem; color: var(--color-muted); font-style: italic; }
+
+.grupo-row { display: flex; gap: 0.4rem; align-items: center; }
+.grupo-select { flex: 1; }
+
+.new-grupo-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+.new-grupo-row input { flex: 1; }
+
+.color-catalog-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  background: rgba(107,142,58,0.04);
+  border: 1px solid rgba(107,142,58,0.12);
+  border-radius: 12px;
 }
 
-.sku-code {
-  font-size: 1.1rem;
+.color-group-header {
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--color-text, #2d3d24);
-  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary, #6b8e3a);
+  margin-bottom: 0.25rem;
+}
+
+.color-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.color-chip-sm {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: rgba(107,142,58,0.08);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.color-chip-sm.more {
+  background: rgba(107,142,58,0.16);
+  font-weight: 700;
+  color: var(--color-primary, #6b8e3a);
 }
 
 .m2-display {
@@ -314,65 +456,36 @@ async function save() {
   color: var(--color-text, #2d3d24);
 }
 
-.m2-display .muted {
-  font-weight: 400;
-  font-size: 0.82rem;
-  color: var(--color-muted);
-}
+.m2-display .muted { font-weight: 400; font-size: 0.82rem; color: var(--color-muted); }
 
 .input-prefix-wrap { position: relative; }
 .input-prefix {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-muted);
-  font-weight: 600;
+  position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+  color: var(--color-muted); font-weight: 600;
 }
 .has-prefix { padding-left: 1.8rem !important; }
 
-textarea {
-  resize: vertical;
-  min-height: 60px;
-  font-family: inherit;
-  font-size: 0.9rem;
-}
+textarea { resize: vertical; min-height: 60px; font-family: inherit; font-size: 0.9rem; }
 
 .checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  cursor: pointer;
-  text-transform: none !important;
-  font-size: 0.88rem !important;
-  font-weight: 500 !important;
-  letter-spacing: 0 !important;
+  display: flex; align-items: center; gap: 0.55rem; cursor: pointer;
+  text-transform: none !important; font-size: 0.88rem !important;
+  font-weight: 500 !important; letter-spacing: 0 !important;
 }
 
 .checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--color-primary, #6b8e3a);
+  width: 16px; height: 16px; accent-color: var(--color-primary, #6b8e3a);
 }
 
 .img-preview {
-  margin-top: 0.6rem;
-  border-radius: 14px;
-  overflow: hidden;
-  width: 120px;
-  height: 120px;
-  border: 1px solid rgba(107,142,58,0.16);
+  margin-top: 0.6rem; border-radius: 14px; overflow: hidden;
+  width: 120px; height: 120px; border: 1px solid rgba(107,142,58,0.16);
 }
-
 .img-preview img { width: 100%; height: 100%; object-fit: cover; }
 
 .form-footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.85rem;
-  padding-top: 0.5rem;
+  display: flex; flex-wrap: wrap; gap: 0.85rem; padding-top: 0.5rem;
   border-top: 1px solid rgba(107,142,58,0.12);
 }
-
 .form-footer a { text-decoration: none; }
 </style>

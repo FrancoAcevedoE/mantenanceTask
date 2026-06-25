@@ -14,7 +14,9 @@ function calcM2(medida) {
 export const createProductController = async (req, res) => {
     try {
         const body = req.body
-        const code = body.code || `${body.prefijo || ''}${body.color || ''}${body.terminacion || ''}${body.nomenclaturaMedida || ''}`
+        const colorMode = body.colorMode || 'especifico'
+        const colorPart = colorMode === 'todos' ? '' : (body.color || '')
+        const code = body.code || `${body.prefijo || ''}${colorPart}${body.terminacion || ''}${body.nomenclaturaMedida || ''}`
         const m2 = calcM2(body.medida)
 
         const product = new Product({
@@ -25,20 +27,23 @@ export const createProductController = async (req, res) => {
             espesor: body.espesor,
             detalle: body.detalle,
             terminacion: body.terminacion,
-            color: body.color,
+            color: colorMode === 'todos' ? 'TODOS' : body.color,
+            colorMode,
             medida: body.medida,
             dimensions: body.medida,
             nomenclaturaMedida: body.nomenclaturaMedida,
             m2,
             grupo: body.grupo,
             image: body.image,
-            precio: body.precio,
+            precio: colorMode === 'todos' ? null : body.precio,
             unidadPrecio: body.unidadPrecio,
             admiteDescuentos: body.admiteDescuentos ?? true,
             comentario: body.comentario,
-            colors: body.color ? [body.color] : [],
+            colors: colorMode === 'todos' ? ['TODOS'] : (body.color ? [body.color] : []),
             thicknesses: body.espesor ? [body.espesor] : [],
-            precioGrupoI: body.precio,
+            precioGrupoI: body.precioGrupoI ?? body.precio,
+            precioGrupoII: body.precioGrupoII ?? null,
+            precioGrupoIII: body.precioGrupoIII ?? null,
         })
 
         await product.save()
