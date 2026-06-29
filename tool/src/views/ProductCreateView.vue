@@ -19,7 +19,7 @@
           <div class="sku-preview">
             <span class="sku-label">SKU base:</span>
             <code class="sku-code">{{ skuPreview || '—' }}</code>
-            <span v-if="form.terminacionesSeleccionadas.length > 1" class="sku-hint">(+ terminacion en cotizacion)</span>
+            <span v-if="form.tiposConfig.flatMap(tc => tc.terminaciones).length > 1" class="sku-hint">(+ terminacion en cotizacion)</span>
             <span v-if="form.colorMode === 'todos' || form.selectedColors.length > 1" class="sku-hint">(+ color en cotizacion)</span>
           </div>
           <div class="form-grid">
@@ -151,35 +151,85 @@
             </div>
           </div>
 
-          <!-- Tipos de producto -->
-          <div class="sub-section">
-            <label class="sub-label">Tipos de producto</label>
-            <div class="tipos-list">
-              <div v-for="(t, i) in form.tipos" :key="i" class="tipo-row">
-                <input v-model="form.tipos[i]" type="text" placeholder="Ej: Compensado" class="input-sm" />
-                <button type="button" class="btn-icon-danger" @click="removeTipo(i)" v-if="form.tipos.length > 1">
-                  <i class="bi bi-x-lg"></i>
+          <!-- Tipos de producto con sus terminaciones -->
+          <div v-for="(tc, ti) in form.tiposConfig" :key="ti" class="tipo-block">
+            <div class="tipo-block-header">
+              <div class="tipo-name-row">
+                <label class="sub-label">Tipo de producto</label>
+                <input v-model="tc.nombre" type="text" placeholder="Ej: Compensado" class="input-sm tipo-name-input" />
+                <button type="button" class="btn-icon-danger" @click="removeTipoConfig(ti)"
+                        v-if="form.tiposConfig.length > 1" title="Quitar tipo">
+                  <i class="bi bi-trash"></i>
                 </button>
               </div>
-              <button type="button" class="secondary-button btn-sm" @click="form.tipos.push('')">
-                <i class="bi bi-plus"></i> Agregar tipo
-              </button>
+              <div v-if="tc.nombre.trim()" class="tipo-terms-section">
+                <label class="sub-label-sm">Terminaciones para {{ tc.nombre }}</label>
+                <div class="terminaciones-checks">
+                  <label v-for="t in allTerminaciones" :key="t.code" class="term-check-item"
+                         :class="{ checked: tc.terminaciones.includes(t.code) }">
+                    <input type="checkbox" :value="t.code" v-model="tc.terminaciones" />
+                    <span class="term-name">{{ t.nombre }}</span>
+                    <span class="term-code">{{ t.code }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabla de precios de este tipo -->
+            <div v-if="tc.nombre.trim() && tc.terminaciones.length" class="variantes-table-wrap">
+              <table class="variantes-table">
+                <thead>
+                  <tr>
+                    <th>Terminacion</th>
+                    <th>SKU</th>
+                    <th>$ General</th>
+                    <th>$ Grupo I</th>
+                    <th>$ Grupo II</th>
+                    <th>$ Grupo III</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in getRowsForTipo(ti)" :key="row._key">
+                    <td class="cell-label">{{ row.tipoTerminacion }} <code>{{ row.terminacion }}</code></td>
+                    <td class="cell-sku"><code>{{ skuForVariante(row) }}</code></td>
+                    <td>
+                      <div class="pct-input-wrap">
+                        <span class="input-prefix-inline">$</span>
+                        <input v-model.number="row.precioGeneral" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="pct-input-wrap">
+                        <span class="input-prefix-inline">$</span>
+                        <input v-model.number="row.precioGrupoI" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="pct-input-wrap">
+                        <span class="input-prefix-inline">$</span>
+                        <input v-model.number="row.precioGrupoII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="pct-input-wrap">
+                        <span class="input-prefix-inline">$</span>
+                        <input v-model.number="row.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <!-- Terminaciones -->
+          <button type="button" class="secondary-button add-row-btn" @click="addTipoConfig">
+            <i class="bi bi-plus"></i> Agregar otro tipo de producto
+          </button>
+
+          <!-- Agregar terminacion personalizada -->
           <div class="sub-section">
-            <label class="sub-label">Tipos de terminacion</label>
-            <div class="terminaciones-checks">
-              <label v-for="t in allTerminaciones" :key="t.code" class="term-check-item"
-                     :class="{ checked: form.terminacionesSeleccionadas.includes(t.code) }">
-                <input type="checkbox" :value="t.code" v-model="form.terminacionesSeleccionadas" />
-                <span class="term-name">{{ t.nombre }}</span>
-                <span class="term-code">{{ t.code }}</span>
-              </label>
-            </div>
             <div class="add-term-row" v-if="showNewTerm">
-              <input v-model="newTermNombre" type="text" placeholder="Nombre" class="input-sm" />
+              <input v-model="newTermNombre" type="text" placeholder="Nombre terminacion" class="input-sm" />
               <input v-model="newTermCode" type="text" placeholder="Cod" class="input-sm input-code" maxlength="4"
                      @input="newTermCode = newTermCode.toUpperCase()" />
               <button type="button" class="btn-sm" @click="addCustomTerm" :disabled="!newTermNombre.trim() || !newTermCode.trim()">
@@ -187,60 +237,10 @@
               </button>
               <button type="button" class="btn-sm secondary-button" @click="showNewTerm = false">Cancelar</button>
             </div>
-            <button v-else type="button" class="secondary-button btn-sm" @click="showNewTerm = true">
-              <i class="bi bi-plus"></i> Otra terminacion
+            <button v-else type="button" class="ghost-button btn-sm" @click="showNewTerm = true">
+              <i class="bi bi-plus"></i> Crear otra terminacion
             </button>
           </div>
-
-          <!-- Tabla de precios auto-generada -->
-          <div v-if="variantesRows.length" class="variantes-table-wrap">
-            <p class="hint">Precios por combinacion ({{ variantesRows.length }} variantes)</p>
-            <table class="variantes-table">
-              <thead>
-                <tr>
-                  <th>Tipo</th>
-                  <th>Terminacion</th>
-                  <th>SKU</th>
-                  <th>$ General</th>
-                  <th>$ Grupo I</th>
-                  <th>$ Grupo II</th>
-                  <th>$ Grupo III</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(v, i) in variantesRows" :key="v._key">
-                  <td class="cell-label">{{ v.tipoProducto || '—' }}</td>
-                  <td class="cell-label">{{ v.tipoTerminacion }} <code>{{ v.terminacion }}</code></td>
-                  <td class="cell-sku"><code>{{ skuForVariante(v) }}</code></td>
-                  <td>
-                    <div class="pct-input-wrap">
-                      <span class="input-prefix-inline">$</span>
-                      <input v-model.number="variantesRows[i].precioGeneral" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="pct-input-wrap">
-                      <span class="input-prefix-inline">$</span>
-                      <input v-model.number="variantesRows[i].precioGrupoI" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="pct-input-wrap">
-                      <span class="input-prefix-inline">$</span>
-                      <input v-model.number="variantesRows[i].precioGrupoII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="pct-input-wrap">
-                      <span class="input-prefix-inline">$</span>
-                      <input v-model.number="variantesRows[i].precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="hint" style="margin-top:0.5rem;">Agrega al menos un tipo y selecciona terminaciones para ver la tabla de precios.</div>
 
           <!-- Comercial -->
           <div class="section-title">Comercial</div>
@@ -399,8 +399,7 @@ const form = ref({
   catalogo: '',
   fichaTecnica: '',
   unidadPrecio: 'hoja',
-  tipos: [''],
-  terminacionesSeleccionadas: [],
+  tiposConfig: [{ nombre: '', terminaciones: [] }],
 })
 
 const DEFAULT_TERMINACIONES = [
@@ -420,55 +419,62 @@ function addCustomTerm() {
   if (!nombre || !code) return
   if (allTerminaciones.value.some(t => t.code === code)) return
   allTerminaciones.value.push({ nombre, code })
-  form.value.terminacionesSeleccionadas.push(code)
   newTermNombre.value = ''
   newTermCode.value = ''
   showNewTerm.value = false
 }
 
-function removeTipo(i) { form.value.tipos.splice(i, 1) }
+function addTipoConfig() {
+  form.value.tiposConfig.push({ nombre: '', terminaciones: [] })
+}
 
-const variantesRows = ref([])
-
-const variantesKeys = computed(() => {
-  const tipos = form.value.tipos.filter(t => t.trim())
-  const terms = form.value.terminacionesSeleccionadas
-    .map(code => allTerminaciones.value.find(t => t.code === code))
-    .filter(Boolean)
-  if (!tipos.length && !terms.length) return []
-  const effectiveTipos = tipos.length ? tipos : ['']
-  const effectiveTerms = terms.length ? terms : [{ nombre: '', code: '' }]
-  const keys = []
-  for (const tipo of effectiveTipos) {
-    for (const term of effectiveTerms) {
-      keys.push({ key: `${tipo}|${term.code}`, tipoProducto: tipo, tipoTerminacion: term.nombre, terminacion: term.code })
+function removeTipoConfig(i) {
+  const removed = form.value.tiposConfig.splice(i, 1)[0]
+  if (removed) {
+    for (const code of removed.terminaciones) {
+      const key = `${removed.nombre}|${code}`
+      delete priceRows.value[key]
     }
   }
-  return keys
-})
+}
 
-watch(variantesKeys, (newKeys) => {
-  const existing = new Map(variantesRows.value.map(r => [r._key, r]))
-  variantesRows.value = newKeys.map(k => {
-    const prev = existing.get(k.key)
-    if (prev) {
-      prev.tipoProducto = k.tipoProducto
-      prev.tipoTerminacion = k.tipoTerminacion
-      prev.terminacion = k.terminacion
-      return prev
-    }
-    return {
-      _key: k.key,
-      tipoProducto: k.tipoProducto,
-      tipoTerminacion: k.tipoTerminacion,
-      terminacion: k.terminacion,
-      precioGeneral: null,
-      precioGrupoI: null,
-      precioGrupoII: null,
-      precioGrupoIII: null,
-    }
-  })
-}, { immediate: true })
+const priceRows = ref({})
+
+function getRowsForTipo(tipoIdx) {
+  const tc = form.value.tiposConfig[tipoIdx]
+  if (!tc || !tc.nombre.trim()) return []
+  return tc.terminaciones
+    .map(code => allTerminaciones.value.find(t => t.code === code))
+    .filter(Boolean)
+    .map(term => {
+      const key = `${tc.nombre}|${term.code}`
+      if (!priceRows.value[key]) {
+        priceRows.value[key] = {
+          _key: key,
+          tipoProducto: tc.nombre,
+          tipoTerminacion: term.nombre,
+          terminacion: term.code,
+          precioGeneral: null,
+          precioGrupoI: null,
+          precioGrupoII: null,
+          precioGrupoIII: null,
+        }
+      } else {
+        priceRows.value[key].tipoProducto = tc.nombre
+        priceRows.value[key].tipoTerminacion = term.nombre
+        priceRows.value[key].terminacion = term.code
+      }
+      return priceRows.value[key]
+    })
+}
+
+function getAllVariantes() {
+  const result = []
+  for (let i = 0; i < form.value.tiposConfig.length; i++) {
+    result.push(...getRowsForTipo(i))
+  }
+  return result
+}
 
 function skuForVariante(v) {
   const { prefijo, nomenclaturaMedida, colorMode, selectedColors } = form.value
@@ -477,9 +483,10 @@ function skuForVariante(v) {
 }
 
 const skuPreview = computed(() => {
-  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, terminacionesSeleccionadas } = form.value
+  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, tiposConfig } = form.value
   const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
-  const termPart = terminacionesSeleccionadas.length === 1 ? terminacionesSeleccionadas[0] : ''
+  const allTerms = tiposConfig.flatMap(tc => tc.terminaciones)
+  const termPart = allTerms.length === 1 ? allTerms[0] : ''
   if (!prefijo && !colorPart && !termPart && !nomenclaturaMedida) return ''
   return `${prefijo}${colorPart}${termPart}${nomenclaturaMedida}`
 })
@@ -569,7 +576,7 @@ async function save() {
     if (payload.colorMode === 'especifico' && payload.selectedColors.length === 1) {
       payload.color = payload.selectedColors[0]
     }
-    const vars = variantesRows.value.map(v => ({
+    const vars = getAllVariantes().map(v => ({
       tipoProducto: v.tipoProducto,
       tipoTerminacion: v.tipoTerminacion,
       terminacion: v.terminacion,
@@ -851,10 +858,23 @@ async function save() {
   font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.06em; color: var(--color-muted); display: block; margin-bottom: 0.4rem;
 }
+.sub-label-sm {
+  font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--color-muted); display: block; margin-bottom: 0.3rem; margin-top: 0.4rem;
+}
 
-.tipos-list { display: flex; flex-direction: column; gap: 0.35rem; }
-.tipo-row { display: flex; gap: 0.35rem; align-items: center; max-width: 300px; }
-.tipo-row .input-sm { flex: 1; }
+.tipo-block {
+  border: 1px solid rgba(107,142,58,0.15);
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 0.6rem;
+  background: rgba(107,142,58,0.03);
+}
+
+.tipo-block-header { display: flex; flex-direction: column; gap: 0.2rem; }
+.tipo-name-row { display: flex; gap: 0.5rem; align-items: center; }
+.tipo-name-input { max-width: 260px; }
+.tipo-terms-section { margin-top: 0.3rem; }
 
 .terminaciones-checks {
   display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem;
