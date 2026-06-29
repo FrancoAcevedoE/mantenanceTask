@@ -1,26 +1,12 @@
 import express from "express"
 import multer from "multer"
-import { dirname, resolve, extname } from "node:path"
-import { fileURLToPath } from "node:url"
-import { existsSync, mkdirSync } from "node:fs"
+import { extname } from "node:path"
 import { verifyToken } from "../middlewares/authMiddleware.js"
 import { checkRole } from "../middlewares/roleMiddleware.js"
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const uploadsDir = resolve(__dirname, "..", "uploads")
-
-if (!existsSync(uploadsDir)) mkdirSync(uploadsDir, { recursive: true })
-
-const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, uploadsDir),
-    filename: (_req, file, cb) => {
-        const unique = `${Date.now()}-${Math.round(Math.random() * 1e6)}`
-        cb(null, `${unique}${extname(file.originalname)}`)
-    },
-})
+import File from "../models/fileModel.js"
 
 const upload = multer({
-    storage,
+    storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
         const allowed = /jpeg|jpg|png|gif|webp|pdf|doc|docx|xls|xlsx/
@@ -31,25 +17,63 @@ const upload = multer({
     },
 })
 
-const router = express.Router()
+const uploadRouter = express.Router()
 
-router.post(
+uploadRouter.post(
     "/",
     verifyToken,
     checkRole("admin"),
     upload.single("file"),
-    (req, res) => {
+    async (req, res) => {
         if (!req.file) return res.status(400).json({ message: "No se envió ningún archivo" })
-        const url = `/uploads/${req.file.filename}`
-        res.json({ url, originalName: req.file.originalname })
+        try {
+            const base64 = req.file.buffer.toString("base64")
+            const dataUri = `data:${req.file.mimetype};base64,${base64}`
+            const unique = `${Date.now()}-${Math.round(Math.random() * 1e6)}${extname(req.file.originalname)}`
+
+            const file = await File.create({
+                filename: unique,
+                originalName: req.file.originalname,
+                mimetype: req.file.mimetype,
+                data: dataUri,
+                size: req.file.size,
+            })
+
+            const url = `/api/files/${file._id}`
+            res.json({ url, originalName: req.file.originalname })
+        } catch (err) {
+            console.error("Upload error:", err)
+            res.status(500).json({ message: "Error al guardar archivo" })
+        }
     }
 )
 
-router.use((err, _req, res, _next) => {
+uploadRouter.use((err, _req, res, _next) => {
     if (err instanceof multer.MulterError) {
         return res.status(400).json({ message: err.message })
     }
     if (err) return res.status(400).json({ message: err.message })
 })
 
-export default router
+const filesRouter = express.Router()
+
+filesRouter.get("/:id", async (req, res) => {
+    try {
+        const file = await File.findById(req.params.id)
+        if (!file) return res.status(404).json({ message: "Archivo no encontrado" })
+
+        const matches = file.data.match(/^data:(.+);base64,(.+)$/)
+        if (!matches) return res.status(500).json({ message: "Formato de archivo inválido" })
+
+        const buffer = Buffer.from(matches[2], "base64")
+        res.set("Content-Type", matches[1])
+        res.set("Content-Disposition", `inline; filename="${file.originalName || file.filename}"`)
+        res.set("Cache-Control", "public, max-age=31536000, immutable")
+        res.send(buffer)
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener archivo" })
+    }
+})
+
+export { uploadRouter, filesRouter }
+export default uploadRouter

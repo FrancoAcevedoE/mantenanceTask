@@ -31,7 +31,7 @@ import productGroupRoutes from "./routes/productGroupRoutes.js"
 import quoteRoutes from "./routes/quoteRoutes.js"
 import activityRoutes from "./routes/activityRoutes.js"
 import colorRoutes from "./routes/colorRoutes.js"
-import uploadRoutes from "./routes/uploadRoutes.js"
+import { uploadRouter, filesRouter } from "./routes/uploadRoutes.js"
 import User from "./models/userModels.js"
 
 console.log("[server] imported routes and models")
@@ -134,7 +134,8 @@ app.use("/api/product-groups", productGroupRoutes)
 app.use("/api/quotes", quoteRoutes)
 app.use("/api/activities", activityRoutes)
 app.use("/api/colors", colorRoutes)
-app.use("/api/upload", uploadRoutes)
+app.use("/api/upload", uploadRouter)
+app.use("/api/files", filesRouter)
 app.use("/uploads", express.static(resolve(__dirname, "uploads")))
 
 app.get("/api/health", (req, res) => {
