@@ -382,6 +382,27 @@ async function uploadFile(event, field) {
   }
 }
 
+const form = ref({
+  prefijo: '',
+  name: '',
+  grupo: '',
+  espesor: '',
+  detalle: '',
+  color: '',
+  colorMode: 'todos',
+  selectedColors: [],
+  medida: '',
+  nomenclaturaMedida: '',
+  admiteDescuentos: true,
+  comentario: '',
+  image: '',
+  catalogo: '',
+  fichaTecnica: '',
+  unidadPrecio: 'hoja',
+  tipos: [''],
+  terminacionesSeleccionadas: [],
+})
+
 const DEFAULT_TERMINACIONES = [
   { nombre: 'Brillante', code: 'BR' },
   { nombre: 'Semimate', code: 'SE' },
@@ -456,27 +477,6 @@ function skuForVariante(v) {
   const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
   return `${prefijo}${colorPart}${v.terminacion}${nomenclaturaMedida}`
 }
-
-const form = ref({
-  prefijo: '',
-  name: '',
-  grupo: '',
-  espesor: '',
-  detalle: '',
-  color: '',
-  colorMode: 'todos',
-  selectedColors: [],
-  medida: '',
-  nomenclaturaMedida: '',
-  admiteDescuentos: true,
-  comentario: '',
-  image: '',
-  catalogo: '',
-  fichaTecnica: '',
-  unidadPrecio: 'hoja',
-  tipos: [''],
-  terminacionesSeleccionadas: [],
-})
 
 const skuPreview = computed(() => {
   const { prefijo, nomenclaturaMedida, colorMode, selectedColors, terminacionesSeleccionadas } = form.value
