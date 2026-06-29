@@ -1228,8 +1228,9 @@ function hasCliente(q) {
 
 <style scoped>
 /* ── Topbar ── */
-.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.6rem; }
 .topbar-left { display: flex; align-items: center; gap: 0.75rem; }
+.topbar-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .page-title { margin: 0; font-size: 1.1rem; font-weight: 700; }
 
 /* ── Empty state ── */
@@ -1429,6 +1430,35 @@ function hasCliente(q) {
   display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;
 }
 @media (max-width: 700px) { .pe-cols { grid-template-columns: 1fr; } }
+
+@media (max-width: 768px) {
+  .topbar { gap: 0.4rem; }
+  .topbar-right { width: 100%; justify-content: flex-end; }
+
+  .items-table { min-width: 0; font-size: 0.75rem; }
+  .items-table thead { display: none; }
+  .item-row { display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.5rem; border-top: 1px solid rgba(107,142,58,0.12); }
+  .item-row td { display: block; padding: 0.2rem 0; border: none; }
+  .col-producto { width: 100%; min-width: 0; }
+  .col-tipo { width: 100%; min-width: 0; }
+  .col-color { width: 100%; min-width: 0; }
+  .col-qty { width: auto; }
+  .col-unit { width: auto; }
+  .col-disc { width: 100%; min-width: 0; }
+  .col-price { width: auto; min-width: 0; font-weight: 700; }
+  .col-desc { width: 100%; min-width: 0; }
+  .col-sub { width: auto; text-align: left; font-weight: 700; color: var(--color-primary, #6b8e3a); }
+  .col-del { width: auto; position: absolute; top: 0.4rem; right: 0.3rem; }
+  .item-row { position: relative; }
+
+  .sel-small, .input-small { font-size: 0.78rem; }
+  .input-num { width: 55px; }
+
+  .inv-table { min-width: 0; font-size: 0.78rem; }
+  .title-cell { max-width: 120px; }
+
+  .form-grid-2 { grid-template-columns: 1fr; }
+}
 
 .pe-form { display: flex; flex-direction: column; gap: 0.75rem; }
 .pe-sec-label {

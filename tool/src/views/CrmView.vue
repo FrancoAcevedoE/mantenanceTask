@@ -104,6 +104,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.45rem;
   padding: 0.6rem 1rem;
+  position: relative;
   border-radius: 12px 12px 0 0;
   background: transparent;
   color: var(--color-muted);
@@ -148,9 +149,46 @@ onMounted(() => {
 
 .crm-tab-badge--warn { background: #f59e0b; }
 
-.crm-body { flex: 1; }
+.crm-body { flex: 1; min-width: 0; overflow-x: hidden; }
 
 /* strip the extra page-container / container nesting from sellerView when embedded */
 .crm-quotes-wrap :deep(.page-container) { background: none; padding: 0; }
 .crm-quotes-wrap :deep(.container)      { padding: 1rem 1.25rem; max-width: none; }
+
+@media (max-width: 768px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+  .topbar h1 { font-size: 1.2rem; }
+
+  .crm-tabs-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    gap: 0;
+    padding-bottom: 0;
+    scrollbar-width: none;
+  }
+  .crm-tabs-bar::-webkit-scrollbar { display: none; }
+
+  .crm-tab {
+    padding: 0.45rem 0.55rem;
+    font-size: 0.62rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    flex-direction: column;
+    gap: 0.15rem;
+    text-align: center;
+  }
+  .crm-tab i { font-size: 1rem; }
+  .crm-tab-badge { position: absolute; top: -2px; right: -2px; min-width: 14px; height: 14px; font-size: 0.58rem; }
+
+  .crm-quotes-wrap :deep(.container) { padding: 0.5rem 0.4rem; }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .crm-tab { padding: 0.5rem 0.75rem; font-size: 0.78rem; }
+}
 </style>

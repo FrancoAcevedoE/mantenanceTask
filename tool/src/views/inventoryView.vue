@@ -147,7 +147,8 @@
                           <span v-if="p.tipo && p.terminacion" class="desc-meta-sep">·</span>
                           <span v-if="p.terminacion" class="desc-meta desc-terminacion">{{ p.terminacion }}</span>
                         </div>
-                        <span v-if="p.thicknesses?.length" class="desc-espesor">{{ p.thicknesses.join(' · ') }}</span>
+                        <span v-if="p.espesor" class="desc-espesor">{{ p.espesor }}mm</span>
+                        <span v-if="p.dimensions" class="desc-medida">{{ p.dimensions }}</span>
                       </td>
                       <td>
                         <span v-if="p.colors?.length" class="color-chip">
@@ -195,7 +196,8 @@
                       <span class="desc-name">{{ p.name }}</span>
                       <span v-if="p.tipo" class="desc-meta">{{ p.tipo }}</span>
                       <span v-if="p.terminacion" class="desc-meta desc-terminacion">{{ p.terminacion }}</span>
-                      <span v-if="p.thicknesses?.length" class="desc-espesor">{{ p.thicknesses.join(' · ') }}</span>
+                      <span v-if="p.espesor" class="desc-espesor">{{ p.espesor }}mm</span>
+                      <span v-if="p.dimensions" class="desc-medida">{{ p.dimensions }}</span>
                     </td>
                     <td>
                       <span v-if="p.colors?.length" class="color-chip">
@@ -652,6 +654,13 @@ function colorStyle(colorName) {
 
 .desc-terminacion { font-style: italic; }
 
+.desc-medida {
+  display: inline-block;
+  margin-top: 0.15rem;
+  font-size: 0.67rem;
+  color: var(--color-muted);
+}
+
 .desc-espesor {
   display: inline-block;
   margin-top: 0.15rem;
@@ -751,7 +760,34 @@ function colorStyle(colorName) {
   .toolbar-actions { flex-wrap: wrap; gap: 0.4rem; }
 }
 
+@media (max-width: 768px) {
+  .inv-table { min-width: 0; font-size: 0.78rem; }
+  .inv-table thead th { padding: 0.4rem 0.5rem; font-size: 0.68rem; }
+  .inv-table tbody td { padding: 0.35rem 0.5rem; }
+
+  .inv-table th:nth-child(1),
+  .inv-table td:nth-child(1),
+  .inv-table th:nth-child(2),
+  .inv-table td:nth-child(2),
+  .inv-table th:nth-child(4),
+  .inv-table td:nth-child(4),
+  .inv-table th:nth-child(6),
+  .inv-table td:nth-child(6),
+  .inv-table th:nth-child(7),
+  .inv-table td:nth-child(7) {
+    display: none;
+  }
+
+  .desc-cell { max-width: none; min-width: 0; }
+  .desc-name { white-space: normal; }
+
+  .action-buttons { gap: 0.2rem; }
+  .action-buttons .btn-sm { padding: 0.3rem 0.5rem; font-size: 0.75rem; }
+}
+
 @media (max-width: 480px) {
   .container { padding: 0.6rem 0.5rem; }
+  .toolbar-actions { gap: 0.3rem; }
+  .search-input { font-size: 0.8rem; }
 }
 </style>

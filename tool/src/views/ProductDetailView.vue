@@ -20,18 +20,27 @@
             <div v-else class="no-image"><i class="bi bi-image" style="font-size:3rem;color:var(--color-muted)"></i></div>
           </div>
 
-          <!-- Color swatches -->
-          <div v-if="product.colors?.length" class="color-section">
-            <h4 class="section-label">Colores disponibles</h4>
+          <!-- Colores -->
+          <div v-if="product.colorMode === 'todos'" class="color-section">
+            <h4 class="section-label">Colores: TODOS</h4>
+            <div class="color-mode-badge todos">Todos los colores disponibles</div>
+          </div>
+          <div v-else-if="product.selectedColors?.length" class="color-section">
+            <h4 class="section-label">Colores seleccionados ({{ product.selectedColors.length }})</h4>
             <div class="swatches-grid">
-              <div
-                v-for="(color, i) in product.colors"
-                :key="i"
-                class="swatch-card"
-                :title="color"
-              >
-                <div class="swatch-dot" :style="swatchStyle(color)"></div>
-                <span class="swatch-name">{{ color }}</span>
+              <div v-for="code in product.selectedColors" :key="code" class="swatch-card" :title="colorName(code)">
+                <span class="swatch-code">{{ code }}</span>
+                <span class="swatch-name">{{ colorName(code) }}</span>
+                <span v-if="colorGroup(code)" class="swatch-group" :class="'g' + colorGroup(code)">G{{ colorGroup(code) }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="product.colors?.length && product.colors[0] !== 'TODOS'" class="color-section">
+            <h4 class="section-label">Colores</h4>
+            <div class="swatches-grid">
+              <div v-for="(color, i) in product.colors" :key="i" class="swatch-card">
+                <span class="swatch-code">{{ color }}</span>
+                <span class="swatch-name">{{ colorName(color) }}</span>
               </div>
             </div>
           </div>
@@ -152,16 +161,12 @@
           </div>
 
           <!-- Archivos -->
-          <div v-if="product.catalogo || product.fichaTecnica" class="files-section">
+          <div v-if="allArchivos.length" class="files-section">
             <h4 class="section-label">Archivos adjuntos</h4>
             <div class="files-row">
-              <a v-if="product.catalogo" :href="resolveUrl(product.catalogo)" target="_blank" class="file-card">
-                <i class="bi bi-file-earmark-pdf"></i>
-                <span>Catalogo</span>
-              </a>
-              <a v-if="product.fichaTecnica" :href="resolveUrl(product.fichaTecnica)" target="_blank" class="file-card">
-                <i class="bi bi-file-earmark-text"></i>
-                <span>Ficha tecnica</span>
+              <a v-for="(a, i) in allArchivos" :key="i" :href="resolveUrl(a.url)" target="_blank" class="file-card">
+                <i class="bi" :class="a.url?.endsWith('.pdf') ? 'bi-file-earmark-pdf' : 'bi-file-earmark-text'"></i>
+                <span>{{ a.titulo || 'Archivo' }}</span>
               </a>
             </div>
           </div>
@@ -181,19 +186,53 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProductsStore } from '@/stores/products'
 import { API_BASE_URL } from '@/utils/api'
+import axios from 'axios'
 import InventorySubNav from '@/components/InventorySubNav.vue'
 
 const route = useRoute()
 const store = useProductsStore()
 const loading = computed(() => store.loading)
 const product = computed(() => store.getById(route.params.id))
+const colorCatalog = ref([])
 
-onMounted(() => {
+function authHeader() {
+  const token = localStorage.getItem('token')
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+}
+
+onMounted(async () => {
   if (!store.products.length) store.fetchProducts()
+  try {
+    const { data } = await axios.get(`${API_BASE_URL}/colors`, authHeader())
+    colorCatalog.value = Array.isArray(data) ? data : []
+  } catch { /* ignore */ }
+})
+
+function colorName(code) {
+  const c = colorCatalog.value.find(c => c.code === code)
+  return c ? c.name : ''
+}
+
+function colorGroup(code) {
+  const c = colorCatalog.value.find(c => c.code === code)
+  return c ? c.grupoColor : null
+}
+
+const allArchivos = computed(() => {
+  const p = product.value
+  if (!p) return []
+  const list = [...(p.archivos || [])]
+  if (p.catalogo && !list.some(a => a.url === p.catalogo)) {
+    list.unshift({ titulo: 'Catalogo', url: p.catalogo })
+  }
+  if (p.fichaTecnica && !list.some(a => a.url === p.fichaTecnica)) {
+    list.unshift({ titulo: 'Ficha tecnica', url: p.fichaTecnica })
+  }
+  return list.filter(a => a.url)
 })
 
 function resolveUrl(path) {
@@ -206,20 +245,6 @@ function formatPrice(n) {
   return (n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-function swatchStyle(colorName) {
-  const map = {
-    negro: '#1a1a1a', blanco: '#f5f5f5', gris: '#9e9e9e', rojo: '#e53935',
-    azul: '#1e88e5', verde: '#43a047', amarillo: '#fdd835', marrón: '#6d4c41',
-    naranja: '#fb8c00', rosa: '#e91e63', violeta: '#8e24aa', beige: '#d7c4a1',
-    platino: '#e5e4e2', almendra: '#d4a96a', tiza: '#b0b0b0', crema: '#fffdd0',
-  }
-  const key = Object.keys(map).find(k => colorName?.toLowerCase().includes(k))
-  return {
-    backgroundColor: key ? map[key] : '#ccc',
-    width: '36px', height: '36px', borderRadius: '50%',
-    border: '2px solid rgba(0,0,0,0.1)', flexShrink: 0
-  }
-}
 
 function stockClass(stock) {
   const n = stock ?? 0
@@ -276,31 +301,41 @@ function stockClass(stock) {
   margin-bottom: 0.75rem;
 }
 
+.color-mode-badge {
+  display: inline-flex; padding: 0.4rem 0.8rem; border-radius: 8px;
+  font-size: 0.78rem; font-weight: 600;
+}
+.color-mode-badge.todos { background: rgba(107,142,58,0.1); color: var(--color-primary, #6b8e3a); }
+
 .swatches-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .swatch-card {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.65rem 0.4rem;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
   background: rgba(255,255,255,0.85);
   border: 1px solid rgba(107,142,58,0.12);
-  border-radius: 14px;
-  cursor: default;
-  transition: transform 0.15s;
+  border-radius: 8px;
+  font-size: 0.75rem;
 }
 
-.swatch-card:hover { transform: translateY(-2px); }
+.swatch-code { font-weight: 700; }
+
+.swatch-group {
+  font-size: 0.62rem; font-weight: 700; padding: 0.1rem 0.3rem; border-radius: 4px;
+}
+.swatch-group.g1 { background: rgba(76,175,80,0.12); color: #2e7d32; }
+.swatch-group.g2 { background: rgba(33,150,243,0.12); color: #1565c0; }
+.swatch-group.g3 { background: rgba(255,152,0,0.12); color: #e65100; }
 
 .swatch-name {
-  font-size: 0.68rem;
-  text-align: center;
-  color: var(--color-text);
+  font-size: 0.72rem;
+  color: var(--color-muted);
   line-height: 1.3;
   text-transform: uppercase;
   letter-spacing: 0.03em;
