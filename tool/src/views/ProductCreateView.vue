@@ -19,7 +19,7 @@
           <div class="sku-preview">
             <span class="sku-label">SKU base:</span>
             <code class="sku-code">{{ skuPreview || '—' }}</code>
-            <span v-if="form.variantes.length > 1" class="sku-hint">(+ terminacion del tipo en cotizacion)</span>
+            <span v-if="form.terminacionesSeleccionadas.length > 1" class="sku-hint">(+ terminacion en cotizacion)</span>
             <span v-if="form.colorMode === 'todos' || form.selectedColors.length > 1" class="sku-hint">(+ color en cotizacion)</span>
           </div>
           <div class="form-grid">
