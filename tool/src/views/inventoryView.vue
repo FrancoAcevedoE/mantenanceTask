@@ -142,11 +142,8 @@
                         <span class="group-count">{{ group.items.length }} producto{{ group.items.length !== 1 ? 's' : '' }}</span>
                       </td>
                     </tr>
-                    <tr
-                      v-for="p in group.items"
-                      :key="p._id"
-                      :class="{ selected: store.selectedIds.includes(p._id) }"
-                    >
+                    <template v-for="p in group.items" :key="p._id">
+                    <tr :class="{ selected: store.selectedIds.includes(p._id) }">
                       <td><input type="checkbox" :checked="store.selectedIds.includes(p._id)" @change="store.toggleSelect(p._id)" /></td>
                       <td><code class="code-badge">{{ p.code }}</code></td>
                       <td class="desc-cell">
@@ -218,6 +215,7 @@
                         </div>
                       </td>
                     </tr>
+                    </template>
                   </template>
                   <tr v-if="groupedFiltered.length === 0">
                     <td colspan="8" class="empty-row">Sin resultados para los filtros aplicados.</td>
@@ -226,11 +224,8 @@
 
                 <!-- Vista plana paginada: con filtro o búsqueda activos -->
                 <template v-else>
-                  <tr
-                    v-for="p in paged"
-                    :key="p._id"
-                    :class="{ selected: store.selectedIds.includes(p._id) }"
-                  >
+                  <template v-for="p in paged" :key="p._id">
+                  <tr :class="{ selected: store.selectedIds.includes(p._id) }">
                     <td><input type="checkbox" :checked="store.selectedIds.includes(p._id)" @change="store.toggleSelect(p._id)" /></td>
                     <td><code class="code-badge">{{ p.code }}</code></td>
                     <td class="desc-cell">
@@ -298,6 +293,7 @@
                       </div>
                     </td>
                   </tr>
+                  </template>
                   <tr v-if="paged.length === 0">
                     <td colspan="8" class="empty-row">Sin resultados para los filtros aplicados.</td>
                   </tr>
