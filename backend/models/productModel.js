@@ -28,6 +28,16 @@ const productSchema = new mongoose.Schema({
     image: { type: String },
     catalogo: { type: String },
     fichaTecnica: { type: String },
+    archivos: [{
+        titulo: String,
+        url: String,
+    }],
+    espesoresMedidas: [{
+        espesor: String,
+        medida: String,
+        nomenclaturaMedida: String,
+        m2: Number,
+    }],
     precio: { type: Number },
     precioGeneral: { type: Number },
     unidadPrecio: { type: String, default: 'hoja' },

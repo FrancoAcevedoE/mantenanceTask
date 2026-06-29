@@ -29,12 +29,6 @@
                      @input="form.prefijo = form.prefijo.toUpperCase()" />
               <span class="field-error" v-if="errors.prefijo">{{ errors.prefijo }}</span>
             </div>
-            <div class="field" :class="{ error: errors.nomenclaturaMedida }">
-              <label>Nomenclatura medida (3 numeros) *</label>
-              <input v-model="form.nomenclaturaMedida" type="text" maxlength="3"
-                     placeholder="Ej: 410" @input="onNomenclatura" />
-              <span class="field-error" v-if="errors.nomenclaturaMedida">{{ errors.nomenclaturaMedida }}</span>
-            </div>
           </div>
 
           <!-- Producto -->
@@ -62,10 +56,6 @@
                 <button type="button" class="btn-sm" @click="createGrupo" :disabled="!newGrupoName.trim()">Crear</button>
               </div>
             </div>
-            <div class="field">
-              <label>Espesor</label>
-              <input v-model="form.espesor" type="text" placeholder="Ej: 3, 6, 0.6..." />
-            </div>
             <div class="field full">
               <label>Detalle</label>
               <textarea v-model="form.detalle" rows="2" placeholder="Descripcion adicional del producto..."></textarea>
@@ -75,68 +65,96 @@
           <!-- Color -->
           <div class="section-title">Color</div>
           <div class="form-grid">
-            <div class="field full">
+            <div class="field">
               <label>Modo de color</label>
               <select v-model="form.colorMode">
                 <option value="todos">TODOS (todos los colores disponibles)</option>
                 <option value="especifico">Colores especificos</option>
               </select>
             </div>
+            <div class="field" v-if="form.colorMode === 'especifico' || form.colorMode === 'todos'">
+              <label>Buscar color</label>
+              <div class="color-search-wrap">
+                <i class="bi bi-search color-search-icon"></i>
+                <input v-model="colorSearch" type="text" placeholder="Buscar por codigo o nombre..." class="color-search-input" />
+                <button v-if="colorSearch" type="button" class="color-search-clear" @click="colorSearch = ''">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- TODOS: preview de colores -->
-          <div v-if="form.colorMode === 'todos'" class="color-catalog-preview">
+          <div v-if="form.colorMode === 'todos'" class="color-panel">
             <div class="color-group-section" v-for="g in [1,2,3]" :key="g">
-              <div class="color-group-header">Grupo {{ romanNum(g) }} ({{ colorsByGroup(g).length }} colores)</div>
-              <div class="color-chips-row">
-                <span v-for="c in colorsByGroup(g).slice(0, 8)" :key="c.code" class="color-chip-sm">
-                  {{ c.code }} {{ c.name }}
-                </span>
-                <span v-if="colorsByGroup(g).length > 8" class="color-chip-sm more">
-                  +{{ colorsByGroup(g).length - 8 }} mas
+              <div class="color-group-badge" :class="'grupo-' + g">Grupo {{ romanNum(g) }} <span class="color-group-count">{{ filteredColorsByGroup(g).length }}</span></div>
+              <div class="color-chips-grid">
+                <span v-for="c in filteredColorsByGroup(g)" :key="c.code" class="color-chip">
+                  <span class="color-chip-code">{{ c.code }}</span>
+                  <span class="color-chip-name">{{ c.name }}</span>
                 </span>
               </div>
+              <div v-if="!filteredColorsByGroup(g).length" class="color-empty">Sin resultados</div>
             </div>
           </div>
 
           <!-- ESPECIFICO: checkboxes por grupo -->
-          <div v-if="form.colorMode === 'especifico'" class="color-catalog-select">
+          <div v-if="form.colorMode === 'especifico'" class="color-panel">
+            <div v-if="form.selectedColors.length" class="color-selection-bar">
+              <span class="color-selection-count">{{ form.selectedColors.length }} color{{ form.selectedColors.length !== 1 ? 'es' : '' }}</span>
+              <button type="button" class="btn-link" @click="form.selectedColors = []">Limpiar seleccion</button>
+            </div>
             <div class="color-group-section" v-for="g in [1,2,3]" :key="g">
-              <div class="color-group-header">
-                <span>Grupo {{ romanNum(g) }}</span>
+              <div class="color-group-header-row">
+                <div class="color-group-badge" :class="'grupo-' + g">Grupo {{ romanNum(g) }} <span class="color-group-count">{{ filteredColorsByGroup(g).length }}</span></div>
                 <button type="button" class="btn-link" @click="toggleGroup(g)">
-                  {{ isGroupAllSelected(g) ? 'Deseleccionar' : 'Seleccionar todo' }}
+                  {{ isGroupAllSelected(g) ? 'Deseleccionar todo' : 'Seleccionar todo' }}
                 </button>
               </div>
               <div class="color-check-grid">
-                <label v-for="c in colorsByGroup(g)" :key="c.code" class="color-check-item"
+                <label v-for="c in filteredColorsByGroup(g)" :key="c.code" class="color-check-item"
                        :class="{ checked: form.selectedColors.includes(c.code) }">
                   <input type="checkbox" :value="c.code" v-model="form.selectedColors" />
                   <span class="color-check-code">{{ c.code }}</span>
                   <span class="color-check-name">{{ c.name }}</span>
+                  <span v-if="c.tipo" class="color-check-tipo">{{ c.tipo }}</span>
                 </label>
               </div>
-            </div>
-            <div v-if="form.selectedColors.length" class="color-selection-count">
-              {{ form.selectedColors.length }} color{{ form.selectedColors.length !== 1 ? 'es' : '' }} seleccionado{{ form.selectedColors.length !== 1 ? 's' : '' }}
+              <div v-if="!filteredColorsByGroup(g).length" class="color-empty">Sin resultados</div>
             </div>
           </div>
 
-          <!-- Medida y m2 -->
-          <div class="section-title">Medida</div>
-          <div class="form-grid">
-            <div class="field">
-              <label>Medida (mm)</label>
-              <input v-model="form.medida" type="text" placeholder="Ej: 1220 x 3050" />
-            </div>
-            <div class="field">
-              <label>m2 por unidad</label>
-              <div class="m2-display">
-                <span v-if="m2Calc !== null">{{ m2Calc }} m2</span>
-                <span v-else class="muted">Se calcula con la medida</span>
+          <!-- Espesores y Medidas -->
+          <div class="section-title">Espesores y medidas</div>
+          <p class="hint">Cada fila es una combinacion espesor + medida. Se usan para generar el SKU y calcular m2.</p>
+          <div v-for="(em, ei) in form.espesoresMedidas" :key="ei" class="tipo-block">
+            <div class="em-row">
+              <div class="em-field">
+                <label class="sub-label-sm">Espesor (mm)</label>
+                <input v-model="em.espesor" type="text" placeholder="Ej: 3" class="input-sm" style="max-width:80px" />
               </div>
+              <div class="em-field">
+                <label class="sub-label-sm">Medida (mm)</label>
+                <input v-model="em.medida" type="text" placeholder="Ej: 1220 x 3050" class="input-sm" />
+              </div>
+              <div class="em-field">
+                <label class="sub-label-sm">Nomenclatura (3 num)</label>
+                <input v-model="em.nomenclaturaMedida" type="text" maxlength="3" placeholder="410" class="input-sm" style="max-width:70px"
+                       @input="em.nomenclaturaMedida = em.nomenclaturaMedida.replace(/\D/g, '').slice(0, 3)" />
+              </div>
+              <div class="em-field">
+                <label class="sub-label-sm">m2</label>
+                <div class="m2-display-sm">{{ calcM2(em.medida) ?? '—' }}</div>
+              </div>
+              <button type="button" class="btn-icon-danger" @click="removeEspesorMedida(ei)"
+                      v-if="form.espesoresMedidas.length > 1" title="Quitar" style="align-self:flex-end;margin-bottom:0.3rem">
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
           </div>
+          <button type="button" class="secondary-button btn-sm" @click="addEspesorMedida">
+            <i class="bi bi-plus"></i> Agregar espesor / medida
+          </button>
 
           <!-- Tipos y Precios -->
           <div class="section-title">Tipos y precios</div>
@@ -299,16 +317,16 @@
           <div class="form-grid">
             <div class="field">
               <label>URL de imagen</label>
-              <input v-model="form.image" type="url" placeholder="https://..." />
+              <input v-model="form.image" type="text" placeholder="https://..." />
             </div>
             <div class="field">
               <label>o subir archivo</label>
               <div class="upload-row">
                 <label class="upload-btn">
                   <i class="bi bi-upload"></i> Elegir imagen
-                  <input type="file" accept="image/*" hidden @change="uploadFile($event, 'image')" />
+                  <input type="file" accept="image/*" hidden @change="uploadImage($event)" />
                 </label>
-                <span v-if="uploading.image" class="upload-status"><i class="bi bi-hourglass-split"></i> Subiendo...</span>
+                <span v-if="uploadingImage" class="upload-status"><i class="bi bi-hourglass-split"></i> Subiendo...</span>
               </div>
             </div>
           </div>
@@ -318,43 +336,35 @@
 
           <!-- Archivos adjuntos -->
           <div class="section-title">Archivos adjuntos</div>
+          <div class="archivos-list">
+            <div v-for="(arch, ai) in form.archivos" :key="ai" class="archivo-item">
+              <div class="archivo-top">
+                <input v-model="arch.titulo" type="text" placeholder="Titulo del archivo (ej: Catalogo, Ficha tecnica...)" class="input-sm" style="flex:1" />
+                <button type="button" class="btn-icon-danger" @click="removeArchivo(ai)" title="Quitar">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+              <div v-if="!arch.url" class="upload-row">
+                <label class="upload-btn">
+                  <i class="bi bi-upload"></i> Subir archivo
+                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" hidden @change="uploadArchivo($event, ai)" />
+                </label>
+                <span v-if="arch._uploading" class="upload-status"><i class="bi bi-hourglass-split"></i> Subiendo...</span>
+              </div>
+              <div v-else class="file-attached">
+                <a :href="resolveUrl(arch.url)" target="_blank" class="file-link">
+                  <i class="bi bi-file-earmark-check"></i> {{ arch.titulo || 'Ver archivo' }}
+                </a>
+                <button type="button" class="btn-icon-danger" @click="arch.url = ''" title="Cambiar">
+                  <i class="bi bi-arrow-repeat"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="secondary-button btn-sm" @click="addArchivo">
+            <i class="bi bi-plus"></i> Agregar archivo
+          </button>
           <div class="form-grid">
-            <div class="field">
-              <label>Catalogo</label>
-              <div class="upload-row">
-                <label class="upload-btn">
-                  <i class="bi bi-file-earmark-pdf"></i> Subir catalogo
-                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" hidden @change="uploadFile($event, 'catalogo')" />
-                </label>
-                <span v-if="uploading.catalogo" class="upload-status"><i class="bi bi-hourglass-split"></i> Subiendo...</span>
-              </div>
-              <div v-if="form.catalogo" class="file-attached">
-                <a :href="resolveUrl(form.catalogo)" target="_blank" class="file-link">
-                  <i class="bi bi-file-earmark-check"></i> Ver catalogo
-                </a>
-                <button type="button" class="btn-icon-danger" @click="form.catalogo = ''" title="Quitar">
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              </div>
-            </div>
-            <div class="field">
-              <label>Ficha tecnica</label>
-              <div class="upload-row">
-                <label class="upload-btn">
-                  <i class="bi bi-file-earmark-pdf"></i> Subir ficha tecnica
-                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" hidden @change="uploadFile($event, 'fichaTecnica')" />
-                </label>
-                <span v-if="uploading.fichaTecnica" class="upload-status"><i class="bi bi-hourglass-split"></i> Subiendo...</span>
-              </div>
-              <div v-if="form.fichaTecnica" class="file-attached">
-                <a :href="resolveUrl(form.fichaTecnica)" target="_blank" class="file-link">
-                  <i class="bi bi-file-earmark-check"></i> Ver ficha tecnica
-                </a>
-                <button type="button" class="btn-icon-danger" @click="form.fichaTecnica = ''" title="Quitar">
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              </div>
-            </div>
           </div>
 
           <div class="form-footer">
@@ -390,9 +400,10 @@ const errors = ref({})
 const grupos = ref([])
 const gruposData = ref([])
 const colorCatalog = ref([])
+const colorSearch = ref('')
 const showNewGrupo = ref(false)
 const newGrupoName = ref('')
-const uploading = ref({ image: false, catalogo: false, fichaTecnica: false })
+const uploadingImage = ref(false)
 
 function resolveUrl(path) {
   if (!path) return ''
@@ -400,23 +411,51 @@ function resolveUrl(path) {
   return `${API_BASE_URL.replace('/api', '')}${path}`
 }
 
-async function uploadFile(event, field) {
+async function doUpload(file) {
+  const fd = new FormData()
+  fd.append('file', file)
+  const { data } = await axios.post(`${API_BASE_URL}/upload`, fd, {
+    headers: { ...authHeader().headers, 'Content-Type': 'multipart/form-data' },
+  })
+  return data.url
+}
+
+async function uploadImage(event) {
   const file = event.target.files?.[0]
   if (!file) return
-  uploading.value[field] = true
+  uploadingImage.value = true
   try {
-    const fd = new FormData()
-    fd.append('file', file)
-    const { data } = await axios.post(`${API_BASE_URL}/upload`, fd, {
-      ...authHeader(),
-      headers: { ...authHeader().headers, 'Content-Type': 'multipart/form-data' },
-    })
-    form.value[field] = data.url
+    form.value.image = await doUpload(file)
+    toast.success(`Imagen subida: ${file.name}`)
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Error al subir imagen')
+  } finally {
+    uploadingImage.value = false
+    event.target.value = ''
+  }
+}
+
+function addArchivo() {
+  form.value.archivos.push({ titulo: '', url: '', _uploading: false })
+}
+
+function removeArchivo(i) {
+  form.value.archivos.splice(i, 1)
+}
+
+async function uploadArchivo(event, idx) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const arch = form.value.archivos[idx]
+  arch._uploading = true
+  try {
+    arch.url = await doUpload(file)
+    if (!arch.titulo) arch.titulo = file.name.replace(/\.[^.]+$/, '')
     toast.success(`Archivo subido: ${file.name}`)
   } catch (err) {
     toast.error(err.response?.data?.message || 'Error al subir archivo')
   } finally {
-    uploading.value[field] = false
+    arch._uploading = false
     event.target.value = ''
   }
 }
@@ -425,18 +464,15 @@ const form = ref({
   prefijo: '',
   name: '',
   grupo: '',
-  espesor: '',
   detalle: '',
   color: '',
   colorMode: 'todos',
   selectedColors: [],
-  medida: '',
-  nomenclaturaMedida: '',
+  espesoresMedidas: [{ espesor: '', medida: '', nomenclaturaMedida: '' }],
   admiteDescuentos: true,
   comentario: '',
   image: '',
-  catalogo: '',
-  fichaTecnica: '',
+  archivos: [],
   unidadPrecio: 'hoja',
   stock: 0,
   tiposConfig: [{ nombre: '', terminaciones: [] }],
@@ -516,38 +552,60 @@ function getAllVariantes() {
   return result
 }
 
+function addEspesorMedida() {
+  form.value.espesoresMedidas.push({ espesor: '', medida: '', nomenclaturaMedida: '' })
+}
+
+function removeEspesorMedida(i) {
+  form.value.espesoresMedidas.splice(i, 1)
+}
+
+function calcM2(medida) {
+  if (!medida) return null
+  const parts = medida.replace(/mm/gi, '').split(/[x×]/i).map(s => parseFloat(s.trim()))
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return Number(((parts[0] * parts[1]) / 1000000).toFixed(4))
+  }
+  return null
+}
+
 function buildSku(prefijo, colorPart, termPart, nomenclatura, espesor) {
   const base = `${prefijo}${colorPart}${termPart}${nomenclatura}`
   return espesor ? `${base}-${espesor}` : base
 }
 
 function skuForVariante(v) {
-  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, espesor } = form.value
+  const { prefijo, colorMode, selectedColors, espesoresMedidas } = form.value
   const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
-  return buildSku(prefijo, colorPart, v.terminacion, nomenclaturaMedida, espesor)
+  const em = espesoresMedidas[0] || {}
+  return buildSku(prefijo, colorPart, v.terminacion, em.nomenclaturaMedida || '', em.espesor || '')
 }
 
 const skuPreview = computed(() => {
-  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, tiposConfig, espesor } = form.value
+  const { prefijo, colorMode, selectedColors, tiposConfig, espesoresMedidas } = form.value
   const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
   const allTerms = tiposConfig.flatMap(tc => tc.terminaciones)
   const termPart = allTerms.length === 1 ? allTerms[0] : ''
-  if (!prefijo && !colorPart && !termPart && !nomenclaturaMedida) return ''
-  return buildSku(prefijo, colorPart, termPart, nomenclaturaMedida, espesor)
-})
-
-const m2Calc = computed(() => {
-  const m = form.value.medida
-  if (!m) return null
-  const parts = m.replace(/mm/gi, '').split(/[x×]/i).map(s => parseFloat(s.trim()))
-  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-    return Number(((parts[0] * parts[1]) / 1000000).toFixed(4))
-  }
-  return null
+  const em = espesoresMedidas[0] || {}
+  const nom = em.nomenclaturaMedida || ''
+  const esp = em.espesor || ''
+  if (!prefijo && !colorPart && !termPart && !nom) return ''
+  return buildSku(prefijo, colorPart, termPart, nom, esp)
 })
 
 function colorsByGroup(g) {
   return colorCatalog.value.filter(c => c.grupoColor === g)
+}
+
+function filteredColorsByGroup(g) {
+  const q = colorSearch.value.trim().toLowerCase()
+  const byGroup = colorsByGroup(g)
+  if (!q) return byGroup
+  return byGroup.filter(c =>
+    c.code.toLowerCase().includes(q) ||
+    c.name.toLowerCase().includes(q) ||
+    (c.tipo && c.tipo.toLowerCase().includes(q))
+  )
 }
 
 function romanNum(g) {
@@ -573,10 +631,6 @@ const selectedGroupData = computed(() => {
   if (!form.value.grupo) return null
   return gruposData.value.find(g => g.nombre === form.value.grupo) || null
 })
-
-function onNomenclatura() {
-  form.value.nomenclaturaMedida = form.value.nomenclaturaMedida.replace(/\D/g, '').slice(0, 3)
-}
 
 function authHeader() {
   const token = localStorage.getItem('token')
@@ -628,22 +682,44 @@ function populate() {
     }
   }
 
+  // Load espesoresMedidas: use array if present, otherwise build from single fields
+  let espesoresMedidas = []
+  if (Array.isArray(p.espesoresMedidas) && p.espesoresMedidas.length) {
+    espesoresMedidas = p.espesoresMedidas.map(em => ({
+      espesor: em.espesor || '',
+      medida: em.medida || '',
+      nomenclaturaMedida: em.nomenclaturaMedida || '',
+    }))
+  } else {
+    espesoresMedidas = [{
+      espesor: p.espesor || '',
+      medida: p.medida || '',
+      nomenclaturaMedida: p.nomenclaturaMedida || '',
+    }]
+  }
+
+  // Load archivos: use array if present, otherwise merge catalogo/fichaTecnica
+  let archivos = []
+  if (Array.isArray(p.archivos) && p.archivos.length) {
+    archivos = p.archivos.map(a => ({ titulo: a.titulo || '', url: a.url || '', _uploading: false }))
+  } else {
+    if (p.catalogo) archivos.push({ titulo: 'Catalogo', url: p.catalogo, _uploading: false })
+    if (p.fichaTecnica) archivos.push({ titulo: 'Ficha tecnica', url: p.fichaTecnica, _uploading: false })
+  }
+
   form.value = {
     prefijo: p.prefijo || '',
     name: p.name || '',
     grupo: p.grupo || '',
-    espesor: p.espesor || '',
     detalle: p.detalle || '',
     color: p.color || '',
     colorMode: p.colorMode || 'todos',
     selectedColors: p.selectedColors || [],
-    medida: p.medida || '',
-    nomenclaturaMedida: p.nomenclaturaMedida || '',
+    espesoresMedidas,
     admiteDescuentos: p.admiteDescuentos ?? true,
     comentario: p.comentario || '',
     image: p.image || '',
-    catalogo: p.catalogo || '',
-    fichaTecnica: p.fichaTecnica || '',
+    archivos,
     unidadPrecio: p.unidadPrecio || 'hoja',
     stock: p.stock ?? 0,
     tiposConfig,
@@ -686,7 +762,6 @@ function validate() {
   const e = {}
   if (!form.value.prefijo.trim() || form.value.prefijo.trim().length !== 3) e.prefijo = 'Debe tener exactamente 3 letras.'
   if (!form.value.name.trim()) e.name = 'El nombre es obligatorio.'
-  if (form.value.nomenclaturaMedida && form.value.nomenclaturaMedida.length !== 3) e.nomenclaturaMedida = 'Debe tener exactamente 3 numeros.'
   errors.value = e
   return Object.keys(e).length === 0
 }
@@ -699,6 +774,11 @@ async function save() {
     if (payload.colorMode === 'especifico' && payload.selectedColors.length === 1) {
       payload.color = payload.selectedColors[0]
     }
+    const em0 = payload.espesoresMedidas[0] || {}
+    payload.espesor = em0.espesor || ''
+    payload.medida = em0.medida || ''
+    payload.nomenclaturaMedida = em0.nomenclaturaMedida || ''
+    payload.archivos = (payload.archivos || []).filter(a => a.url).map(a => ({ titulo: a.titulo, url: a.url }))
     const vars = getAllVariantes().map(v => ({
       tipoProducto: v.tipoProducto,
       tipoTerminacion: v.tipoTerminacion,
@@ -798,113 +878,39 @@ async function save() {
 }
 .new-grupo-row input { flex: 1; }
 
-.color-catalog-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 0.75rem;
-  background: rgba(107,142,58,0.04);
-  border: 1px solid rgba(107,142,58,0.12);
-  border-radius: 12px;
-}
+/* Color search */
+.color-search-wrap { position: relative; display: flex; align-items: center; }
+.color-search-icon { position: absolute; left: 0.75rem; color: var(--color-muted); font-size: 0.85rem; pointer-events: none; }
+.color-search-input { width: 100%; padding: 0.5rem 2rem 0.5rem 2.2rem; border: 1px solid rgba(107,142,58,0.2); border-radius: 10px; font-size: 0.85rem; background: rgba(255,255,255,0.8); transition: border-color 0.2s; }
+.color-search-input:focus { border-color: var(--color-primary, #6b8e3a); outline: none; }
+.color-search-clear { position: absolute; right: 0.5rem; background: none; border: none; color: var(--color-muted); cursor: pointer; font-size: 0.75rem; padding: 0.2rem; }
 
-.color-group-header {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-primary, #6b8e3a);
-  margin-bottom: 0.25rem;
-}
+.color-panel { border: 1px solid rgba(107,142,58,0.15); border-radius: 14px; background: rgba(255,255,255,0.6); padding: 0.8rem; display: flex; flex-direction: column; gap: 0.8rem; max-height: 420px; overflow-y: auto; }
+.color-group-section { display: flex; flex-direction: column; gap: 0.4rem; }
+.color-group-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem; border-radius: 8px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; width: fit-content; }
+.color-group-badge.grupo-1 { background: rgba(76,175,80,0.12); color: #2e7d32; }
+.color-group-badge.grupo-2 { background: rgba(33,150,243,0.12); color: #1565c0; }
+.color-group-badge.grupo-3 { background: rgba(255,152,0,0.12); color: #e65100; }
+.color-group-count { background: rgba(0,0,0,0.08); border-radius: 6px; padding: 0.1rem 0.4rem; font-size: 0.68rem; }
+.color-group-header-row { display: flex; justify-content: space-between; align-items: center; }
+.btn-link { background: none; border: none; color: var(--color-primary, #6b8e3a); font-size: 0.72rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; }
 
-.color-chips-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
+.color-chips-grid { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.color-chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.55rem; border-radius: 7px; background: rgba(107,142,58,0.07); font-size: 0.72rem; border: 1px solid rgba(107,142,58,0.1); }
+.color-chip-code { font-weight: 700; }
+.color-chip-name { color: var(--color-muted); }
 
-.color-chip-sm {
-  display: inline-block;
-  padding: 0.2rem 0.5rem;
-  background: rgba(107,142,58,0.08);
-  border-radius: 6px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.color-chip-sm.more {
-  background: rgba(107,142,58,0.16);
-  font-weight: 700;
-  color: var(--color-primary, #6b8e3a);
-}
-
-.color-catalog-select {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  padding: 0.75rem;
-  background: rgba(107,142,58,0.04);
-  border: 1px solid rgba(107,142,58,0.12);
-  border-radius: 12px;
-}
-
-.color-catalog-select .color-group-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  color: var(--color-primary, #6b8e3a);
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-}
-
-.color-check-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.3rem;
-}
-
-.color-check-item {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.78rem;
-  transition: background 0.15s;
-  border: 1px solid transparent;
-}
-
-.color-check-item:hover { background: rgba(107,142,58,0.08); }
-.color-check-item.checked { background: rgba(107,142,58,0.12); border-color: rgba(107,142,58,0.25); }
-
-.color-check-item input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--color-primary, #6b8e3a);
-  flex-shrink: 0;
-}
-
+.color-check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.25rem; }
+.color-check-item { display: flex; align-items: center; gap: 0.45rem; padding: 0.35rem 0.6rem; border-radius: 8px; cursor: pointer; font-size: 0.78rem; transition: all 0.15s; border: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.5); }
+.color-check-item:hover { background: rgba(107,142,58,0.08); border-color: rgba(107,142,58,0.2); }
+.color-check-item.checked { background: rgba(107,142,58,0.1); border-color: rgba(107,142,58,0.3); box-shadow: 0 0 0 1px rgba(107,142,58,0.15); }
+.color-check-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--color-primary, #6b8e3a); flex-shrink: 0; }
 .color-check-code { font-weight: 700; min-width: 35px; }
-.color-check-name { color: var(--color-muted); font-weight: 400; }
-
-.color-selection-count {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--color-primary, #6b8e3a);
-  text-align: right;
-  padding-top: 0.3rem;
-  border-top: 1px solid rgba(107,142,58,0.12);
-}
+.color-check-name { color: var(--color-text); font-weight: 400; flex: 1; }
+.color-check-tipo { font-size: 0.65rem; color: var(--color-muted); font-style: italic; background: rgba(0,0,0,0.04); padding: 0.1rem 0.35rem; border-radius: 4px; }
+.color-empty { font-size: 0.78rem; color: var(--color-muted); font-style: italic; padding: 0.3rem 0; }
+.color-selection-bar { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.6rem; background: rgba(107,142,58,0.08); border-radius: 8px; margin-bottom: 0.2rem; }
+.color-selection-count { font-size: 0.78rem; font-weight: 600; color: var(--color-primary, #6b8e3a); }
 
 .hint { font-size: 0.78rem; color: var(--color-muted); margin: 0; }
 
@@ -1021,6 +1027,22 @@ async function save() {
 
 .cell-label { font-size: 0.82rem; font-weight: 500; }
 .cell-sku code { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: var(--color-muted); }
+
+.em-row {
+  display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: flex-end;
+}
+.em-field { display: flex; flex-direction: column; gap: 0.2rem; }
+.m2-display-sm {
+  padding: 0.4rem 0.6rem; background: rgba(107,142,58,0.06); border-radius: 8px;
+  font-size: 0.85rem; font-weight: 600; min-width: 60px; text-align: center;
+}
+
+.archivos-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.archivo-item {
+  border: 1px solid rgba(107,142,58,0.15); border-radius: 10px; padding: 0.6rem;
+  background: rgba(107,142,58,0.03);
+}
+.archivo-top { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }
 
 .descuentos-preview { margin-top: 0.3rem; }
 .desc-table-wrap { overflow-x: auto; margin-top: 0.5rem; }

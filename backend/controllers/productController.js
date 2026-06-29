@@ -49,6 +49,11 @@ export const createProductController = async (req, res) => {
             image: body.image,
             catalogo: body.catalogo,
             fichaTecnica: body.fichaTecnica,
+            archivos: body.archivos || [],
+            espesoresMedidas: (body.espesoresMedidas || []).map(em => ({
+                ...em,
+                m2: calcM2(em.medida),
+            })),
             precio: body.precio ?? null,
             precioGeneral: body.precioGeneral ?? firstVar.precioGeneral ?? null,
             unidadPrecio: body.unidadPrecio,
