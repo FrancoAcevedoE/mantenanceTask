@@ -74,59 +74,60 @@
           <div class="section-title">Tabla de descuentos</div>
           <p class="hint">Agrega las filas que necesites. Los porcentajes combinados se calculan automaticamente.</p>
 
-          <div class="discount-edit-table-wrap">
-            <table class="discount-edit-table">
-              <thead>
-                <tr>
-                  <th>Comentario</th>
-                  <th>% Dto cantidad</th>
-                  <th>% Dto contado</th>
-                  <th>% Dto 30 dias</th>
-                  <th>% Cant+Contado</th>
-                  <th>% Cant+30dias</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, i) in form.descuentos" :key="i">
-                  <td>
-                    <input v-model="row.nota" type="text" placeholder="Ej: de 1 a 30 hojas" class="input-sm" />
-                  </td>
-                  <td>
-                    <div class="pct-input-wrap">
-                      <input v-model.number="row.porcCantidad" type="number" min="0" max="100" step="0.1"
-                             class="input-num-sm" @input="calcConcat(row)" />
-                      <span>%</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="pct-input-wrap">
-                      <input v-model.number="row.porcContado" type="number" min="0" max="100" step="0.1"
-                             class="input-num-sm" @input="calcConcat(row)" />
-                      <span>%</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="pct-input-wrap">
-                      <input v-model.number="row.porc30dias" type="number" min="0" max="100" step="0.1"
-                             class="input-num-sm" @input="calcConcat(row)" />
-                      <span>%</span>
-                    </div>
-                  </td>
-                  <td class="calc-cell">{{ row.porcCantidadContado?.toFixed(2) || '—' }}%</td>
-                  <td class="calc-cell">{{ row.porcCantidad30dias?.toFixed(2) || '—' }}%</td>
-                  <td>
-                    <button type="button" class="btn-icon-danger" @click="removeRow(i)" title="Quitar fila">
-                      <i class="bi bi-x-lg"></i>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="desc-block" v-for="(row, i) in form.descuentos" :key="i">
+            <div class="desc-block-header">
+              <div class="desc-comment-row">
+                <label class="sub-label">Comentario</label>
+                <input v-model="row.nota" type="text" placeholder="Ej: de 1 a 30 hojas" class="input-sm desc-comment-input" />
+                <button type="button" class="btn-icon-danger" @click="removeRow(i)" title="Quitar fila">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div class="desc-prices-wrap">
+              <table class="variantes-table">
+                <thead>
+                  <tr>
+                    <th>% Dto cantidad</th>
+                    <th>% Dto contado</th>
+                    <th>% Dto 30 dias</th>
+                    <th>% Cant+Contado</th>
+                    <th>% Cant+30dias</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="pct-input-wrap">
+                        <input v-model.number="row.porcCantidad" type="number" min="0" max="100" step="0.1"
+                               class="input-num-sm" @input="calcConcat(row)" />
+                        <span>%</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="pct-input-wrap">
+                        <input v-model.number="row.porcContado" type="number" min="0" max="100" step="0.1"
+                               class="input-num-sm" @input="calcConcat(row)" />
+                        <span>%</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="pct-input-wrap">
+                        <input v-model.number="row.porc30dias" type="number" min="0" max="100" step="0.1"
+                               class="input-num-sm" @input="calcConcat(row)" />
+                        <span>%</span>
+                      </div>
+                    </td>
+                    <td class="calc-cell">{{ row.porcCantidadContado?.toFixed(2) || '—' }}%</td>
+                    <td class="calc-cell">{{ row.porcCantidad30dias?.toFixed(2) || '—' }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <button type="button" class="secondary-button add-row-btn" @click="addRow">
-            <i class="bi bi-plus"></i> Agregar fila
+            <i class="bi bi-plus"></i> Agregar fila de descuento
           </button>
 
           <div class="field full">
@@ -379,15 +380,32 @@ async function remove(g) {
 
 textarea { resize: vertical; min-height: 50px; font-family: inherit; font-size: 0.9rem; }
 
-.discount-edit-table-wrap { overflow-x: auto; margin-top: 0.5rem; }
+.desc-block {
+  border: 1px solid rgba(107,142,58,0.15);
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 0.6rem;
+  background: rgba(107,142,58,0.03);
+}
 
-.discount-edit-table {
+.desc-block-header { display: flex; flex-direction: column; gap: 0.2rem; }
+.desc-comment-row { display: flex; gap: 0.5rem; align-items: center; }
+.desc-comment-input { flex: 1; max-width: 320px; }
+
+.sub-label {
+  font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--color-muted); white-space: nowrap;
+}
+
+.desc-prices-wrap { overflow-x: auto; margin-top: 0.5rem; }
+
+.variantes-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.82rem;
 }
 
-.discount-edit-table th {
+.variantes-table th {
   padding: 0.45rem 0.5rem;
   text-align: left;
   font-size: 0.7rem;
@@ -399,7 +417,7 @@ textarea { resize: vertical; min-height: 50px; font-family: inherit; font-size: 
   white-space: nowrap;
 }
 
-.discount-edit-table td {
+.variantes-table td {
   padding: 0.35rem 0.5rem;
   border-bottom: 1px solid rgba(0,0,0,0.04);
   vertical-align: middle;

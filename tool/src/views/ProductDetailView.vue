@@ -480,9 +480,17 @@ function stockClass(stock) {
 .file-card:hover { background: rgba(107,142,58,0.14); border-color: rgba(107,142,58,0.4); }
 .file-card i { font-size: 1.2rem; }
 
+.detail-main { min-width: 0; }
+
+.variantes-section, .files-section, .prices-section, .detail-grid {
+  overflow-x: auto;
+}
+
 @media (max-width: 800px) {
   .detail-layout { grid-template-columns: 1fr; }
   .detail-aside { flex-direction: row; flex-wrap: wrap; }
   .product-image-wrap { width: 160px; height: 160px; aspect-ratio: unset; }
+  .detail-price-row { flex-wrap: wrap; }
+  .detail-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>

@@ -745,5 +745,13 @@ function colorStyle(colorName) {
   }
 
   .inv-sidebar.open { display: flex; }
+
+  .table-scroll { -webkit-overflow-scrolling: touch; }
+
+  .toolbar-actions { flex-wrap: wrap; gap: 0.4rem; }
+}
+
+@media (max-width: 480px) {
+  .container { padding: 0.6rem 0.5rem; }
 }
 </style>
