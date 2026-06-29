@@ -193,8 +193,8 @@
           </div>
 
           <!-- Tabla de precios auto-generada -->
-          <div v-if="computedVariantes.length" class="variantes-table-wrap">
-            <p class="hint">Precios por combinacion ({{ computedVariantes.length }} variantes)</p>
+          <div v-if="variantesRows.length" class="variantes-table-wrap">
+            <p class="hint">Precios por combinacion ({{ variantesRows.length }} variantes)</p>
             <table class="variantes-table">
               <thead>
                 <tr>
@@ -208,32 +208,32 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(v, i) in computedVariantes" :key="v._key">
+                <tr v-for="(v, i) in variantesRows" :key="v._key">
                   <td class="cell-label">{{ v.tipoProducto || '—' }}</td>
                   <td class="cell-label">{{ v.tipoTerminacion }} <code>{{ v.terminacion }}</code></td>
                   <td class="cell-sku"><code>{{ skuForVariante(v) }}</code></td>
                   <td>
                     <div class="pct-input-wrap">
                       <span class="input-prefix-inline">$</span>
-                      <input v-model.number="computedVariantes[i].precioGeneral" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      <input v-model.number="variantesRows[i].precioGeneral" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                     </div>
                   </td>
                   <td>
                     <div class="pct-input-wrap">
                       <span class="input-prefix-inline">$</span>
-                      <input v-model.number="computedVariantes[i].precioGrupoI" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      <input v-model.number="variantesRows[i].precioGrupoI" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                     </div>
                   </td>
                   <td>
                     <div class="pct-input-wrap">
                       <span class="input-prefix-inline">$</span>
-                      <input v-model.number="computedVariantes[i].precioGrupoII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      <input v-model.number="variantesRows[i].precioGrupoII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                     </div>
                   </td>
                   <td>
                     <div class="pct-input-wrap">
                       <span class="input-prefix-inline">$</span>
-                      <input v-model.number="computedVariantes[i].precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      <input v-model.number="variantesRows[i].precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                     </div>
                   </td>
                 </tr>
@@ -428,49 +428,47 @@ function addCustomTerm() {
 
 function removeTipo(i) { form.value.tipos.splice(i, 1) }
 
-const priceCache = ref({})
+const variantesRows = ref([])
 
-const computedVariantes = computed(() => {
+const variantesKeys = computed(() => {
   const tipos = form.value.tipos.filter(t => t.trim())
   const terms = form.value.terminacionesSeleccionadas
     .map(code => allTerminaciones.value.find(t => t.code === code))
     .filter(Boolean)
-
   if (!tipos.length && !terms.length) return []
-
   const effectiveTipos = tipos.length ? tipos : ['']
   const effectiveTerms = terms.length ? terms : [{ nombre: '', code: '' }]
-
-  const result = []
+  const keys = []
   for (const tipo of effectiveTipos) {
     for (const term of effectiveTerms) {
-      const key = `${tipo}|${term.code}`
-      const cached = priceCache.value[key] || {}
-      result.push({
-        _key: key,
-        tipoProducto: tipo,
-        tipoTerminacion: term.nombre,
-        terminacion: term.code,
-        precioGeneral: cached.precioGeneral ?? null,
-        precioGrupoI: cached.precioGrupoI ?? null,
-        precioGrupoII: cached.precioGrupoII ?? null,
-        precioGrupoIII: cached.precioGrupoIII ?? null,
-      })
+      keys.push({ key: `${tipo}|${term.code}`, tipoProducto: tipo, tipoTerminacion: term.nombre, terminacion: term.code })
     }
   }
-  return result
+  return keys
 })
 
-watch(computedVariantes, (vars) => {
-  for (const v of vars) {
-    priceCache.value[v._key] = {
-      precioGeneral: v.precioGeneral,
-      precioGrupoI: v.precioGrupoI,
-      precioGrupoII: v.precioGrupoII,
-      precioGrupoIII: v.precioGrupoIII,
+watch(variantesKeys, (newKeys) => {
+  const existing = new Map(variantesRows.value.map(r => [r._key, r]))
+  variantesRows.value = newKeys.map(k => {
+    const prev = existing.get(k.key)
+    if (prev) {
+      prev.tipoProducto = k.tipoProducto
+      prev.tipoTerminacion = k.tipoTerminacion
+      prev.terminacion = k.terminacion
+      return prev
     }
-  }
-}, { deep: true })
+    return {
+      _key: k.key,
+      tipoProducto: k.tipoProducto,
+      tipoTerminacion: k.tipoTerminacion,
+      terminacion: k.terminacion,
+      precioGeneral: null,
+      precioGrupoI: null,
+      precioGrupoII: null,
+      precioGrupoIII: null,
+    }
+  })
+}, { immediate: true })
 
 function skuForVariante(v) {
   const { prefijo, nomenclaturaMedida, colorMode, selectedColors } = form.value
@@ -571,7 +569,7 @@ async function save() {
     if (payload.colorMode === 'especifico' && payload.selectedColors.length === 1) {
       payload.color = payload.selectedColors[0]
     }
-    const vars = computedVariantes.value.map(v => ({
+    const vars = variantesRows.value.map(v => ({
       tipoProducto: v.tipoProducto,
       tipoTerminacion: v.tipoTerminacion,
       terminacion: v.terminacion,
