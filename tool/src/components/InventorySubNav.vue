@@ -20,6 +20,10 @@
       <i class="bi bi-collection"></i>
       <span>Grupos</span>
     </router-link>
+    <router-link to="/color-catalog" :class="{ active: isActive('/color-catalog') }">
+      <i class="bi bi-palette"></i>
+      <span>Colores</span>
+    </router-link>
     <router-link to="/product-log" :class="{ active: isActive('/product-log') }">
       <i class="bi bi-journal-text"></i>
       <span>Registro</span>

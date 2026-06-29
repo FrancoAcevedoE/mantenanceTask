@@ -16,6 +16,7 @@ import StockManagementView from '@/views/StockManagementView.vue'
 import InventoryDashboardView from '@/views/InventoryDashboardView.vue'
 import ProductLogView from '@/views/ProductLogView.vue'
 import ProductGroupView from '@/views/ProductGroupView.vue'
+import ColorCatalogView from '@/views/ColorCatalogView.vue'
 import CrmView from '@/views/CrmView.vue'
 
 const getStoredUser = () => {
@@ -86,6 +87,9 @@ const router = createRouter({
     },
     {
       path: '/product-groups', name: 'ProductGroups', component: ProductGroupView, meta: { requiresAuth: true, roles: ['admin'] }
+    },
+    {
+      path: '/color-catalog', name: 'ColorCatalog', component: ColorCatalogView, meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
       path: '/crm', name: 'CRM', component: CrmView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
