@@ -150,70 +150,97 @@
               </select>
             </div>
           </div>
-          <p class="hint">Cada fila es una combinacion de tipo + terminacion con sus precios por grupo de color.</p>
-          <div class="variantes-table-wrap">
+
+          <!-- Tipos de producto -->
+          <div class="sub-section">
+            <label class="sub-label">Tipos de producto</label>
+            <div class="tipos-list">
+              <div v-for="(t, i) in form.tipos" :key="i" class="tipo-row">
+                <input v-model="form.tipos[i]" type="text" placeholder="Ej: Compensado" class="input-sm" />
+                <button type="button" class="btn-icon-danger" @click="removeTipo(i)" v-if="form.tipos.length > 1">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+              <button type="button" class="secondary-button btn-sm" @click="form.tipos.push('')">
+                <i class="bi bi-plus"></i> Agregar tipo
+              </button>
+            </div>
+          </div>
+
+          <!-- Terminaciones -->
+          <div class="sub-section">
+            <label class="sub-label">Tipos de terminacion</label>
+            <div class="terminaciones-checks">
+              <label v-for="t in allTerminaciones" :key="t.code" class="term-check-item"
+                     :class="{ checked: form.terminacionesSeleccionadas.includes(t.code) }">
+                <input type="checkbox" :value="t.code" v-model="form.terminacionesSeleccionadas" />
+                <span class="term-name">{{ t.nombre }}</span>
+                <span class="term-code">{{ t.code }}</span>
+              </label>
+            </div>
+            <div class="add-term-row" v-if="showNewTerm">
+              <input v-model="newTermNombre" type="text" placeholder="Nombre" class="input-sm" />
+              <input v-model="newTermCode" type="text" placeholder="Cod" class="input-sm input-code" maxlength="4"
+                     @input="newTermCode = newTermCode.toUpperCase()" />
+              <button type="button" class="btn-sm" @click="addCustomTerm" :disabled="!newTermNombre.trim() || !newTermCode.trim()">
+                Agregar
+              </button>
+              <button type="button" class="btn-sm secondary-button" @click="showNewTerm = false">Cancelar</button>
+            </div>
+            <button v-else type="button" class="secondary-button btn-sm" @click="showNewTerm = true">
+              <i class="bi bi-plus"></i> Otra terminacion
+            </button>
+          </div>
+
+          <!-- Tabla de precios auto-generada -->
+          <div v-if="computedVariantes.length" class="variantes-table-wrap">
+            <p class="hint">Precios por combinacion ({{ computedVariantes.length }} variantes)</p>
             <table class="variantes-table">
               <thead>
                 <tr>
                   <th>Tipo</th>
-                  <th>Tipo de terminacion</th>
-                  <th>Terminacion (SKU)</th>
+                  <th>Terminacion</th>
+                  <th>SKU</th>
                   <th>$ General</th>
                   <th>$ Grupo I</th>
                   <th>$ Grupo II</th>
                   <th>$ Grupo III</th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(v, i) in form.variantes" :key="i">
-                  <td>
-                    <input v-model="v.tipoProducto" type="text" placeholder="Ej: Compensado" class="input-sm" />
-                  </td>
-                  <td>
-                    <input v-model="v.tipoTerminacion" type="text" placeholder="Ej: Brillante" class="input-sm" />
-                  </td>
-                  <td>
-                    <input v-model="v.terminacion" type="text" placeholder="Ej: BR" class="input-sm input-code"
-                           @input="v.terminacion = v.terminacion.toUpperCase()" maxlength="4" />
-                  </td>
+                <tr v-for="(v, i) in computedVariantes" :key="v._key">
+                  <td class="cell-label">{{ v.tipoProducto || '—' }}</td>
+                  <td class="cell-label">{{ v.tipoTerminacion }} <code>{{ v.terminacion }}</code></td>
+                  <td class="cell-sku"><code>{{ skuForVariante(v) }}</code></td>
                   <td>
                     <div class="pct-input-wrap">
                       <span class="input-prefix-inline">$</span>
-                      <input v-model.number="v.precioGeneral" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      <input v-model.number="computedVariantes[i].precioGeneral" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                     </div>
                   </td>
                   <td>
                     <div class="pct-input-wrap">
                       <span class="input-prefix-inline">$</span>
-                      <input v-model.number="v.precioGrupoI" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      <input v-model.number="computedVariantes[i].precioGrupoI" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                     </div>
                   </td>
                   <td>
                     <div class="pct-input-wrap">
                       <span class="input-prefix-inline">$</span>
-                      <input v-model.number="v.precioGrupoII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      <input v-model.number="computedVariantes[i].precioGrupoII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                     </div>
                   </td>
                   <td>
                     <div class="pct-input-wrap">
                       <span class="input-prefix-inline">$</span>
-                      <input v-model.number="v.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      <input v-model.number="computedVariantes[i].precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                     </div>
-                  </td>
-                  <td>
-                    <button type="button" class="btn-icon-danger" @click="removeVariante(i)"
-                            v-if="form.variantes.length > 1" title="Quitar">
-                      <i class="bi bi-x-lg"></i>
-                    </button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <button type="button" class="secondary-button add-row-btn" @click="addVariante">
-            <i class="bi bi-plus"></i> Agregar variante
-          </button>
+          <div v-else class="hint" style="margin-top:0.5rem;">Agrega al menos un tipo y selecciona terminaciones para ver la tabla de precios.</div>
 
           <!-- Comercial -->
           <div class="section-title">Comercial</div>
@@ -309,7 +336,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProductsStore } from '@/stores/products'
 import { useToast } from 'vue-toastification'
@@ -355,12 +382,80 @@ async function uploadFile(event, field) {
   }
 }
 
-function emptyVariante() {
-  return { tipoProducto: '', tipoTerminacion: '', terminacion: '', precioGeneral: null, precioGrupoI: null, precioGrupoII: null, precioGrupoIII: null }
+const DEFAULT_TERMINACIONES = [
+  { nombre: 'Brillante', code: 'BR' },
+  { nombre: 'Semimate', code: 'SE' },
+  { nombre: 'Textura', code: 'TE' },
+]
+
+const allTerminaciones = ref([...DEFAULT_TERMINACIONES])
+const showNewTerm = ref(false)
+const newTermNombre = ref('')
+const newTermCode = ref('')
+
+function addCustomTerm() {
+  const nombre = newTermNombre.value.trim()
+  const code = newTermCode.value.trim().toUpperCase()
+  if (!nombre || !code) return
+  if (allTerminaciones.value.some(t => t.code === code)) return
+  allTerminaciones.value.push({ nombre, code })
+  form.value.terminacionesSeleccionadas.push(code)
+  newTermNombre.value = ''
+  newTermCode.value = ''
+  showNewTerm.value = false
 }
 
-function addVariante() { form.value.variantes.push(emptyVariante()) }
-function removeVariante(i) { form.value.variantes.splice(i, 1) }
+function removeTipo(i) { form.value.tipos.splice(i, 1) }
+
+const priceCache = ref({})
+
+const computedVariantes = computed(() => {
+  const tipos = form.value.tipos.filter(t => t.trim())
+  const terms = form.value.terminacionesSeleccionadas
+    .map(code => allTerminaciones.value.find(t => t.code === code))
+    .filter(Boolean)
+
+  if (!tipos.length && !terms.length) return []
+
+  const effectiveTipos = tipos.length ? tipos : ['']
+  const effectiveTerms = terms.length ? terms : [{ nombre: '', code: '' }]
+
+  const result = []
+  for (const tipo of effectiveTipos) {
+    for (const term of effectiveTerms) {
+      const key = `${tipo}|${term.code}`
+      const cached = priceCache.value[key] || {}
+      result.push({
+        _key: key,
+        tipoProducto: tipo,
+        tipoTerminacion: term.nombre,
+        terminacion: term.code,
+        precioGeneral: cached.precioGeneral ?? null,
+        precioGrupoI: cached.precioGrupoI ?? null,
+        precioGrupoII: cached.precioGrupoII ?? null,
+        precioGrupoIII: cached.precioGrupoIII ?? null,
+      })
+    }
+  }
+  return result
+})
+
+watch(computedVariantes, (vars) => {
+  for (const v of vars) {
+    priceCache.value[v._key] = {
+      precioGeneral: v.precioGeneral,
+      precioGrupoI: v.precioGrupoI,
+      precioGrupoII: v.precioGrupoII,
+      precioGrupoIII: v.precioGrupoIII,
+    }
+  }
+}, { deep: true })
+
+function skuForVariante(v) {
+  const { prefijo, nomenclaturaMedida, colorMode, selectedColors } = form.value
+  const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
+  return `${prefijo}${colorPart}${v.terminacion}${nomenclaturaMedida}`
+}
 
 const form = ref({
   prefijo: '',
@@ -379,13 +474,14 @@ const form = ref({
   catalogo: '',
   fichaTecnica: '',
   unidadPrecio: 'hoja',
-  variantes: [emptyVariante()],
+  tipos: [''],
+  terminacionesSeleccionadas: [],
 })
 
 const skuPreview = computed(() => {
-  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, variantes } = form.value
+  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, terminacionesSeleccionadas } = form.value
   const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
-  const termPart = variantes.length === 1 ? (variantes[0].terminacion || '') : ''
+  const termPart = terminacionesSeleccionadas.length === 1 ? terminacionesSeleccionadas[0] : ''
   if (!prefijo && !colorPart && !termPart && !nomenclaturaMedida) return ''
   return `${prefijo}${colorPart}${termPart}${nomenclaturaMedida}`
 })
@@ -475,8 +571,18 @@ async function save() {
     if (payload.colorMode === 'especifico' && payload.selectedColors.length === 1) {
       payload.color = payload.selectedColors[0]
     }
-    if (payload.variantes.length === 1) {
-      const v0 = payload.variantes[0]
+    const vars = computedVariantes.value.map(v => ({
+      tipoProducto: v.tipoProducto,
+      tipoTerminacion: v.tipoTerminacion,
+      terminacion: v.terminacion,
+      precioGeneral: v.precioGeneral,
+      precioGrupoI: v.precioGrupoI,
+      precioGrupoII: v.precioGrupoII,
+      precioGrupoIII: v.precioGrupoIII,
+    }))
+    payload.variantes = vars
+    if (vars.length === 1) {
+      const v0 = vars[0]
       payload.tipo = v0.tipoProducto
       payload.tipoTerminacion = v0.tipoTerminacion
       payload.terminacion = v0.terminacion
@@ -741,6 +847,39 @@ async function save() {
 .btn-icon-danger:hover { background: rgba(220,38,38,0.1); }
 
 .add-row-btn { align-self: flex-start; margin-top: 0.4rem; }
+
+.sub-section { margin-top: 0.6rem; }
+.sub-label {
+  font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--color-muted); display: block; margin-bottom: 0.4rem;
+}
+
+.tipos-list { display: flex; flex-direction: column; gap: 0.35rem; }
+.tipo-row { display: flex; gap: 0.35rem; align-items: center; max-width: 300px; }
+.tipo-row .input-sm { flex: 1; }
+
+.terminaciones-checks {
+  display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem;
+}
+
+.term-check-item {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.4rem 0.7rem; border-radius: 8px; cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1); font-size: 0.82rem;
+  transition: all 0.15s;
+}
+.term-check-item:hover { background: rgba(107,142,58,0.08); }
+.term-check-item.checked { background: rgba(107,142,58,0.12); border-color: rgba(107,142,58,0.3); }
+.term-check-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--color-primary, #6b8e3a); }
+.term-name { font-weight: 600; }
+.term-code { font-size: 0.72rem; color: var(--color-muted); font-weight: 700; letter-spacing: 0.05em; }
+
+.add-term-row { display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
+.add-term-row .input-sm { max-width: 140px; }
+.add-term-row .input-code { max-width: 60px; }
+
+.cell-label { font-size: 0.82rem; font-weight: 500; }
+.cell-sku code { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: var(--color-muted); }
 
 .m2-display {
   padding: 0.65rem 1rem;
