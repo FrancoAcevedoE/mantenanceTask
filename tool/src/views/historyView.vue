@@ -110,17 +110,29 @@
         </div>
       </div>
     </Teleport>
+    <ConfirmDialog
+      :visible="confirmDlg.visible"
+      :title="confirmDlg.title"
+      :message="confirmDlg.message"
+      :confirm-text="confirmDlg.confirmText"
+      :type="confirmDlg.type"
+      @confirm="onConfirmDlg"
+      @cancel="confirmDlg.visible = false"
+    />
   </div>
 </template>
 
 <script>
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 export default {
+  components: { ConfirmDialog },
 
   data() {
     return {
+      confirmDlg: { visible: false, title: '', message: '', confirmText: 'Eliminar', type: 'danger', action: null },
       isLoading: false,
       history: [],
       searchMachine: "",
@@ -272,15 +284,26 @@ export default {
       }
     },
 
-    async deleteMaintenanceRecord(item) {
-      if (!window.confirm(`¿Eliminar el registro de ${item.machine}? Esta acción no se puede deshacer.`)) return
-      try {
-        await axios.delete(`${API_BASE_URL}/maintenance/${item._id}`, this.authConfig())
-        this.$notify.success("Registro eliminado correctamente")
-        await this.loadHistory()
-      } catch (error) {
-        this.$notify.notifyApiError(error, "No se pudo eliminar el registro")
+    deleteMaintenanceRecord(item) {
+      this.confirmDlg = {
+        visible: true, title: 'Eliminar registro',
+        message: `¿Eliminar el registro de ${item.machine}? Esta accion no se puede deshacer.`,
+        confirmText: 'Eliminar', type: 'danger',
+        action: async () => {
+          try {
+            await axios.delete(`${API_BASE_URL}/maintenance/${item._id}`, this.authConfig())
+            this.$notify.success("Registro eliminado correctamente")
+            await this.loadHistory()
+          } catch (error) {
+            this.$notify.notifyApiError(error, "No se pudo eliminar el registro")
+          }
+        }
       }
+    },
+    onConfirmDlg() {
+      const action = this.confirmDlg.action
+      this.confirmDlg.visible = false
+      if (action) action()
     }
 
   }

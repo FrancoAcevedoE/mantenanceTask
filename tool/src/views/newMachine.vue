@@ -224,18 +224,29 @@
       </div>
 
     </div>
-
+    <ConfirmDialog
+      :visible="machineConfirm.visible"
+      title="Ocultar maquina"
+      message="Ocultar maquina? No aparecera en formularios ni dashboard de maquinas activas."
+      confirm-text="Ocultar"
+      type="warning"
+      @confirm="doDeleteMachine"
+      @cancel="machineConfirm.visible = false"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 export default {
+  components: { ConfirmDialog },
   data() {
     return {
 
+      machineConfirm: { visible: false, id: null },
       activePanel: '',
 
       form: {
@@ -423,11 +434,15 @@ export default {
       this.showMachineModal = false
       this.selectedMachine = null
     },
-    async deleteMachine(machineId) {
-      const isConfirmed = window.confirm("Ocultar maquina? No aparecera en formularios ni dashboard de maquinas activas.")
-      if (!isConfirmed) return
+    deleteMachine(machineId) {
+      this.machineConfirm = { visible: true, id: machineId }
+    },
+    async doDeleteMachine() {
+      const id = this.machineConfirm.id
+      this.machineConfirm.visible = false
+      if (!id) return
       try {
-        await axios.delete(`${API_BASE_URL}/machines/${machineId}`, this.authConfig())
+        await axios.delete(`${API_BASE_URL}/machines/${id}`, this.authConfig())
         this.$notify.success("Maquina ocultada correctamente")
         await this.loadMachines()
       } catch (error) {

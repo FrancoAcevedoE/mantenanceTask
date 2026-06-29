@@ -23,6 +23,16 @@
         </div>
       </div>
 
+      <ConfirmDialog
+        :visible="!!quoteToDelete"
+        title="Eliminar cotizacion"
+        :message="quoteToDelete ? `¿Eliminar cotización #${String(quoteToDelete.numero).padStart(4,'0')} '${quoteToDelete.titulo}'?` : ''"
+        confirm-text="Eliminar"
+        type="danger"
+        @confirm="doDeleteQuote"
+        @cancel="quoteToDelete = null"
+      />
+
       <!-- ── HISTORIAL ────────────────────────────────────────────────── -->
       <div v-if="activeTab === 'list'">
         <div v-if="loadingQuotes" class="empty-state">Cargando cotizaciones…</div>
@@ -50,7 +60,7 @@
                 <td class="actions-cell">
                   <button class="icon-btn" title="Imprimir" @click="openPrint(q)"><i class="bi bi-printer"></i></button>
                   <button class="icon-btn" title="Editar" @click="editQuote(q)"><i class="bi bi-pencil"></i></button>
-                  <button class="icon-btn danger" title="Eliminar" @click="confirmDelete(q)"><i class="bi bi-trash3"></i></button>
+                  <button class="icon-btn danger" title="Eliminar" @click="quoteToDelete = q"><i class="bi bi-trash3"></i></button>
                 </td>
               </tr>
             </tbody>
@@ -612,6 +622,7 @@ import axios from 'axios'
 import { useProductsStore } from '@/stores/products'
 import { useCrmStore } from '@/stores/crm'
 import { useToast } from 'vue-toastification'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { API_BASE_URL } from '@/utils/api'
 
 const productsStore = useProductsStore()
@@ -1187,8 +1198,12 @@ async function openPrint(q) {
 }
 
 // ── Eliminar ──────────────────────────────────────────────────────────────────
-async function confirmDelete(q) {
-  if (!confirm(`¿Eliminar cotización #${String(q.numero).padStart(4,'0')} "${q.titulo}"?`)) return
+const quoteToDelete = ref(null)
+
+async function doDeleteQuote() {
+  const q = quoteToDelete.value
+  quoteToDelete.value = null
+  if (!q) return
   try {
     await axios.delete(`${API_BASE_URL}/quotes/${q._id}`, authH())
     toast.success('Cotización eliminada.')

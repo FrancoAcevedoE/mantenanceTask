@@ -18,9 +18,18 @@
           <router-link to="/product/new">
             <button class="primary-button"><i class="bi bi-plus-lg"></i> Nuevo producto</button>
           </router-link>
-          <button class="danger-button" @click="deleteAll">
+          <button class="danger-button" @click="showDeleteAllConfirm = true">
             <i class="bi bi-trash"></i> Vaciar
           </button>
+          <ConfirmDialog
+            :visible="showDeleteAllConfirm"
+            title="Vaciar inventario"
+            message="¿Estas seguro de eliminar TODOS los productos? Esta accion no se puede deshacer."
+            confirm-text="Eliminar todo"
+            type="danger"
+            @confirm="deleteAll(); showDeleteAllConfirm = false"
+            @cancel="showDeleteAllConfirm = false"
+          />
           <router-link to="/inv-dashboard">
             <button class="secondary-button"><i class="bi bi-bar-chart-line"></i> Dashboard</button>
           </router-link>
@@ -168,12 +177,44 @@
                       <td><span :class="stockBadge(p.stock)">{{ p.stock ?? 0 }}</span></td>
                       <td>
                         <div class="action-buttons">
-                          <router-link :to="`/product/${p._id}`">
-                            <button class="btn-sm secondary-button"><i class="bi bi-eye"></i></button>
-                          </router-link>
+                          <button class="btn-sm secondary-button" @click="toggleDetail(p._id)" :title="expandedId === p._id ? 'Ocultar' : 'Ver detalle'">
+                            <i class="bi" :class="expandedId === p._id ? 'bi-chevron-up' : 'bi-eye'"></i>
+                          </button>
                           <router-link :to="`/product/${p._id}/edit`">
                             <button class="btn-sm secondary-button"><i class="bi bi-pencil"></i></button>
                           </router-link>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-if="expandedId === p._id" class="detail-expand-row">
+                      <td colspan="8">
+                        <div class="detail-expand-box">
+                          <div class="dex-grid">
+                            <div v-if="p.image" class="dex-img">
+                              <img :src="resolveUrl(p.image)" :alt="p.name" />
+                            </div>
+                            <div class="dex-info">
+                              <div class="dex-row"><span class="dex-label">SKU</span><code>{{ p.code }}</code></div>
+                              <div v-if="p.grupo" class="dex-row"><span class="dex-label">Grupo</span><span>{{ p.grupo }}</span></div>
+                              <div v-if="p.tipo" class="dex-row"><span class="dex-label">Tipo</span><span>{{ p.tipo }}</span></div>
+                              <div v-if="p.terminacion" class="dex-row"><span class="dex-label">Terminacion</span><span>{{ p.terminacion }}</span></div>
+                              <div v-if="p.espesor" class="dex-row"><span class="dex-label">Espesor</span><span>{{ p.espesor }}mm</span></div>
+                              <div v-if="p.dimensions" class="dex-row"><span class="dex-label">Medida</span><span>{{ p.dimensions }}</span></div>
+                              <div v-if="p.m2" class="dex-row"><span class="dex-label">m2</span><span>{{ p.m2 }}</span></div>
+                              <div v-if="p.colorMode" class="dex-row"><span class="dex-label">Color</span><span>{{ p.colorMode === 'todos' ? 'TODOS' : (p.selectedColors?.join(', ') || p.color || '—') }}</span></div>
+                              <div v-if="p.detalle" class="dex-row full"><span class="dex-label">Detalle</span><span>{{ p.detalle }}</span></div>
+                              <div v-if="p.comentario" class="dex-row full"><span class="dex-label">Comentario</span><span>{{ p.comentario }}</span></div>
+                            </div>
+                            <div class="dex-prices">
+                              <div v-if="p.precioGeneral != null" class="dex-price"><span class="dex-label">General</span><span class="dex-val">${{ formatPrice(p.precioGeneral) }}</span></div>
+                              <div v-if="p.precioGrupoI != null" class="dex-price"><span class="dex-label">Grupo I</span><span class="dex-val">${{ formatPrice(p.precioGrupoI) }}</span></div>
+                              <div v-if="p.precioGrupoII != null" class="dex-price"><span class="dex-label">Grupo II</span><span class="dex-val">${{ formatPrice(p.precioGrupoII) }}</span></div>
+                              <div v-if="p.precioGrupoIII != null" class="dex-price"><span class="dex-label">Grupo III</span><span class="dex-val">${{ formatPrice(p.precioGrupoIII) }}</span></div>
+                            </div>
+                          </div>
+                          <div class="dex-footer">
+                            <router-link :to="`/product/${p._id}`"><button class="btn-sm"><i class="bi bi-box-arrow-up-right"></i> Ver completo</button></router-link>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -217,12 +258,43 @@
                     <td><span :class="stockBadge(p.stock)">{{ p.stock ?? 0 }}</span></td>
                     <td>
                       <div class="action-buttons">
-                        <router-link :to="`/product/${p._id}`">
-                          <button class="btn-sm secondary-button"><i class="bi bi-eye"></i></button>
-                        </router-link>
+                        <button class="btn-sm secondary-button" @click="toggleDetail(p._id)" :title="expandedId === p._id ? 'Ocultar' : 'Ver detalle'">
+                          <i class="bi" :class="expandedId === p._id ? 'bi-chevron-up' : 'bi-eye'"></i>
+                        </button>
                         <router-link :to="`/product/${p._id}/edit`">
                           <button class="btn-sm secondary-button"><i class="bi bi-pencil"></i></button>
                         </router-link>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="expandedId === p._id" class="detail-expand-row">
+                    <td colspan="8">
+                      <div class="detail-expand-box">
+                        <div class="dex-grid">
+                          <div v-if="p.image" class="dex-img">
+                            <img :src="resolveUrl(p.image)" :alt="p.name" />
+                          </div>
+                          <div class="dex-info">
+                            <div class="dex-row"><span class="dex-label">SKU</span><code>{{ p.code }}</code></div>
+                            <div v-if="p.grupo" class="dex-row"><span class="dex-label">Grupo</span><span>{{ p.grupo }}</span></div>
+                            <div v-if="p.tipo" class="dex-row"><span class="dex-label">Tipo</span><span>{{ p.tipo }}</span></div>
+                            <div v-if="p.terminacion" class="dex-row"><span class="dex-label">Terminacion</span><span>{{ p.terminacion }}</span></div>
+                            <div v-if="p.espesor" class="dex-row"><span class="dex-label">Espesor</span><span>{{ p.espesor }}mm</span></div>
+                            <div v-if="p.dimensions" class="dex-row"><span class="dex-label">Medida</span><span>{{ p.dimensions }}</span></div>
+                            <div v-if="p.m2" class="dex-row"><span class="dex-label">m2</span><span>{{ p.m2 }}</span></div>
+                            <div v-if="p.colorMode" class="dex-row"><span class="dex-label">Color</span><span>{{ p.colorMode === 'todos' ? 'TODOS' : (p.selectedColors?.join(', ') || p.color || '—') }}</span></div>
+                            <div v-if="p.detalle" class="dex-row full"><span class="dex-label">Detalle</span><span>{{ p.detalle }}</span></div>
+                          </div>
+                          <div class="dex-prices">
+                            <div v-if="p.precioGeneral != null" class="dex-price"><span class="dex-label">General</span><span class="dex-val">${{ formatPrice(p.precioGeneral) }}</span></div>
+                            <div v-if="p.precioGrupoI != null" class="dex-price"><span class="dex-label">Grupo I</span><span class="dex-val">${{ formatPrice(p.precioGrupoI) }}</span></div>
+                            <div v-if="p.precioGrupoII != null" class="dex-price"><span class="dex-label">Grupo II</span><span class="dex-val">${{ formatPrice(p.precioGrupoII) }}</span></div>
+                            <div v-if="p.precioGrupoIII != null" class="dex-price"><span class="dex-label">Grupo III</span><span class="dex-val">${{ formatPrice(p.precioGrupoIII) }}</span></div>
+                          </div>
+                        </div>
+                        <div class="dex-footer">
+                          <router-link :to="`/product/${p._id}`"><button class="btn-sm"><i class="bi bi-box-arrow-up-right"></i> Ver completo</button></router-link>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -253,11 +325,25 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useProductsStore } from '@/stores/products'
+import { API_BASE_URL } from '@/utils/api'
 import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const store = useProductsStore()
 const toast = useToast()
+
+const expandedId = ref(null)
+
+function toggleDetail(id) {
+  expandedId.value = expandedId.value === id ? null : id
+}
+
+function resolveUrl(path) {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return `${API_BASE_URL.replace('/api', '')}${path}`
+}
 
 const search = ref('')
 const filtersOpen = ref(false)
@@ -291,8 +377,9 @@ function clearFilters() {
   search.value = ''
 }
 
+const showDeleteAllConfirm = ref(false)
+
 async function deleteAll() {
-  if (!confirm('¿Estas seguro de eliminar TODOS los productos? Esta accion no se puede deshacer.')) return
   try {
     const res = await store.deleteAllProducts()
     toast.success(res.message || 'Productos eliminados')
@@ -759,6 +846,41 @@ function colorStyle(colorName) {
 
   .toolbar-actions { flex-wrap: wrap; gap: 0.4rem; }
 }
+
+/* Detail expand */
+.detail-expand-row td { padding: 0 !important; }
+.detail-expand-box {
+  background: rgba(107,142,58,0.04);
+  border-top: 1px solid rgba(107,142,58,0.12);
+  border-bottom: 1px solid rgba(107,142,58,0.12);
+  padding: 0.8rem 1rem;
+}
+.dex-grid {
+  display: flex; gap: 1rem; flex-wrap: wrap;
+}
+.dex-img {
+  width: 80px; height: 80px; border-radius: 10px; overflow: hidden;
+  border: 1px solid rgba(107,142,58,0.15); flex-shrink: 0;
+}
+.dex-img img { width: 100%; height: 100%; object-fit: cover; }
+.dex-info {
+  flex: 1; min-width: 180px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 0.8rem;
+}
+.dex-row { display: flex; gap: 0.4rem; align-items: baseline; font-size: 0.8rem; }
+.dex-row.full { grid-column: 1 / -1; }
+.dex-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted); white-space: nowrap; }
+.dex-prices {
+  display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-start;
+}
+.dex-price {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0.35rem 0.6rem; border-radius: 8px;
+  background: rgba(255,255,255,0.8); border: 1px solid rgba(107,142,58,0.12);
+}
+.dex-val { font-weight: 700; font-size: 0.9rem; }
+.dex-footer { margin-top: 0.5rem; }
+.dex-footer a { text-decoration: none; }
 
 @media (max-width: 768px) {
   .inv-table { min-width: 0; font-size: 0.78rem; }

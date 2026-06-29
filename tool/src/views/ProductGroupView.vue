@@ -22,7 +22,7 @@
               <button class="btn-sm secondary-button" @click="startEdit(g)">
                 <i class="bi bi-pencil"></i> Editar
               </button>
-              <button class="btn-sm danger-button" @click="remove(g)">
+              <button class="btn-sm danger-button" @click="groupToDelete = g">
                 <i class="bi bi-trash"></i>
               </button>
             </div>
@@ -145,6 +145,15 @@
         </form>
       </div>
     </div>
+    <ConfirmDialog
+      :visible="!!groupToDelete"
+      title="Eliminar grupo"
+      :message="groupToDelete ? `¿Eliminar el grupo '${groupToDelete.nombre}'? Los productos asociados no se eliminan.` : ''"
+      confirm-text="Eliminar"
+      type="danger"
+      @confirm="doRemoveGroup"
+      @cancel="groupToDelete = null"
+    />
   </div>
 </template>
 
@@ -154,6 +163,7 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const toast = useToast()
 const groups = ref([])
@@ -277,8 +287,12 @@ async function saveGroup() {
   }
 }
 
-async function remove(g) {
-  if (!confirm(`¿Eliminar el grupo "${g.nombre}"? Los productos asociados no se eliminan.`)) return
+const groupToDelete = ref(null)
+
+async function doRemoveGroup() {
+  const g = groupToDelete.value
+  groupToDelete.value = null
+  if (!g) return
   try {
     await axios.delete(`${API_BASE_URL}/product-groups/${g._id}`, authHeader())
     toast.success('Grupo eliminado')

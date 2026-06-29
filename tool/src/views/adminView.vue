@@ -161,16 +161,28 @@
         </div>
       </div>
     </div>
+    <ConfirmDialog
+      :visible="confirmDialog.visible"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :confirm-text="confirmDialog.confirmText"
+      :type="confirmDialog.type"
+      @confirm="onDialogConfirm"
+      @cancel="confirmDialog.visible = false"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 export default {
+  components: { ConfirmDialog },
   data() {
     return {
+      confirmDialog: { visible: false, title: '', message: '', confirmText: 'Confirmar', type: 'danger', action: null },
       user: {
         name: "",
         dni: "",
@@ -283,22 +295,29 @@ export default {
         this.$notify.notifyApiError(error, "No se pudo eliminar el usuario")
       }
     },
-    async deleteUserPermanent(userId) {
-      const confirmed = window.confirm(
-        "Eliminar definitivamente este usuario? Esta accion no se puede deshacer."
+    showConfirm(title, message, confirmText, action) {
+      this.confirmDialog = { visible: true, title, message, confirmText, type: 'danger', action }
+    },
+    onDialogConfirm() {
+      const action = this.confirmDialog.action
+      this.confirmDialog.visible = false
+      if (action) action()
+    },
+    deleteUserPermanent(userId) {
+      this.showConfirm(
+        'Eliminar usuario',
+        'Eliminar definitivamente este usuario? Esta accion no se puede deshacer.',
+        'Eliminar',
+        async () => {
+          try {
+            await axios.delete(`${API_BASE_URL}/users/${userId}/permanent`, this.authConfig())
+            this.$notify.success("Usuario eliminado definitivamente")
+            await this.loadUsers()
+          } catch (error) {
+            this.$notify.notifyApiError(error, "No se pudo eliminar definitivamente el usuario")
+          }
+        }
       )
-
-      if (!confirmed) {
-        return
-      }
-
-      try {
-        await axios.delete(`${API_BASE_URL}/users/${userId}/permanent`, this.authConfig())
-        this.$notify.success("Usuario eliminado definitivamente")
-        await this.loadUsers()
-      } catch (error) {
-        this.$notify.notifyApiError(error, "No se pudo eliminar definitivamente el usuario")
-      }
     },
     async restoreUser(userId) {
       try {
@@ -309,19 +328,16 @@ export default {
         this.$notify.notifyApiError(error, "No se pudo restaurar el usuario")
       }
     },
-    async purgeMaintenanceData() {
-      if (this.isPurging) {
-        return
-      }
-
-      const confirmed = window.confirm(
-        "Esta seguro de limpiar todo el historial y dashboard? Esta accion no se puede deshacer."
+    purgeMaintenanceData() {
+      if (this.isPurging) return
+      this.showConfirm(
+        'Limpiar historial',
+        'Esta seguro de limpiar todo el historial y dashboard? Esta accion no se puede deshacer.',
+        'Limpiar todo',
+        () => this.doPurge()
       )
-
-      if (!confirmed) {
-        return
-      }
-
+    },
+    async doPurge() {
       const confirmationKeyword = window.prompt(
         "Para confirmar definitivamente, escribi BORRAR"
       )
