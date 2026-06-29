@@ -227,7 +227,7 @@ function fmt(n) {
 <style scoped>
 .bulk-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 380px 1fr;
   gap: 1.5rem;
   align-items: start;
 }
@@ -236,36 +236,51 @@ function fmt(n) {
   background: rgba(107,142,58,0.05);
   border: 1px solid rgba(107,142,58,0.14);
   border-radius: 20px;
-  padding: 1.4rem;
+  padding: 1.6rem;
 }
 
 .config-panel h3, .preview-panel h3 {
-  font-size: 1rem;
+  font-size: 1.05rem;
   margin-bottom: 1.2rem;
 }
 
-.field-block { margin-bottom: 1.2rem; }
+.field-block { margin-bottom: 1.4rem; }
 
 .block-label {
   display: block;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-muted);
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.65rem;
 }
 
-.radio-group { display: flex; flex-direction: column; gap: 0.6rem; }
+.radio-group { display: flex; flex-direction: column; gap: 0.5rem; }
 
 .radio-opt {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.65rem;
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   text-transform: none;
   letter-spacing: 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(107,142,58,0.12);
+  background: rgba(255,255,255,0.6);
+  transition: all 0.15s;
+}
+
+.radio-opt:hover { background: rgba(107,142,58,0.08); border-color: rgba(107,142,58,0.25); }
+.radio-opt:has(input:checked) { background: rgba(107,142,58,0.1); border-color: rgba(107,142,58,0.3); }
+
+.radio-opt input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary, #6b8e3a);
+  flex-shrink: 0;
 }
 
 .radio-opt.disabled { opacity: 0.5; cursor: not-allowed; }
@@ -381,5 +396,16 @@ function fmt(n) {
 
 @media (max-width: 900px) {
   .bulk-layout { grid-template-columns: 1fr; }
+  .config-panel, .preview-panel { padding: 1rem; border-radius: 14px; }
+}
+
+@media (max-width: 600px) {
+  .pct-presets { gap: 0.25rem; }
+  .preset-btn { padding: 0.35rem 0.6rem; font-size: 0.72rem; }
+  .summary-row { gap: 0.4rem; }
+  .summary-card { padding: 0.6rem 0.7rem; flex: 1 1 100px; }
+  .s-value { font-size: 1rem; }
+  .preview-table { min-width: 0; font-size: 0.78rem; }
+  .preview-header { flex-direction: column; gap: 0.3rem; align-items: flex-start; }
 }
 </style>

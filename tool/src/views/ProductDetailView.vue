@@ -15,10 +15,19 @@
       <div v-else class="detail-layout">
         <!-- Left panel -->
         <aside class="detail-aside">
-          <div class="product-image-wrap">
+          <div class="product-image-wrap" @click="product.image && (imgExpanded = true)">
             <img v-if="product.image" :src="resolveUrl(product.image)" :alt="product.name" class="product-img" />
             <div v-else class="no-image"><i class="bi bi-image" style="font-size:3rem;color:var(--color-muted)"></i></div>
+            <div v-if="product.image" class="img-zoom-hint"><i class="bi bi-arrows-fullscreen"></i></div>
           </div>
+
+          <!-- Lightbox -->
+          <Teleport to="body">
+            <div v-if="imgExpanded" class="lightbox-overlay" @click="imgExpanded = false">
+              <button class="lightbox-close" @click.stop="imgExpanded = false"><i class="bi bi-x-lg"></i></button>
+              <img :src="resolveUrl(product.image)" :alt="product.name" class="lightbox-img" @click.stop />
+            </div>
+          </Teleport>
 
           <!-- Colores -->
           <div v-if="product.colorMode === 'todos'" class="color-section">
@@ -198,6 +207,7 @@ const store = useProductsStore()
 const loading = computed(() => store.loading)
 const product = computed(() => store.getById(route.params.id))
 const colorCatalog = ref([])
+const imgExpanded = ref(false)
 
 function authHeader() {
   const token = localStorage.getItem('token')
@@ -280,9 +290,44 @@ function stockClass(stock) {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  position: relative;
 }
 
-.product-img { width: 100%; height: 100%; object-fit: cover; }
+.product-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+.product-image-wrap:hover .product-img { transform: scale(1.03); }
+
+.img-zoom-hint {
+  position: absolute;
+  bottom: 0.5rem; right: 0.5rem;
+  background: rgba(0,0,0,0.5); color: #fff;
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; opacity: 0;
+  transition: opacity 0.2s;
+}
+.product-image-wrap:hover .img-zoom-hint { opacity: 1; }
+
+.lightbox-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem; cursor: zoom-out;
+}
+.lightbox-img {
+  max-width: 90vw; max-height: 90vh;
+  object-fit: contain; border-radius: 12px;
+  cursor: default;
+}
+.lightbox-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: rgba(255,255,255,0.15); border: none;
+  color: #fff; font-size: 1.2rem; width: 36px; height: 36px;
+  border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.3); }
 
 .no-image {
   display: flex;

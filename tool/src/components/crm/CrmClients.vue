@@ -315,7 +315,7 @@ const geocoding      = ref(false)
 const geoError       = ref('')
 
 const STAGES = [
-  { key: 'nuevo_lead',         label: 'Nuevo Lead',  color: '#3b82f6' },
+  { key: 'nuevo_lead',         label: 'Nuevos Clientes',  color: '#3b82f6' },
   { key: 'contactado',         label: 'Contactado',  color: '#8b5cf6' },
   { key: 'cotizacion_enviada', label: 'Cotizado',    color: '#f59e0b' },
   { key: 'ganado',             label: 'Ganado',      color: '#22c55e' },

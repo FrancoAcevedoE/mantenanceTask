@@ -264,12 +264,12 @@ const crmStore = useCrmStore()
 
 // ── Lookups ────────────────────────────────────────────────────────────────
 const STAGE_LABEL = {
-  nuevo_lead: 'Nuevo Lead', contactado: 'Contactado',
+  nuevo_lead: 'Nuevos Clientes', contactado: 'Contactado',
   cotizacion_enviada: 'Cotización enviada', negociacion: 'Negociación',
   ganado: 'Ganado', perdido: 'Perdido',
 }
 const STAGES = [
-  { key: 'nuevo_lead',         label: 'Nuevo Lead',          color: '#3b82f6' },
+  { key: 'nuevo_lead',         label: 'Nuevos Clientes',     color: '#3b82f6' },
   { key: 'contactado',         label: 'Contactado',           color: '#8b5cf6' },
   { key: 'cotizacion_enviada', label: 'Cotización enviada',   color: '#f59e0b' },
   { key: 'negociacion',        label: 'Negociación',          color: '#6366f1' },

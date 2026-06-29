@@ -1561,6 +1561,11 @@ function hasCliente(q) {
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 8mm 10mm;
+  }
+
   .no-print,
   .sidebar,
   .mobile-toggle,
@@ -1572,7 +1577,6 @@ function hasCliente(q) {
 
   html, body, #app { height: auto !important; max-height: none !important; overflow: visible !important; }
 
-  /* eliminar margen del sidebar y centrado del container */
   main.app-content,
   .with-nav { margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
   .crm-wrap, .container { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
@@ -1580,57 +1584,56 @@ function hasCliente(q) {
   .print-doc {
     display: block !important;
     font-family: 'Inter', Arial, sans-serif;
-    color: #111;
-    padding: 1.2cm 1.5cm;
-    font-size: 10pt;
-    line-height: 1.5;
+    color: #000;
+    padding: 0;
+    font-size: 9.5pt;
+    line-height: 1.4;
   }
 
-  .print-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.2rem; border-bottom: 2px solid #5a7a2a; padding-bottom: 0.9rem; gap: 1rem; }
-  .print-left { display: flex; flex-direction: column; gap: 0.15rem; }
-  .print-logo { height: 70px; width: auto; object-fit: contain; margin-bottom: 0.3rem; }
-  .print-company-name { font-weight: 700; font-size: 10.5pt; }
-  .print-company-detail { font-size: 8.5pt; color: #555; }
+  .print-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.8rem; border-bottom: 1.5pt solid #000; padding-bottom: 0.6rem; gap: 1rem; }
+  .print-left { display: flex; flex-direction: column; gap: 0.1rem; }
+  .print-logo { height: 55px; width: auto; object-fit: contain; margin-bottom: 0.2rem; filter: grayscale(1); }
+  .print-company-name { font-weight: 700; font-size: 10pt; color: #000; }
+  .print-company-detail { font-size: 8pt; color: #333; }
   .print-company { text-align: right; }
-  .print-doc-title { font-size: 20pt; font-weight: 800; color: #5a7a2a; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
-  .print-meta-table { font-size: 9pt; border-collapse: collapse; }
-  .print-meta-table td { padding: 0.05rem 0.4rem; }
-  .print-meta-table td:first-child { color: #666; text-align: right; }
+  .print-doc-title { font-size: 18pt; font-weight: 800; color: #000; letter-spacing: 0.08em; margin-bottom: 0.3rem; }
+  .print-meta-table { font-size: 8.5pt; border-collapse: collapse; }
+  .print-meta-table td { padding: 0.05rem 0.35rem; }
+  .print-meta-table td:first-child { color: #444; text-align: right; }
 
-  .print-titulo { font-size: 13pt; font-weight: 700; margin: 0.8rem 0 0.6rem; color: #222; }
+  .print-titulo { font-size: 12pt; font-weight: 700; margin: 0.5rem 0 0.4rem; color: #000; }
 
-  .print-client-box { background: #f5f7f0; border: 1px solid #d4dfc8; border-radius: 6px; padding: 0.6rem 0.9rem; margin-bottom: 0.9rem; }
-  .print-section-label { font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #5a7a2a; margin-bottom: 0.3rem; }
-  .print-client-name { font-weight: 700; font-size: 10.5pt; }
-  .print-client-detail { font-size: 9pt; color: #444; }
+  .print-client-box { background: none; border: 1px solid #999; border-radius: 4px; padding: 0.4rem 0.7rem; margin-bottom: 0.6rem; }
+  .print-section-label { font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #000; margin-bottom: 0.2rem; }
+  .print-client-name { font-weight: 700; font-size: 10pt; color: #000; }
+  .print-client-detail { font-size: 8.5pt; color: #333; }
 
-  .print-items { width: 100%; border-collapse: collapse; margin-bottom: 0.9rem; font-size: 9pt; }
-  .print-items thead tr { background: #5a7a2a; color: #fff; }
-  .print-items thead th { padding: 0.4rem 0.6rem; text-align: left; font-weight: 700; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.05em; }
-  .print-items tbody tr:nth-child(even) { background: #f9fbf6; }
-  .print-items tbody td { padding: 0.35rem 0.6rem; border-bottom: 1px solid #e2ead8; vertical-align: top; }
+  .print-items { width: 100%; border-collapse: collapse; margin-bottom: 0.6rem; font-size: 8.5pt; }
+  .print-items thead tr { background: none; color: #000; }
+  .print-items thead th { padding: 0.3rem 0.4rem; text-align: left; font-weight: 700; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1.5pt solid #000; border-top: 1.5pt solid #000; }
+  .print-items tbody tr:nth-child(even) { background: none; }
+  .print-items tbody td { padding: 0.25rem 0.4rem; border-bottom: 0.5pt solid #ccc; vertical-align: top; color: #000; }
 
   .pi-name { display: block; font-weight: 600; }
-  .pi-code { display: block; font-size: 8pt; color: #777; }
-  .pi-meta { display: block; font-size: 7.5pt; color: #888; font-style: italic; }
-  .pi-product { min-width: 130px; }
-  .pi-color  { width: 70px; }
-  .pi-qty    { width: 40px; text-align: right; }
-  .pi-unit   { width: 50px; }
-  .pi-disc   { width: 100px; font-size: 8pt; color: #555; }
-  .pi-price  { width: 75px; text-align: right; }
-  .pi-desc   { color: #555; }
-  .pi-sub    { width: 80px; text-align: right; font-weight: 600; }
+  .pi-code { display: block; font-size: 7.5pt; color: #555; }
+  .pi-meta { display: block; font-size: 7pt; color: #666; font-style: italic; }
+  .pi-product { min-width: 110px; }
+  .pi-color  { width: 60px; }
+  .pi-qty    { width: 35px; text-align: right; }
+  .pi-unit   { width: 45px; }
+  .pi-disc   { width: 90px; font-size: 7.5pt; color: #444; }
+  .pi-price  { width: 65px; text-align: right; }
+  .pi-desc   { color: #444; }
+  .pi-sub    { width: 70px; text-align: right; font-weight: 700; }
 
-  .print-total-row { background: #5a7a2a !important; color: #fff; }
-  .print-total-label { text-align: right; font-weight: 700; font-size: 10pt; padding: 0.45rem 0.6rem; }
-  .print-total-value { text-align: right; font-weight: 800; font-size: 11pt; padding: 0.45rem 0.6rem; white-space: nowrap; }
+  .print-total-row { background: none !important; color: #000; }
+  .print-total-label { text-align: right; font-weight: 700; font-size: 10pt; padding: 0.35rem 0.4rem; border-top: 1.5pt solid #000; }
+  .print-total-value { text-align: right; font-weight: 800; font-size: 11pt; padding: 0.35rem 0.4rem; border-top: 1.5pt solid #000; white-space: nowrap; }
 
-  .print-notes { margin-bottom: 0.8rem; }
-  .print-notes-text { font-size: 9pt; color: #444; white-space: pre-line; margin: 0.3rem 0 0; }
+  .print-notes { margin-bottom: 0.5rem; }
+  .print-notes-text { font-size: 8.5pt; color: #333; white-space: pre-line; margin: 0.2rem 0 0; }
 
-  .print-validity { font-size: 8.5pt; color: #555; border-top: 1px solid #d4dfc8; padding-top: 0.5rem; margin-bottom: 0.5rem; font-style: italic; white-space: pre-line; }
-  .print-footer { font-size: 8pt; color: #888; border-top: 1px solid #e0e0e0; padding-top: 0.4rem; margin-top: 0.4rem; }
-  .print-footer-extra { font-size: 8.5pt; color: #555; margin-bottom: 0.25rem; text-align: left; }
+  .print-validity { font-size: 8pt; color: #444; border-top: 0.5pt solid #999; padding-top: 0.4rem; margin-bottom: 0.3rem; font-style: italic; white-space: pre-line; }
+  .print-footer { display: none; }
 }
 </style>

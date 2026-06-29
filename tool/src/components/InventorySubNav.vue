@@ -81,8 +81,18 @@ function isActive(path) {
 }
 
 @media (max-width: 600px) {
-  .inv-subnav a span { display: none; }
-  .inv-subnav a { padding: 0.55rem 0.85rem; }
-  .inv-subnav a i { font-size: 1.15rem; }
+  .inv-subnav { gap: 0.3rem; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .inv-subnav::-webkit-scrollbar { display: none; }
+  .inv-subnav a {
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.6rem;
+    text-align: center;
+    flex-shrink: 0;
+    border-radius: 10px;
+  }
+  .inv-subnav a i { font-size: 1rem; }
+  .inv-subnav a span { display: inline; }
 }
 </style>

@@ -152,7 +152,7 @@ const loading      = ref(false)
 const showReport   = ref(false)
 
 const STAGES = [
-  { key: 'nuevo_lead',        label: 'Nuevo Lead',          shortLabel: 'Lead',    color: '#3b82f6' },
+  { key: 'nuevo_lead',        label: 'Nuevos Clientes',     shortLabel: 'Nuevos',  color: '#3b82f6' },
   { key: 'contactado',        label: 'Contactado',           shortLabel: 'Cont.',   color: '#8b5cf6' },
   { key: 'cotizacion_enviada',label: 'Cotización Enviada',   shortLabel: 'Prop.',   color: '#f59e0b' },
   { key: 'negociacion',       label: 'Negociación',          shortLabel: 'Neg.',    color: '#6366f1' },

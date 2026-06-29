@@ -114,7 +114,7 @@ const clientsByStage = computed(() => {
 const emit = defineEmits(['edit-client'])
 
 const STAGES = [
-  { key: 'nuevo_lead',         label: 'Nuevo Lead',  icon: 'bi bi-person-plus-fill',      color: '#3b82f6' },
+  { key: 'nuevo_lead',         label: 'Nuevos Clientes',  icon: 'bi bi-person-plus-fill',      color: '#3b82f6' },
   { key: 'contactado',         label: 'Contactado',  icon: 'bi bi-telephone-fill',         color: '#8b5cf6' },
   { key: 'cotizacion_enviada', label: 'Cotizado',    icon: 'bi bi-file-earmark-text-fill', color: '#f59e0b' },
   { key: 'ganado',             label: 'Ganado',      icon: 'bi bi-trophy-fill',            color: '#22c55e' },
@@ -152,11 +152,16 @@ function onTouchMove(event) {
 
 function onTouchEnd() {
   const stageKey = dragOver.value
-  const clientId = draggingId.value
+  const clientId = touchClientId.value || draggingId.value
   touchClientId.value = null
   dragOver.value      = null
   draggingId.value    = null
-  if (clientId && stageKey) onDrop(stageKey)
+  if (clientId && stageKey) {
+    const client = crmStore.clients.find(c => c._id === clientId)
+    if (client && client.pipelineEstado !== stageKey) {
+      crmStore.updatePipelineStage(clientId, stageKey)
+    }
+  }
 }
 
 async function onDrop(stageKey) {
@@ -284,6 +289,7 @@ async function onDrop(stageKey) {
   box-shadow: 0 1px 6px rgba(42,53,32,.07);
   cursor: grab;
   user-select: none;
+  touch-action: none;
   transition: box-shadow 0.15s, transform 0.15s, opacity 0.15s;
   display: flex;
   flex-direction: column;
