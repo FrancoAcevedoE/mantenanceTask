@@ -742,7 +742,8 @@ function rebuildSkuAndPrice(item, prod) {
   const colorSel = colorCatalog.value.find(c => c.code === item.color)
   const colorPart = colorSel ? colorSel.code : ''
 
-  item.codigo = `${prefijo}${colorPart}${term}${nom}`
+  const espesorPart = prod.espesor ? `-${prod.espesor}` : ''
+  item.codigo = `${prefijo}${colorPart}${term}${nom}${espesorPart}`
 
   const src = vari || prod
   if (colorSel) {

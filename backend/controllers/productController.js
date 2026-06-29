@@ -21,7 +21,8 @@ export const createProductController = async (req, res) => {
         const hasMultipleTypes = variantes.length > 1
         const colorPart = hasMultipleColors ? '' : (body.color || selectedColors[0] || '')
         const termPart = hasMultipleTypes ? '' : (body.terminacion || variantes[0]?.terminacion || '')
-        const code = body.code || `${body.prefijo || ''}${colorPart}${termPart}${body.nomenclaturaMedida || ''}`
+        const espesorPart = body.espesor ? `-${body.espesor}` : ''
+        const code = body.code || `${body.prefijo || ''}${colorPart}${termPart}${body.nomenclaturaMedida || ''}${espesorPart}`
         const m2 = calcM2(body.medida)
 
         const colorsArray = colorMode === 'todos' ? ['TODOS'] : selectedColors.length ? selectedColors : (body.color ? [body.color] : [])

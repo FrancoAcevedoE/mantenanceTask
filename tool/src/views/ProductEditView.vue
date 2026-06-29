@@ -261,6 +261,39 @@
             </div>
           </div>
 
+          <!-- Tabla de descuentos del grupo -->
+          <div v-if="form.admiteDescuentos && selectedGroupData?.descuentos?.length" class="descuentos-preview">
+            <div class="section-title">Descuentos de {{ selectedGroupData.nombre }}</div>
+            <div class="desc-table-wrap">
+              <table class="variantes-table">
+                <thead>
+                  <tr>
+                    <th>Comentario</th>
+                    <th>% Dto cantidad</th>
+                    <th>% Dto contado</th>
+                    <th>% Dto 30 dias</th>
+                    <th>% Cant+Contado</th>
+                    <th>% Cant+30dias</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(d, i) in selectedGroupData.descuentos" :key="i">
+                    <td class="cell-label">{{ d.nota || '—' }}</td>
+                    <td>{{ d.porcCantidad }}%</td>
+                    <td>{{ d.porcContado }}%</td>
+                    <td>{{ d.porc30dias }}%</td>
+                    <td class="calc-cell">{{ d.porcCantidadContado?.toFixed(2) }}%</td>
+                    <td class="calc-cell">{{ d.porcCantidad30dias?.toFixed(2) }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="hint">Para editar estos descuentos, ir a <router-link to="/product-groups">Grupos</router-link>.</p>
+          </div>
+          <div v-else-if="form.admiteDescuentos && form.grupo && !selectedGroupData?.descuentos?.length" class="hint">
+            El grupo {{ form.grupo }} no tiene descuentos configurados. <router-link to="/product-groups">Configurar en Grupos</router-link>.
+          </div>
+
           <!-- Imagen -->
           <div class="section-title">Imagen del producto</div>
           <div class="form-grid">
@@ -355,6 +388,7 @@ const toast = useToast()
 const saving = ref(false)
 const errors = ref({})
 const grupos = ref([])
+const gruposData = ref([])
 const colorCatalog = ref([])
 const showNewGrupo = ref(false)
 const newGrupoName = ref('')
@@ -482,19 +516,24 @@ function getAllVariantes() {
   return result
 }
 
+function buildSku(prefijo, colorPart, termPart, nomenclatura, espesor) {
+  const base = `${prefijo}${colorPart}${termPart}${nomenclatura}`
+  return espesor ? `${base}-${espesor}` : base
+}
+
 function skuForVariante(v) {
-  const { prefijo, nomenclaturaMedida, colorMode, selectedColors } = form.value
+  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, espesor } = form.value
   const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
-  return `${prefijo}${colorPart}${v.terminacion}${nomenclaturaMedida}`
+  return buildSku(prefijo, colorPart, v.terminacion, nomenclaturaMedida, espesor)
 }
 
 const skuPreview = computed(() => {
-  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, tiposConfig } = form.value
+  const { prefijo, nomenclaturaMedida, colorMode, selectedColors, tiposConfig, espesor } = form.value
   const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
   const allTerms = tiposConfig.flatMap(tc => tc.terminaciones)
   const termPart = allTerms.length === 1 ? allTerms[0] : ''
   if (!prefijo && !colorPart && !termPart && !nomenclaturaMedida) return ''
-  return `${prefijo}${colorPart}${termPart}${nomenclaturaMedida}`
+  return buildSku(prefijo, colorPart, termPart, nomenclaturaMedida, espesor)
 })
 
 const m2Calc = computed(() => {
@@ -530,6 +569,11 @@ function toggleGroup(g) {
   }
 }
 
+const selectedGroupData = computed(() => {
+  if (!form.value.grupo) return null
+  return gruposData.value.find(g => g.nombre === form.value.grupo) || null
+})
+
 function onNomenclatura() {
   form.value.nomenclaturaMedida = form.value.nomenclaturaMedida.replace(/\D/g, '').slice(0, 3)
 }
@@ -545,7 +589,8 @@ onMounted(async () => {
       axios.get(`${API_BASE_URL}/product-groups`, authHeader()),
       axios.get(`${API_BASE_URL}/colors`, authHeader()),
     ])
-    grupos.value = (Array.isArray(groupsRes.data) ? groupsRes.data : []).map(g => g.nombre)
+    gruposData.value = Array.isArray(groupsRes.data) ? groupsRes.data : []
+    grupos.value = gruposData.value.map(g => g.nombre)
     colorCatalog.value = Array.isArray(colorsRes.data) ? colorsRes.data : []
   } catch { /* ignore */ }
 
@@ -976,6 +1021,11 @@ async function save() {
 
 .cell-label { font-size: 0.82rem; font-weight: 500; }
 .cell-sku code { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: var(--color-muted); }
+
+.descuentos-preview { margin-top: 0.3rem; }
+.desc-table-wrap { overflow-x: auto; margin-top: 0.5rem; }
+.calc-cell { font-weight: 600; color: var(--color-primary, #6b8e3a); white-space: nowrap; }
+.descuentos-preview .hint a { color: var(--color-primary, #6b8e3a); font-weight: 600; }
 
 .m2-display {
   padding: 0.65rem 1rem;

@@ -347,6 +347,7 @@ async function remove(g) {
 
 /* Edit form */
 .edit-layout { display: flex; flex-direction: column; gap: 1.2rem; }
+.edit-layout form { display: flex; flex-direction: column; gap: 1rem; }
 
 .edit-header {
   display: flex;
