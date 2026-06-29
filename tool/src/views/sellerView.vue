@@ -960,10 +960,19 @@ function recalc(idx) {
 function filteredBySearch(search) {
   const q = (search || '').toLowerCase().trim()
   if (!q) return []
-  return productsStore.products.filter(p =>
+  const direct = productsStore.products.filter(p =>
     (p.code || '').toLowerCase().includes(q) ||
     (p.name || '').toLowerCase().includes(q)
-  ).slice(0, 10)
+  )
+  if (direct.length) return direct.slice(0, 10)
+
+  // SKU inteligente: parsear prefijo del input y buscar productos base
+  const upper = q.toUpperCase()
+  const byPrefix = productsStore.products.filter(p => {
+    if (!p.prefijo) return false
+    return upper.startsWith(p.prefijo)
+  })
+  return byPrefix.slice(0, 10)
 }
 
 function openSearch(idx) {
@@ -1015,10 +1024,54 @@ function navEnter(idx) {
   }
 }
 
+function parseSkuParts(searchText, product) {
+  if (!searchText || !product.prefijo) return null
+  const upper = searchText.toUpperCase().trim()
+  if (!upper.startsWith(product.prefijo)) return null
+
+  let rest = upper.slice(product.prefijo.length)
+  const espesorMatch = rest.match(/-(\d+(?:\.\d+)?)$/)
+  if (espesorMatch) rest = rest.slice(0, -espesorMatch[0].length)
+
+  const allTermCodes = (product.variantes || []).map(v => v.terminacion).filter(Boolean)
+  const uniqueTerms = [...new Set(allTermCodes)]
+
+  let foundColor = ''
+  let foundTerm = ''
+  let matched = false
+
+  for (const term of uniqueTerms) {
+    if (rest.includes(term)) {
+      const termIdx = rest.indexOf(term)
+      const colorCandidate = rest.slice(0, termIdx)
+      if (colorCandidate.length >= 3 && colorCandidate.length <= 6) {
+        foundColor = colorCandidate
+        foundTerm = term
+        matched = true
+        break
+      }
+    }
+  }
+
+  if (!matched && rest.length >= 4) {
+    foundColor = rest.slice(0, 4)
+    const afterColor = rest.slice(4)
+    for (const term of uniqueTerms) {
+      if (afterColor.startsWith(term)) {
+        foundTerm = term
+        break
+      }
+    }
+  }
+
+  return (foundColor || foundTerm) ? { color: foundColor, terminacion: foundTerm } : null
+}
+
 function selectResult(idx, p) {
   activeSearchIdx.value = -1
   navIdx.value = -1
   const item = form.value.items[idx]
+  const searchText = item._search || ''
   item._productId = p._id
   item._search = ''
   item.nombre = p.name
@@ -1028,10 +1081,22 @@ function selectResult(idx, p) {
   item._variantes = p.variantes || []
   item._varianteIdx = -1
   item._espesores = p.thicknesses || []
-  item.espesor = item._espesores.length ? item._espesores[0] : ''
+  item.espesor = p.espesor || (item._espesores.length ? item._espesores[0] : '')
   item.unidad = p.unidadPrecio || 'unidad'
 
-  if (item._variantes.length === 1) {
+  // Parsear SKU buscado para auto-completar color y terminación
+  const skuParts = parseSkuParts(searchText, p)
+
+  // Terminación / tipo
+  if (skuParts?.terminacion && item._variantes.length) {
+    const vi = item._variantes.findIndex(v => v.terminacion === skuParts.terminacion)
+    if (vi >= 0) {
+      item._varianteIdx = vi
+      item.tipo = item._variantes[vi].tipoProducto || ''
+      item.tipoTerminacion = item._variantes[vi].tipoTerminacion || ''
+      item.terminacion = item._variantes[vi].terminacion || ''
+    }
+  } else if (item._variantes.length === 1) {
     item._varianteIdx = 0
     item.tipo = item._variantes[0].tipoProducto || p.tipo || ''
     item.tipoTerminacion = item._variantes[0].tipoTerminacion || p.tipoTerminacion || ''
@@ -1046,19 +1111,42 @@ function selectResult(idx, p) {
     item.terminacion = p.terminacion || ''
   }
 
-  const needsColorSelection = p.colorMode === 'todos' || (p.selectedColors?.length > 1)
-  const needsTipoSelection = item._variantes.length > 1
-  if (needsColorSelection || needsTipoSelection) {
-    item._colors = []
-    item.color = needsColorSelection ? '' : (p.selectedColors?.length === 1 ? p.selectedColors[0] : '')
-    item._basePrice = 0
-    item.precioUnitario = 0
+  // Color
+  if (skuParts?.color) {
+    const colorObj = colorCatalog.value.find(c => c.code === skuParts.color)
+    if (colorObj) {
+      item.color = colorObj.code
+      item._colors = []
+      const vari = getActiveVariante(item)
+      const src = vari || p
+      let base = 0
+      if (colorObj.grupoColor === 1) base = src.precioGrupoI ?? src.precioGeneral ?? 0
+      else if (colorObj.grupoColor === 2) base = src.precioGrupoII ?? src.precioGeneral ?? 0
+      else if (colorObj.grupoColor === 3) base = src.precioGrupoIII ?? src.precioGeneral ?? 0
+      else base = src.precioGeneral ?? 0
+      item._basePrice = base
+      item.precioUnitario = base
+      rebuildSkuAndPrice(item, p)
+    } else {
+      item.color = ''
+      item._basePrice = 0
+      item.precioUnitario = 0
+    }
   } else {
-    item._colors = p.colors || []
-    item.color = p.selectedColors?.length === 1 ? p.selectedColors[0] : (item._colors.length ? item._colors[0] : '')
-    const base = p.precio ?? p.precioGrupoI ?? p.pricePerM2 ?? 0
-    item._basePrice = base
-    item.precioUnitario = base
+    const needsColorSelection = p.colorMode === 'todos' || (p.selectedColors?.length > 1)
+    const needsTipoSelection = item._variantes.length > 1 && item._varianteIdx < 0
+    if (needsColorSelection || needsTipoSelection) {
+      item._colors = []
+      item.color = ''
+      item._basePrice = 0
+      item.precioUnitario = 0
+    } else {
+      item._colors = p.colors || []
+      item.color = p.selectedColors?.length === 1 ? p.selectedColors[0] : (item._colors.length ? item._colors[0] : '')
+      const base = p.precio ?? p.precioGrupoI ?? p.pricePerM2 ?? 0
+      item._basePrice = base
+      item.precioUnitario = base
+    }
   }
 
   item._discountPct = 0
