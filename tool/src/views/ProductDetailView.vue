@@ -53,8 +53,19 @@
 
           <!-- Colores -->
           <div v-if="product.colorMode === 'todos'" class="color-section">
-            <h4 class="section-label">Colores: TODOS</h4>
-            <div class="color-mode-badge todos">Todos los colores disponibles</div>
+            <h4 class="section-label">Colores: TODOS <span class="swatch-count">({{ colorCatalog.length }})</span></h4>
+            <div class="color-mode-badge todos">Todos los colores del catálogo</div>
+            <div class="swatches-grid" v-if="colorCatalog.length">
+              <div v-for="c in colorCatalog" :key="c.code" class="swatch-card" :title="c.name" @click="openColorDetail(c.code)">
+                <div class="swatch-thumb">
+                  <img v-if="colorImage(c.code)" :src="resolveUrl(colorImage(c.code))" :alt="c.code" />
+                  <div v-else class="swatch-thumb-css" :style="{ background: guessColorFromName(c.name) }"></div>
+                </div>
+                <span class="swatch-code">{{ c.code }}</span>
+                <span class="swatch-name">{{ c.name }}</span>
+                <span v-if="c.grupoColor" class="swatch-group" :class="'g' + c.grupoColor">G{{ c.grupoColor }}</span>
+              </div>
+            </div>
           </div>
           <div v-else-if="product.selectedColors?.length" class="color-section">
             <h4 class="section-label">Colores seleccionados ({{ product.selectedColors.length }})</h4>

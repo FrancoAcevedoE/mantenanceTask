@@ -400,13 +400,13 @@ const filtered = computed(() => {
       p.grupo?.toLowerCase().includes(q) ||
       p.dimensions?.toLowerCase().includes(q) ||
       p.comentario?.toLowerCase().includes(q) ||
-      p.colors?.some(c => c.toLowerCase().includes(q)) ||
+      (p.colorMode === 'todos' ? 'todos'.includes(q) : p.colors?.some(c => c.toLowerCase().includes(q))) ||
       p.thicknesses?.some(t => t.toLowerCase().includes(q))
     )
   }
 
   if (filters.value.grupo) list = list.filter(p => p.grupo === filters.value.grupo)
-  if (filters.value.color) list = list.filter(p => p.colors?.includes(filters.value.color))
+  if (filters.value.color) list = list.filter(p => p.colorMode === 'todos' || p.colors?.includes(filters.value.color))
   if (filters.value.medida) list = list.filter(p => p.dimensions === filters.value.medida)
   if (filters.value.terminacion) list = list.filter(p => p.terminacion === filters.value.terminacion)
   if (filters.value.textura) list = list.filter(p => p.textura === filters.value.textura)

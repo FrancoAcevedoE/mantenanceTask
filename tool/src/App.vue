@@ -2,6 +2,7 @@
 import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NotificationBell from '@/components/NotificationBell.vue'
+import UserManual from '@/components/UserManual.vue'
 import { useNotificationsStore } from '@/stores/notifications'
 
 const route = useRoute()
@@ -69,6 +70,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
 
 <template>
   <NotificationBell v-if="showNav" />
+  <UserManual v-if="showNav" />
 
   <div v-if="showNav && mobileOpen" class="sidebar-backdrop" @click="closeMobile" />
 
