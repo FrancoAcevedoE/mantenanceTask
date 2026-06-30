@@ -169,7 +169,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, idx) in form.items" :key="idx" class="item-row">
+              <template v-for="(item, idx) in form.items" :key="idx">
+              <tr class="item-row">
 
                 <!-- ── Producto: búsqueda SKU / nombre ── -->
                 <td class="col-producto">
@@ -346,6 +347,19 @@
                   </button>
                 </td>
               </tr>
+              <tr v-if="item._tieneAgregado" class="agregado-sub-row">
+                <td colspan="10">
+                  <label class="agregado-check-label">
+                    <input type="checkbox" v-model="item._incluirAgregado" @change="recalc(idx)" />
+                    <span class="agregado-check-name">{{ item._agregadoNombre }}</span>
+                    <span class="agregado-check-price">+ {{ fmtMoney(item._agregadoPrecio) }} / u &nbsp;·&nbsp; sin descuento</span>
+                    <span v-if="item._incluirAgregado" class="agregado-check-total">
+                      total agregado: {{ fmtMoney((item._agregadoPrecio || 0) * (item.cantidad || 0)) }}
+                    </span>
+                  </label>
+                </td>
+              </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -872,6 +886,10 @@ function emptyItem() {
     _variantes: [],
     _varianteIdx: -1,
     _admiteDescuentos: true,
+    _tieneAgregado: false,
+    _agregadoNombre: '',
+    _agregadoPrecio: 0,
+    _incluirAgregado: false,
     nombre: '',
     codigo: '',
     tipo: '',
@@ -922,6 +940,10 @@ function editQuote(q) {
         _variantes: prod?.variantes || [],
         _varianteIdx: it._varianteIdx ?? (prod?.variantes?.length === 1 ? 0 : -1),
         _admiteDescuentos: prod?.admiteDescuentos ?? true,
+        _tieneAgregado: prod?.tieneAgregado ?? false,
+        _agregadoNombre: prod?.agregadoNombre || '',
+        _agregadoPrecio: prod?.agregadoPrecio ?? 0,
+        _incluirAgregado: it._incluirAgregado ?? false,
         nombre: it.nombre || '',
         codigo: it.codigo || '',
         tipo: it.tipo || '',
@@ -958,7 +980,9 @@ function removeItem(idx) {
 
 function recalc(idx) {
   const item = form.value.items[idx]
-  item.subtotal = Number(((item.cantidad || 0) * (item.precioUnitario || 0)).toFixed(2))
+  const base = (item.cantidad || 0) * (item.precioUnitario || 0)
+  const agr = item._incluirAgregado ? (item.cantidad || 0) * (item._agregadoPrecio || 0) : 0
+  item.subtotal = Number((base + agr).toFixed(2))
 }
 
 // ── Búsqueda de producto por SKU / nombre ────────────────────────────────────
@@ -1155,6 +1179,10 @@ function selectResult(idx, p) {
   }
 
   item._admiteDescuentos = p.admiteDescuentos ?? true
+  item._tieneAgregado = p.tieneAgregado ?? false
+  item._agregadoNombre = p.agregadoNombre || ''
+  item._agregadoPrecio = p.agregadoPrecio ?? 0
+  item._incluirAgregado = false
   item._discountPct = 0
   item._discountLabel = 'Sin descuento'
 
@@ -1241,6 +1269,7 @@ function buildPayload() {
       subtotal: it.subtotal,
       discountLabel: it._discountLabel !== 'Sin descuento' ? it._discountLabel : '',
       discountPct: it._discountPct || 0,
+      _incluirAgregado: it._incluirAgregado || false,
     })),
     descripcionGeneral: form.value.descripcionGeneral,
   }
@@ -1443,6 +1472,32 @@ function hasCliente(q) {
 .disc-clear-btn:hover { color: #dc2626; background: rgba(239,68,68,0.1); }
 .badge-exento { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 6px; background: rgba(107,142,58,0.1); color: var(--color-primary,#6b8e3a); border: 1px solid rgba(107,142,58,0.25); letter-spacing: 0.04em; white-space: nowrap; }
 .base-price-hint { display: block; font-size: 0.69rem; color: var(--color-muted); margin-top: 0.2rem; text-decoration: line-through; }
+
+/* ── Agregado opcional ── */
+.agregado-sub-row td {
+  padding: 0.3rem 0.75rem 0.4rem;
+  background: rgba(107,142,58,0.03);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.agregado-check-label {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  cursor: pointer; font-size: 0.8rem;
+}
+.agregado-check-label input[type="checkbox"] {
+  cursor: pointer; accent-color: var(--color-primary, #6b8e3a);
+  width: 14px; height: 14px;
+}
+.agregado-check-name { font-weight: 600; color: var(--color-text); }
+.agregado-check-price {
+  font-size: 0.75rem; color: var(--color-muted);
+  background: rgba(0,0,0,0.05); border-radius: 5px;
+  padding: 0.1rem 0.45rem;
+}
+.agregado-check-total {
+  font-size: 0.75rem; font-weight: 700; color: var(--color-primary, #6b8e3a);
+  background: rgba(107,142,58,0.1); border-radius: 5px;
+  padding: 0.1rem 0.45rem;
+}
 
 /* ── Campos genéricos en tabla ── */
 .sel-small, .input-small {
