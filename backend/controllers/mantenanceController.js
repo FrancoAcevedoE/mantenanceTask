@@ -926,6 +926,13 @@ export const notificationsHistoryController = async (req, res) => {
         const toDateRaw = String(req.query.to || "").trim()
         
         const query = {}
+
+        // Roles CRM solo ven notificaciones de su área
+        const crmRoles = ['vendedor', 'admin_ventas']
+        if (crmRoles.includes(req.user?.role)) {
+            query.audience = 'crm'
+        }
+
         if (fromDateRaw || toDateRaw) {
             query.createdAt = {}
 

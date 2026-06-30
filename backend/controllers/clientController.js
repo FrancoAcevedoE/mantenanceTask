@@ -1,4 +1,5 @@
 import Client from "../models/clientModel.js"
+import { notifyNewClient } from "../services/crmNotificationService.js"
 
 export const createClient = async (req, res) => {
   try {
@@ -37,6 +38,7 @@ export const createClient = async (req, res) => {
     })
 
     res.status(201).json(client)
+    notifyNewClient(client.razonSocial || client.name || '').catch(() => {})
   } catch (error) {
     console.error("Error creating client:", error)
     res.status(500).json({ message: "Error al crear cliente", error: error.message })

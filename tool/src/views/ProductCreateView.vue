@@ -15,7 +15,7 @@
         <form class="edit-form" @submit.prevent="save" novalidate>
 
           <!-- SKU -->
-          <div class="section-title">SKU</div>
+          <div class="section-title">SKU <HelpTooltip tip="El SKU identifica cada variante de producto. Se arma automáticamente con el prefijo + color + terminación. Ejemplo: LKH-TE-BR = línea LKH, color TE, terminación brillante." /></div>
           <div class="sku-preview">
             <span class="sku-label">SKU base:</span>
             <code class="sku-code">{{ skuPreview || '—' }}</code>
@@ -32,7 +32,7 @@
           </div>
 
           <!-- Producto -->
-          <div class="section-title">Producto</div>
+          <div class="section-title">Producto <HelpTooltip tip="Nombre descriptivo del producto. El código se construye automáticamente; solo completá el nombre comercial." /></div>
           <div class="form-grid">
             <div class="field" :class="{ error: errors.name }">
               <label>Producto *</label>
@@ -67,7 +67,7 @@
           </div>
 
           <!-- Color -->
-          <div class="section-title">Color</div>
+          <div class="section-title">Color <HelpTooltip tip="Elegí 'TODOS' si el producto está disponible en todos los colores del catálogo. Elegí 'Colores específicos' para limitar a ciertos colores." /></div>
           <div class="form-grid">
             <div class="field">
               <label>Modo de color</label>
@@ -161,7 +161,7 @@
           </button>
 
           <!-- Tipos y Precios -->
-          <div class="section-title">Tipos y precios</div>
+          <div class="section-title">Tipos y precios <HelpTooltip tip="Cada tipo (Brillante, Semimate, Textura) puede tener un precio diferente. Podés agregar múltiples tipos con sus terminaciones y precios de cada grupo comercial." /></div>
           <div class="form-grid">
             <div class="field">
               <label>Unidad de precio</label>
@@ -249,7 +249,7 @@
           </button>
 
           <!-- Agregado opcional -->
-          <div class="section-title">Agregado opcional</div>
+          <div class="section-title">Agregado opcional <HelpTooltip tip="Un complemento opcional que el vendedor puede incluir al armar una cotización. Por ejemplo: 'Capa exterior $45'. Este precio NO recibe descuento y tiene su propio campo de cantidad." /></div>
           <div class="agregado-row">
             <label class="checkbox-label">
               <input type="checkbox" v-model="form.tieneAgregado" />
@@ -397,6 +397,7 @@ import { useProductsStore } from '@/stores/products'
 import { useToast } from 'vue-toastification'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import HelpTooltip from '@/components/HelpTooltip.vue'
 
 const router = useRouter()
 const store = useProductsStore()

@@ -1,5 +1,6 @@
 import ProductGroup from '../models/productGroupModel.js'
 import { registerAuditEvent } from '../services/auditService.js'
+import { notifyGroupModified } from '../services/crmNotificationService.js'
 
 function concat(a, b) {
   return Math.round((1 - (1 - a / 100) * (1 - b / 100)) * 10000) / 100
@@ -72,6 +73,7 @@ export const updateGroup = async (req, res) => {
     })
 
     res.json(group)
+    notifyGroupModified(nombre || group.nombre).catch(() => {})
   } catch (err) {
     res.status(500).json({ message: err.message })
   }

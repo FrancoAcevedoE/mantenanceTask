@@ -161,9 +161,9 @@
                 <th class="col-color">Color</th>
                 <th class="col-qty">Cant.</th>
                 <th class="col-unit">Unidad</th>
-                <th class="col-disc">Descuento</th>
+                <th class="col-disc">Descuento <HelpTooltip tip="Elegí el descuento del grupo o escribí uno manual. Se aplica sobre el precio unitario. Los agregados opcionales NO tienen descuento." /></th>
                 <th class="col-price">Precio unit.</th>
-                <th class="col-desc">Descripción</th>
+                <th class="col-desc">Descripción <HelpTooltip tip="Observaciones por ítem. Se amplía mientras escribís y vuelve al tamaño original al salir." /></th>
                 <th class="col-sub">Subtotal</th>
                 <th class="col-del"></th>
               </tr>
@@ -662,6 +662,7 @@ import { useToast } from 'vue-toastification'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { API_BASE_URL } from '@/utils/api'
 import { usePermissions } from '@/utils/permissions'
+import HelpTooltip from '@/components/HelpTooltip.vue'
 
 const { canManage, userId } = usePermissions()
 

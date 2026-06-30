@@ -3,6 +3,7 @@ import { verifyToken } from '../middlewares/authMiddleware.js'
 import { checkRole } from '../middlewares/roleMiddleware.js'
 import Color from '../models/colorModel.js'
 import { COLOR_CATALOG } from '../data/colorCatalog.js'
+import { notifyNewColor } from '../services/crmNotificationService.js'
 
 const router = Router()
 
@@ -38,6 +39,7 @@ router.post('/', verifyToken, checkRole('admin', 'admin_ventas'), async (req, re
         }
         const color = await Color.create({ code, name, tipo: tipo || '', grupoColor, image: image || '' })
         res.status(201).json(color)
+        notifyNewColor(name, code).catch(() => {})
     } catch (err) {
         if (err.code === 11000) return res.status(400).json({ message: 'Ya existe un color con ese codigo' })
         res.status(500).json({ message: 'Error creating color', error: err.message })

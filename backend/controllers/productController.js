@@ -1,6 +1,7 @@
 import Product from "../models/productModel.js"
 import AuditLog from "../models/auditLogModel.js"
 import { registerAuditEvent } from "../services/auditService.js"
+import { notifyNewProduct, notifyPriceChange } from "../services/crmNotificationService.js"
 
 function calcM2(medida) {
     if (!medida) return null
@@ -78,6 +79,7 @@ export const createProductController = async (req, res) => {
         })
 
         res.status(201).json({ message: "Product created successfully", product })
+        notifyNewProduct(product.name).catch(() => {})
     } catch (error) {
         console.error("Error creating product:", error)
         if (error.code === 11000) {
@@ -125,6 +127,10 @@ export const updateProductController = async (req, res) => {
         })
 
         res.json({ message: "Product updated successfully", product })
+        // notificar cambio de precio si viene en la actualización
+        if (updates.precio != null || updates.precioGrupoI != null || updates.variantes) {
+            notifyPriceChange(1, product.name).catch(() => {})
+        }
     } catch (error) {
         console.error("Error updating product:", error)
         res.status(500).json({ message: "Error updating product", error: error.message })

@@ -161,3 +161,33 @@ export const sendPushNotificationToAllUsers = async (payload = {}) => {
     failed
   }
 }
+
+export const sendPushToRoles = async (roles = [], payload = {}) => {
+  if (!getPushConfig().enabled) return { ok: false, reason: 'push-not-configured', sent: 0, failed: 0 }
+
+  const users = await User.find({
+    isDeleted: { $ne: true },
+    role: { $in: roles },
+    'pushSubscriptions.0': { $exists: true }
+  }).select('pushSubscriptions')
+
+  const normalizedPayload = buildPushPayload(payload)
+  let sent = 0
+  let failed = 0
+
+  for (const user of users) {
+    for (const subscription of (user.pushSubscriptions || [])) {
+      try {
+        await webpush.sendNotification(subscription, JSON.stringify(normalizedPayload))
+        sent += 1
+      } catch (error) {
+        failed += 1
+        if (error.statusCode === 404 || error.statusCode === 410) {
+          await User.updateOne({ _id: user._id }, { $pull: { pushSubscriptions: { endpoint: subscription.endpoint } } })
+        }
+      }
+    }
+  }
+
+  return { ok: true, sent, failed }
+}

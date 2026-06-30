@@ -3,25 +3,22 @@ import {
   sendDailyStoppedPendingNotification,
   sendWeeklyCompletedMaintenanceNotification
 } from "./notificationService.js"
+import {
+  notifyWeeklySalesSummary,
+  notifyMonthlySalesSummary,
+  notifyFollowupReminder
+} from "./crmNotificationService.js"
 
 const TIMEZONE = process.env.NOTIFICATION_TIMEZONE || "America/Argentina/Buenos_Aires"
 const DAILY_CRON = process.env.DAILY_NOTIFICATION_CRON || "0 7 * * *"
 const MONDAY_7AM_CRON = process.env.MONDAY_NOTIFICATION_CRON || "0 7 * * 1"
+// CRM: cada dos días a las 9 AM (lunes, miércoles, viernes, domingo)
+const FOLLOWUP_CRON = "0 9 * * 1,3,5,0"
+// CRM: resumen mensual el 1ro de cada mes a las 8 AM
+const MONTHLY_CRON = "0 8 1 * *"
 
-const runDailyJob = async (title) => {
-  try {
-    await sendDailyStoppedPendingNotification(title)
-  } catch (error) {
-    console.error("[CRON NOTIFICATION] Error ejecutando aviso diario:", error.message)
-  }
-}
-
-const runWeeklyJob = async (title) => {
-  try {
-    await sendWeeklyCompletedMaintenanceNotification(title)
-  } catch (error) {
-    console.error("[CRON NOTIFICATION] Error ejecutando resumen semanal:", error.message)
-  }
+const safe = (fn, label) => async () => {
+  try { await fn() } catch (err) { console.error(`[CRON] ${label}:`, err.message) }
 }
 
 export const startCronNotifications = () => {
@@ -30,26 +27,19 @@ export const startCronNotifications = () => {
     return
   }
 
-  cron.schedule(
-    DAILY_CRON,
-    () => {
-      runDailyJob("Aviso diario 7 AM")
-    },
-    { timezone: TIMEZONE }
-  )
+  // Mantenimiento
+  cron.schedule(DAILY_CRON, safe(() => sendDailyStoppedPendingNotification("Aviso diario 7 AM"), "diario"), { timezone: TIMEZONE })
+  cron.schedule(MONDAY_7AM_CRON, safe(() => sendWeeklyCompletedMaintenanceNotification("Resumen semanal de completados"), "semanal-mant"), { timezone: TIMEZONE })
 
-  cron.schedule(
-    MONDAY_7AM_CRON,
-    () => {
-      runWeeklyJob("Resumen semanal de completados")
-    },
-    { timezone: TIMEZONE }
-  )
+  // CRM
+  cron.schedule(MONDAY_7AM_CRON, safe(notifyWeeklySalesSummary, "resumen-semanal-ventas"), { timezone: TIMEZONE })
+  cron.schedule(FOLLOWUP_CRON, safe(notifyFollowupReminder, "seguimiento-crm"), { timezone: TIMEZONE })
+  cron.schedule(MONTHLY_CRON, safe(notifyMonthlySalesSummary, "resumen-mensual-ventas"), { timezone: TIMEZONE })
 
-  console.log(`[CRON NOTIFICATION] Activo. Diario: ${DAILY_CRON} | Lunes: ${MONDAY_7AM_CRON} | TZ: ${TIMEZONE}`)
+  console.log(`[CRON] Activo. Diario: ${DAILY_CRON} | Lunes: ${MONDAY_7AM_CRON} | Seguimiento: ${FOLLOWUP_CRON} | Mensual: ${MONTHLY_CRON} | TZ: ${TIMEZONE}`)
 
   if (process.env.NOTIFICATION_RUN_ON_STARTUP === "true") {
-    runDailyJob("Prueba inicio diario")
-    runWeeklyJob("Prueba inicio semanal")
+    safe(() => sendDailyStoppedPendingNotification("Prueba inicio diario"), "startup-diario")()
+    safe(notifyWeeklySalesSummary, "startup-ventas")()
   }
 }

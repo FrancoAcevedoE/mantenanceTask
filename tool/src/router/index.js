@@ -52,10 +52,10 @@ const router = createRouter({
       path: '/history', name: 'History', component: historyView, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }
     },
     {
-      path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor', 'vendedor'] }
+      path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }
     },
     {
-      path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }
+      path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor', 'vendedor', 'admin_ventas'] }
     },
     {
       path: '/inventory', name: 'InventoryView', component: inventoryView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }

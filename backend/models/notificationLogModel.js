@@ -40,6 +40,11 @@ const notificationLogSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {}
   },
+  audience: {
+    type: String,
+    enum: ['maintenance', 'crm', 'all'],
+    default: 'maintenance'
+  },
   createdAt: {
     type: Date,
     default: Date.now

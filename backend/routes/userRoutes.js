@@ -31,21 +31,21 @@ router.get(
 router.get(
     "/push/public-key",
     verifyToken,
-    checkRole("admin", "supervisor", "operario"),
+    checkRole("admin", "supervisor", "operario", "vendedor", "admin_ventas"),
     getPushPublicKey
 )
 
 router.post(
     "/push/subscribe",
     verifyToken,
-    checkRole("admin", "supervisor", "operario"),
+    checkRole("admin", "supervisor", "operario", "vendedor", "admin_ventas"),
     subscribeToPush
 )
 
 router.delete(
     "/push/subscribe",
     verifyToken,
-    checkRole("admin", "supervisor", "operario"),
+    checkRole("admin", "supervisor", "operario", "vendedor", "admin_ventas"),
     unsubscribeFromPush
 )
 

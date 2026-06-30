@@ -78,21 +78,21 @@ router.delete(
 router.get(
     "/notifications/history",
     verifyToken,
-    checkRole("admin","supervisor", "operario"),
+    checkRole("admin","supervisor", "operario", "vendedor", "admin_ventas"),
     notificationsHistoryController
 )
 
 router.post(
     "/notifications/history/read",
     verifyToken,
-    checkRole("admin","supervisor", "operario"),
+    checkRole("admin","supervisor", "operario", "vendedor", "admin_ventas"),
     markNotificationHistoryReadController
 )
 
 router.delete(
     "/notifications/history/read",
     verifyToken,
-    checkRole("admin","supervisor", "operario"),
+    checkRole("admin","supervisor", "operario", "vendedor", "admin_ventas"),
     clearNotificationHistoryReadsController
 )
 

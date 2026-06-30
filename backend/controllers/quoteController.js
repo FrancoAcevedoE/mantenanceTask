@@ -1,6 +1,7 @@
 import Quote from "../models/quoteModel.js"
 import Client from "../models/clientModel.js"
 import { registerAuditEvent } from "../services/auditService.js"
+import { notifyQuoteSent } from "../services/crmNotificationService.js"
 
 function calcItems(items = []) {
   return items.map(item => ({
@@ -78,6 +79,8 @@ export const createQuote = async (req, res) => {
       performedBy: req.user.name,
     })
     res.status(201).json(quote)
+    const clienteName = quote.cliente?.nombre || quote.cliente?.empresa || quote.cliente?.razonSocial || 'cliente'
+    notifyQuoteSent(titulo, clienteName).catch(() => {})
   } catch (error) {
     console.error("Error creating quote:", error)
     res.status(500).json({ message: "Error al crear cotización", error: error.message })

@@ -28,11 +28,13 @@ const showNav = computed(() => {
 })
 
 const isAdmin = computed(() => currentUser.value?.role === 'admin')
+const isCrmRole = computed(() => ['admin_ventas', 'vendedor'].includes(currentUser.value?.role))
+const canViewDashboard = computed(() => ['admin', 'operario', 'supervisor'].includes(currentUser.value?.role))
 const canViewNewMachine = computed(() => ['admin'].includes(currentUser.value?.role))
 const canViewNew = computed(() => ['admin', 'operario'].includes(currentUser.value?.role))
 const canViewSeller = computed(() => ['admin', 'admin_ventas', 'vendedor'].includes(currentUser.value?.role))
 const canViewHistory = computed(() => !['vendedor', 'admin_ventas'].includes(currentUser.value?.role))
-const canViewNotifications = computed(() => !['vendedor', 'admin_ventas'].includes(currentUser.value?.role))
+const canViewNotifications = computed(() => Boolean(currentUser.value?.role))
 
 const mobileOpen = ref(false)
 const closeMobile = () => { mobileOpen.value = false }
@@ -76,7 +78,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
 
   <aside v-if="showNav" :class="['sidebar', { 'sidebar--open': mobileOpen }]">
     <nav class="sidebar-nav">
-      <router-link to="/dashboard" @click="closeMobile">
+      <router-link v-if="canViewDashboard" to="/dashboard" @click="closeMobile">
         <i class="bi bi-bar-chart-fill"></i>
         <span class="nav-label">Dashboard</span>
       </router-link>
