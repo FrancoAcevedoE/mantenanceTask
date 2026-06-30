@@ -799,8 +799,10 @@ function colorStyle(colorName) {
   color: #fff !important;
 }
 
-.action-buttons { display: flex; gap: 0.35rem; }
-.action-buttons a { text-decoration: none; }
+.action-buttons { display: flex; gap: 0.35rem; align-items: center; }
+.action-buttons a { text-decoration: none; display: inline-flex; }
+.action-buttons a .btn-sm,
+.action-buttons .btn-sm { width: 32px; height: 32px; padding: 0 !important; display: inline-flex; align-items: center; justify-content: center; }
 
 .muted { color: var(--color-muted); }
 

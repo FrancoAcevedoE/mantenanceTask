@@ -226,7 +226,7 @@ main.app-content.nav-open {
 .sidebar {
   position: fixed;
   top: 0;
-  left: calc(-1 * var(--sidebar-w-open));
+  left: 0;
   height: 100vh;
   width: var(--sidebar-w-open);
   z-index: 1000;
@@ -237,10 +237,12 @@ main.app-content.nav-open {
   background: rgba(255, 255, 255, 0.97);
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
   overflow: hidden;
-  transition: left 0.25s ease;
+  transform: translateX(calc(-1 * var(--sidebar-w-open)));
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
-.sidebar--open { left: 0; }
+.sidebar--open { transform: translateX(0); }
 
 /* ── Nav links ── */
 

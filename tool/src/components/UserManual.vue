@@ -293,7 +293,8 @@ const toggleWithRoute = () => {
   right: 0;
   width: min(420px, 100vw);
   height: 100vh;
-  background: #fff;
+  background: #ffffff !important;
+  color: #1a1a1a !important;
   box-shadow: -8px 0 30px rgba(0,0,0,0.18);
   z-index: 1400;
   display: flex;
@@ -364,6 +365,8 @@ const toggleWithRoute = () => {
   flex: 1;
   overflow-y: auto;
   padding: 1.2rem;
+  background: #ffffff;
+  color: #1a1a1a;
 }
 
 .manual-section h3 {
