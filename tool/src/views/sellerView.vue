@@ -281,39 +281,42 @@
 
                 <!-- Descuento -->
                 <td class="col-disc">
-                  <select
-                    v-model="item._discountLabel"
-                    @change="onDiscountChange(idx)"
-                    class="sel-disc"
-                    :disabled="!item._groupDescuentos?.length && !item._productId"
-                    :title="!item._groupDescuentos?.length ? 'Este producto no tiene tabla de descuentos' : ''"
-                  >
-                    <option
-                      v-for="opt in discountOptions(item._groupDescuentos)"
-                      :key="opt.label"
-                      :value="opt.label"
-                    >{{ opt.label }}</option>
-                  </select>
-                  <div class="disc-manual">
-                    <input
-                      v-model.number="item._discountPct"
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      placeholder="0"
-                      class="disc-pct-input"
-                      @change="onManualDiscount(idx)"
-                      @focus="$event.target.select()"
-                    />
-                    <span class="disc-pct-sym">%</span>
-                    <button
-                      v-if="item._discountPct > 0"
-                      class="disc-clear-btn"
-                      title="Quitar descuento"
-                      @click="clearDiscount(idx)"
-                    ><i class="bi bi-x-lg"></i></button>
-                  </div>
+                  <span v-if="!item._admiteDescuentos" class="badge-exento" title="Este producto está exento de descuentos">Exento</span>
+                  <template v-else>
+                    <select
+                      v-model="item._discountLabel"
+                      @change="onDiscountChange(idx)"
+                      class="sel-disc"
+                      :disabled="!item._groupDescuentos?.length && !item._productId"
+                      :title="!item._groupDescuentos?.length ? 'Este producto no tiene tabla de descuentos' : ''"
+                    >
+                      <option
+                        v-for="opt in discountOptions(item._groupDescuentos)"
+                        :key="opt.label"
+                        :value="opt.label"
+                      >{{ opt.label }}</option>
+                    </select>
+                    <div class="disc-manual">
+                      <input
+                        v-model.number="item._discountPct"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        placeholder="0"
+                        class="disc-pct-input"
+                        @change="onManualDiscount(idx)"
+                        @focus="$event.target.select()"
+                      />
+                      <span class="disc-pct-sym">%</span>
+                      <button
+                        v-if="item._discountPct > 0"
+                        class="disc-clear-btn"
+                        title="Quitar descuento"
+                        @click="clearDiscount(idx)"
+                      ><i class="bi bi-x-lg"></i></button>
+                    </div>
+                  </template>
                 </td>
 
                 <!-- Precio unitario -->
@@ -868,6 +871,7 @@ function emptyItem() {
     _selectedColors: [],
     _variantes: [],
     _varianteIdx: -1,
+    _admiteDescuentos: true,
     nombre: '',
     codigo: '',
     tipo: '',
@@ -917,6 +921,7 @@ function editQuote(q) {
         _selectedColors: prod?.selectedColors || [],
         _variantes: prod?.variantes || [],
         _varianteIdx: it._varianteIdx ?? (prod?.variantes?.length === 1 ? 0 : -1),
+        _admiteDescuentos: prod?.admiteDescuentos ?? true,
         nombre: it.nombre || '',
         codigo: it.codigo || '',
         tipo: it.tipo || '',
@@ -1149,11 +1154,12 @@ function selectResult(idx, p) {
     }
   }
 
+  item._admiteDescuentos = p.admiteDescuentos ?? true
   item._discountPct = 0
   item._discountLabel = 'Sin descuento'
 
   const grupo = grupos.value.find(g => g.nombre === p.grupo)
-  item._groupDescuentos = grupo?.descuentos || []
+  item._groupDescuentos = item._admiteDescuentos ? (grupo?.descuentos || []) : []
 
   recalc(idx)
 }
@@ -1435,6 +1441,7 @@ function hasCliente(q) {
 .disc-pct-sym { font-size: 0.75rem; color: var(--color-muted); flex-shrink: 0; }
 .disc-clear-btn { background: none; border: none; cursor: pointer; padding: 0.15rem 0.25rem; color: var(--color-muted); border-radius: 4px; font-size: 0.78rem; line-height: 1; flex-shrink: 0; }
 .disc-clear-btn:hover { color: #dc2626; background: rgba(239,68,68,0.1); }
+.badge-exento { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 6px; background: rgba(107,142,58,0.1); color: var(--color-primary,#6b8e3a); border: 1px solid rgba(107,142,58,0.25); letter-spacing: 0.04em; white-space: nowrap; }
 .base-price-hint { display: block; font-size: 0.69rem; color: var(--color-muted); margin-top: 0.2rem; text-decoration: line-through; }
 
 /* ── Campos genéricos en tabla ── */
