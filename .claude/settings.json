@@ -48,7 +48,12 @@
       "Bash(lsof -i :5173 -sTCP:LISTEN)",
       "Bash(node scripts/seedProducts.js)",
       "Bash(xargs cat)",
-      "Bash(MONGODB_URI=\"mongodb+srv://dbTool:Powerade3121@cluster0.ihztqvq.mongodb.net/mantenanceDB?retryWrites=true&w=majority\" node scripts/seedProducts.js)"
+      "Bash(MONGODB_URI=\"mongodb+srv://dbTool:Powerade3121@cluster0.ihztqvq.mongodb.net/mantenanceDB?retryWrites=true&w=majority\" node scripts/seedProducts.js)",
+      "Bash(find \"/Users/francoemanuelacevedo/Documents/Practica profesional\" -type d -newer \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views/ColorCatalogView.vue\" 2>/dev/null | head -20)",
+      "Read(//Users/francoemanuelacevedo/Documents/Practica profesional/**)",
+      "Bash(ls \"/Users/francoemanuelacevedo/Documents/Practica profesional/\")",
+      "Bash(node --env-file=.env scripts/importColorImages.js)",
+      "Bash(git -C \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask\" status --short \"tool/public/listaPrecios\")"
     ]
   }
 }

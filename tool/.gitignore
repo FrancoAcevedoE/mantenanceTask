@@ -37,3 +37,6 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Imágenes locales de muestras (almacenadas en MongoDB, no en git)
+public/listaPrecios/
