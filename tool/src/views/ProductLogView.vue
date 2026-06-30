@@ -133,6 +133,7 @@ function formatDate(d) {
   gap: 0.5rem;
   align-items: center;
   margin-top: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .filter-chips {
