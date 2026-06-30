@@ -32,7 +32,7 @@
           </div>
           <div class="cg-grid">
             <div v-for="c in filteredByGroup(g)" :key="c._id" class="color-card">
-              <div class="cc-thumb" @click="c.image && (lightboxImg = resolveUrl(c.image))">
+              <div class="cc-thumb" @click="openLightbox(c)" title="Ver detalle">
                 <img v-if="c.image" :src="resolveUrl(c.image)" :alt="c.name" />
                 <div v-else class="cc-placeholder" :style="{ background: guessColor(c.name) }"></div>
               </div>
@@ -105,12 +105,26 @@
         </Transition>
       </Teleport>
 
-      <!-- Lightbox imagen -->
+      <!-- Lightbox color -->
       <Teleport to="body">
-        <div v-if="lightboxImg" class="lightbox-overlay" @click="lightboxImg = ''">
-          <button class="lightbox-close" @click.stop="lightboxImg = ''"><i class="bi bi-x-lg"></i></button>
-          <img :src="lightboxImg" alt="Color" class="lightbox-img" @click.stop />
-        </div>
+        <Transition name="modal-fade">
+          <div v-if="lightboxColor" class="lightbox-overlay" @click="lightboxColor = null">
+            <div class="lightbox-card" @click.stop>
+              <button class="lightbox-close" @click="lightboxColor = null"><i class="bi bi-x-lg"></i></button>
+              <div class="lbc-swatch" :style="lightboxColor.image ? {} : { background: guessColor(lightboxColor.name) }">
+                <img v-if="lightboxColor.image" :src="resolveUrl(lightboxColor.image)" :alt="lightboxColor.name" class="lbc-img" />
+              </div>
+              <div class="lbc-info">
+                <code class="lbc-code">{{ lightboxColor.code }}</code>
+                <span class="lbc-name">{{ lightboxColor.name }}</span>
+                <div class="lbc-meta">
+                  <span v-if="lightboxColor.tipo" class="lbc-tag">{{ lightboxColor.tipo }}</span>
+                  <span class="lbc-tag" :class="'lbc-grupo-' + lightboxColor.grupoColor">Grupo {{ romanNum(lightboxColor.grupoColor) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
       </Teleport>
 
       <ConfirmDialog
@@ -143,7 +157,9 @@ const editId = ref(null)
 const saving = ref(false)
 const uploadingImg = ref(false)
 const colorToDelete = ref(null)
-const lightboxImg = ref('')
+const lightboxColor = ref(null)
+
+function openLightbox(c) { lightboxColor.value = c }
 
 const form = ref({ code: '', name: '', tipo: '', grupoColor: 1, image: '' })
 
@@ -368,9 +384,56 @@ async function uploadColorImg(event) {
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 
 /* Lightbox */
-.lightbox-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; padding: 1.5rem; cursor: zoom-out; }
-.lightbox-img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 12px; cursor: default; }
-.lightbox-close { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 1.2rem; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.lightbox-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  cursor: zoom-out;
+}
+
+.lightbox-card {
+  position: relative;
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+  cursor: default;
+}
+
+.lightbox-close {
+  position: absolute; top: 0.65rem; right: 0.65rem; z-index: 1;
+  background: rgba(0,0,0,0.25); border: none; color: #fff;
+  font-size: 1rem; width: 30px; height: 30px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.lightbox-close:hover { background: rgba(0,0,0,0.5); }
+
+.lbc-swatch {
+  width: 100%; height: 220px; display: flex; align-items: center; justify-content: center;
+}
+.lbc-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.lbc-info {
+  padding: 1rem 1.2rem 1.2rem;
+  display: flex; flex-direction: column; gap: 0.3rem;
+}
+.lbc-code {
+  font-size: 1.5rem; font-weight: 800; letter-spacing: 0.08em;
+  color: var(--color-primary, #6b8e3a); font-family: monospace;
+}
+.lbc-name { font-size: 1rem; font-weight: 600; color: var(--color-text); }
+.lbc-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.2rem; }
+.lbc-tag {
+  display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem;
+  border-radius: 999px; background: rgba(107,142,58,0.1); color: var(--color-muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.lbc-grupo-1 { background: rgba(76,175,80,0.12); color: #2e7d32; }
+.lbc-grupo-2 { background: rgba(33,150,243,0.12); color: #1565c0; }
+.lbc-grupo-3 { background: rgba(255,152,0,0.12); color: #e65100; }
 
 @media (max-width: 600px) {
   .cg-grid { grid-template-columns: 1fr; padding: 0.5rem; }
