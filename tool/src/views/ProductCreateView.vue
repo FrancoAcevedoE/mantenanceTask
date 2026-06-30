@@ -208,6 +208,11 @@
                     <th>$ Grupo I</th>
                     <th>$ Grupo II</th>
                     <th>$ Grupo III</th>
+                    <th class="th-addterm">
+                      <button type="button" class="btn-addterm" @click="addTermTipoIdx = (addTermTipoIdx === ti ? null : ti)">
+                        <i class="bi bi-plus"></i> Agregar otro
+                      </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -238,31 +243,25 @@
                         <input v-model.number="row.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                       </div>
                     </td>
+                    <td></td>
                   </tr>
                 </tbody>
               </table>
+              <!-- Form inline agregar terminacion -->
+              <div v-if="addTermTipoIdx === ti" class="add-term-inline">
+                <input v-model="newTermNombre" type="text" placeholder="Nombre (ej: Mate)" class="input-sm" />
+                <input v-model="newTermCode" type="text" placeholder="Cod" class="input-sm input-code" maxlength="4"
+                       @input="newTermCode = newTermCode.toUpperCase()" />
+                <button type="button" class="btn-sm" @click="addCustomTerm(ti)"
+                        :disabled="!newTermNombre.trim() || !newTermCode.trim()">Agregar</button>
+                <button type="button" class="btn-sm secondary-button" @click="addTermTipoIdx = null">Cancelar</button>
+              </div>
             </div>
           </div>
 
           <button type="button" class="secondary-button add-row-btn" @click="addTipoConfig">
-            <i class="bi bi-plus"></i> Agregar otro tipo de producto
+            <i class="bi bi-plus"></i> Agregar otro +
           </button>
-
-          <!-- Agregar terminacion personalizada -->
-          <div class="sub-section">
-            <div class="add-term-row" v-if="showNewTerm">
-              <input v-model="newTermNombre" type="text" placeholder="Nombre terminacion" class="input-sm" />
-              <input v-model="newTermCode" type="text" placeholder="Cod" class="input-sm input-code" maxlength="4"
-                     @input="newTermCode = newTermCode.toUpperCase()" />
-              <button type="button" class="btn-sm" @click="addCustomTerm" :disabled="!newTermNombre.trim() || !newTermCode.trim()">
-                Agregar
-              </button>
-              <button type="button" class="btn-sm secondary-button" @click="showNewTerm = false">Cancelar</button>
-            </div>
-            <button v-else type="button" class="ghost-button btn-sm" @click="showNewTerm = true">
-              <i class="bi bi-plus"></i> Crear otra terminacion
-            </button>
-          </div>
 
           <!-- Comercial -->
           <div class="section-title">Comercial</div>
@@ -488,19 +487,24 @@ const DEFAULT_TERMINACIONES = [
 ]
 
 const allTerminaciones = ref([...DEFAULT_TERMINACIONES])
-const showNewTerm = ref(false)
+const addTermTipoIdx = ref(null)
 const newTermNombre = ref('')
 const newTermCode = ref('')
 
-function addCustomTerm() {
+function addCustomTerm(tipoIdx) {
   const nombre = newTermNombre.value.trim()
   const code = newTermCode.value.trim().toUpperCase()
   if (!nombre || !code) return
-  if (allTerminaciones.value.some(t => t.code === code)) return
-  allTerminaciones.value.push({ nombre, code })
+  if (!allTerminaciones.value.some(t => t.code === code)) {
+    allTerminaciones.value.push({ nombre, code })
+  }
+  const tc = form.value.tiposConfig[tipoIdx]
+  if (tc && !tc.terminaciones.includes(code)) {
+    tc.terminaciones.push(code)
+  }
   newTermNombre.value = ''
   newTermCode.value = ''
-  showNewTerm.value = false
+  addTermTipoIdx.value = null
 }
 
 function addTipoConfig() {
@@ -995,9 +999,24 @@ async function save() {
 .term-name { font-weight: 600; }
 .term-code { font-size: 0.72rem; color: var(--color-muted); font-weight: 700; letter-spacing: 0.05em; }
 
-.add-term-row { display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; }
-.add-term-row .input-sm { max-width: 140px; }
-.add-term-row .input-code { max-width: 60px; }
+.th-addterm { text-align: right; white-space: nowrap; }
+.btn-addterm {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  background: rgba(107,142,58,0.08); border: 1px solid rgba(107,142,58,0.2);
+  color: var(--color-primary,#6b8e3a); border-radius: 7px;
+  font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.btn-addterm:hover { background: rgba(107,142,58,0.16); }
+
+.add-term-inline {
+  display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;
+  padding: 0.5rem 0.6rem; margin-top: 0.4rem;
+  background: rgba(107,142,58,0.04); border-radius: 0 0 8px 8px;
+  border: 1px dashed rgba(107,142,58,0.25); border-top: none;
+}
+.add-term-inline .input-sm { max-width: 140px; }
+.add-term-inline .input-code { max-width: 60px; }
 
 .cell-label { font-size: 0.82rem; font-weight: 500; }
 .cell-sku code { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: var(--color-muted); }
