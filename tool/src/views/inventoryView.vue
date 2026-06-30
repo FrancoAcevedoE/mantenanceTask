@@ -18,8 +18,8 @@
           <router-link to="/product/new">
             <button class="primary-button"><i class="bi bi-plus-lg"></i> Nuevo producto</button>
           </router-link>
-          <button class="danger-button" @click="showDeleteAllConfirm = true">
-            <i class="bi bi-trash"></i> Vaciar
+          <button class="danger-button btn-vaciar" @click="showDeleteAllConfirm = true" title="Vaciar inventario">
+            <i class="bi bi-trash"></i><span class="vaciar-label"> Vaciar</span>
           </button>
           <ConfirmDialog
             :visible="showDeleteAllConfirm"
@@ -884,17 +884,21 @@ function colorStyle(colorName) {
   .inv-table tbody td { padding: 0.35rem 0.5rem; }
 
   .inv-table th:nth-child(1),
-  .inv-table td:nth-child(1),
+  .inv-table td:nth-child(1):not(.detail-expand-row td),
   .inv-table th:nth-child(2),
-  .inv-table td:nth-child(2),
+  .inv-table td:nth-child(2):not(.detail-expand-row td),
   .inv-table th:nth-child(4),
-  .inv-table td:nth-child(4),
+  .inv-table td:nth-child(4):not(.detail-expand-row td),
   .inv-table th:nth-child(6),
-  .inv-table td:nth-child(6),
+  .inv-table td:nth-child(6):not(.detail-expand-row td),
   .inv-table th:nth-child(7),
-  .inv-table td:nth-child(7) {
+  .inv-table td:nth-child(7):not(.detail-expand-row td) {
     display: none;
   }
+
+  .detail-expand-row td { display: table-cell !important; }
+  .detail-expand-box { padding: 0.6rem 0.5rem; }
+  .dex-info { grid-template-columns: 1fr; }
 
   .desc-cell { max-width: none; min-width: 0; }
   .desc-name { white-space: normal; }
@@ -907,5 +911,10 @@ function colorStyle(colorName) {
   .container { padding: 0.6rem 0.5rem; }
   .toolbar-actions { gap: 0.3rem; }
   .search-input { font-size: 0.8rem; }
+}
+
+@media (max-width: 768px) {
+  .btn-vaciar { padding: 0.45rem 0.7rem; }
+  .vaciar-label { display: none; }
 }
 </style>

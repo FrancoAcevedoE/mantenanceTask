@@ -5,17 +5,20 @@
       <span class="crm-subtitle">Gestión comercial</span>
     </div>
 
-    <div class="crm-tabs-bar">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        :class="['crm-tab', { 'crm-tab--active': activeTab === tab.key }]"
-        @click="activeTab = tab.key"
-      >
-        <i :class="tab.icon"></i>
-        <span>{{ tab.label }}</span>
-        <span v-if="tab.badge" class="crm-tab-badge" :class="tab.badgeClass">{{ tab.badge }}</span>
-      </button>
+    <div class="crm-tabs-wrap">
+      <div class="crm-tabs-bar">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
+          :class="['crm-tab', { 'crm-tab--active': activeTab === tab.key }]"
+          @click="activeTab = tab.key"
+        >
+          <i :class="tab.icon"></i>
+          <span>{{ tab.label }}</span>
+          <span v-if="tab.badge" class="crm-tab-badge" :class="tab.badgeClass">{{ tab.badge }}</span>
+        </button>
+      </div>
+      <div class="crm-tabs-fade" aria-hidden="true"><i class="bi bi-chevron-right"></i></div>
     </div>
 
     <div class="crm-body">
@@ -142,12 +145,18 @@ onMounted(() => {
 }
 
 /* ── Tabs bar ── */
+.crm-tabs-wrap {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.crm-tabs-fade { display: none; }
+
 .crm-tabs-bar {
   display: flex;
   gap: 0.25rem;
   border-bottom: 2px solid rgba(107, 142, 58, 0.14);
   padding-bottom: 0;
-  margin-bottom: 1.25rem;
   flex-wrap: wrap;
 }
 
@@ -325,8 +334,24 @@ onMounted(() => {
     gap: 0;
     padding-bottom: 0;
     scrollbar-width: none;
+    padding-right: 2rem;
   }
   .crm-tabs-bar::-webkit-scrollbar { display: none; }
+
+  .crm-tabs-fade {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 2px;
+    width: 36px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.95) 40%);
+    pointer-events: none;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+  }
 
   .crm-tab {
     padding: 0.45rem 0.55rem;

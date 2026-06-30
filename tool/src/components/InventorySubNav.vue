@@ -1,34 +1,39 @@
 <template>
-  <nav class="inv-subnav">
-    <router-link to="/inventory" :class="{ active: isActive('/inventory') }">
-      <i class="bi bi-grid-3x3-gap"></i>
-      <span>Productos</span>
-    </router-link>
-    <router-link to="/inv-dashboard" :class="{ active: isActive('/inv-dashboard') }">
-      <i class="bi bi-bar-chart-line"></i>
-      <span>Dashboard</span>
-    </router-link>
-    <router-link to="/stock-management" :class="{ active: isActive('/stock-management') }">
-      <i class="bi bi-boxes"></i>
-      <span>Stock</span>
-    </router-link>
-    <router-link to="/bulk-price" :class="{ active: isActive('/bulk-price') }">
-      <i class="bi bi-tags"></i>
-      <span>Precios masivos</span>
-    </router-link>
-    <router-link to="/product-groups" :class="{ active: isActive('/product-groups') }">
-      <i class="bi bi-collection"></i>
-      <span>Grupos</span>
-    </router-link>
-    <router-link to="/color-catalog" :class="{ active: isActive('/color-catalog') }">
-      <i class="bi bi-palette"></i>
-      <span>Colores</span>
-    </router-link>
-    <router-link to="/product-log" :class="{ active: isActive('/product-log') }">
-      <i class="bi bi-journal-text"></i>
-      <span>Registro</span>
-    </router-link>
-  </nav>
+  <div class="subnav-wrap">
+    <nav class="inv-subnav">
+      <router-link to="/inventory" :class="{ active: isActive('/inventory') }">
+        <i class="bi bi-grid-3x3-gap"></i>
+        <span>Productos</span>
+      </router-link>
+      <router-link to="/inv-dashboard" :class="{ active: isActive('/inv-dashboard') }">
+        <i class="bi bi-bar-chart-line"></i>
+        <span>Dashboard</span>
+      </router-link>
+      <router-link to="/stock-management" :class="{ active: isActive('/stock-management') }">
+        <i class="bi bi-boxes"></i>
+        <span>Stock</span>
+      </router-link>
+      <router-link to="/bulk-price" :class="{ active: isActive('/bulk-price') }">
+        <i class="bi bi-tags"></i>
+        <span>Precios masivos</span>
+      </router-link>
+      <router-link to="/product-groups" :class="{ active: isActive('/product-groups') }">
+        <i class="bi bi-collection"></i>
+        <span>Grupos</span>
+      </router-link>
+      <router-link to="/color-catalog" :class="{ active: isActive('/color-catalog') }">
+        <i class="bi bi-palette"></i>
+        <span>Colores</span>
+      </router-link>
+      <router-link to="/product-log" :class="{ active: isActive('/product-log') }">
+        <i class="bi bi-journal-text"></i>
+        <span>Registro</span>
+      </router-link>
+    </nav>
+    <div class="scroll-fade" aria-hidden="true">
+      <i class="bi bi-chevron-right"></i>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -43,11 +48,17 @@ function isActive(path) {
 </script>
 
 <style scoped>
+.subnav-wrap {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.scroll-fade { display: none; }
+
 .inv-subnav {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid rgba(107, 142, 58, 0.15);
 }
@@ -85,7 +96,7 @@ function isActive(path) {
 }
 
 @media (max-width: 600px) {
-  .inv-subnav { gap: 0.3rem; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .inv-subnav { gap: 0.3rem; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-right: 2rem; }
   .inv-subnav::-webkit-scrollbar { display: none; }
   .inv-subnav a {
     flex-direction: column;
@@ -98,5 +109,20 @@ function isActive(path) {
   }
   .inv-subnav a i { font-size: 1rem; }
   .inv-subnav a span { display: inline; }
+
+  .scroll-fade {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 1rem;
+    width: 36px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.95) 40%);
+    pointer-events: none;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+  }
 }
 </style>
