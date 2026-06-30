@@ -40,7 +40,7 @@ const router = createRouter({
         path: '/logUser', name: 'LogUser', component: logUser
       },
       {
-        path: '/adminView', name: 'AdminView', component: adminView, meta: { requiresAuth: true, adminOnly: true }
+        path: '/adminView', name: 'AdminView', component: adminView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas'] }
       },
       {
       path: '/newMachine', name: 'NewMachine', component: newMachine, meta: { requiresAuth: true, roles: ['admin'] }
@@ -52,7 +52,7 @@ const router = createRouter({
       path: '/history', name: 'History', component: historyView, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }
     },
     {
-      path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true }
+      path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor', 'vendedor'] }
     },
     {
       path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }
@@ -104,10 +104,6 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !token) {
     return next('/logUser')
-  }
-
-  if (to.meta.adminOnly && user?.role !== 'admin') {
-    return next('/dashboard')
   }
 
   if (to.meta.roles && !to.meta.roles.includes(user?.role)) {

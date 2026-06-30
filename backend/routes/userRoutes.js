@@ -52,7 +52,7 @@ router.delete(
 router.get(
     "/",
     verifyToken,
-    checkRole("admin"),
+    checkRole("admin", "admin_ventas"),
     getUsers
 )
 
@@ -73,35 +73,35 @@ router.get(
 router.post(
     "/",
     verifyToken,
-    checkRole("admin"),
+    checkRole("admin", "admin_ventas"),
     createUser
 )
 
 router.patch(
     "/:id",
     verifyToken,
-    checkRole("admin"),
+    checkRole("admin", "admin_ventas"),
     updateUser
 )
 
 router.delete(
     "/:id/permanent",
     verifyToken,
-    checkRole("admin"),
+    checkRole("admin", "admin_ventas"),
     deleteUserPermanent
 )
 
 router.patch(
     "/:id/restore",
     verifyToken,
-    checkRole("admin"),
+    checkRole("admin", "admin_ventas"),
     restoreUser
 )
 
 router.delete(
     "/:id",
     verifyToken,
-    checkRole("admin"),
+    checkRole("admin", "admin_ventas"),
     deleteUser
 )
 

@@ -79,9 +79,14 @@ export const login = async (req, res) => {
 export const getUsers = async (req, res) => {
     try {
         const includeDeleted = String(req.query.includeDeleted || "").trim().toLowerCase() === "true"
-        const query = includeDeleted ? {} : { isDeleted: { $ne: true } }
+        const baseQuery = includeDeleted ? {} : { isDeleted: { $ne: true } }
 
-        const users = await User.find(query)
+        // admin_ventas solo puede ver usuarios vendedor
+        if (req.user?.role === 'admin_ventas') {
+            baseQuery.role = 'vendedor'
+        }
+
+        const users = await User.find(baseQuery)
             .select("name dni role isDeleted deletedAt")
             .sort({ name: 1 })
 
@@ -148,6 +153,11 @@ export const getOperarios = async (req, res) => {
 export const createUser = async (req, res) => {
     try {
         const { name, role } = req.body
+
+        // admin_ventas solo puede crear vendedores
+        if (req.user?.role === 'admin_ventas' && role !== 'vendedor') {
+            return res.status(403).json({ message: 'Solo podés crear usuarios con rol vendedor' })
+        }
         const dniRaw = String(req.body.dni ?? "").trim()
         const passwordRaw = String(req.body.password ?? "").trim()
 
@@ -238,10 +248,13 @@ export const updateUser = async (req, res) => {
         }
 
         if (role !== undefined) {
-            if (!["admin", "operario", "supervisor", "vendedor"].includes(role)) {
-                return res.status(400).json({
-                    message: "Rol invalido"
-                })
+            const validRoles = ["admin", "admin_ventas", "operario", "supervisor", "vendedor"]
+            if (!validRoles.includes(role)) {
+                return res.status(400).json({ message: "Rol invalido" })
+            }
+            // admin_ventas solo puede asignar rol vendedor
+            if (req.user?.role === 'admin_ventas' && role !== 'vendedor') {
+                return res.status(403).json({ message: 'Solo podés asignar rol vendedor' })
             }
             updateData.role = role
         }
@@ -277,6 +290,15 @@ export const updateUser = async (req, res) => {
         const previousUser = await User.findById(req.params.id)
             .select("name dni role")
             .lean()
+
+        if (!previousUser) {
+            return res.status(404).json({ message: "Usuario no encontrado" })
+        }
+
+        // admin_ventas solo puede modificar vendedores
+        if (req.user?.role === 'admin_ventas' && previousUser.role !== 'vendedor') {
+            return res.status(403).json({ message: 'No tenés permiso para modificar este usuario' })
+        }
 
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
@@ -322,9 +344,15 @@ export const updateUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
     try {
         if (req.params.id === req.user.id) {
-            return res.status(400).json({
-                message: "No puedes eliminar tu propio usuario"
-            })
+            return res.status(400).json({ message: "No puedes eliminar tu propio usuario" })
+        }
+
+        // admin_ventas solo puede ocultar vendedores
+        if (req.user?.role === 'admin_ventas') {
+            const target = await User.findById(req.params.id).select('role').lean()
+            if (!target || target.role !== 'vendedor') {
+                return res.status(403).json({ message: 'No tenés permiso para eliminar este usuario' })
+            }
         }
 
         const user = await User.findOneAndUpdate(
@@ -374,9 +402,15 @@ export const deleteUser = async (req, res) => {
 export const deleteUserPermanent = async (req, res) => {
     try {
         if (req.params.id === req.user.id) {
-            return res.status(400).json({
-                message: "No puedes eliminar definitivamente tu propio usuario"
-            })
+            return res.status(400).json({ message: "No puedes eliminar definitivamente tu propio usuario" })
+        }
+
+        // admin_ventas solo puede eliminar definitivamente vendedores
+        if (req.user?.role === 'admin_ventas') {
+            const target = await User.findById(req.params.id).select('role').lean()
+            if (!target || target.role !== 'vendedor') {
+                return res.status(403).json({ message: 'No tenés permiso para eliminar este usuario' })
+            }
         }
 
         const user = await User.findByIdAndDelete(req.params.id)

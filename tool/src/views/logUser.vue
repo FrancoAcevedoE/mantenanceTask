@@ -114,7 +114,8 @@ export default {
         const user = response.data.user
         localStorage.setItem("token",token)
         localStorage.setItem("user", JSON.stringify(user))
-        this.$router.push(user.role === "admin" ? "/adminView" : "/dashboard")
+        const dest = user.role === 'admin' ? '/adminView' : user.role === 'admin_ventas' ? '/inventory' : '/dashboard'
+        this.$router.push(dest)
 
       }
       catch(err){

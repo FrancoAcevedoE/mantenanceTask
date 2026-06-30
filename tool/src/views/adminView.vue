@@ -11,11 +11,12 @@
         <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" placeholder="Contraseña"/>
 
         <label for="role">Rol</label>
-        <select id="role" v-model="user.role">
-          <option value="operario">Operario</option>
-          <option value="supervisor">Supervisor</option>
+        <select id="role" v-model="user.role" :disabled="currentUserRole === 'admin_ventas'">
+          <option v-if="currentUserRole !== 'admin_ventas'" value="operario">Operario</option>
+          <option v-if="currentUserRole !== 'admin_ventas'" value="supervisor">Supervisor</option>
           <option value="vendedor">Vendedor</option>
-          <option value="admin">Admin</option>
+          <option v-if="currentUserRole !== 'admin_ventas'" value="admin_ventas">Admin de ventas</option>
+          <option v-if="currentUserRole !== 'admin_ventas'" value="admin">Admin</option>
         </select>
 
         <p v-if="message" class="message">{{ message }}</p>
@@ -44,7 +45,7 @@
             <div class="user-info">
               <strong>{{ createdUser.name }}</strong>
               <span>Documento: {{ createdUser.dni }}</span>
-              <span>Rol: {{ createdUser.role }}</span>
+              <span>Rol: {{ roleLabel(createdUser.role) }}</span>
             </div>
 
             <button
@@ -76,7 +77,7 @@
               <div class="user-info">
                 <strong>{{ deletedUser.name }}</strong>
                 <span>Documento: {{ deletedUser.dni }}</span>
-                <span>Rol: {{ deletedUser.role }}</span>
+                <span>Rol: {{ roleLabel(deletedUser.role) }}</span>
               </div>
 
               <button
@@ -178,16 +179,22 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
+function getCurrentUser() {
+  try { return JSON.parse(localStorage.getItem('user') || '{}') } catch { return {} }
+}
+
 export default {
   components: { ConfirmDialog },
   data() {
+    const currentUser = getCurrentUser()
     return {
+      currentUserRole: currentUser.role || '',
       confirmDialog: { visible: false, title: '', message: '', confirmText: 'Confirmar', type: 'danger', action: null },
       user: {
         name: "",
         dni: "",
         password: "",
-        role: "operario"
+        role: currentUser.role === 'admin_ventas' ? 'vendedor' : 'operario'
       },
       users: [],
       deletedUsers: [],
@@ -203,6 +210,10 @@ export default {
     }
   },
   methods: {
+    roleLabel(role) {
+      const map = { admin: 'Admin', admin_ventas: 'Admin de ventas', vendedor: 'Vendedor', operario: 'Operario', supervisor: 'Supervisor' }
+      return map[role] || role
+    },
     toggleCreateForm() {
       this.showCreateForm = !this.showCreateForm
       this.message = ""

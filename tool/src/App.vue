@@ -104,7 +104,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
         <i class="bi bi-building-add"></i>
         <span class="nav-label">Nueva máquina</span>
       </router-link>
-      <router-link v-if="isAdmin" to="/adminView" @click="closeMobile">
+      <router-link v-if="isAdmin || currentUser?.role === 'admin_ventas'" to="/adminView" @click="closeMobile">
         <i class="bi bi-person-plus-fill"></i>
         <span class="nav-label">Usuarios</span>
       </router-link>
