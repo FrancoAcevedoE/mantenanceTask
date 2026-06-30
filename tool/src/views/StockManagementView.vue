@@ -3,7 +3,7 @@
     <div class="container">
       <div class="topbar">
         <h2 class="title">Gestión de Stock</h2>
-        <div class="toolbar-actions">
+        <div v-if="canManage" class="toolbar-actions">
           <button @click="openModal('ingreso')">
             <i class="bi bi-box-arrow-in-down"></i> Agregar ingreso
           </button>
@@ -87,7 +87,7 @@
               <td class="stock-val">{{ p.stock ?? 0 }}</td>
               <td><span :class="badgeClass(p.stock)">{{ badgeLabel(p.stock) }}</span></td>
               <td>
-                <div class="action-buttons">
+                <div v-if="canManage" class="action-buttons">
                   <button class="btn-sm secondary-button" title="Ingreso" @click="openModalFor(p, 'ingreso')">
                     <i class="bi bi-plus-lg"></i>
                   </button>
@@ -157,6 +157,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useProductsStore } from '@/stores/products'
 import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
+import { usePermissions } from '@/utils/permissions'
+
+const { canManage } = usePermissions()
 
 const store = useProductsStore()
 const toast = useToast()

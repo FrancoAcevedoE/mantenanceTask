@@ -30,7 +30,7 @@ router.get('/', verifyToken, async (req, res) => {
     }
 })
 
-router.post('/', verifyToken, checkRole('admin'), async (req, res) => {
+router.post('/', verifyToken, checkRole('admin', 'admin_ventas'), async (req, res) => {
     try {
         const { code, name, tipo, grupoColor, image } = req.body
         if (!code || !name || !grupoColor) {
@@ -44,7 +44,7 @@ router.post('/', verifyToken, checkRole('admin'), async (req, res) => {
     }
 })
 
-router.put('/:id', verifyToken, checkRole('admin'), async (req, res) => {
+router.put('/:id', verifyToken, checkRole('admin', 'admin_ventas'), async (req, res) => {
     try {
         const color = await Color.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' })
         if (!color) return res.status(404).json({ message: 'Color no encontrado' })
@@ -55,7 +55,7 @@ router.put('/:id', verifyToken, checkRole('admin'), async (req, res) => {
     }
 })
 
-router.delete('/:id', verifyToken, checkRole('admin'), async (req, res) => {
+router.delete('/:id', verifyToken, checkRole('admin', 'admin_ventas'), async (req, res) => {
     try {
         const color = await Color.findByIdAndDelete(req.params.id)
         if (!color) return res.status(404).json({ message: 'Color no encontrado' })

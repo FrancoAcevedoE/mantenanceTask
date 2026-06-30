@@ -256,6 +256,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useCrmStore } from '@/stores/crm'
+import { usePermissions } from '@/utils/permissions'
+
+const { canManage, userId } = usePermissions()
 
 const props = defineProps({ quotes: { type: Array, default: () => [] } })
 defineEmits(['close'])
@@ -355,6 +358,8 @@ const selectedClientIds  = ref([])
 // ── Filtered datasets ──────────────────────────────────────────────────────
 const preFilteredClients = computed(() => {
   let list = crmStore.visibleClients
+  // vendedor solo ve los clientes que creó o tiene asignados
+  if (!canManage.value && userId.value) list = list.filter(c => c.createdBy === userId.value || c.vendedorId === userId.value)
   const f = filters.value
   if (f.clientEstado) list = list.filter(c => c.estado === f.clientEstado)
   if (f.clientTipo)   list = list.filter(c => c.tipoCliente === f.clientTipo)
@@ -393,6 +398,8 @@ function selectAllClients() { selectedClientIds.value = preFilteredClients.value
 
 const filteredQuotes = computed(() => {
   let list = props.quotes
+  // vendedor solo ve sus propias cotizaciones
+  if (!canManage.value && userId.value) list = list.filter(q => q.sellerId === userId.value || q.createdBy === userId.value)
   if (filters.value.quoteEstado) list = list.filter(q => q.estado === filters.value.quoteEstado)
   return list.filter(q => inRange(q.createdAt))
 })

@@ -50,7 +50,7 @@
             <button class="cc-ico-btn cc-ico-btn--edit" @click="openEdit(c)" title="Editar">
               <i class="bi bi-pencil"></i>
             </button>
-            <button class="cc-ico-btn cc-ico-btn--del" @click="confirmDelete(c)" title="Eliminar">
+            <button v-if="canManage" class="cc-ico-btn cc-ico-btn--del" @click="confirmDelete(c)" title="Eliminar">
               <i class="bi bi-trash"></i>
             </button>
           </div>
@@ -186,7 +186,7 @@
             <!-- ── Tipo de cliente ── -->
             <div class="cm-field">
               <label>Tipo de cliente</label>
-              <div class="cm-tipo-row">
+              <div v-if="canManage" class="cm-tipo-row">
                 <button type="button"
                   :class="['cm-tipo-opt', { 'cm-tipo-opt--sel cm-tipo-opt--pot': form.tipoCliente === 'potencial' }]"
                   @click="form.tipoCliente = 'potencial'">
@@ -197,6 +197,12 @@
                   @click="form.tipoCliente = 'normal'">
                   <i class="bi bi-person-check-fill"></i> Cliente
                 </button>
+              </div>
+              <div v-else class="cm-tipo-display">
+                <span :class="form.tipoCliente === 'potencial' ? 'cm-tipo-opt--pot' : 'cm-tipo-opt--cli'">
+                  <i :class="form.tipoCliente === 'potencial' ? 'bi bi-star-fill' : 'bi bi-person-check-fill'"></i>
+                  {{ form.tipoCliente === 'potencial' ? 'Potencial' : 'Cliente' }}
+                </span>
               </div>
               <p class="cm-tipo-hint">
                 Se convierte automáticamente a <strong>Cliente</strong> cuando una cotización asociada pasa a <em>Ganada</em>.
@@ -296,6 +302,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useCrmStore } from '@/stores/crm'
+import { usePermissions } from '@/utils/permissions'
+
+const { canManage } = usePermissions()
 
 const props = defineProps({ pendingEdit: { type: Object, default: null } })
 

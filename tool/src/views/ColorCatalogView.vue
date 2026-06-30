@@ -3,7 +3,7 @@
     <div class="container">
       <div class="topbar">
         <h2 class="title">Catalogo de colores</h2>
-        <button class="primary-button" @click="startNew">
+        <button v-if="canManage" class="primary-button" @click="startNew">
           <i class="bi bi-plus-lg"></i> Nuevo color
         </button>
       </div>
@@ -41,7 +41,7 @@
                 <span class="cc-name">{{ c.name }}</span>
                 <span v-if="c.tipo" class="cc-tipo">{{ c.tipo }}</span>
               </div>
-              <div class="cc-actions">
+              <div v-if="canManage" class="cc-actions">
                 <button class="icon-btn" @click="startEdit(c)" title="Editar"><i class="bi bi-pencil"></i></button>
                 <button class="icon-btn danger" @click="colorToDelete = c" title="Eliminar"><i class="bi bi-trash"></i></button>
               </div>
@@ -147,6 +147,9 @@ import { API_BASE_URL } from '@/utils/api'
 import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { usePermissions } from '@/utils/permissions'
+
+const { canManage } = usePermissions()
 
 const toast = useToast()
 const colors = ref([])

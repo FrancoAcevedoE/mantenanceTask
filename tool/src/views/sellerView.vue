@@ -10,7 +10,7 @@
         </div>
         <div class="topbar-right">
           <template v-if="activeTab === 'list'">
-            <button class="ghost-button" @click="showPrintEditor = true">
+            <button v-if="canManage" class="ghost-button" @click="showPrintEditor = true">
               <i class="bi bi-pencil-square"></i> Editar impresión
             </button>
             <button class="primary-button" @click="startNew">
@@ -60,7 +60,7 @@
                 <td class="actions-cell">
                   <button class="icon-btn" title="Imprimir" @click="openPrint(q)"><i class="bi bi-printer"></i></button>
                   <button class="icon-btn" title="Editar" @click="editQuote(q)"><i class="bi bi-pencil"></i></button>
-                  <button class="icon-btn danger" title="Eliminar" @click="quoteToDelete = q"><i class="bi bi-trash3"></i></button>
+                  <button v-if="canManage" class="icon-btn danger" title="Eliminar" @click="quoteToDelete = q"><i class="bi bi-trash3"></i></button>
                 </td>
               </tr>
             </tbody>
@@ -661,6 +661,9 @@ import { useCrmStore } from '@/stores/crm'
 import { useToast } from 'vue-toastification'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { API_BASE_URL } from '@/utils/api'
+import { usePermissions } from '@/utils/permissions'
+
+const { canManage, userId } = usePermissions()
 
 const productsStore = useProductsStore()
 const crmStore = useCrmStore()

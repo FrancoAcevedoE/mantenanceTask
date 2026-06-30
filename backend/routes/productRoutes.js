@@ -5,11 +5,11 @@ import { checkRole } from "../middlewares/roleMiddleware.js"
 
 const router = express.Router()
 
-router.post("/", verifyToken, checkRole("admin"), createProductController)
-router.get("/", verifyToken, checkRole("admin", "vendedor"), getProductsController)
-router.get("/audit-log", verifyToken, checkRole("admin"), getProductAuditLogController)
-router.put("/:id", verifyToken, checkRole("admin"), updateProductController)
-router.delete("/all", verifyToken, checkRole("admin"), deleteAllProductsController)
-router.delete("/:id", verifyToken, checkRole("admin"), deleteProductController)
+router.post("/", verifyToken, checkRole("admin", "admin_ventas"), createProductController)
+router.get("/", verifyToken, checkRole("admin", "admin_ventas", "vendedor"), getProductsController)
+router.get("/audit-log", verifyToken, checkRole("admin", "admin_ventas", "vendedor"), getProductAuditLogController)
+router.put("/:id", verifyToken, checkRole("admin", "admin_ventas"), updateProductController)
+router.delete("/all", verifyToken, checkRole("admin", "admin_ventas"), deleteAllProductsController)
+router.delete("/:id", verifyToken, checkRole("admin", "admin_ventas"), deleteProductController)
 
 export default router

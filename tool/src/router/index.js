@@ -58,37 +58,37 @@ const router = createRouter({
       path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }
     },
     {
-      path: '/inventory', name: 'InventoryView', component: inventoryView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+      path: '/inventory', name: 'InventoryView', component: inventoryView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }
     },
     {
-      path: '/product/new', name: 'ProductCreate', component: ProductCreateView, meta: { requiresAuth: true, roles: ['admin'] }
+      path: '/product/new', name: 'ProductCreate', component: ProductCreateView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas'] }
     },
     {
-      path: '/product/:id', name: 'ProductDetail', component: ProductDetailView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+      path: '/product/:id', name: 'ProductDetail', component: ProductDetailView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }
     },
     {
-      path: '/product/:id/edit', name: 'ProductEdit', component: ProductEditView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+      path: '/product/:id/edit', name: 'ProductEdit', component: ProductEditView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas'] }
     },
     {
-      path: '/bulk-price', name: 'BulkPrice', component: BulkPriceUpdateView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+      path: '/bulk-price', name: 'BulkPrice', component: BulkPriceUpdateView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }
     },
     {
-      path: '/stock-management', name: 'StockManagement', component: StockManagementView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+      path: '/stock-management', name: 'StockManagement', component: StockManagementView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }
     },
     {
-      path: '/inv-dashboard', name: 'InventoryDashboard', component: InventoryDashboardView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+      path: '/inv-dashboard', name: 'InventoryDashboard', component: InventoryDashboardView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }
     },
     {
-      path: '/product-log', name: 'ProductLog', component: ProductLogView, meta: { requiresAuth: true, roles: ['admin'] }
+      path: '/product-log', name: 'ProductLog', component: ProductLogView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }
     },
     {
-      path: '/product-groups', name: 'ProductGroups', component: ProductGroupView, meta: { requiresAuth: true, roles: ['admin'] }
+      path: '/product-groups', name: 'ProductGroups', component: ProductGroupView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }
     },
     {
-      path: '/color-catalog', name: 'ColorCatalog', component: ColorCatalogView, meta: { requiresAuth: true, roles: ['admin'] }
+      path: '/color-catalog', name: 'ColorCatalog', component: ColorCatalogView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }
     },
     {
-      path: '/crm', name: 'CRM', component: CrmView, meta: { requiresAuth: true, roles: ['admin', 'vendedor'] }
+      path: '/crm', name: 'CRM', component: CrmView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'] }
     }
 
   ]

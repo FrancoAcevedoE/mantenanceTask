@@ -10,12 +10,13 @@ import { verifyToken } from "../middlewares/authMiddleware.js"
 import { checkRole } from "../middlewares/roleMiddleware.js"
 
 const router = express.Router()
-const canQuote = checkRole("vendedor", "admin")
+const canQuote    = checkRole("vendedor", "admin", "admin_ventas")
+const canManageQ  = checkRole("admin", "admin_ventas")
 
-router.post("/",     verifyToken, canQuote, createQuote)
-router.get("/",      verifyToken, canQuote, getQuotes)
-router.get("/:id",   verifyToken, canQuote, getQuoteById)
-router.put("/:id",   verifyToken, canQuote, updateQuote)
-router.delete("/:id", verifyToken, canQuote, deleteQuote)
+router.post("/",     verifyToken, canQuote,   createQuote)
+router.get("/",      verifyToken, canQuote,   getQuotes)
+router.get("/:id",   verifyToken, canQuote,   getQuoteById)
+router.put("/:id",   verifyToken, canQuote,   updateQuote)
+router.delete("/:id", verifyToken, canManageQ, deleteQuote)
 
 export default router

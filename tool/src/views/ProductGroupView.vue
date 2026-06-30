@@ -3,7 +3,7 @@
     <div class="container">
       <div class="topbar">
         <h2 class="title">Grupos de productos</h2>
-        <button class="primary-button" @click="startNew">
+        <button v-if="canManage" class="primary-button" @click="startNew">
           <i class="bi bi-plus-lg"></i> Nuevo grupo
         </button>
       </div>
@@ -18,7 +18,7 @@
         <div v-for="g in groups" :key="g._id" class="group-card">
           <div class="group-card-header">
             <h3>{{ g.nombre }}</h3>
-            <div class="group-actions">
+            <div v-if="canManage" class="group-actions">
               <button class="btn-sm secondary-button" @click="startEdit(g)">
                 <i class="bi bi-pencil"></i> Editar
               </button>
@@ -164,6 +164,9 @@ import { API_BASE_URL } from '@/utils/api'
 import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { usePermissions } from '@/utils/permissions'
+
+const { canManage } = usePermissions()
 
 const toast = useToast()
 const groups = ref([])

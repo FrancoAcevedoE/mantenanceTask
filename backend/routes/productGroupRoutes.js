@@ -7,8 +7,8 @@ const router = Router()
 
 router.get('/', verifyToken, getGroups)
 router.get('/:nombre', verifyToken, getGroupByNombre)
-router.post('/', verifyToken, checkRole('admin'), createGroup)
-router.put('/:id', verifyToken, checkRole('admin'), updateGroup)
-router.delete('/:id', verifyToken, checkRole('admin'), deleteGroup)
+router.post('/', verifyToken, checkRole('admin', 'admin_ventas'), createGroup)
+router.put('/:id', verifyToken, checkRole('admin', 'admin_ventas'), updateGroup)
+router.delete('/:id', verifyToken, checkRole('admin', 'admin_ventas'), deleteGroup)
 
 export default router

@@ -129,10 +129,11 @@
           </div>
 
           <div class="apply-row">
-            <button @click="applyChanges" :disabled="applying" class="apply-btn">
+            <button v-if="canManage" @click="applyChanges" :disabled="applying" class="apply-btn">
               <i class="bi" :class="applying ? 'bi-hourglass-split' : 'bi-check-circle'"></i>
               {{ applying ? 'Aplicando...' : 'Aplicar cambios' }}
             </button>
+            <span v-else class="readonly-hint"><i class="bi bi-eye"></i> Solo simulación — sin permiso para guardar</span>
             <button class="secondary-button" @click="preview = []">Cancelar</button>
           </div>
         </div>
@@ -146,6 +147,9 @@ import { ref, computed } from 'vue'
 import { useProductsStore } from '@/stores/products'
 import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
+import { usePermissions } from '@/utils/permissions'
+
+const { canManage } = usePermissions()
 
 const store = useProductsStore()
 const toast = useToast()
@@ -393,6 +397,7 @@ function fmt(n) {
 }
 
 .apply-btn { background: #15803d; }
+.readonly-hint { font-size: 0.8rem; color: var(--color-muted); display: inline-flex; align-items: center; gap: 0.4rem; }
 
 @media (max-width: 900px) {
   .bulk-layout { grid-template-columns: 1fr; }

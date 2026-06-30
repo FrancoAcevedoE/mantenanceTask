@@ -15,10 +15,10 @@
           <button class="secondary-button" @click="filtersOpen = !filtersOpen">
             <i class="bi bi-funnel"></i> Filtros
           </button>
-          <router-link to="/product/new">
+          <router-link v-if="canManage" to="/product/new">
             <button class="primary-button"><i class="bi bi-plus-lg"></i> Nuevo producto</button>
           </router-link>
-          <button class="danger-button btn-vaciar" @click="showDeleteAllConfirm = true" title="Vaciar inventario">
+          <button v-if="canManage" class="danger-button btn-vaciar" @click="showDeleteAllConfirm = true" title="Vaciar inventario">
             <i class="bi bi-trash"></i><span class="vaciar-label"> Vaciar</span>
           </button>
           <ConfirmDialog
@@ -177,7 +177,7 @@
                           <button class="btn-sm secondary-button" @click="toggleDetail(p._id)" :title="expandedId === p._id ? 'Ocultar' : 'Ver detalle'">
                             <i class="bi" :class="expandedId === p._id ? 'bi-chevron-up' : 'bi-eye'"></i>
                           </button>
-                          <router-link :to="`/product/${p._id}/edit`">
+                          <router-link v-if="canManage" :to="`/product/${p._id}/edit`">
                             <button class="btn-sm secondary-button"><i class="bi bi-pencil"></i></button>
                           </router-link>
                         </div>
@@ -256,7 +256,7 @@
                         <button class="btn-sm secondary-button" @click="toggleDetail(p._id)" :title="expandedId === p._id ? 'Ocultar' : 'Ver detalle'">
                           <i class="bi" :class="expandedId === p._id ? 'bi-chevron-up' : 'bi-eye'"></i>
                         </button>
-                        <router-link :to="`/product/${p._id}/edit`">
+                        <router-link v-if="canManage" :to="`/product/${p._id}/edit`">
                           <button class="btn-sm secondary-button"><i class="bi bi-pencil"></i></button>
                         </router-link>
                       </div>
@@ -325,6 +325,9 @@ import { API_BASE_URL } from '@/utils/api'
 import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { usePermissions } from '@/utils/permissions'
+
+const { canManage } = usePermissions()
 
 const store = useProductsStore()
 const toast = useToast()

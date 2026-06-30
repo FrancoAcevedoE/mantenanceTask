@@ -11,10 +11,10 @@ import { checkRole } from "../middlewares/roleMiddleware.js"
 
 const router = express.Router()
 
-router.post("/", verifyToken, checkRole("admin", "vendedor"), createClient)
+router.post("/", verifyToken, checkRole("admin", "admin_ventas", "vendedor"), createClient)
 router.get("/", verifyToken, getClients)
 router.get("/:id", verifyToken, getClientById)
-router.put("/:id", verifyToken, checkRole("admin", "vendedor"), updateClient)
-router.delete("/:id", verifyToken, checkRole("admin", "vendedor"), deleteClient)
+router.put("/:id", verifyToken, checkRole("admin", "admin_ventas", "vendedor"), updateClient)
+router.delete("/:id", verifyToken, checkRole("admin", "admin_ventas"), deleteClient)
 
 export default router
