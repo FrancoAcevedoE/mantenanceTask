@@ -204,10 +204,16 @@
                     <th>$ Grupo I</th>
                     <th>$ Grupo II</th>
                     <th>$ Grupo III</th>
-                    <th class="th-addterm">
-                      <button type="button" class="btn-addterm" @click="addTermTipoIdx = (addTermTipoIdx === ti ? null : ti)">
-                        <i class="bi bi-plus"></i> Agregar otro
-                      </button>
+                    <th class="th-grupo-extra">
+                      <label class="grupo-extra-head">
+                        <input type="checkbox" v-model="form.habilitarGrupoExtra" />
+                        <input v-if="form.habilitarGrupoExtra"
+                               v-model="form.grupoExtraLabel"
+                               type="text" class="grupo-extra-label-input"
+                               placeholder="Grupo IV" maxlength="20"
+                               @click.stop />
+                        <span v-else class="grupo-extra-hint">+ Grupo extra</span>
+                      </label>
                     </th>
                   </tr>
                 </thead>
@@ -239,23 +245,21 @@
                         <input v-model.number="row.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                       </div>
                     </td>
-                    <td></td>
+                    <td>
+                      <div v-if="form.habilitarGrupoExtra" class="pct-input-wrap">
+                        <span class="input-prefix-inline">$</span>
+                        <input v-model.number="row.precioGrupoIV" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
+                      </div>
+                      <span v-else class="cell-extra-off">—</span>
+                    </td>
                   </tr>
                 </tbody>
               </table>
-              <div v-if="addTermTipoIdx === ti" class="add-term-inline">
-                <input v-model="newTermNombre" type="text" placeholder="Nombre (ej: Mate)" class="input-sm" />
-                <input v-model="newTermCode" type="text" placeholder="Cod" class="input-sm input-code" maxlength="4"
-                       @input="newTermCode = newTermCode.toUpperCase()" />
-                <button type="button" class="btn-sm" @click="addCustomTerm(ti)"
-                        :disabled="!newTermNombre.trim() || !newTermCode.trim()">Agregar</button>
-                <button type="button" class="btn-sm secondary-button" @click="addTermTipoIdx = null">Cancelar</button>
-              </div>
             </div>
           </div>
 
           <button type="button" class="secondary-button add-row-btn" @click="addTipoConfig">
-            <i class="bi bi-plus"></i> Agregar otro +
+            <i class="bi bi-plus"></i> Agregar otro tipo de producto
           </button>
 
           <!-- Comercial -->
@@ -474,6 +478,8 @@ const form = ref({
   unidadPrecio: 'hoja',
   stock: 0,
   tiposConfig: [{ nombre: '', terminaciones: [] }],
+  habilitarGrupoExtra: false,
+  grupoExtraLabel: 'Grupo IV',
 })
 
 const DEFAULT_TERMINACIONES = [
@@ -483,27 +489,8 @@ const DEFAULT_TERMINACIONES = [
 ]
 
 const allTerminaciones = ref([...DEFAULT_TERMINACIONES])
-const addTermTipoIdx = ref(null)
-const newTermNombre = ref('')
-const newTermCode = ref('')
 
 const priceRows = ref({})
-
-function addCustomTerm(tipoIdx) {
-  const nombre = newTermNombre.value.trim()
-  const code = newTermCode.value.trim().toUpperCase()
-  if (!nombre || !code) return
-  if (!allTerminaciones.value.some(t => t.code === code)) {
-    allTerminaciones.value.push({ nombre, code })
-  }
-  const tc = form.value.tiposConfig[tipoIdx]
-  if (tc && !tc.terminaciones.includes(code)) {
-    tc.terminaciones.push(code)
-  }
-  newTermNombre.value = ''
-  newTermCode.value = ''
-  addTermTipoIdx.value = null
-}
 
 function addTipoConfig() {
   form.value.tiposConfig.push({ nombre: '', terminaciones: [] })
@@ -537,6 +524,7 @@ function getRowsForTipo(tipoIdx) {
           precioGrupoI: null,
           precioGrupoII: null,
           precioGrupoIII: null,
+          precioGrupoIV: null,
         }
       } else {
         priceRows.value[key].tipoProducto = tc.nombre
@@ -726,6 +714,8 @@ function populate() {
     unidadPrecio: p.unidadPrecio || 'hoja',
     stock: p.stock ?? 0,
     tiposConfig,
+    habilitarGrupoExtra: p.habilitarGrupoExtra ?? false,
+    grupoExtraLabel: p.grupoExtraLabel || 'Grupo IV',
   }
 
   // Pre-fill priceRows from variantes
@@ -742,6 +732,7 @@ function populate() {
       precioGrupoI: v.precioGrupoI ?? null,
       precioGrupoII: v.precioGrupoII ?? null,
       precioGrupoIII: v.precioGrupoIII ?? null,
+      precioGrupoIV: v.precioGrupoIV ?? null,
     }
   }
 }
@@ -790,6 +781,7 @@ async function save() {
       precioGrupoI: v.precioGrupoI,
       precioGrupoII: v.precioGrupoII,
       precioGrupoIII: v.precioGrupoIII,
+      precioGrupoIV: payload.habilitarGrupoExtra ? (v.precioGrupoIV ?? null) : null,
     }))
     payload.variantes = vars
     if (vars.length === 1) {
@@ -801,6 +793,7 @@ async function save() {
       payload.precioGrupoI = v0.precioGrupoI
       payload.precioGrupoII = v0.precioGrupoII
       payload.precioGrupoIII = v0.precioGrupoIII
+      payload.precioGrupoIV = v0.precioGrupoIV
     }
     await store.updateProduct(route.params.id, payload)
     toast.success('Producto actualizado correctamente.')
@@ -1024,24 +1017,20 @@ async function save() {
 .term-name { font-weight: 600; }
 .term-code { font-size: 0.72rem; color: var(--color-muted); font-weight: 700; letter-spacing: 0.05em; }
 
-.th-addterm { text-align: right; white-space: nowrap; }
-.btn-addterm {
-  display: inline-flex; align-items: center; gap: 0.25rem;
-  background: rgba(107,142,58,0.08); border: 1px solid rgba(107,142,58,0.2);
-  color: var(--color-primary,#6b8e3a); border-radius: 7px;
-  font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; cursor: pointer;
-  transition: all 0.15s; white-space: nowrap;
+.th-grupo-extra { white-space: nowrap; }
+.grupo-extra-head {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  cursor: pointer; font-weight: 600; font-size: 0.7rem;
+  color: var(--color-muted);
 }
-.btn-addterm:hover { background: rgba(107,142,58,0.16); }
-
-.add-term-inline {
-  display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;
-  padding: 0.5rem 0.6rem; margin-top: 0.4rem;
-  background: rgba(107,142,58,0.04); border-radius: 0 0 8px 8px;
-  border: 1px dashed rgba(107,142,58,0.25); border-top: none;
+.grupo-extra-head input[type="checkbox"] { cursor: pointer; accent-color: var(--color-primary, #6b8e3a); }
+.grupo-extra-label-input {
+  width: 90px; padding: 0.15rem 0.35rem; border-radius: 5px;
+  border: 1px solid rgba(107,142,58,0.3); font-size: 0.7rem; font-weight: 700;
+  color: var(--color-text); background: rgba(107,142,58,0.04);
 }
-.add-term-inline .input-sm { max-width: 140px; }
-.add-term-inline .input-code { max-width: 60px; }
+.grupo-extra-hint { opacity: 0.55; font-style: italic; }
+.cell-extra-off { color: rgba(0,0,0,0.18); font-size: 0.85rem; }
 
 .cell-label { font-size: 0.82rem; font-weight: 500; }
 .cell-sku code { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: var(--color-muted); }

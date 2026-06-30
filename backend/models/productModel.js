@@ -20,6 +20,7 @@ const productSchema = new mongoose.Schema({
         precioGrupoI: Number,
         precioGrupoII: Number,
         precioGrupoIII: Number,
+        precioGrupoIV: Number,
     }],
     medida: { type: String },
     nomenclaturaMedida: { type: String },
@@ -51,6 +52,9 @@ const productSchema = new mongoose.Schema({
     precioGrupoI: { type: Number },
     precioGrupoII: { type: Number },
     precioGrupoIII: { type: Number },
+    precioGrupoIV: { type: Number },
+    habilitarGrupoExtra: { type: Boolean, default: false },
+    grupoExtraLabel: { type: String, default: 'Grupo IV' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 })
