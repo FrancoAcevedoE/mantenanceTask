@@ -204,17 +204,6 @@
                     <th>$ Grupo I</th>
                     <th>$ Grupo II</th>
                     <th>$ Grupo III</th>
-                    <th class="th-grupo-extra">
-                      <label class="grupo-extra-head">
-                        <input type="checkbox" v-model="form.habilitarGrupoExtra" />
-                        <input v-if="form.habilitarGrupoExtra"
-                               v-model="form.grupoExtraLabel"
-                               type="text" class="grupo-extra-label-input"
-                               placeholder="Grupo IV" maxlength="20"
-                               @click.stop />
-                        <span v-else class="grupo-extra-hint">+ Grupo extra</span>
-                      </label>
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -245,13 +234,6 @@
                         <input v-model.number="row.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
                       </div>
                     </td>
-                    <td>
-                      <div v-if="form.habilitarGrupoExtra" class="pct-input-wrap">
-                        <span class="input-prefix-inline">$</span>
-                        <input v-model.number="row.precioGrupoIV" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
-                      </div>
-                      <span v-else class="cell-extra-off">—</span>
-                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -261,6 +243,30 @@
           <button type="button" class="secondary-button add-row-btn" @click="addTipoConfig">
             <i class="bi bi-plus"></i> Agregar otro tipo de producto
           </button>
+
+          <!-- Agregado opcional -->
+          <div class="section-title">Agregado opcional</div>
+          <div class="agregado-row">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.tieneAgregado" />
+              <span>Este producto tiene un complemento opcional</span>
+            </label>
+            <template v-if="form.tieneAgregado">
+              <div class="agregado-fields">
+                <div class="field">
+                  <label>Nombre del agregado</label>
+                  <input v-model="form.agregadoNombre" type="text" placeholder="Ej: Capa exterior, Tratamiento UV..." />
+                </div>
+                <div class="field">
+                  <label>Precio del agregado</label>
+                  <div class="pct-input-wrap">
+                    <span class="input-prefix">$</span>
+                    <input v-model.number="form.agregadoPrecio" type="number" min="0" step="0.01" placeholder="0.00" />
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
 
           <!-- Comercial -->
           <div class="section-title">Comercial</div>
@@ -478,8 +484,9 @@ const form = ref({
   unidadPrecio: 'hoja',
   stock: 0,
   tiposConfig: [{ nombre: '', terminaciones: [] }],
-  habilitarGrupoExtra: false,
-  grupoExtraLabel: 'Grupo IV',
+  tieneAgregado: false,
+  agregadoNombre: '',
+  agregadoPrecio: null,
 })
 
 const DEFAULT_TERMINACIONES = [
@@ -524,7 +531,6 @@ function getRowsForTipo(tipoIdx) {
           precioGrupoI: null,
           precioGrupoII: null,
           precioGrupoIII: null,
-          precioGrupoIV: null,
         }
       } else {
         priceRows.value[key].tipoProducto = tc.nombre
@@ -714,8 +720,9 @@ function populate() {
     unidadPrecio: p.unidadPrecio || 'hoja',
     stock: p.stock ?? 0,
     tiposConfig,
-    habilitarGrupoExtra: p.habilitarGrupoExtra ?? false,
-    grupoExtraLabel: p.grupoExtraLabel || 'Grupo IV',
+    tieneAgregado: p.tieneAgregado ?? false,
+    agregadoNombre: p.agregadoNombre || '',
+    agregadoPrecio: p.agregadoPrecio ?? null,
   }
 
   // Pre-fill priceRows from variantes
@@ -732,7 +739,6 @@ function populate() {
       precioGrupoI: v.precioGrupoI ?? null,
       precioGrupoII: v.precioGrupoII ?? null,
       precioGrupoIII: v.precioGrupoIII ?? null,
-      precioGrupoIV: v.precioGrupoIV ?? null,
     }
   }
 }
@@ -781,7 +787,6 @@ async function save() {
       precioGrupoI: v.precioGrupoI,
       precioGrupoII: v.precioGrupoII,
       precioGrupoIII: v.precioGrupoIII,
-      precioGrupoIV: payload.habilitarGrupoExtra ? (v.precioGrupoIV ?? null) : null,
     }))
     payload.variantes = vars
     if (vars.length === 1) {
@@ -793,7 +798,10 @@ async function save() {
       payload.precioGrupoI = v0.precioGrupoI
       payload.precioGrupoII = v0.precioGrupoII
       payload.precioGrupoIII = v0.precioGrupoIII
-      payload.precioGrupoIV = v0.precioGrupoIV
+    }
+    if (!payload.tieneAgregado) {
+      payload.agregadoNombre = ''
+      payload.agregadoPrecio = null
     }
     await store.updateProduct(route.params.id, payload)
     toast.success('Producto actualizado correctamente.')
@@ -1017,20 +1025,15 @@ async function save() {
 .term-name { font-weight: 600; }
 .term-code { font-size: 0.72rem; color: var(--color-muted); font-weight: 700; letter-spacing: 0.05em; }
 
-.th-grupo-extra { white-space: nowrap; }
-.grupo-extra-head {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  cursor: pointer; font-weight: 600; font-size: 0.7rem;
-  color: var(--color-muted);
+.agregado-row { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.agregado-fields {
+  display: grid; grid-template-columns: 1fr 200px; gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  background: rgba(107,142,58,0.04);
+  border: 1px solid rgba(107,142,58,0.15);
+  border-radius: 10px;
 }
-.grupo-extra-head input[type="checkbox"] { cursor: pointer; accent-color: var(--color-primary, #6b8e3a); }
-.grupo-extra-label-input {
-  width: 90px; padding: 0.15rem 0.35rem; border-radius: 5px;
-  border: 1px solid rgba(107,142,58,0.3); font-size: 0.7rem; font-weight: 700;
-  color: var(--color-text); background: rgba(107,142,58,0.04);
-}
-.grupo-extra-hint { opacity: 0.55; font-style: italic; }
-.cell-extra-off { color: rgba(0,0,0,0.18); font-size: 0.85rem; }
+@media (max-width: 600px) { .agregado-fields { grid-template-columns: 1fr; } }
 
 .cell-label { font-size: 0.82rem; font-weight: 500; }
 .cell-sku code { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: var(--color-muted); }
