@@ -209,6 +209,8 @@ import { useRoute } from 'vue-router'
 const open = ref(false)
 const route = useRoute()
 
+defineExpose({ open })
+
 const sections = [
   { id: 'inventory', label: 'Inventario', icon: 'bi-box-seam' },
   { id: 'sku',       label: 'SKU',        icon: 'bi-upc-scan' },
@@ -258,12 +260,17 @@ const toggleWithRoute = () => {
   background: #1e3a5f;
   color: #fff;
   border: none;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
   cursor: pointer;
   font-size: 1.1rem;
-  transition: background 0.15s;
+  opacity: 0.35;
+  transition: opacity 0.2s, background 0.15s;
 }
-.manual-btn:hover { background: #274f82; }
+.manual-btn:hover { opacity: 1; background: #274f82; }
+
+@media (max-width: 768px) {
+  .manual-shell { display: none; }
+}
 
 .manual-btn-label {
   font-size: 0.55rem;

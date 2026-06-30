@@ -70,7 +70,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
 
 <template>
   <NotificationBell v-if="showNav" />
-  <UserManual v-if="showNav" />
+  <UserManual v-if="showNav" ref="manual" />
 
   <div v-if="showNav && mobileOpen" class="sidebar-backdrop" @click="closeMobile" />
 
@@ -114,10 +114,16 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       </router-link>
     </nav>
 
-    <button class="sidebar-logout" @click="logout" type="button">
-      <i class="bi bi-box-arrow-right"></i>
-      <span class="nav-label">Cerrar sesión</span>
-    </button>
+    <div class="sidebar-bottom-actions">
+      <button class="sidebar-manual-btn" @click="$refs.manual.open = true; closeMobile()" type="button">
+        <i class="bi bi-question-circle-fill"></i>
+        <span class="nav-label">Manual de usuario</span>
+      </button>
+      <button class="sidebar-logout" @click="logout" type="button">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="nav-label">Cerrar sesión</span>
+      </button>
+    </div>
   </aside>
 
   <main :class="['app-content', { 'with-nav': showNav, 'nav-open': showNav && mobileOpen }]">
@@ -330,10 +336,51 @@ main.app-content.nav-open {
   text-align: center;
 }
 
+/* ── Sidebar bottom actions ── */
+
+.sidebar-bottom-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+}
+
+.sidebar-manual-btn {
+  display: none; /* solo visible en mobile via el sidebar */
+  align-items: center;
+  width: 100%;
+  gap: 0;
+  padding: 0.7rem 0.6rem;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: #767676;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.sidebar-manual-btn:hover {
+  background: rgba(30, 58, 95, 0.1);
+  color: #1e3a5f;
+}
+.sidebar-manual-btn i {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  width: 32px;
+  text-align: center;
+}
+
 /* ── Mobile: no desplazar contenido, solo overlay ── */
 @media (max-width: 768px) {
   main.app-content.nav-open {
     margin-left: 0;
+  }
+
+  .sidebar-manual-btn {
+    display: flex;
   }
 }
 </style>
