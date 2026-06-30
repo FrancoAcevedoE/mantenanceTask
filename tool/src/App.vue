@@ -92,10 +92,6 @@ onBeforeUnmount(() => { notificationsStore.stop() })
         <i class="bi bi-bell"></i>
         <span class="nav-label">Notificaciones</span>
       </router-link>
-      <router-link v-if="canViewSeller" to="/seller" @click="closeMobile">
-        <i class="bi bi-calculator"></i>
-        <span class="nav-label">Cotizaciones</span>
-      </router-link>
       <router-link v-if="canViewSeller" to="/inventory" @click="closeMobile">
         <i class="bi bi-box-seam"></i>
         <span class="nav-label">Inventario</span>
