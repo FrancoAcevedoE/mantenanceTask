@@ -2,6 +2,7 @@
   <div class="manual-shell">
     <button type="button" class="manual-btn" @click.stop="open = !open" title="Manual de usuario">
       <i class="bi bi-question-circle-fill"></i>
+      <span class="manual-btn-label">Manual</span>
     </button>
 
     <Teleport to="body">
@@ -240,27 +241,37 @@ const toggleWithRoute = () => {
 <style scoped>
 .manual-shell {
   position: fixed;
-  top: 1rem;
-  right: 4.5rem;
+  top: 5.5rem;
+  right: 1rem;
   z-index: 1200;
 }
 
 .manual-btn {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.15rem;
   width: 54px;
   height: 54px;
-  border-radius: 50%;
+  border-radius: 14px;
   background: #1e3a5f;
-  color: #f8fafc;
+  color: #fff;
   border: none;
-  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.28);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28);
   cursor: pointer;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   transition: background 0.15s;
 }
 .manual-btn:hover { background: #274f82; }
+
+.manual-btn-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
 
 .manual-backdrop {
   position: fixed;
