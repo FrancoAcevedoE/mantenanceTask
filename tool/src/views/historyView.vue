@@ -181,13 +181,13 @@ export default {
 
     getStoredUser() {
       try {
-        const raw = localStorage.getItem("user")
+        const raw = sessionStorage.getItem("user")
         return raw ? JSON.parse(raw) : null
       } catch { return null }
     },
 
     authConfig() {
-      const token = localStorage.getItem("token")
+      const token = sessionStorage.getItem("token")
       return { headers: { Authorization: `Bearer ${token}` } }
     },
 

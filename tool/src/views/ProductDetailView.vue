@@ -241,7 +241,7 @@ const imgExpanded = ref(false)
 const lightboxColor = ref(null)
 
 function authHeader() {
-  const token = localStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
 }
 

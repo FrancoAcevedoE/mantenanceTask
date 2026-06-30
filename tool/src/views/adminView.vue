@@ -180,7 +180,7 @@ import { API_BASE_URL } from '@/utils/api'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 function getCurrentUser() {
-  try { return JSON.parse(localStorage.getItem('user') || '{}') } catch { return {} }
+  try { return JSON.parse(sessionStorage.getItem('user') || '{}') } catch { return {} }
 }
 
 export default {
@@ -219,7 +219,7 @@ export default {
       this.message = ""
     },
     authConfig() {
-      const token = localStorage.getItem("token")
+      const token = sessionStorage.getItem("token")
 
       return {
         headers: {

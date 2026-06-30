@@ -305,7 +305,7 @@ export default {
       this.form.machineParts.splice(index, 1)
     },
     authConfig() {
-      const token = localStorage.getItem("token")
+      const token = sessionStorage.getItem("token")
       return {
         headers: {
           'Authorization': `Bearer ${token}`

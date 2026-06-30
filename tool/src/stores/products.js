@@ -27,7 +27,7 @@ export const useProductsStore = defineStore('products', () => {
   const uniqueTexturas = computed(() => [...new Set(products.value.map(p => p.textura).filter(Boolean))])
 
   function authHeader() {
-    const token = localStorage.getItem('token')
+    const token = sessionStorage.getItem('token')
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
   }
 

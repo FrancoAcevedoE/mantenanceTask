@@ -10,7 +10,7 @@ const notificationsStore = useNotificationsStore()
 
 const getStoredUser = () => {
   try {
-    const rawUser = localStorage.getItem('user')
+    const rawUser = sessionStorage.getItem('user')
     return rawUser ? JSON.parse(rawUser) : null
   } catch {
     return null
@@ -24,7 +24,7 @@ const currentUser = computed(() => {
 
 const showNav = computed(() => {
   route.fullPath
-  return route.name !== 'LogUser' && Boolean(localStorage.getItem('token'))
+  return route.name !== 'LogUser' && Boolean(sessionStorage.getItem('token'))
 })
 
 const isAdmin = computed(() => currentUser.value?.role === 'admin')
@@ -38,8 +38,8 @@ const mobileOpen = ref(false)
 const closeMobile = () => { mobileOpen.value = false }
 
 const logout = async () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
+  sessionStorage.removeItem('token')
+  sessionStorage.removeItem('user')
   notificationsStore.reset()
   closeMobile()
   await router.push('/logUser')

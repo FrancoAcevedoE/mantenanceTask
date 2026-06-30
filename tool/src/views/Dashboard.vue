@@ -531,7 +531,7 @@ export default {
     },
 
     currentUser() {
-      return JSON.parse(localStorage.getItem('user') || '{}')
+      return JSON.parse(sessionStorage.getItem('user') || '{}')
     }
 
   },
@@ -550,7 +550,7 @@ export default {
     this.syncPeriodSelectorsFromPeriod()
 
     // Solo cargar dashboard para admin, supervisor y operario
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const user = JSON.parse(sessionStorage.getItem('user') || '{}')
     if (['admin', 'supervisor', 'operario'].includes(user.role)) {
       await this.loadDashboard()
     }
@@ -585,7 +585,7 @@ export default {
 
     authConfig() {
 
-      const token = localStorage.getItem("token")
+      const token = sessionStorage.getItem("token")
 
       return {
         headers: {
@@ -644,8 +644,8 @@ export default {
 
       } catch (error) {
         if (error.response?.status === 401 || error.response?.status === 403) {
-          localStorage.removeItem("token")
-          localStorage.removeItem("user")
+          sessionStorage.removeItem("token")
+          sessionStorage.removeItem("user")
           this.$notify.warning("Tu sesion expiro. Volve a iniciar sesion para cargar el dashboard.")
           this.$router.push("/logUser")
           return

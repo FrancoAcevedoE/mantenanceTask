@@ -112,8 +112,8 @@ export default {
 
         const token = response.data.token
         const user = response.data.user
-        localStorage.setItem("token",token)
-        localStorage.setItem("user", JSON.stringify(user))
+        sessionStorage.setItem("token",token)
+        sessionStorage.setItem("user", JSON.stringify(user))
         const dest = user.role === 'admin' ? '/adminView' : user.role === 'admin_ventas' ? '/inventory' : '/dashboard'
         this.$router.push(dest)
 

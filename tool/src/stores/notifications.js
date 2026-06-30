@@ -56,7 +56,7 @@ export const useNotificationsStore = defineStore('notifications', {
 
   actions: {
     authConfig() {
-      const token = localStorage.getItem('token')
+      const token = sessionStorage.getItem('token')
 
       return {
         headers: {
@@ -66,13 +66,13 @@ export const useNotificationsStore = defineStore('notifications', {
     },
 
     async fetchNotifications({ silent = false } = {}) {
-      if (!localStorage.getItem('token')) {
+      if (!sessionStorage.getItem('token')) {
         this.reset()
         return
       }
 
       // No cargar notificaciones de mantenimiento para vendedores
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
       if (user.role === 'vendedor') {
         // Inicializar con datos vacíos para vendedores
         this.items = []
@@ -223,7 +223,7 @@ export const useNotificationsStore = defineStore('notifications', {
     },
 
     async syncPushStatus() {
-      if (!this.pushSupported || !localStorage.getItem('token')) {
+      if (!this.pushSupported || !sessionStorage.getItem('token')) {
         this.pushEnabled = false
         return false
       }

@@ -386,7 +386,7 @@ export default {
 
     getStoredUser() {
       try {
-        const rawUser = localStorage.getItem('user')
+        const rawUser = sessionStorage.getItem('user')
         return rawUser ? JSON.parse(rawUser) : null
       } catch {
         return null
@@ -399,7 +399,7 @@ export default {
     },
 
     authConfig() {
-      const token = localStorage.getItem('token')
+      const token = sessionStorage.getItem('token')
 
       return {
         headers: {

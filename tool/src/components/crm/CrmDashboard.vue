@@ -189,7 +189,7 @@ const fmtDate = (d) =>
 onMounted(async () => {
   loading.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = sessionStorage.getItem('token')
     const { data } = await axios.get(`${API_BASE_URL}/quotes`, {
       headers: { Authorization: `Bearer ${token}` }
     })

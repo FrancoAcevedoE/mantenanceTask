@@ -188,7 +188,7 @@ export default {
     },
 
     currentUser() {
-      return JSON.parse(localStorage.getItem('user') || '{}')
+      return JSON.parse(sessionStorage.getItem('user') || '{}')
     }
   },
 
@@ -209,7 +209,7 @@ export default {
     authConfig() {
       return {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`
         }
       }
     },
@@ -383,7 +383,7 @@ export default {
     document.body.style.background = 'rgb(103, 111, 62)'
     document.body.style.backgroundAttachment = 'fixed'
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const user = JSON.parse(sessionStorage.getItem('user') || '{}')
     if (user.role === 'vendedor') return
 
     this.loadHistory()

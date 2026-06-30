@@ -20,7 +20,7 @@ import CrmView from '@/views/CrmView.vue'
 
 const getStoredUser = () => {
   try {
-    const rawUser = localStorage.getItem('user')
+    const rawUser = sessionStorage.getItem('user')
     return rawUser ? JSON.parse(rawUser) : null
   } catch {
     return null
@@ -33,7 +33,7 @@ const router = createRouter({
 
       {
         path: '/',
-        redirect: () => localStorage.getItem('token') ? '/dashboard' : '/logUser'
+        redirect: () => sessionStorage.getItem('token') ? '/dashboard' : '/logUser'
       },
 
       {
@@ -95,7 +95,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
   const user = getStoredUser()
 
   if (to.name === 'LogUser' && token) {

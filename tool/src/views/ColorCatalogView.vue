@@ -167,7 +167,7 @@ function openLightbox(c) { lightboxColor.value = c }
 const form = ref({ code: '', name: '', tipo: '', grupoColor: 1, image: '' })
 
 function authHeader() {
-  const token = localStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
 }
 

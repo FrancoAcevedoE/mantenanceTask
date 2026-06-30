@@ -179,7 +179,7 @@ const errors = ref({})
 const form = ref({ nombre: '', descuentos: [], notas: '' })
 
 function authHeader() {
-  const token = localStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
 }
 

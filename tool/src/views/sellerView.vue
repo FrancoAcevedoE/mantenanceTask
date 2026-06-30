@@ -724,7 +724,7 @@ const totalForm = computed(() =>
 
 // ── Auth header ───────────────────────────────────────────────────────────────
 function authH() {
-  const token = localStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
 }
 

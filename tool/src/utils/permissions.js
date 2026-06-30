@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 
 function getUser() {
-  try { return JSON.parse(localStorage.getItem('user') || '{}') } catch { return {} }
+  try { return JSON.parse(sessionStorage.getItem('user') || '{}') } catch { return {} }
 }
 
 export function usePermissions() {
