@@ -341,6 +341,7 @@
                     rows="1"
                     @input="autoResize($event)"
                     @focus="autoResize($event)"
+                    @blur="$event.target.style.height = ''"
                   ></textarea>
                 </td>
 
