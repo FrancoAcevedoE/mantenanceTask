@@ -283,7 +283,7 @@
                 <!-- Descuento -->
                 <td class="col-disc">
                   <span v-if="!item._admiteDescuentos" class="badge-exento" title="Este producto está exento de descuentos">Exento</span>
-                  <template v-else>
+                  <div v-else class="disc-wrap">
                     <select
                       v-model="item._discountLabel"
                       @change="onDiscountChange(idx)"
@@ -317,7 +317,7 @@
                         @click="clearDiscount(idx)"
                       ><i class="bi bi-x-lg"></i></button>
                     </div>
-                  </template>
+                  </div>
                 </td>
 
                 <!-- Precio unitario -->
@@ -334,7 +334,14 @@
 
                 <!-- Descripción -->
                 <td class="col-desc">
-                  <input v-model="item.descripcion" type="text" placeholder="Observaciones…" class="input-small" />
+                  <textarea
+                    v-model="item.descripcion"
+                    placeholder="Observaciones…"
+                    class="input-small desc-textarea"
+                    rows="1"
+                    @input="autoResize($event)"
+                    @focus="autoResize($event)"
+                  ></textarea>
                 </td>
 
                 <!-- Subtotal -->
@@ -349,14 +356,26 @@
               </tr>
               <tr v-if="item._tieneAgregado" class="agregado-sub-row">
                 <td colspan="10">
-                  <label class="agregado-check-label">
+                  <div class="agregado-check-label">
                     <input type="checkbox" v-model="item._incluirAgregado" @change="recalc(idx)" />
                     <span class="agregado-check-name">{{ item._agregadoNombre }}</span>
-                    <span class="agregado-check-price">+ {{ fmtMoney(item._agregadoPrecio) }} / u &nbsp;·&nbsp; sin descuento</span>
-                    <span v-if="item._incluirAgregado" class="agregado-check-total">
-                      total agregado: {{ fmtMoney((item._agregadoPrecio || 0) * (item.cantidad || 0)) }}
-                    </span>
-                  </label>
+                    <span class="agregado-check-price">{{ fmtMoney(item._agregadoPrecio) }} / u &nbsp;·&nbsp; sin descuento</span>
+                    <template v-if="item._incluirAgregado">
+                      <div class="agregado-qty-wrap">
+                        <span class="agregado-qty-label">Cant.</span>
+                        <input
+                          v-model.number="item._agregadoCantidad"
+                          type="number" min="1" step="1"
+                          class="agregado-qty-input"
+                          @input="recalc(idx)"
+                          @focus="$event.target.select()"
+                        />
+                      </div>
+                      <span class="agregado-check-total">
+                        = {{ fmtMoney((item._agregadoPrecio || 0) * (item._agregadoCantidad || 1)) }}
+                      </span>
+                    </template>
+                  </div>
                 </td>
               </tr>
               </template>
@@ -890,6 +909,7 @@ function emptyItem() {
     _agregadoNombre: '',
     _agregadoPrecio: 0,
     _incluirAgregado: false,
+    _agregadoCantidad: 1,
     nombre: '',
     codigo: '',
     tipo: '',
@@ -944,6 +964,7 @@ function editQuote(q) {
         _agregadoNombre: prod?.agregadoNombre || '',
         _agregadoPrecio: prod?.agregadoPrecio ?? 0,
         _incluirAgregado: it._incluirAgregado ?? false,
+        _agregadoCantidad: it._agregadoCantidad ?? 1,
         nombre: it.nombre || '',
         codigo: it.codigo || '',
         tipo: it.tipo || '',
@@ -981,8 +1002,14 @@ function removeItem(idx) {
 function recalc(idx) {
   const item = form.value.items[idx]
   const base = (item.cantidad || 0) * (item.precioUnitario || 0)
-  const agr = item._incluirAgregado ? (item.cantidad || 0) * (item._agregadoPrecio || 0) : 0
+  const agr = item._incluirAgregado ? (item._agregadoCantidad || 1) * (item._agregadoPrecio || 0) : 0
   item.subtotal = Number((base + agr).toFixed(2))
+}
+
+function autoResize(e) {
+  const el = e.target
+  el.style.height = 'auto'
+  el.style.height = el.scrollHeight + 'px'
 }
 
 // ── Búsqueda de producto por SKU / nombre ────────────────────────────────────
@@ -1183,6 +1210,7 @@ function selectResult(idx, p) {
   item._agregadoNombre = p.agregadoNombre || ''
   item._agregadoPrecio = p.agregadoPrecio ?? 0
   item._incluirAgregado = false
+  item._agregadoCantidad = 1
   item._discountPct = 0
   item._discountLabel = 'Sin descuento'
 
@@ -1270,6 +1298,7 @@ function buildPayload() {
       discountLabel: it._discountLabel !== 'Sin descuento' ? it._discountLabel : '',
       discountPct: it._discountPct || 0,
       _incluirAgregado: it._incluirAgregado || false,
+      _agregadoCantidad: it._agregadoCantidad || 1,
     })),
     descripcionGeneral: form.value.descripcionGeneral,
   }
@@ -1458,9 +1487,10 @@ function hasCliente(q) {
 .sp-clear:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
 
 /* ── Descuento ── */
-.sel-disc { width: 100%; font-size: 0.78rem; padding: 0.28rem 0.4rem; border: 1px solid rgba(107,142,58,0.2); border-radius: 7px; }
+.disc-wrap { display: flex; align-items: center; gap: 0.35rem; flex-wrap: nowrap; }
+.sel-disc { font-size: 0.78rem; padding: 0.28rem 0.4rem; border: 1px solid rgba(107,142,58,0.2); border-radius: 7px; min-width: 0; flex: 1; }
 .sel-disc:disabled { opacity: 0.45; cursor: not-allowed; }
-.disc-manual { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.3rem; }
+.disc-manual { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
 .disc-pct-input {
   width: 54px; font-size: 0.82rem; padding: 0.3rem 0.35rem;
   border: 1px solid rgba(107,142,58,0.22); border-radius: 7px;
@@ -1498,6 +1528,15 @@ function hasCliente(q) {
   background: rgba(107,142,58,0.1); border-radius: 5px;
   padding: 0.1rem 0.45rem;
 }
+.agregado-qty-wrap {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+}
+.agregado-qty-label { font-size: 0.72rem; color: var(--color-muted); }
+.agregado-qty-input {
+  width: 48px; text-align: center; font-size: 0.8rem; font-weight: 700;
+  padding: 0.15rem 0.3rem; border-radius: 6px;
+  border: 1px solid rgba(107,142,58,0.3); background: #fff;
+}
 
 /* ── Campos genéricos en tabla ── */
 .sel-small, .input-small {
@@ -1508,6 +1547,10 @@ function hasCliente(q) {
 .sel-small:focus, .input-small:focus {
   outline: none; border-color: var(--color-primary, #6b8e3a);
   box-shadow: 0 0 0 2px rgba(107,142,58,0.12);
+}
+.desc-textarea {
+  resize: none; overflow: hidden; min-height: 32px;
+  line-height: 1.4; display: block;
 }
 .input-num {
   width: 100%; font-size: 0.82rem; padding: 0.38rem 0.55rem;
