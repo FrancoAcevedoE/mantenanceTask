@@ -142,7 +142,7 @@ export default {
     this.pwaUrl = normalizedUrl
     this.qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(this.pwaUrl)}`
 
-    document.body.style.background = 'linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28))';
+    document.body.style.background = 'linear-gradient(160deg, #f8fafc 0%, #e8ede4 60%, #f1f5f9 100%)';
   },
 
   beforeUnmount() {
@@ -158,11 +158,11 @@ input {
   padding: 12px 16px;
   margin: 10px 0;
 
-  border: 1px solid #d8d8d8;
+  border: 1px solid #e2e8f0;
   border-radius: 999px;
 
-  background: #fff;
-  color: #333;
+  background: #ffffff;
+  color: #1e293b;
 
   font-size: 1rem;
 
@@ -174,26 +174,24 @@ input {
 input:hover,
 input:focus {
   outline: none;
-  background: #f8f8f8;
-  border-color: #bdbdbd;
+  background: #f8fafc;
+  border-color: #3b6b2e;
 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 0 0 3px rgba(59, 107, 46, 0.1);
 }
 .login-box{
-  background: rgba(255,255,255,0.96);
+  background: #ffffff;
 
   padding: 2rem;
 
-  border-radius: 24px;
+  border-radius: 20px;
 
   width: min(420px, 100%);
 
   margin-top: 1.25rem;
 
-  box-shadow:
-    0 10px 24px rgba(21,38,18,0.18);
-
-  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 32px rgba(30, 41, 59, 0.12);
+  border: 1px solid #e2e8f0;
 }
 * {
   box-sizing: border-box;
@@ -229,15 +227,16 @@ input:focus {
 ========================= */
 
 .pwa-qr-box {
-  background: rgba(255,255,255,0.92);
+  background: #ffffff;
 
-  border-radius: 16px;
+  border-radius: 14px;
 
   padding: 0.75rem;
 
   text-align: center;
 
-  box-shadow: 0 2px 4px rgba(0,0,0,.18);
+  box-shadow: 0 4px 16px rgba(30, 41, 59, 0.1);
+  border: 1px solid #e2e8f0;
 
   display: flex;
   flex-direction: column;
@@ -253,7 +252,7 @@ input:focus {
 
 .pwa-qr-box h3 {
   margin: 0 0 .4rem;
-  color: #333;
+  color: #1e293b;
   font-size: .95rem;
 }
 
@@ -322,18 +321,21 @@ input:focus {
   align-items: center;
   justify-content: center;
 
-  background: white;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(226, 232, 240, 0.5);
 
-  color: #0369a1;
+  color: #e2e8f0;
 
   text-decoration: none;
 
-  box-shadow: 0 1px 4px rgba(0,0,0,.18);
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
 
   transition: .2s;
 }
 
 .social-links a:hover {
+  background: rgba(255,255,255,0.28);
+  border-color: rgba(255,255,255,0.6);
   transform: translateY(-2px);
 }
 
@@ -354,12 +356,37 @@ input:focus {
 }
 
 /* =========================
+   TITLE
+========================= */
+
+.login-box .title {
+  color: #1e293b;
+  font-size: 1.9rem;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.5rem;
+}
+
+/* =========================
    LOGIN BUTTON
 ========================= */
 
 .login-btn {
   position: relative;
   min-height: 44px;
+  width: 100%;
+  background: #3b6b2e;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.18s;
+}
+
+.login-btn:hover:not(:disabled) {
+  background: #2d5224;
 }
 
 .login-btn:disabled {

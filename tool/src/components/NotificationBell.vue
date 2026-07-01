@@ -198,12 +198,19 @@ onBeforeUnmount(() => {
   width: 54px !important;
   height: 54px;
   padding: 0 !important;
-  border: 0;
+  border: 1px solid #e2e8f0;
   border-radius: 50%;
-  background: #0f172a;
-  color: #f8fafc;
-  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.28);
+  background: #ffffff;
+  color: #475569;
+  box-shadow: 0 2px 12px rgba(30, 41, 59, 0.1);
   cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+
+.notification-bell:hover {
+  background: #f8fafc;
+  color: #3b6b2e;
+  box-shadow: 0 4px 16px rgba(30, 41, 59, 0.14);
 }
 
 .notification-bell i {
@@ -225,7 +232,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #fff;
+  border: 2px solid #ffffff;
 }
 
 .notification-panel {

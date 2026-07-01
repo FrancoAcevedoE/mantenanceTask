@@ -23,6 +23,10 @@
         {{ showPending ? 'Solo pendientes' : 'Todas' }}
       </button>
 
+      <button class="ca-btn-difusion" @click="showDifusion = true">
+        <i class="bi bi-megaphone-fill"></i> Difusión
+      </button>
+
       <button class="ca-btn-add" @click="openModal">
         <i class="bi bi-plus-circle-fill"></i> Nueva actividad
       </button>
@@ -188,12 +192,16 @@
       </div>
     </Teleport>
 
+    <!-- ── Difusión modal ── -->
+    <CrmDifusion :open="showDifusion" @close="showDifusion = false" />
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useCrmStore } from '@/stores/crm'
+import CrmDifusion from './CrmDifusion.vue'
 
 const crmStore = useCrmStore()
 
@@ -201,15 +209,17 @@ const filterTipo    = ref('')
 const filterCliente = ref('')
 const showPending   = ref(false)
 const showModal     = ref(false)
+const showDifusion  = ref(false)
 const saving        = ref(false)
 const formError     = ref('')
 const deleting      = ref(null)
 
 const TYPES = [
-  { key: 'llamada', label: 'Llamada',  icon: 'bi bi-telephone-fill', color: '#3b82f6' },
-  { key: 'reunion', label: 'Reunión',  icon: 'bi bi-people-fill',    color: '#8b5cf6' },
-  { key: 'correo',  label: 'Correo',   icon: 'bi bi-envelope-fill',  color: '#f59e0b' },
-  { key: 'nota',    label: 'Nota',     icon: 'bi bi-sticky-fill',    color: '#6b8e3a' },
+  { key: 'llamada',  label: 'Llamada',  icon: 'bi bi-telephone-fill',  color: '#3b82f6' },
+  { key: 'reunion',  label: 'Reunión',  icon: 'bi bi-people-fill',     color: '#8b5cf6' },
+  { key: 'correo',   label: 'Correo',   icon: 'bi bi-envelope-fill',   color: '#f59e0b' },
+  { key: 'nota',     label: 'Nota',     icon: 'bi bi-sticky-fill',     color: '#6b8e3a' },
+  { key: 'difusion', label: 'Difusión', icon: 'bi bi-megaphone-fill',  color: '#ec4899' },
 ]
 
 const TYPE_MAP = Object.fromEntries(TYPES.map(t => [t.key, t]))
@@ -319,6 +329,22 @@ const fmtDate = (d) => {
 }
 
 .ca-btn-toggle:hover:not(:disabled) { transform: none; }
+
+.ca-btn-difusion {
+  padding: 0.6rem 1rem;
+  font-size: 0.83rem;
+  border-radius: 12px;
+  background: rgba(236, 72, 153, 0.1);
+  color: #be185d;
+  border: 1px solid rgba(236, 72, 153, 0.2);
+  box-shadow: none;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.15s, color 0.15s;
+}
+.ca-btn-difusion:hover { background: rgba(236, 72, 153, 0.18); color: #9d174d; transform: none; }
 
 .ca-btn-add {
   padding: 0.6rem 1.1rem;

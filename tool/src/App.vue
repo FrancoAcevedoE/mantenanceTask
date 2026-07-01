@@ -134,12 +134,26 @@ onBeforeUnmount(() => { notificationsStore.stop() })
 <style>
 :root {
   --sidebar-w-open: 240px;
+  --color-bg: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-surface-2: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-text: #1e293b;
+  --color-muted: #64748b;
+  --color-primary: #3b6b2e;
+  --color-primary-hover: #2d5224;
+  --color-danger: #dc2626;
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #475569;
+  --sidebar-accent: #3b6b2e;
 }
 
-body.bg-login { background: linear-gradient(180deg, rgb(248, 248, 252), rgb(69, 82, 28)); }
+body.bg-login {
+  background: linear-gradient(160deg, #f8fafc 0%, #e8ede4 60%, #f1f5f9 100%);
+}
 body.bg-app,
 body.bg-dashboard,
-body.bg-notifications { background: rgb(103, 111, 62); }
+body.bg-notifications { background: #f1f5f9; }
 
 html, body, #app {
   height: 100vh;
@@ -155,8 +169,8 @@ html, body {
 body {
   margin: 0;
   padding: 0;
-  background: var(--color-bg, rgb(103, 111, 62));
-  color: var(--color-text, #21321A);
+  background: var(--color-bg, #f1f5f9);
+  color: var(--color-text, #1e293b);
   font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
@@ -172,15 +186,39 @@ main.app-content {
   flex: 1;
   min-width: 0;
   height: 100vh;
+  max-height: 100vh;
   padding: 0.2rem 0.35rem 0.35rem;
   background: transparent;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
   transition: margin-left 0.25s ease;
+}
+
+main.app-content::-webkit-scrollbar {
+  width: 5px;
+}
+main.app-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+main.app-content::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.25);
+  border-radius: 3px;
+}
+main.app-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.45);
 }
 
 main.app-content.with-nav {
   margin-left: 0;
+}
+
+@media (max-width: 768px) {
+  main.app-content.with-nav {
+    padding-top: 4.5rem;
+  }
 }
 
 main.app-content.nav-open {
@@ -200,16 +238,16 @@ main.app-content.nav-open {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.93);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  color: var(--color-text, #2d3d24);
+  color: #1e293b;
   padding: 0;
 }
 
 .mobile-toggle i { font-size: 1.5rem; }
-.mobile-toggle:hover { transform: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18); }
+.mobile-toggle:hover { color: #3b6b2e; transform: none; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12); }
 
 /* ── Backdrop ── */
 
@@ -234,8 +272,9 @@ main.app-content.nav-open {
   flex-direction: column;
   align-items: flex-start;
   padding: 4rem 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.97);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+  background: #ffffff;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
+  border-right: 1px solid #e2e8f0;
   overflow: hidden;
   transform: translateX(calc(-1 * var(--sidebar-w-open)));
   transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
@@ -250,7 +289,7 @@ main.app-content.nav-open {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.25rem;
+  gap: 0.15rem;
   flex: 1;
   overflow: visible;
   width: 100%;
@@ -261,38 +300,39 @@ main.app-content.nav-open {
   align-items: center;
   width: 100%;
   gap: 0;
-  padding: 0.7rem 0.6rem;
-  border-radius: 14px;
-  color: #767676;
+  padding: 0.65rem 0.6rem;
+  border-radius: 10px;
+  color: #64748b;
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 500;
+  font-size: 0.88rem;
   white-space: nowrap;
   background: transparent;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .sidebar-nav a i {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
   width: 32px;
   text-align: center;
 }
 
 .sidebar-nav a:hover {
-  background: rgba(107, 142, 58, 0.1);
-  color: var(--color-text, #2d3d24);
+  background: rgba(59, 107, 46, 0.07);
+  color: #1e293b;
   box-shadow: none;
 }
 
 .sidebar-nav a.router-link-active {
-  background: rgba(107, 142, 58, 0.16);
-  color: #2c2c2c;
+  background: rgba(59, 107, 46, 0.1);
+  color: #3b6b2e;
+  font-weight: 600;
 }
 
 .sidebar-nav a.router-link-active:hover {
-  background: rgba(107, 142, 58, 0.2);
-  color: #2c2c2c;
+  background: rgba(59, 107, 46, 0.13);
+  color: #3b6b2e;
 }
 
 /* ── Labels: siempre visibles en el drawer ── */
@@ -313,26 +353,26 @@ main.app-content.nav-open {
   align-items: center;
   width: 100%;
   gap: 0;
-  padding: 0.7rem 0.6rem;
-  border-radius: 14px;
+  padding: 0.65rem 0.6rem;
+  border-radius: 10px;
   border: none;
   background: transparent;
-  color: #767676;
-  font-weight: 600;
-  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.88rem;
   cursor: pointer;
   white-space: nowrap;
   box-shadow: none;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .sidebar-logout:hover {
-  background: rgba(220, 38, 38, 0.1);
+  background: rgba(220, 38, 38, 0.07);
   color: #dc2626;
 }
 
 .sidebar-logout i {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
   width: 32px;
   text-align: center;
@@ -352,24 +392,24 @@ main.app-content.nav-open {
   align-items: center;
   width: 100%;
   gap: 0;
-  padding: 0.7rem 0.6rem;
-  border-radius: 14px;
+  padding: 0.65rem 0.6rem;
+  border-radius: 10px;
   border: none;
   background: transparent;
-  color: #767676;
-  font-weight: 600;
-  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.88rem;
   cursor: pointer;
   white-space: nowrap;
   box-shadow: none;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 .sidebar-manual-btn:hover {
-  background: rgba(30, 58, 95, 0.1);
-  color: #1e3a5f;
+  background: rgba(59, 107, 46, 0.07);
+  color: #1e293b;
 }
 .sidebar-manual-btn i {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
   width: 32px;
   text-align: center;

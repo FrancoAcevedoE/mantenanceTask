@@ -51,13 +51,11 @@
                 </td>
                 <td class="action-cell">
                   <div class="action-buttons">
-                    <button class="btn-detail" @click="openDetailModal(item)">
-                      <span class="btn-full">Ver detalle</span>
-                      <span class="btn-short">Info</span>
+                    <button class="btn-detail" @click="openDetailModal(item)" title="Ver detalle">
+                      <i class="bi bi-info-circle-fill"></i>
                     </button>
-                    <button v-if="currentUserRole === 'admin'" class="btn-delete" @click="deleteMaintenanceRecord(item)">
-                      <span class="btn-full">Eliminar</span>
-                      <span class="btn-short">Borrar</span>
+                    <button v-if="currentUserRole === 'admin'" class="btn-delete" @click="deleteMaintenanceRecord(item)" title="Eliminar">
+                      <i class="bi bi-trash-fill"></i>
                     </button>
                   </div>
                 </td>
@@ -319,7 +317,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
+  padding: 1rem 0.75rem 2rem;
   background: transparent;
 }
 
@@ -355,23 +353,27 @@ export default {
 
 .filters {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   margin-bottom: 1rem;
+  width: 100%;
 }
 
 .filters input,
 .filters select {
-  padding: 10px;
+  padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 2rem;
-  min-width: 180px;
+  min-width: 0;
+  flex: 1 1 180px;
   max-width: 100%;
   box-sizing: border-box;
   background: #fff;
   text-align: center;
   text-align-last: center;
+  font-size: 0.88rem;
 }
 
 .filters input:focus,
@@ -392,7 +394,7 @@ export default {
 .history-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 480px;
+  min-width: 0;
 }
 
 .history-table th,
@@ -460,6 +462,21 @@ export default {
 
 button:hover { background: #8f8f8f; }
 
+.action-buttons .btn-detail,
+.action-buttons .btn-delete {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  min-width: 0;
+  box-shadow: none;
+}
+
 .action-buttons .btn-detail { background: #e3f0fa; color: #1565c0; border: 1px solid rgba(21, 101, 192, 0.2); }
 .action-buttons .btn-detail:hover { background: #d2e6f7; }
 
@@ -486,33 +503,24 @@ button:hover { background: #8f8f8f; }
   color: #495057;
 }
 
-.btn-short { display: none; }
-
 @media (max-width: 1000px) {
   .col-hide-mobile { display: none; }
-  .btn-full { display: none; }
-  .btn-short { display: inline; }
-  .btn-detail, .btn-delete { padding: 3px 6px; font-size: 0.65rem; border-radius: 0.75rem; }
-  .action-buttons { gap: 0.2rem; }
   .action-cell { padding: 6px 4px !important; }
 }
 
 @media (max-width: 768px) {
-  .page-container { padding: 1rem; }
-  .container { padding: 1rem; }
+  .page-container { padding: 0.5rem 0.5rem 2rem; }
+  .container { padding: 0.85rem; }
   .topbar { flex-direction: column; align-items: stretch; }
-  .filters { justify-content: center; width: 100%; }
+  .filters { flex-direction: column; align-items: stretch; }
   .filters input,
-  .filters select,
-  .filters input[type="date"] {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    flex: 1 1 100%;
-    box-sizing: border-box;
+  .filters select {
+    width: 100%;
+    flex: unset;
+    font-size: 0.85rem;
   }
-  .history-table { min-width: unset; }
-  .history-table th, .history-table td { padding: 8px 8px; font-size: 0.82rem; }
+  .history-table { min-width: 0; }
+  .history-table th, .history-table td { padding: 8px 6px; font-size: 0.82rem; }
 }
 
 /* ── Loading ── */

@@ -432,7 +432,7 @@ export default {
   align-items: center;
   justify-content: flex-start;
 
-  padding: 2rem;
+  padding: 1rem 0.5rem 2rem;
 
   background: transparent !important;
 
@@ -569,7 +569,6 @@ export default {
 
 .notification-history-card {
   width: min(1080px, 100%);
-  margin-top: 5.4rem;
   padding: 1.2rem;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.96);
@@ -592,7 +591,7 @@ export default {
 
 .notification-history-card {
   width: min(1080px, 100%);
-  margin: 5.4rem auto 0;
+  margin: 0 auto;
   text-align: center;
 }
 
@@ -604,8 +603,12 @@ export default {
 }
 
 .notification-history-actions {
+  display: flex;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .notification-history-filters {
@@ -621,11 +624,13 @@ export default {
 
 .notification-history-filters input,
 .notification-history-filters select {
-  width: 180px;
+  flex: 1 1 160px;
+  min-width: 0;
+  width: auto;
 }
 
 .notification-history-filters button {
-  width: fit-content;
+  flex-shrink: 0;
 }
 
 .notification-history-summary article {
@@ -635,27 +640,37 @@ export default {
 
 .notification-history-filters input,
 .notification-history-filters select {
-  border: 0;
-  border-radius: 12px;
-  padding: 2px 6px;
-  font-size: 0.72rem;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.83rem;
   line-height: 1.4;
+  height: 38px;
+  box-sizing: border-box;
 }
 
 .notification-history-filters button,
 .ghost-button,
 .mark-read-button {
-  border-radius: 12px;
+  border-radius: 10px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  height: 38px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
 }
 
 .notification-history-filters input,
 .notification-history-filters select {
-  background: #f1f0ed;
+  background: #f8fafc;
 }
 
 .notification-history-filters button,
 .mark-read-button {
-  background: #6b8e3a;
+  background: #3b6b2e;
   color: #fff;
   font-weight: 600;
   cursor: pointer;
@@ -665,6 +680,9 @@ export default {
   background: #f1f0ed;
   color: #2d3d24;
   cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.75rem;
+  height: auto;
 }
 
 .notification-history-summary {
@@ -784,8 +802,7 @@ export default {
   }
 
   .notification-history-card {
-    margin-top: 0.6rem;
-    margin-bottom: 1.5rem;
+    margin: 0 auto 1.5rem;
     padding: 1rem;
     border-radius: 16px;
   }
@@ -805,18 +822,27 @@ export default {
   }
 
   .notification-history-filters {
-    gap: 0.4rem;
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .notification-history-filters input,
   .notification-history-filters select {
     width: 100%;
-    flex: 1 1 140px;
+    flex: unset;
+    height: 40px;
   }
 
   .notification-history-filters button {
     width: 100%;
-    flex-basis: 100%;
+    height: 40px;
+  }
+
+  .ghost-button {
+    height: 36px;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
   }
 
   .notification-history-summary {

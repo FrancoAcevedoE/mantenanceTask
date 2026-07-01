@@ -44,25 +44,16 @@
           <div v-for="createdUser in users" :key="createdUser._id" class="user-item">
             <div class="user-info">
               <strong>{{ createdUser.name }}</strong>
-              <span>Documento: {{ createdUser.dni }}</span>
-              <span>Rol: {{ roleLabel(createdUser.role) }}</span>
+              <span class="user-meta">DNI {{ createdUser.dni }} · {{ roleLabel(createdUser.role) }}</span>
             </div>
-
-            <button
-              type="button"
-              class="edit-button"
-              @click="editUser(createdUser)"
-            >
-              Modificar
-            </button>
-
-            <button
-              type="button"
-              class="danger-button"
-              @click="deleteUser(createdUser._id)"
-            >
-              Ocultar
-            </button>
+            <div class="user-actions">
+              <button type="button" class="edit-button" @click="editUser(createdUser)" title="Modificar">
+                <i class="bi bi-pencil-fill"></i>
+              </button>
+              <button type="button" class="danger-button" @click="deleteUser(createdUser._id)" title="Ocultar">
+                <i class="bi bi-eye-slash-fill"></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -576,23 +567,24 @@ align-items: center;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.94);
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.622);
+  padding: 1.75rem;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(30, 41, 59, 0.08);
 }
 
 .panel-card:hover {
-  transition: 0.3s;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+  transition: 0.25s;
+  box-shadow: 0 6px 24px rgba(30, 41, 59, 0.12);
 }
 
 .title {
   text-align: center;
   margin: 0 0 1rem;
-  color: #333;
-  font-size: 2rem;
-  letter-spacing: 0.04rem;
+  color: #1e293b;
+  font-size: 1.8rem;
+  letter-spacing: 0.03rem;
 }
 
 .admin-form label {
@@ -610,7 +602,9 @@ align-items: center;
   padding: 10px;
   margin: 10px 0;
   border-radius: 2rem;
-  border: 1px solid #ccc;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #1e293b;
   text-align: center;
 }
 
@@ -619,9 +613,10 @@ align-items: center;
 .admin-form select:hover,
 .admin-form select:focus {
   outline: none;
-  background: #f0f0f0;
+  background: #ffffff;
+  border-color: #3b6b2e;
   transition: 0.2s;
-  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
+  box-shadow: 0 0 0 3px rgba(59, 107, 46, 0.1);
 }
 
 .actions {
@@ -634,18 +629,25 @@ align-items: center;
 button {
   border-radius: 2rem;
   padding: 10px;
-  background: #a6a6a6;
-  color: #fff;
+  background: #3b6b2e;
+  color: #ffffff;
+  font-weight: 600;
   border: none;
   cursor: pointer;
+  transition: background 0.18s;
 }
 
 button:hover {
-  background: #8f8f8f;
+  background: #2d5224;
 }
 
 .secondary-button {
-  background: #7e8a97;
+  background: #64748b;
+  color: #ffffff;
+}
+
+.secondary-button:hover {
+  background: #475569;
 }
 
 .users-panel {
@@ -657,18 +659,18 @@ button:hover {
   margin-top: 1rem;
   padding: 1rem;
   border-radius: 1rem;
-  border: 1px solid #f5b7b1;
-  background: #fff5f5;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
 }
 
 .danger-zone h3 {
   margin: 0;
-  color: #8a1c1c;
+  color: #991b1b;
 }
 
 .danger-zone p {
   margin: 0.5rem 0 0;
-  color: #6d3d3d;
+  color: #6b7280;
 }
 
 .danger-zone-button {
@@ -768,38 +770,72 @@ button:hover {
 .users-list {
   width: 100%;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.4rem;
 }
 
 .user-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-radius: 1rem;
-  background: #ffffff;
-  box-shadow: 0 1px 5px rgba(189, 189, 189, 0.31);
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
 }
 
 .user-info {
-  display: grid;
-  gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  flex: 1;
+  min-width: 0;
 }
 
-.user-info strong,
-.user-info span {
-  color: #333;
+.user-info strong {
+  font-size: 0.88rem;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-meta {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.user-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
 }
 
 .danger-button {
   margin: 0;
   background: #cb5f5f;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 0.85rem;
 }
 
 .edit-button {
   margin: 0;
   background: #6b8e3a;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 0.85rem;
 }
 
 .edit-button:hover {
@@ -824,23 +860,23 @@ button:hover {
   margin-top: 1rem;
   padding: 1rem;
   border-radius: 1rem;
-  border: 1px solid #f0d6ab;
-  background: #fff8eb;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
 }
 
 .deleted-zone h3 {
   margin: 0;
-  color: #7d4f00;
+  color: #78350f;
 }
 
 .deleted-zone p {
   margin: 0.5rem 0 0.75rem;
-  color: #6f5a37;
+  color: #6b7280;
 }
 
 .deleted-item {
-  background: #fffdf8;
-  border: 1px solid #f3e2ba;
+  background: #ffffff;
+  border: 1px solid #fde68a;
 }
 
 .hard-delete-button {
