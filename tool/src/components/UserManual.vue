@@ -16,6 +16,16 @@
           </header>
 
           <nav class="manual-nav">
+            <!-- Documentos de ventas (top) -->
+            <div class="manual-nav-group-label">Área de ventas</div>
+            <button v-for="s in SALES_SECTIONS" :key="s.id"
+              :class="['manual-nav-btn', 'manual-nav-btn--sales', { active: activeSection === s.id }]"
+              @click="activeSection = s.id">
+              <i :class="'bi ' + s.icon"></i> {{ s.label }}
+            </button>
+            <div class="manual-nav-divider" />
+            <!-- Manual técnico -->
+            <div class="manual-nav-group-label">Manual técnico</div>
             <button v-for="s in sections" :key="s.id"
               :class="['manual-nav-btn', { active: activeSection === s.id }]"
               @click="activeSection = s.id">
@@ -24,6 +34,114 @@
           </nav>
 
           <div class="manual-body">
+            <!-- GUÍA DE VENTAS -->
+            <template v-if="activeSection === 'guia_ventas'">
+              <div class="manual-section sales-doc-section">
+                <div class="sales-doc-header">
+                  <div class="sales-doc-title-row">
+                    <h3><i class="bi bi-star-fill"></i> {{ docs.guia_ventas.title || 'Guía de ventas' }}</h3>
+                    <button v-if="canEdit && editing !== 'guia_ventas'" class="sales-doc-edit-btn" @click="startEdit('guia_ventas')">
+                      <i class="bi bi-pencil-fill"></i> Editar
+                    </button>
+                  </div>
+                  <p v-if="docs.guia_ventas.updatedBy" class="sales-doc-meta">
+                    Última edición: {{ docs.guia_ventas.updatedBy }} — {{ fmtDate(docs.guia_ventas.updatedAt) }}
+                  </p>
+                </div>
+
+                <div v-if="loadingDoc" class="sales-doc-loading"><i class="bi bi-arrow-repeat"></i> Cargando…</div>
+
+                <!-- Modo lectura -->
+                <template v-else-if="editing !== 'guia_ventas'">
+                  <div v-if="docs.guia_ventas.content" class="sales-doc-content">{{ docs.guia_ventas.content }}</div>
+                  <p v-else class="sales-doc-empty">Aún no hay contenido cargado.<span v-if="canEdit"> Hacé click en <strong>Editar</strong> para redactar la guía.</span></p>
+                </template>
+
+                <!-- Modo edición -->
+                <template v-else>
+                  <input v-model="editDraft.title" class="sales-doc-title-input" placeholder="Título del documento" />
+                  <textarea v-model="editDraft.content" class="sales-doc-textarea" rows="18" placeholder="Escribí aquí la guía de ventas…" />
+                  <div class="sales-doc-actions">
+                    <button class="sales-doc-save-btn" :disabled="saving" @click="saveDoc('guia_ventas')">
+                      <i class="bi bi-check-lg"></i> {{ saving ? 'Guardando…' : 'Guardar' }}
+                    </button>
+                    <button class="sales-doc-cancel-btn" @click="cancelEdit">Cancelar</button>
+                  </div>
+                </template>
+              </div>
+            </template>
+
+            <!-- PERFIL DE PUESTO -->
+            <template v-if="activeSection === 'perfil_puesto'">
+              <div class="manual-section sales-doc-section">
+                <div class="sales-doc-header">
+                  <div class="sales-doc-title-row">
+                    <h3><i class="bi bi-person-badge-fill"></i> {{ docs.perfil_puesto.title || 'Perfil de puesto' }}</h3>
+                    <button v-if="canEdit && editing !== 'perfil_puesto'" class="sales-doc-edit-btn" @click="startEdit('perfil_puesto')">
+                      <i class="bi bi-pencil-fill"></i> Editar
+                    </button>
+                  </div>
+                  <p v-if="docs.perfil_puesto.updatedBy" class="sales-doc-meta">
+                    Última edición: {{ docs.perfil_puesto.updatedBy }} — {{ fmtDate(docs.perfil_puesto.updatedAt) }}
+                  </p>
+                </div>
+
+                <div v-if="loadingDoc" class="sales-doc-loading"><i class="bi bi-arrow-repeat"></i> Cargando…</div>
+
+                <template v-else-if="editing !== 'perfil_puesto'">
+                  <div v-if="docs.perfil_puesto.content" class="sales-doc-content">{{ docs.perfil_puesto.content }}</div>
+                  <p v-else class="sales-doc-empty">Aún no hay contenido cargado.<span v-if="canEdit"> Hacé click en <strong>Editar</strong> para redactar el perfil.</span></p>
+
+                  <!-- PDF adjunto -->
+                  <div class="sales-doc-pdf-section">
+                    <div v-if="docs.perfil_puesto.pdfUrl" class="sales-doc-pdf-row">
+                      <i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444;font-size:1.1rem;flex-shrink:0"></i>
+                      <a :href="docs.perfil_puesto.pdfUrl" target="_blank" rel="noopener" class="sales-doc-pdf-link">
+                        {{ docs.perfil_puesto.pdfName || 'Perfil de puesto.pdf' }}
+                      </a>
+                      <button v-if="canEdit" class="sales-doc-pdf-del" @click="removePdf('perfil_puesto')" title="Quitar PDF">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                    <div v-else-if="canEdit" class="sales-doc-pdf-upload">
+                      <label class="sales-doc-upload-btn" :class="{ disabled: uploadingPdf }">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                        {{ uploadingPdf ? 'Subiendo…' : 'Adjuntar PDF' }}
+                        <input type="file" accept="application/pdf" :disabled="uploadingPdf"
+                          @change="e => uploadPdf('perfil_puesto', e)" style="display:none" />
+                      </label>
+                    </div>
+                    <p v-else class="sales-doc-empty" style="margin-top:0.5rem">Sin PDF adjunto.</p>
+                  </div>
+                </template>
+
+                <template v-else>
+                  <input v-model="editDraft.title" class="sales-doc-title-input" placeholder="Título del documento" />
+                  <textarea v-model="editDraft.content" class="sales-doc-textarea" rows="16" placeholder="Escribí aquí el perfil de puesto…" />
+                  <!-- PDF también editable en modo edición -->
+                  <div class="sales-doc-pdf-section" style="margin-top:0.6rem">
+                    <div v-if="docs.perfil_puesto.pdfUrl" class="sales-doc-pdf-row">
+                      <i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444;font-size:1.1rem;flex-shrink:0"></i>
+                      <span class="sales-doc-pdf-link">{{ docs.perfil_puesto.pdfName || 'PDF adjunto' }}</span>
+                      <button class="sales-doc-pdf-del" @click="removePdf('perfil_puesto')" title="Quitar PDF"><i class="bi bi-x"></i></button>
+                    </div>
+                    <label v-else class="sales-doc-upload-btn" :class="{ disabled: uploadingPdf }">
+                      <i class="bi bi-file-earmark-arrow-up"></i>
+                      {{ uploadingPdf ? 'Subiendo…' : 'Adjuntar PDF' }}
+                      <input type="file" accept="application/pdf" :disabled="uploadingPdf"
+                        @change="e => uploadPdf('perfil_puesto', e)" style="display:none" />
+                    </label>
+                  </div>
+                  <div class="sales-doc-actions">
+                    <button class="sales-doc-save-btn" :disabled="saving" @click="saveDoc('perfil_puesto')">
+                      <i class="bi bi-check-lg"></i> {{ saving ? 'Guardando…' : 'Guardar' }}
+                    </button>
+                    <button class="sales-doc-cancel-btn" @click="cancelEdit">Cancelar</button>
+                  </div>
+                </template>
+              </div>
+            </template>
+
             <!-- INVENTARIO -->
             <template v-if="activeSection === 'inventory'">
               <div class="manual-section">
@@ -370,13 +488,112 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import axios from 'axios'
+import { API_BASE_URL } from '@/utils/api'
 
 const open = ref(false)
 const route = useRoute()
 
 defineExpose({ open })
+
+// ── Rol actual ──
+const currentUser = computed(() => {
+  try { return JSON.parse(sessionStorage.getItem('user') || '{}') } catch { return {} }
+})
+const canEdit = computed(() => ['admin', 'admin_ventas'].includes(currentUser.value?.role))
+const isSalesRole = computed(() => ['admin_ventas', 'vendedor'].includes(currentUser.value?.role))
+
+// ── Documentos de ventas ──
+const SALES_DOCS = ['guia_ventas', 'perfil_puesto']
+const docs = ref({ guia_ventas: { content: '', title: 'Guía de ventas', updatedBy: '', updatedAt: null, pdfUrl: '', pdfName: '' },
+                   perfil_puesto: { content: '', title: 'Perfil de puesto', updatedBy: '', updatedAt: null, pdfUrl: '', pdfName: '' } })
+const editing    = ref(null)   // null | 'guia_ventas' | 'perfil_puesto'
+const editDraft  = ref({ content: '', title: '' })
+const saving     = ref(false)
+const loadingDoc = ref(false)
+const uploadingPdf = ref(false)
+
+function authHeader() {
+  const token = sessionStorage.getItem('token')
+  return { headers: { Authorization: `Bearer ${token}` } }
+}
+
+async function fetchDoc(key) {
+  try {
+    const { data } = await axios.get(`${API_BASE_URL}/sales-docs/${key}`, authHeader())
+    docs.value[key] = data
+  } catch { /* keep empty default */ }
+}
+
+async function loadAllDocs() {
+  loadingDoc.value = true
+  await Promise.all(SALES_DOCS.map(fetchDoc))
+  loadingDoc.value = false
+}
+
+function startEdit(key) {
+  editDraft.value = { content: docs.value[key].content, title: docs.value[key].title }
+  editing.value = key
+}
+
+function cancelEdit() { editing.value = null }
+
+async function saveDoc(key) {
+  saving.value = true
+  try {
+    const { data } = await axios.put(`${API_BASE_URL}/sales-docs/${key}`, editDraft.value, authHeader())
+    docs.value[key] = { ...docs.value[key], ...data }
+    editing.value = null
+  } catch (e) {
+    alert(e.response?.data?.message || 'Error al guardar')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function uploadPdf(key, event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  if (file.type !== 'application/pdf') { alert('Solo se permiten archivos PDF'); return }
+  uploadingPdf.value = true
+  try {
+    const fd = new FormData()
+    fd.append('pdf', file)
+    const { data } = await axios.post(`${API_BASE_URL}/sales-docs/${key}/pdf`, fd, {
+      ...authHeader(),
+      headers: { ...authHeader().headers, 'Content-Type': 'multipart/form-data' }
+    })
+    docs.value[key] = { ...docs.value[key], pdfUrl: data.pdfUrl, pdfName: data.pdfName }
+  } catch (e) {
+    alert(e.response?.data?.message || 'Error al subir PDF')
+  } finally {
+    uploadingPdf.value = false
+    event.target.value = ''
+  }
+}
+
+async function removePdf(key) {
+  if (!confirm('¿Quitar el PDF adjunto?')) return
+  try {
+    await axios.delete(`${API_BASE_URL}/sales-docs/${key}/pdf`, authHeader())
+    docs.value[key] = { ...docs.value[key], pdfUrl: '', pdfName: '' }
+  } catch (e) {
+    alert(e.response?.data?.message || 'Error al quitar el PDF')
+  }
+}
+
+function fmtDate(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+// ── Secciones estándar del manual ──
+const SALES_SECTIONS = [
+  { id: 'guia_ventas',  label: 'Guía de ventas',  icon: 'bi-star-fill',    doc: true },
+  { id: 'perfil_puesto', label: 'Perfil de puesto', icon: 'bi-person-badge-fill', doc: true },
+]
 
 const sections = [
   { id: 'inventory', label: 'Inventario',  icon: 'bi-box-seam' },
@@ -399,13 +616,21 @@ const sectionByRoute = {
   NotificationsHistory: 'notifs',
 }
 
-const activeSection = ref('inventory')
+const activeSection = ref('guia_ventas')
 
 const toggleWithRoute = () => {
-  const mapped = sectionByRoute[route.name] || 'inventory'
-  if (!open.value) activeSection.value = mapped
+  const mapped = sectionByRoute[route.name] || (isSalesRole.value ? 'guia_ventas' : 'inventory')
+  if (!open.value) {
+    activeSection.value = mapped
+    if (SALES_DOCS.includes(mapped)) loadAllDocs()
+  }
   open.value = !open.value
 }
+
+onMounted(() => {
+  // Pre-carga silenciosa para tener el contenido listo si abren el manual
+  loadAllDocs()
+})
 </script>
 
 <style scoped>
@@ -633,4 +858,197 @@ const toggleWithRoute = () => {
 .manual-slide-enter-from, .manual-slide-leave-to { transform: translateX(100%); }
 
 .swatch-count { font-size: 0.8rem; font-weight: 400; color: #888; margin-left: 0.3rem; }
+
+/* Nav groups */
+.manual-nav-group-label {
+  width: 100%;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  padding: 0.15rem 0.1rem 0;
+  margin-bottom: -0.1rem;
+}
+.manual-nav-divider {
+  width: 100%;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.3rem 0 0.15rem;
+}
+.manual-nav-btn--sales.active { background: #1e4d8c; border-color: #1e4d8c; }
+.manual-nav-btn--sales:not(.active) { border-color: #bfdbfe; color: #1e40af; }
+.manual-nav-btn--sales:not(.active):hover { background: #eff6ff; border-color: #93c5fd; }
+
+/* Sales doc sections */
+.sales-doc-section { padding-top: 0.25rem; }
+.sales-doc-header { margin-bottom: 0.75rem; }
+.sales-doc-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.sales-doc-title-row h3 {
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.sales-doc-meta {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin: 0.25rem 0 0;
+}
+.sales-doc-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sales-doc-edit-btn:hover { background: #dbeafe; }
+.sales-doc-loading {
+  color: #9ca3af;
+  font-size: 0.82rem;
+  padding: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.sales-doc-content {
+  white-space: pre-wrap;
+  font-size: 0.83rem;
+  color: #374151;
+  line-height: 1.6;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  min-height: 60px;
+}
+.sales-doc-empty {
+  color: #9ca3af;
+  font-size: 0.82rem;
+  font-style: italic;
+}
+.sales-doc-title-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin-bottom: 0.6rem;
+  outline: none;
+}
+.sales-doc-title-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px #ede9fe; }
+.sales-doc-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.82rem;
+  color: #374151;
+  resize: vertical;
+  line-height: 1.6;
+  font-family: inherit;
+  outline: none;
+}
+.sales-doc-textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 2px #ede9fe; }
+.sales-doc-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.sales-doc-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 8px;
+  border: none;
+  background: #1e3a5f;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sales-doc-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.sales-doc-save-btn:not(:disabled):hover { background: #264f85; }
+.sales-doc-cancel-btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #6b7280;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.sales-doc-cancel-btn:hover { background: #f3f4f6; }
+
+/* PDF adjunto */
+.sales-doc-pdf-section { margin-top: 0.85rem; }
+.sales-doc-pdf-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+}
+.sales-doc-pdf-link {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.sales-doc-pdf-link:hover { text-decoration: underline; color: #ef4444; }
+.sales-doc-pdf-del {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.1rem 0.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  box-shadow: none;
+}
+.sales-doc-pdf-del:hover { color: #ef4444; }
+.sales-doc-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  border: 1.5px dashed #d1d5db;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.sales-doc-upload-btn:hover:not(.disabled) { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
+.sales-doc-upload-btn.disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

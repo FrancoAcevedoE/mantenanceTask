@@ -37,8 +37,32 @@
 
     <!-- Grid -->
     <div v-else class="cc-grid">
-      <div v-for="c in filtered" :key="c._id" class="cc-card">
-        <div class="cc-card-top">
+      <div v-for="c in filtered" :key="c._id" class="cc-card-wrap">
+        <!-- Burbuja roja/naranja: potencial sin actividad -->
+        <div v-if="c.tipoCliente === 'potencial' && staleDays(c) >= 2"
+          class="cc-stale-badge"
+          :class="staleDays(c) >= 7 ? 'cc-stale-badge--critical' : 'cc-stale-badge--warn'">
+          {{ staleDays(c) }}d
+          <span class="cc-stale-tooltip">
+            <strong>{{ staleDays(c) }} días sin actividad ni cotización</strong><br>
+            <template v-if="staleDays(c) >= 7">⛔ Mañana este cliente se transfiere automáticamente al administrador de ventas.</template>
+            <template v-else>⚠️ Registrá una actividad o cotización para evitar la transferencia automática a los 8 días.</template>
+          </span>
+        </div>
+        <!-- Burbuja naranja: cliente sin cotización en 60+ días -->
+        <div v-if="showQuoteBubble(c)"
+          class="cc-stale-badge cc-stale-badge--quote"
+          :style="c.tipoCliente === 'potencial' && staleDays(c) >= 2 ? 'top:0;right:38px' : ''">
+          <i class="bi bi-file-earmark-x"></i>
+          <span class="cc-stale-tooltip cc-stale-tooltip--quote">
+            <strong>Sin cotización hace {{ daysSinceQuote(c) === 9999 ? 'mucho tiempo' : daysSinceQuote(c) + ' días' }}</strong><br>
+            🟠 Este cliente no recibe una cotización en más de 60 días. Hacé click en la tarjeta para ver el detalle y generar una nueva.
+            <em style="display:block;margin-top:4px;opacity:.75">La alerta se ocultará al abrir la tarjeta y reaparecerá el próximo lunes.</em>
+          </span>
+        </div>
+        <div class="cc-card" :class="{ 'cc-card--potencial': c.tipoCliente === 'potencial' }"
+          @click.self="snoozeAndOpen(c)">
+        <div class="cc-card-top" @click.self="snoozeAndOpen(c)">
           <div class="cc-avatar" :style="{ background: avatarColor(c.razonSocial || c.name || '') }">
             {{ initials(c.razonSocial || c.name || '?') }}
           </div>
@@ -56,7 +80,7 @@
           </div>
         </div>
 
-        <div class="cc-card-body">
+        <div class="cc-card-body" @click="snoozeAndOpen(c)">
           <div v-if="c.contactoPrincipal" class="cc-field">
             <i class="bi bi-person"></i><span>{{ c.contactoPrincipal }}</span>
           </div>
@@ -101,7 +125,8 @@
             {{ stageLabel(c.pipelineEstado) }}
           </span>
         </div>
-      </div>
+        </div><!-- /.cc-card -->
+      </div><!-- /.cc-card-wrap -->
     </div>
 
     <!-- ── Modal add/edit ── -->
@@ -498,10 +523,137 @@ function clearLocation() {
   form.value.longitud = null
   form.value.lugar    = ''
 }
+
+function staleDays(client) {
+  if (client.tipoCliente !== 'potencial') return 0
+  // Una cotización también cuenta como contacto y resetea el contador
+  const candidates = [client.lastActivityAt, client.lastQuoteAt, client.createdAt]
+    .filter(Boolean).map(d => new Date(d).getTime())
+  if (!candidates.length) return 0
+  const mostRecent = Math.max(...candidates)
+  return Math.floor((Date.now() - mostRecent) / (1000 * 60 * 60 * 24))
+}
+
+// ── Burbuja naranja: clientes sin cotización en 60+ días ──
+
+const SNOOZE_KEY = 'cc_quote_snooze'
+
+function loadSnooze() {
+  try { return JSON.parse(localStorage.getItem(SNOOZE_KEY) || '{}') } catch { return {} }
+}
+
+function nextMonday(ts) {
+  const d = new Date(ts)
+  const day = d.getDay() // 0=dom, 1=lun...
+  const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7 || 7
+  d.setDate(d.getDate() + daysUntilMonday)
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+function daysSinceQuote(client) {
+  if (client.tipoCliente !== 'normal') return 0
+  const base = client.lastQuoteAt || null
+  if (!base) return 9999 // nunca tuvo cotización → siempre cuenta
+  return Math.floor((Date.now() - new Date(base).getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function showQuoteBubble(client) {
+  if (daysSinceQuote(client) < 60) return false
+  const snooze = loadSnooze()
+  const snoozeUntil = snooze[client._id]
+  if (!snoozeUntil) return true
+  return Date.now() >= snoozeUntil
+}
+
+function snoozeAndOpen(client) {
+  const snooze = loadSnooze()
+  snooze[client._id] = nextMonday(Date.now())
+  localStorage.setItem(SNOOZE_KEY, JSON.stringify(snooze))
+  openEdit(client)
+}
 </script>
 
 <style scoped>
 .cc-wrap { position: relative; min-width: 0; overflow: hidden; }
+
+/* ── Card wrapper (necesario para que la burbuja salga encima del overflow:hidden del card) ── */
+.cc-card-wrap {
+  position: relative;
+  /* padding superior para que la burbuja no empuje el contenido */
+  padding-top: 8px;
+}
+
+/* ── Stale alert bubble ── */
+.cc-stale-badge {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0 6px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  cursor: default;
+}
+.cc-stale-badge--warn     { background: #f59e0b; color: #fff; }
+.cc-stale-badge--critical { background: #ef4444; color: #fff; animation: cc-pulse 1.6s ease-in-out infinite; }
+.cc-stale-badge--quote    { background: #f97316; color: #fff; font-size: 0.75rem; gap: 3px; }
+
+@keyframes cc-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.18); }
+}
+
+/* Card body clickeable */
+.cc-card-body { cursor: pointer; }
+.cc-card-body:hover { background: rgba(107,142,58,.03); }
+
+/* Tooltip de la burbuja */
+.cc-stale-tooltip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 210px;
+  background: #1e293b;
+  color: #f1f5f9;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.5;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  white-space: normal;
+  pointer-events: none;
+  z-index: 20;
+}
+.cc-stale-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  right: 8px;
+  border: 5px solid transparent;
+  border-bottom-color: #1e293b;
+}
+.cc-stale-badge:hover .cc-stale-tooltip { display: block; }
+
+/* Tooltip de la burbuja naranja (cotización) — abre hacia la izquierda para no salirse */
+.cc-stale-tooltip--quote {
+  right: auto;
+  left: 0;
+  width: 230px;
+}
+.cc-stale-tooltip--quote::before {
+  right: auto;
+  left: 8px;
+}
 
 /* ── Toolbar ── */
 .cc-toolbar {
@@ -563,8 +715,12 @@ function clearLocation() {
 /* ── Grid ── */
 .cc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .cc-grid { grid-template-columns: 1fr; gap: 0.6rem; }
 }
 
 /* ── Card ── */
@@ -605,9 +761,8 @@ function clearLocation() {
   color: var(--color-text);
   text-transform: none;
   line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .cc-comercial {
@@ -657,9 +812,14 @@ function clearLocation() {
 .cc-field span {
   flex: 1;
   min-width: 0;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .cc-field span { white-space: normal; word-break: break-word; overflow: visible; }
+  .cc-card-foot  { flex-wrap: wrap; }
 }
 
 .cc-sector {

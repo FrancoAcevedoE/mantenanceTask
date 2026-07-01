@@ -34,7 +34,8 @@ export const createClient = async (req, res) => {
       lugar: (lugar || '').trim(),
       latitud: latitud != null ? Number(latitud) : null,
       longitud: longitud != null ? Number(longitud) : null,
-      createdBy: req.user?.name || '',
+      createdBy:    req.user?.name || '',
+      assignedToId: String(req.user?._id || req.user?.id || ''),
     })
 
     res.status(201).json(client)

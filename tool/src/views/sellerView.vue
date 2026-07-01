@@ -35,10 +35,18 @@
 
       <!-- ── HISTORIAL ────────────────────────────────────────────────── -->
       <div v-if="activeTab === 'list'">
+        <!-- Buscador de cotizaciones -->
+        <div class="quote-search-bar">
+          <i class="bi bi-search quote-search-ico"></i>
+          <input v-model="quoteSearch" type="text" placeholder="Buscar por título, cliente, estado, número…" class="quote-search-input" />
+          <button v-if="quoteSearch" class="quote-search-clear" @click="quoteSearch = ''" title="Limpiar">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
         <div v-if="loadingQuotes" class="empty-state">Cargando cotizaciones…</div>
-        <div v-else-if="!quotes.length" class="empty-state">
+        <div v-else-if="!filteredQuotes.length" class="empty-state">
           <i class="bi bi-file-earmark-text" style="font-size:2rem; opacity:.35"></i>
-          <p>No hay cotizaciones todavía.</p>
+          <p>{{ quoteSearch ? 'Sin resultados para "' + quoteSearch + '"' : 'No hay cotizaciones todavía.' }}</p>
         </div>
         <div v-else class="table-scroll">
           <table class="inv-table">
@@ -49,7 +57,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="q in quotes" :key="q._id">
+              <tr v-for="q in filteredQuotes" :key="q._id">
                 <td class="num-cell">#{{ String(q.numero).padStart(4,'0') }}</td>
                 <td class="title-cell">{{ q.titulo }}</td>
                 <td class="client-cell">{{ q.cliente?.nombre || '—' }}</td>
@@ -674,6 +682,19 @@ const toast = useToast()
 const activeTab = ref('list')
 const quotes = ref([])
 const loadingQuotes = ref(false)
+const quoteSearch = ref('')
+
+const filteredQuotes = computed(() => {
+  if (!quoteSearch.value.trim()) return quotes.value
+  const rx = new RegExp(quoteSearch.value.trim(), 'i')
+  return quotes.value.filter(q =>
+    rx.test(q.titulo) ||
+    rx.test(q.cliente?.nombre) ||
+    rx.test(q.cliente?.empresa) ||
+    rx.test(q.estado) ||
+    rx.test(String(q.numero).padStart(4, '0'))
+  )
+})
 const saving = ref(false)
 const editingId = ref(null)
 const showCliente = ref(false)
@@ -1405,6 +1426,43 @@ function hasCliente(q) {
 .topbar-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .page-title { margin: 0; font-size: 1.1rem; font-weight: 700; }
 
+/* ── Buscador de cotizaciones ── */
+.quote-search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+.quote-search-ico {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+.quote-search-input {
+  width: 100%;
+  padding: 0.55rem 2.4rem 0.55rem 2.1rem;
+  border-radius: 10px;
+  font-size: 0.83rem;
+  border: 1px solid #d1d5db;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.quote-search-input:focus { border-color: var(--color-primary); }
+.quote-search-clear {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+  box-shadow: none;
+}
+
 /* ── Empty state ── */
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; padding: 3rem 1rem; color: var(--color-muted); text-align: center; }
 
@@ -1767,18 +1825,12 @@ function hasCliente(q) {
 
 <!-- ── Media print (global para afectar App.vue) ── -->
 <style>
-/* Elimina encabezado/pie del navegador (título, URL, fecha, n° de página) y el reborde */
 @page {
   size: A4;
-  margin: 0;
+  margin: 10mm 12mm;
 }
 
 @media print {
-  @page {
-    size: A4;
-    margin: 8mm 10mm;
-  }
-
   .no-print,
   .sidebar,
   .mobile-toggle,
@@ -1788,19 +1840,40 @@ function hasCliente(q) {
   .crm-tabs-bar,
   .topbar { display: none !important; }
 
-  html, body, #app { height: auto !important; max-height: none !important; overflow: visible !important; }
+  /* Quitar todos los fondos / sombreados del tema — el gradiente gris→verde viene de .container */
+  html, body, #app,
+  main.app-content, main.app-content.with-nav,
+  .container, .box, .panel-card, .crm-wrap, .crm-body {
+    background: #fff !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  html, body, #app { height: auto !important; max-height: none !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; }
 
   main.app-content,
   .with-nav { margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
-  .crm-wrap, .container { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+
+  .crm-wrap, .container {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 
   .print-doc {
     display: block !important;
     font-family: 'Inter', Arial, sans-serif;
     color: #000;
+    background: #fff !important;
     padding: 0;
     font-size: 9.5pt;
     line-height: 1.4;
+    width: 100%;
   }
 
   .print-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.8rem; border-bottom: 1.5pt solid #000; padding-bottom: 0.6rem; gap: 1rem; }
@@ -1839,14 +1912,22 @@ function hasCliente(q) {
   .pi-desc   { color: #444; }
   .pi-sub    { width: 70px; text-align: right; font-weight: 700; }
 
-  .print-total-row { background: none !important; color: #000; }
-  .print-total-label { text-align: right; font-weight: 700; font-size: 10pt; padding: 0.35rem 0.4rem; border-top: 1.5pt solid #000; }
-  .print-total-value { text-align: right; font-weight: 800; font-size: 11pt; padding: 0.35rem 0.4rem; border-top: 1.5pt solid #000; white-space: nowrap; }
+  .print-total-row { background: #fff !important; color: #000; }
+  .print-total-label { text-align: right; font-weight: 700; font-size: 10pt; padding: 0.35rem 0.4rem; border-top: 1.5pt solid #000; background: #fff !important; }
+  .print-total-value { text-align: right; font-weight: 800; font-size: 11pt; padding: 0.35rem 0.4rem; border-top: 1.5pt solid #000; white-space: nowrap; background: #fff !important; }
 
-  .print-notes { margin-bottom: 0.5rem; }
+  .print-items tbody tr { background: #fff !important; }
+  .print-items tfoot { background: #fff !important; }
+
+  .print-notes { margin-bottom: 0.5rem; background: #fff !important; }
   .print-notes-text { font-size: 8.5pt; color: #333; white-space: pre-line; margin: 0.2rem 0 0; }
 
-  .print-validity { font-size: 8pt; color: #444; border-top: 0.5pt solid #999; padding-top: 0.4rem; margin-bottom: 0.3rem; font-style: italic; white-space: pre-line; }
+  .print-validity { font-size: 8pt; color: #444; border-top: 0.5pt solid #999; padding-top: 0.4rem; margin-bottom: 0.3rem; font-style: italic; white-space: pre-line; background: #fff !important; }
   .print-footer { display: none; }
+
+  /* Forzar blanco en TODO lo que esté dentro del documento de impresión */
+  .print-doc * { background: transparent !important; box-shadow: none !important; }
+  .print-doc table, .print-doc tr, .print-doc td, .print-doc th { background: #fff !important; }
+  .print-total-row td { background: #fff !important; }
 }
 </style>

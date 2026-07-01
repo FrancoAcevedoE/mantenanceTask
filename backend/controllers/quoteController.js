@@ -71,6 +71,11 @@ export const createQuote = async (req, res) => {
       await upgradeClientOnWin(quote.cliente, clienteId)
     }
 
+    // Actualizar fecha de última cotización en el cliente CRM
+    if (clienteId) {
+      Client.findByIdAndUpdate(clienteId, { lastQuoteAt: new Date() }).catch(() => {})
+    }
+
     await registerAuditEvent({
       action: "CREATE_QUOTE",
       entity: "Quote",
@@ -136,6 +141,12 @@ export const updateQuote = async (req, res) => {
         update.cliente,
         clienteId ?? existing.clienteId
       )
+    }
+
+    // Actualizar fecha de última cotización en el cliente CRM
+    const effectiveClienteId = clienteId ?? existing.clienteId
+    if (effectiveClienteId) {
+      Client.findByIdAndUpdate(effectiveClienteId, { lastQuoteAt: new Date() }).catch(() => {})
     }
 
     res.json(quote)

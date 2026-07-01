@@ -23,6 +23,12 @@ export const createActivity = async (req, res) => {
       realizadoPorId: req.user?.id || null,
     })
 
+    // Actualizar fecha de última actividad en el cliente
+    Client.findByIdAndUpdate(clienteId, {
+      lastActivityAt: new Date(),
+      followupAlertSentAt: null, // resetear para que se vuelva a alertar si se vuelve a quedar sin seguimiento
+    }).catch(() => {})
+
     res.status(201).json(activity)
   } catch (error) {
     console.error("Error creating activity:", error)

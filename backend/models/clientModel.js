@@ -37,6 +37,10 @@ const clientSchema = new mongoose.Schema({
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
   createdBy: { type: String, default: '' },
+  assignedToId:        { type: String, default: '' },
+  lastActivityAt:      { type: Date,   default: null },
+  followupAlertSentAt: { type: Date,   default: null },
+  lastQuoteAt:         { type: Date,   default: null },
 }, { timestamps: true })
 
 export default mongoose.model("Client", clientSchema)
