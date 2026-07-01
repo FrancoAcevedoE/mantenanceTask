@@ -142,7 +142,7 @@ export default {
     this.pwaUrl = normalizedUrl
     this.qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(this.pwaUrl)}`
 
-    document.body.style.background = 'linear-gradient(160deg, #f8fafc 0%, #e8ede4 60%, #f1f5f9 100%)';
+    document.body.style.background = 'linear-gradient(160deg, #2b3a14 0%, #3d5220 55%, #1e2b0e 100%)';
   },
 
   beforeUnmount() {
@@ -227,7 +227,7 @@ input:focus {
 ========================= */
 
 .pwa-qr-box {
-  background: #ffffff;
+  background: rgba(255,255,255,0.92);
 
   border-radius: 14px;
 
@@ -235,8 +235,8 @@ input:focus {
 
   text-align: center;
 
-  box-shadow: 0 4px 16px rgba(30, 41, 59, 0.1);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.6);
 
   display: flex;
   flex-direction: column;
@@ -284,7 +284,8 @@ input:focus {
 ========================= */
 
 .social-box {
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
 
   border-radius: 16px;
 

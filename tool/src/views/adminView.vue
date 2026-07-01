@@ -4,6 +4,30 @@
       <div v-if="showCreateForm" class="panel-card admin-form">
         <h2 class="title">Panel de Admin</h2>
 
+        <!-- Foto de perfil -->
+        <div class="photo-picker-wrap">
+          <div class="photo-preview" @click="triggerPhotoInput" :title="user.photo ? 'Cambiar foto' : 'Agregar foto'">
+            <img v-if="user.photo" :src="user.photo" class="photo-img" alt="foto" />
+            <div v-else class="photo-placeholder">
+              <i class="bi bi-person-fill"></i>
+            </div>
+            <div class="photo-overlay"><i class="bi bi-camera-fill"></i></div>
+          </div>
+          <div class="photo-actions">
+            <button type="button" class="photo-btn" @click="triggerPhotoInput">
+              <i class="bi bi-upload"></i> Subir foto
+            </button>
+            <button type="button" class="photo-btn photo-btn--camera" @click="triggerCamera">
+              <i class="bi bi-camera-fill"></i> Tomar foto
+            </button>
+            <button v-if="user.photo" type="button" class="photo-btn photo-btn--remove" @click="user.photo = ''">
+              <i class="bi bi-trash-fill"></i> Quitar
+            </button>
+          </div>
+          <input ref="photoInputRef" type="file" accept="image/*" class="photo-input-hidden" @change="onPhotoFile" />
+          <input ref="cameraInputRef" type="file" accept="image/*" capture="user" class="photo-input-hidden" @change="onPhotoFile" />
+        </div>
+
         <input type="text" id="name" v-model="user.name" placeholder="Nombre"/>
         <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" placeholder="Documento"/>
 
@@ -42,6 +66,10 @@
 
         <div v-else class="users-list">
           <div v-for="createdUser in users" :key="createdUser._id" class="user-item">
+            <div class="user-avatar-sm">
+              <img v-if="createdUser.photo" :src="createdUser.photo" class="user-avatar-img" :alt="createdUser.name" />
+              <span v-else class="user-avatar-initials" :style="{ background: avatarColor(createdUser.name) }">{{ initials(createdUser.name) }}</span>
+            </div>
             <div class="user-info">
               <strong>{{ createdUser.name }}</strong>
               <span class="user-meta">DNI {{ createdUser.dni }} · {{ roleLabel(createdUser.role) }}</span>
@@ -174,6 +202,8 @@ function getCurrentUser() {
   try { return JSON.parse(sessionStorage.getItem('user') || '{}') } catch { return {} }
 }
 
+const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#f59e0b','#6366f1','#22c55e','#ec4899','#6b8e3a','#ef4444']
+
 export default {
   components: { ConfirmDialog },
   data() {
@@ -185,7 +215,8 @@ export default {
         name: "",
         dni: "",
         password: "",
-        role: currentUser.role === 'admin_ventas' ? 'vendedor' : 'operario'
+        role: currentUser.role === 'admin_ventas' ? 'vendedor' : 'operario',
+        photo: ""
       },
       users: [],
       deletedUsers: [],
@@ -204,6 +235,36 @@ export default {
     roleLabel(role) {
       const map = { admin: 'Admin', admin_ventas: 'Admin de ventas', vendedor: 'Vendedor', operario: 'Operario', supervisor: 'Supervisor' }
       return map[role] || role
+    },
+    avatarColor(name) {
+      let n = 0; for (const c of (name || '')) n += c.charCodeAt(0)
+      return AVATAR_COLORS[n % AVATAR_COLORS.length]
+    },
+    initials(name) {
+      return (name || '?').split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('')
+    },
+    triggerPhotoInput() { this.$refs.photoInputRef.click() },
+    triggerCamera()     { this.$refs.cameraInputRef.click() },
+    onPhotoFile(e) {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        const img = new Image()
+        img.onload = () => {
+          const MAX = 320
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+          const w = Math.round(img.width * scale)
+          const h = Math.round(img.height * scale)
+          const canvas = document.createElement('canvas')
+          canvas.width = w; canvas.height = h
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+          this.user.photo = canvas.toDataURL('image/jpeg', 0.82)
+        }
+        img.src = ev.target.result
+      }
+      reader.readAsDataURL(file)
     },
     toggleCreateForm() {
       this.showCreateForm = !this.showCreateForm
@@ -283,7 +344,8 @@ export default {
         name: createdUser.name || "",
         dni: String(createdUser.dni || ""),
         password: "",
-        role: createdUser.role || "operario"
+        role: createdUser.role || "operario",
+        photo: createdUser.photo || ""
       }
       window.scrollTo({ top: 0, behavior: "smooth" })
     },
@@ -523,7 +585,8 @@ export default {
         name: "",
         dni: "",
         password: "",
-        role: "operario"
+        role: "operario",
+        photo: ""
       }
       this.editingUserId = null
     }
@@ -894,6 +957,109 @@ button:hover {
 
 .restore-button:hover {
   background: #16613b;
+}
+
+/* ── Foto de perfil ── */
+.photo-picker-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  width: 100%;
+}
+
+.photo-preview {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.photo-preview:hover .photo-overlay { opacity: 1; }
+
+.photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: #94a3b8;
+}
+
+.photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.3rem;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+
+.photo-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.photo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #6b8e3a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+.photo-btn--camera { background: #3b82f6; }
+.photo-btn--remove { background: #cb5f5f; }
+.photo-btn:hover { filter: brightness(0.9); }
+
+.photo-input-hidden { display: none; }
+
+/* Avatar en lista */
+.user-avatar-sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.user-avatar-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 /* Responsive */

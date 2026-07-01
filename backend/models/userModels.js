@@ -69,7 +69,12 @@ trim:true
 notificationHistoryReadIds:[{
 type:String,
 trim:true
-}]
+}],
+
+photo:{
+type:String,
+default:""
+}
 
 })
 

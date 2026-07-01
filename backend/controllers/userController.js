@@ -87,7 +87,7 @@ export const getUsers = async (req, res) => {
         }
 
         const users = await User.find(baseQuery)
-            .select("name dni role isDeleted deletedAt")
+            .select("name dni role isDeleted deletedAt photo")
             .sort({ name: 1 })
 
         res.json(users)
@@ -190,11 +190,14 @@ export const createUser = async (req, res) => {
             })
         }
 
+        const photo = typeof req.body.photo === 'string' && req.body.photo.startsWith('data:image/') ? req.body.photo : ''
+
         const user = await User.create({
             name,
             dni,
             password,
-            role: role || "operario"
+            role: role || "operario",
+            photo
         })
 
         await registerAuditEvent({
@@ -285,6 +288,11 @@ export const updateUser = async (req, res) => {
                 })
             }
             updateData.password = Number(passwordRaw)
+        }
+
+        if (req.body.photo !== undefined) {
+            const p = req.body.photo
+            updateData.photo = (typeof p === 'string' && (p === '' || p.startsWith('data:image/'))) ? p : ''
         }
 
         const previousUser = await User.findById(req.params.id)

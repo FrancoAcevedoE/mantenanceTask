@@ -683,17 +683,51 @@ const HistoryPanel = defineComponent({
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Responsive ── */
+.crm-dash { overflow-x: hidden; }
+
 @media (max-width: 1024px) {
   :deep(.dash-grid) { grid-template-columns: repeat(3, 1fr); }
 }
+
 @media (max-width: 768px) {
-  :deep(.dash-grid)  { grid-template-columns: repeat(2, 1fr); }
+  :deep(.dash-grid)   { grid-template-columns: repeat(2, 1fr); }
   :deep(.dash-bottom) { grid-template-columns: 1fr; }
-  .seller-name { min-width: 80px; }
-  .history-grid, :deep(.history-grid) { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+  :deep(.dash-bottom--compact) { grid-template-columns: 1fr; }
+
+  .seller-name        { min-width: 80px; }
+  .dash-topbar        { gap: 0.5rem; }
+  .dash-report-btn    { margin-left: 0; width: 100%; justify-content: center; }
+
+  .history-grid, :deep(.history-grid) {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+  .history-cell, :deep(.history-cell) { padding: 0.5rem 0.6rem; }
 }
-@media (max-width: 480px) {
+
+@media (max-width: 540px) {
+  :deep(.dash-grid)  { grid-template-columns: repeat(2, 1fr); gap: 0.45rem; }
+  :deep(.dash-card)  { padding: 0.55rem 0.6rem; gap: 0.45rem; }
+  :deep(.dash-value) { font-size: 1.1rem; }
+  :deep(.dash-value--sm) { font-size: 0.8rem; }
+  :deep(.dash-icon)  { width: 28px; height: 28px; font-size: 0.82rem; }
+
+  .history-grid, :deep(.history-grid) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .view-toggle { width: 100%; }
+  .vt-btn      { flex: 1; justify-content: center; }
+
+  .seller-row-hd { flex-wrap: wrap; gap: 0.4rem; padding: 0.6rem 0.75rem; }
+  .seller-mini-stats { order: 3; width: 100%; }
+}
+
+@media (max-width: 380px) {
   :deep(.dash-grid) { grid-template-columns: 1fr; }
-  .seller-mini-stats { display: none; }
+  .month-label      { min-width: 100px; font-size: 0.78rem; }
+
+  .history-grid, :deep(.history-grid) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>
