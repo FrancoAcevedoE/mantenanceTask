@@ -567,6 +567,10 @@ const HistoryPanel = defineComponent({
   margin-top: 0.6rem;
 }
 .history-cell, :deep(.history-cell) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
   background: rgba(255,255,255,.85);
   border: 1px solid rgba(107,142,58,.12);
   border-radius: 10px;
