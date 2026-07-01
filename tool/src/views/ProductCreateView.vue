@@ -19,7 +19,7 @@
           <div class="sku-preview">
             <span class="sku-label">SKU base:</span>
             <code class="sku-code">{{ skuPreview || '—' }}</code>
-            <span v-if="form.tiposConfig.flatMap(tc => tc.terminaciones).length > 1" class="sku-hint">(+ terminacion en cotizacion)</span>
+            <span v-if="form.espesoresMedidas.flatMap(em => em.tiposConfig.flatMap(tc => tc.terminaciones)).length > 1" class="sku-hint">(+ terminacion en cotizacion)</span>
             <span v-if="form.colorMode === 'todos' || form.selectedColors.length > 1" class="sku-hint">(+ color en cotizacion)</span>
           </div>
           <div class="form-grid">
@@ -128,10 +128,21 @@
             </div>
           </div>
 
-          <!-- Espesores y Medidas -->
-          <div class="section-title">Espesores y medidas</div>
-          <p class="hint">Cada fila es una combinacion espesor + medida. Se usan para generar el SKU y calcular m2.</p>
-          <div v-for="(em, ei) in form.espesoresMedidas" :key="ei" class="tipo-block">
+          <!-- Espesores, Medidas y Precios -->
+          <div class="section-title">Espesores / medidas y precios <HelpTooltip tip="Cada fila es una medida con su propio set de tipos y precios. Agregá tantas medidas como necesites." /></div>
+          <div class="form-grid" style="margin-bottom:0.5rem">
+            <div class="field">
+              <label>Unidad de precio</label>
+              <select v-model="form.unidadPrecio">
+                <option value="hoja">Por hoja</option>
+                <option value="placa">Por placa</option>
+                <option value="m2">Por m2</option>
+              </select>
+            </div>
+          </div>
+
+          <div v-for="(em, ei) in form.espesoresMedidas" :key="ei" class="em-block">
+            <!-- Fila de dimensiones -->
             <div class="em-row">
               <div class="em-field">
                 <label class="sub-label-sm">Espesor (mm)</label>
@@ -151,101 +162,73 @@
                 <div class="m2-display-sm">{{ calcM2(em.medida) ?? '—' }}</div>
               </div>
               <button type="button" class="btn-icon-danger" @click="removeEspesorMedida(ei)"
-                      v-if="form.espesoresMedidas.length > 1" title="Quitar" style="align-self:flex-end;margin-bottom:0.3rem">
+                      v-if="form.espesoresMedidas.length > 1" title="Quitar medida" style="align-self:flex-end;margin-bottom:0.3rem">
                 <i class="bi bi-trash"></i>
               </button>
             </div>
-          </div>
-          <button type="button" class="secondary-button btn-sm" @click="addEspesorMedida">
-            <i class="bi bi-plus"></i> Agregar espesor / medida
-          </button>
 
-          <!-- Tipos y Precios -->
-          <div class="section-title">Tipos y precios <HelpTooltip tip="Cada tipo (Brillante, Semimate, Textura) puede tener un precio diferente. Podés agregar múltiples tipos con sus terminaciones y precios de cada grupo comercial." /></div>
-          <div class="form-grid">
-            <div class="field">
-              <label>Unidad de precio</label>
-              <select v-model="form.unidadPrecio">
-                <option value="hoja">Por hoja</option>
-                <option value="placa">Por placa</option>
-                <option value="m2">Por m2</option>
-              </select>
+            <!-- Divisor y sección de tipos+precios para esta medida -->
+            <div class="em-prices-divider">
+              <span>Tipos y precios para {{ em.medida ? `medida ${em.medida}` : 'esta medida' }}</span>
             </div>
-          </div>
 
-          <!-- Tipos de producto con sus terminaciones -->
-          <div v-for="(tc, ti) in form.tiposConfig" :key="ti" class="tipo-block">
-            <div class="tipo-block-header">
-              <div class="tipo-name-row">
-                <label class="sub-label">Tipo de producto</label>
-                <input v-model="tc.nombre" type="text" placeholder="Ej: Compensado" class="input-sm tipo-name-input" />
-                <button type="button" class="btn-icon-danger" @click="removeTipoConfig(ti)"
-                        v-if="form.tiposConfig.length > 1" title="Quitar tipo">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-              <div v-if="tc.nombre.trim()" class="tipo-terms-section">
-                <label class="sub-label-sm">Terminaciones para {{ tc.nombre }}</label>
-                <div class="terminaciones-checks">
-                  <label v-for="t in allTerminaciones" :key="t.code" class="term-check-item"
-                         :class="{ checked: tc.terminaciones.includes(t.code) }">
-                    <input type="checkbox" :value="t.code" v-model="tc.terminaciones" />
-                    <span class="term-name">{{ t.nombre }}</span>
-                    <span class="term-code">{{ t.code }}</span>
-                  </label>
+            <div v-for="(tc, ti) in em.tiposConfig" :key="ti" class="tipo-block">
+              <div class="tipo-block-header">
+                <div class="tipo-name-row">
+                  <label class="sub-label">Tipo de producto</label>
+                  <input v-model="tc.nombre" type="text" placeholder="Ej: Compensado" class="input-sm tipo-name-input" />
+                  <button type="button" class="btn-icon-danger" @click="removeTipoFromEM(ei, ti)"
+                          v-if="em.tiposConfig.length > 1" title="Quitar tipo">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+                <div v-if="tc.nombre.trim()" class="tipo-terms-section">
+                  <label class="sub-label-sm">Terminaciones para {{ tc.nombre }}</label>
+                  <div class="terminaciones-checks">
+                    <label v-for="t in allTerminaciones" :key="t.code" class="term-check-item"
+                           :class="{ checked: tc.terminaciones.includes(t.code) }">
+                      <input type="checkbox" :value="t.code" v-model="tc.terminaciones" />
+                      <span class="term-name">{{ t.nombre }}</span>
+                      <span class="term-code">{{ t.code }}</span>
+                    </label>
+                  </div>
                 </div>
               </div>
+
+              <!-- Tabla de precios -->
+              <div v-if="tc.nombre.trim() && tc.terminaciones.length" class="variantes-table-wrap">
+                <table class="variantes-table">
+                  <thead>
+                    <tr>
+                      <th>Terminacion</th>
+                      <th>SKU</th>
+                      <th>$ General</th>
+                      <th>$ Grupo I</th>
+                      <th>$ Grupo II</th>
+                      <th>$ Grupo III</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in getRowsForEMTipo(ei, ti)" :key="row._key">
+                      <td class="cell-label">{{ row.tipoTerminacion }} <code>{{ row.terminacion }}</code></td>
+                      <td class="cell-sku"><code>{{ skuForVarianteEM(row, ei) }}</code></td>
+                      <td><div class="pct-input-wrap"><span class="input-prefix-inline">$</span><input v-model.number="row.precioGeneral" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" /></div></td>
+                      <td><div class="pct-input-wrap"><span class="input-prefix-inline">$</span><input v-model.number="row.precioGrupoI" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" /></div></td>
+                      <td><div class="pct-input-wrap"><span class="input-prefix-inline">$</span><input v-model.number="row.precioGrupoII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" /></div></td>
+                      <td><div class="pct-input-wrap"><span class="input-prefix-inline">$</span><input v-model.number="row.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" /></div></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <!-- Tabla de precios de este tipo -->
-            <div v-if="tc.nombre.trim() && tc.terminaciones.length" class="variantes-table-wrap">
-              <table class="variantes-table">
-                <thead>
-                  <tr>
-                    <th>Terminacion</th>
-                    <th>SKU</th>
-                    <th>$ General</th>
-                    <th>$ Grupo I</th>
-                    <th>$ Grupo II</th>
-                    <th>$ Grupo III</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="row in getRowsForTipo(ti)" :key="row._key">
-                    <td class="cell-label">{{ row.tipoTerminacion }} <code>{{ row.terminacion }}</code></td>
-                    <td class="cell-sku"><code>{{ skuForVariante(row) }}</code></td>
-                    <td>
-                      <div class="pct-input-wrap">
-                        <span class="input-prefix-inline">$</span>
-                        <input v-model.number="row.precioGeneral" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="pct-input-wrap">
-                        <span class="input-prefix-inline">$</span>
-                        <input v-model.number="row.precioGrupoI" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="pct-input-wrap">
-                        <span class="input-prefix-inline">$</span>
-                        <input v-model.number="row.precioGrupoII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="pct-input-wrap">
-                        <span class="input-prefix-inline">$</span>
-                        <input v-model.number="row.precioGrupoIII" type="number" min="0" step="0.01" placeholder="0" class="input-num-sm" />
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <button type="button" class="secondary-button btn-sm" style="margin-top:0.3rem" @click="addTipoToEM(ei)">
+              <i class="bi bi-plus"></i> Agregar tipo a esta medida
+            </button>
           </div>
 
-          <button type="button" class="secondary-button add-row-btn" @click="addTipoConfig">
-            <i class="bi bi-plus"></i> Agregar otro +
+          <button type="button" class="secondary-button btn-sm" style="margin-top:0.5rem" @click="addEspesorMedida">
+            <i class="bi bi-plus"></i> Agregar espesor / medida
           </button>
 
           <!-- Agregado opcional -->
@@ -481,13 +464,12 @@ const form = ref({
   color: '',
   colorMode: 'todos',
   selectedColors: [],
-  espesoresMedidas: [{ espesor: '', medida: '', nomenclaturaMedida: '' }],
+  espesoresMedidas: [{ espesor: '', medida: '', nomenclaturaMedida: '', tiposConfig: [{ nombre: '', terminaciones: [] }] }],
   admiteDescuentos: true,
   comentario: '',
   image: '',
   archivos: [],
   unidadPrecio: 'hoja',
-  tiposConfig: [{ nombre: '', terminaciones: [] }],
   tieneAgregado: false,
   agregadoNombre: '',
   agregadoPrecio: null,
@@ -501,15 +483,16 @@ const DEFAULT_TERMINACIONES = [
 
 const allTerminaciones = ref([...DEFAULT_TERMINACIONES])
 
-function addTipoConfig() {
-  form.value.tiposConfig.push({ nombre: '', terminaciones: [] })
+function addTipoToEM(emIdx) {
+  form.value.espesoresMedidas[emIdx].tiposConfig.push({ nombre: '', terminaciones: [] })
 }
 
-function removeTipoConfig(i) {
-  const removed = form.value.tiposConfig.splice(i, 1)[0]
+function removeTipoFromEM(emIdx, tiIdx) {
+  const em = form.value.espesoresMedidas[emIdx]
+  const removed = em.tiposConfig.splice(tiIdx, 1)[0]
   if (removed) {
     for (const code of removed.terminaciones) {
-      const key = `${removed.nombre}|${code}`
+      const key = `${emIdx}|${removed.nombre}|${code}`
       delete priceRows.value[key]
     }
   }
@@ -517,17 +500,20 @@ function removeTipoConfig(i) {
 
 const priceRows = ref({})
 
-function getRowsForTipo(tipoIdx) {
-  const tc = form.value.tiposConfig[tipoIdx]
+function getRowsForEMTipo(emIdx, tipoIdx) {
+  const em = form.value.espesoresMedidas[emIdx]
+  if (!em) return []
+  const tc = em.tiposConfig[tipoIdx]
   if (!tc || !tc.nombre.trim()) return []
   return tc.terminaciones
     .map(code => allTerminaciones.value.find(t => t.code === code))
     .filter(Boolean)
     .map(term => {
-      const key = `${tc.nombre}|${term.code}`
+      const key = `${emIdx}|${tc.nombre}|${term.code}`
       if (!priceRows.value[key]) {
         priceRows.value[key] = {
           _key: key,
+          emIdx,
           tipoProducto: tc.nombre,
           tipoTerminacion: term.nombre,
           terminacion: term.code,
@@ -547,14 +533,17 @@ function getRowsForTipo(tipoIdx) {
 
 function getAllVariantes() {
   const result = []
-  for (let i = 0; i < form.value.tiposConfig.length; i++) {
-    result.push(...getRowsForTipo(i))
+  for (let ei = 0; ei < form.value.espesoresMedidas.length; ei++) {
+    const em = form.value.espesoresMedidas[ei]
+    for (let ti = 0; ti < em.tiposConfig.length; ti++) {
+      result.push(...getRowsForEMTipo(ei, ti))
+    }
   }
   return result
 }
 
 function addEspesorMedida() {
-  form.value.espesoresMedidas.push({ espesor: '', medida: '', nomenclaturaMedida: '' })
+  form.value.espesoresMedidas.push({ espesor: '', medida: '', nomenclaturaMedida: '', tiposConfig: [{ nombre: '', terminaciones: [] }] })
 }
 
 function removeEspesorMedida(i) {
@@ -575,17 +564,17 @@ function buildSku(prefijo, colorPart, termPart, nomenclatura, espesor) {
   return espesor ? `${base}-${espesor}` : base
 }
 
-function skuForVariante(v) {
+function skuForVarianteEM(v, emIdx) {
   const { prefijo, colorMode, selectedColors, espesoresMedidas } = form.value
   const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
-  const em = espesoresMedidas[0] || {}
+  const em = espesoresMedidas[emIdx] || espesoresMedidas[0] || {}
   return buildSku(prefijo, colorPart, v.terminacion, em.nomenclaturaMedida || '', em.espesor || '')
 }
 
 const skuPreview = computed(() => {
-  const { prefijo, colorMode, selectedColors, tiposConfig, espesoresMedidas } = form.value
+  const { prefijo, colorMode, selectedColors, espesoresMedidas } = form.value
   const colorPart = colorMode === 'especifico' && selectedColors.length === 1 ? selectedColors[0] : ''
-  const allTerms = tiposConfig.flatMap(tc => tc.terminaciones)
+  const allTerms = espesoresMedidas.flatMap(em => em.tiposConfig.flatMap(tc => tc.terminaciones))
   const termPart = allTerms.length === 1 ? allTerms[0] : ''
   const em = espesoresMedidas[0] || {}
   const nom = em.nomenclaturaMedida || ''
@@ -683,18 +672,39 @@ async function save() {
     payload.medida = em0.medida || ''
     payload.nomenclaturaMedida = em0.nomenclaturaMedida || ''
     payload.archivos = (payload.archivos || []).filter(a => a.url).map(a => ({ titulo: a.titulo, url: a.url }))
-    const vars = getAllVariantes().map(v => ({
-      tipoProducto: v.tipoProducto,
-      tipoTerminacion: v.tipoTerminacion,
-      terminacion: v.terminacion,
-      precioGeneral: v.precioGeneral,
-      precioGrupoI: v.precioGrupoI,
-      precioGrupoII: v.precioGrupoII,
-      precioGrupoIII: v.precioGrupoIII,
-    }))
-    payload.variantes = vars
-    if (vars.length === 1) {
-      const v0 = vars[0]
+
+    // Construir variantes per-espesoresMedida y también lista plana para compatibilidad
+    const flatVariantes = []
+    payload.espesoresMedidas = payload.espesoresMedidas.map((em, ei) => {
+      const emVariantes = []
+      for (let ti = 0; ti < em.tiposConfig.length; ti++) {
+        const rows = getRowsForEMTipo(ei, ti)
+        for (const v of rows) {
+          const vObj = {
+            tipoProducto: v.tipoProducto,
+            tipoTerminacion: v.tipoTerminacion,
+            terminacion: v.terminacion,
+            precioGeneral: v.precioGeneral,
+            precioGrupoI: v.precioGrupoI,
+            precioGrupoII: v.precioGrupoII,
+            precioGrupoIII: v.precioGrupoIII,
+          }
+          emVariantes.push(vObj)
+          flatVariantes.push(vObj)
+        }
+      }
+      return {
+        espesor: em.espesor,
+        medida: em.medida,
+        nomenclaturaMedida: em.nomenclaturaMedida,
+        m2: calcM2(em.medida) ?? undefined,
+        variantes: emVariantes,
+      }
+    })
+
+    payload.variantes = flatVariantes
+    if (flatVariantes.length === 1) {
+      const v0 = flatVariantes[0]
       payload.tipo = v0.tipoProducto
       payload.tipoTerminacion = v0.tipoTerminacion
       payload.terminacion = v0.terminacion
@@ -1009,6 +1019,40 @@ async function save() {
 
 .cell-label { font-size: 0.82rem; font-weight: 500; }
 .cell-sku code { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; color: var(--color-muted); }
+
+.em-block {
+  border: 1px solid rgba(107,142,58,.18);
+  border-radius: 14px;
+  padding: 0.85rem 0.9rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: rgba(107,142,58,.02);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.em-prices-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.2rem 0;
+}
+.em-prices-divider::before,
+.em-prices-divider::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: rgba(107,142,58,.25);
+  border-radius: 2px;
+}
+.em-prices-divider span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-primary, #6b8e3a);
+  white-space: nowrap;
+}
 
 .em-row {
   display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: flex-end;

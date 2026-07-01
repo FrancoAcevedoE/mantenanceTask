@@ -107,6 +107,19 @@ button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
+/* Botones icono (pequeños, sin texto): no se desplazan para evitar flicker */
+button.cc-ico-btn:hover:not(:disabled),
+button.ca-act-btn:hover:not(:disabled),
+button.btn-icon-danger:hover:not(:disabled),
+button.btn-icon:hover:not(:disabled),
+button.month-btn:hover:not(:disabled),
+button.crm-close:hover:not(:disabled),
+button.cc-btn-add:hover:not(:disabled),
+button.vt-btn:hover:not(:disabled),
+button.photo-btn:hover:not(:disabled) {
+  transform: none;
+}
+
 button:disabled {
   background: rgba(107, 142, 58, 0.3);
   cursor: not-allowed;

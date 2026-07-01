@@ -866,6 +866,8 @@ function snoozeAndOpen(client) {
   letter-spacing: 0.05em;
   padding: 0.18rem 0.55rem;
   border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .cc-tipo--potencial { background: rgba(245,158,11,.12); color: #b45309; }
