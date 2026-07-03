@@ -57,7 +57,7 @@ const syncNotifications = async () => {
 }
 
 const setBodyTheme = (theme) => {
-  document.body.classList.remove('bg-login', 'bg-app', 'bg-dashboard', 'bg-notifications')
+  document.body.classList.remove('bg-login', 'bg-app', 'bg-dashboard', 'bg-notifications', 'bg-maintenance')
   if (theme) document.body.classList.add(theme)
 }
 
@@ -154,6 +154,10 @@ body.bg-login {
 body.bg-app,
 body.bg-dashboard,
 body.bg-notifications { background: #f1f5f9; }
+body.bg-maintenance {
+  background: rgb(103, 111, 62);
+  background-attachment: fixed;
+}
 
 html, body, #app {
   height: 100vh;

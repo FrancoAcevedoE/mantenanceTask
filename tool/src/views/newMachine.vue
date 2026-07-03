@@ -456,12 +456,8 @@ export default {
   },
   mounted() {
     this.loadMachines()
-   document.body.style.background = 'rgb(103, 111, 62)'
-document.body.style.backgroundAttachment = 'fixed'
   },
-  beforeUnmount() {
-    document.body.style.background = '';
-  }
+  beforeUnmount() {}
 }
 </script>
 <style scoped>
