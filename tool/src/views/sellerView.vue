@@ -82,6 +82,15 @@
             <textarea class="send-textarea" v-model="sendMessage" rows="6"></textarea>
           </div>
 
+          <!-- Adjunto PDF -->
+          <div class="send-pdf-hint">
+            <i class="bi bi-info-circle"></i>
+            Generá el PDF de la cotización y adjuntalo manualmente al enviar.
+            <button class="send-pdf-btn" @click="openSendPrint(quoteToSend)">
+              <i class="bi bi-file-earmark-pdf"></i> Generar PDF
+            </button>
+          </div>
+
           <!-- Acciones -->
           <div class="send-modal-footer">
             <button class="ghost-button" @click="quoteToSend = null">Cancelar</button>
@@ -1467,7 +1476,135 @@ function openSend(q) {
   const total = fmtMoney(totalCotizacion(q))
   const num   = String(q.numero).padStart(4, '0')
   sendSubject.value = `Cotización #${num} — ${q.titulo}`
-  sendMessage.value = `Hola${q.cliente?.nombre ? ' ' + q.cliente.nombre : ''}, te envío la cotización #${num} "${q.titulo}" por un total de ${total}.\n\nQuedo a disposición para cualquier consulta.`
+
+  const itemLines = (q.items || [])
+    .filter(it => it.nombre)
+    .map(it => {
+      const parts = [it.nombre]
+      if (it.color) parts.push(it.color)
+      if (it.tipo || it.terminacion) parts.push([it.tipo, it.terminacion].filter(Boolean).join('/'))
+      return `• ${parts.join(' — ')} x${it.cantidad} ${it.unidad}: ${fmtMoney(it.subtotal)}`
+    })
+    .join('\n')
+
+  const greeting = `Hola${q.cliente?.nombre ? ' ' + q.cliente.nombre : ''}`
+  const intro = `te envío la cotización #${num} "${q.titulo}".`
+  const detalle = itemLines ? `\n\nDetalle:\n${itemLines}\n\nTotal: ${total}` : `\n\nTotal: ${total}`
+  const cierre = '\n\nQuedo a disposición para cualquier consulta.'
+
+  sendMessage.value = `${greeting}, ${intro}${detalle}${cierre}`
+}
+
+function openSendPrint(q) {
+  if (!q) return
+  const num = String(q.numero).padStart(4, '0')
+  const logoHtml = pt.value.logo
+    ? `<img src="${pt.value.logo}" style="max-height:60px;max-width:140px;display:block;margin-bottom:4px;">`
+    : `<img src="/karikal.png" style="max-height:60px;display:block;margin-bottom:4px;">`
+
+  const companyLines = [
+    pt.value.razonSocial ? `<div style="font-weight:700;font-size:13px;">${pt.value.razonSocial}</div>` : '',
+    pt.value.direccion   ? `<div>${pt.value.direccion}</div>` : '',
+    pt.value.ciudad      ? `<div>${pt.value.ciudad}</div>` : '',
+    pt.value.telefono    ? `<div>${pt.value.telefono}</div>` : '',
+    pt.value.email       ? `<div>${pt.value.email}</div>` : '',
+    pt.value.web         ? `<div>${pt.value.web}</div>` : '',
+    pt.value.cuit        ? `<div>CUIT: ${pt.value.cuit}</div>` : '',
+  ].filter(Boolean).join('')
+
+  const clientHtml = (q.cliente?.nombre || q.cliente?.empresa || q.cliente?.email || q.cliente?.telefono) ? `
+    <div style="margin-bottom:16px;padding:10px 14px;border:1px solid #d0d0d0;border-radius:6px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.08em;color:#888;margin-bottom:4px;">DESTINATARIO</div>
+      ${q.cliente?.nombre  ? `<div style="font-weight:700;">${q.cliente.nombre}</div>` : ''}
+      ${q.cliente?.empresa ? `<div>${q.cliente.empresa}</div>` : ''}
+      ${q.cliente?.email   ? `<div>${q.cliente.email}</div>` : ''}
+      ${q.cliente?.telefono? `<div>${q.cliente.telefono}</div>` : ''}
+    </div>` : ''
+
+  const itemsRows = (q.items || []).map(it => `
+    <tr>
+      <td style="padding:6px 8px;">
+        <span style="font-weight:600;">${it.nombre || ''}</span>
+        ${it.codigo ? `<br><span style="font-size:10px;color:#666;">${it.codigo}</span>` : ''}
+        ${(it.tipo || it.terminacion || it.espesor) ? `<br><span style="font-size:10px;color:#888;">${[it.tipo, it.terminacion, it.espesor ? it.espesor+'mm' : ''].filter(Boolean).join(' · ')}</span>` : ''}
+      </td>
+      <td style="padding:6px 8px;">${it.color || '—'}</td>
+      <td style="padding:6px 8px;text-align:center;">${it.cantidad}</td>
+      <td style="padding:6px 8px;">${it.unidad}</td>
+      <td style="padding:6px 8px;">${it.discountLabel || '—'}</td>
+      <td style="padding:6px 8px;text-align:right;">$ ${Number(it.precioUnitario||0).toLocaleString('es-AR',{minimumFractionDigits:2})}</td>
+      <td style="padding:6px 8px;">${it.descripcion || ''}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600;">$ ${Number(it.subtotal||0).toLocaleString('es-AR',{minimumFractionDigits:2})}</td>
+    </tr>`).join('')
+
+  const total = totalCotizacion(q)
+  const condText = (pt.value.condiciones || 'Oferta válida por {dias} días a partir de la fecha de emisión.').replace('{dias}', String(q.validezDias || 7))
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Cotización #${num}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 11px; color: #222; padding: 24px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #333; }
+  .header-left { font-size: 11px; line-height: 1.5; }
+  .header-right { text-align: right; }
+  .doc-title { font-size: 22px; font-weight: 800; letter-spacing: .06em; color: #333; margin-bottom: 8px; }
+  .meta-table td { padding: 2px 6px; font-size: 11px; }
+  .meta-table td:first-child { color: #888; text-align: right; }
+  .titulo { font-size: 15px; font-weight: 700; margin: 16px 0 12px; }
+  table.items { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  table.items th { background: #333; color: #fff; padding: 6px 8px; font-size: 10px; text-align: left; letter-spacing: .04em; }
+  table.items td { border-bottom: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; }
+  table.items tr:nth-child(even) td { background: #f7f7f7; }
+  .total-row td { padding: 8px; font-weight: 700; font-size: 13px; background: #333; color: #fff; }
+  .notes { margin-bottom: 12px; }
+  .notes-label { font-size: 9px; font-weight: 700; letter-spacing: .08em; color: #888; margin-bottom: 4px; }
+  .validity { font-size: 10px; color: #555; margin-bottom: 8px; }
+  .footer { font-size: 10px; color: #888; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 12px; }
+  @media print { body { padding: 12px; } }
+</style>
+</head><body>
+<div class="header">
+  <div class="header-left">
+    ${logoHtml}
+    ${companyLines}
+  </div>
+  <div class="header-right">
+    <div class="doc-title">COTIZACIÓN</div>
+    <table class="meta-table"><tbody>
+      <tr><td>N°</td><td><strong>#${num}</strong></td></tr>
+      <tr><td>Fecha</td><td>${fmtDate(q.createdAt)}</td></tr>
+      <tr><td>Válida hasta</td><td>${validezFecha(q.createdAt, q.validezDias)}</td></tr>
+      <tr><td>Vendedor</td><td>${q.vendedor || ''}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+<div class="titulo">${q.titulo || ''}</div>
+${clientHtml}
+<table class="items">
+  <thead><tr>
+    <th>Producto / Material</th><th>Color</th><th>Cant.</th><th>Unidad</th>
+    <th>Descuento</th><th style="text-align:right">Precio unit.</th><th>Descripción</th><th style="text-align:right">Subtotal</th>
+  </tr></thead>
+  <tbody>${itemsRows}</tbody>
+  <tfoot><tr class="total-row">
+    <td colspan="7" style="text-align:right;padding:8px;">TOTAL</td>
+    <td style="text-align:right;padding:8px;">$ ${Number(total).toLocaleString('es-AR',{minimumFractionDigits:2})}</td>
+  </tr></tfoot>
+</table>
+${q.descripcionGeneral ? `<div class="notes"><div class="notes-label">NOTAS Y CONDICIONES</div><p>${q.descripcionGeneral}</p></div>` : ''}
+<div class="validity">${condText}</div>
+<div class="footer">
+  ${pt.value.piePagina ? `<div>${pt.value.piePagina}</div>` : ''}
+  <div>Cotización generada por ${q.vendedor || ''} — ${fmtDate(q.createdAt)}</div>
+</div>
+<script>window.onload=function(){window.print()}<\/script>
+</body></html>`
+
+  const w = window.open('', '_blank', 'noopener')
+  if (!w) { toast.warning('El navegador bloqueó la ventana emergente. Permití las ventanas emergentes e intentá de nuevo.'); return }
+  w.document.write(html)
+  w.document.close()
 }
 
 function normalizePhoneSend(raw) {
@@ -2251,4 +2388,35 @@ function hasCliente(q) {
   cursor: pointer;
 }
 .email-btn:hover { background: #2563eb; }
+
+.send-pdf-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  background: rgba(0,0,0,0.04);
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  margin-bottom: 0.5rem;
+}
+.send-pdf-hint i { flex-shrink: 0; }
+
+.send-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.send-pdf-btn:hover { background: #b91c1c; }
 </style>
