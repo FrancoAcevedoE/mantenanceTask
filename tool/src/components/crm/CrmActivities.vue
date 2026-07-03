@@ -639,5 +639,18 @@ const fmtDate = (d) => {
   .cm-row { grid-template-columns: 1fr; }
   .ca-toolbar { flex-direction: column; align-items: stretch; }
   .ca-btn-add { margin-left: 0; }
+
+  .ca-item-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .ca-item-title {
+    width: 100%;
+  }
+
+  .ca-item-actions {
+    margin-left: auto;
+  }
 }
 </style>

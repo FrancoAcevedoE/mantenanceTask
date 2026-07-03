@@ -6,7 +6,7 @@
     </div>
 
     <div class="crm-tabs-wrap">
-      <div class="crm-tabs-bar">
+      <div class="crm-tabs-bar" ref="tabsBarRef">
         <button
           v-for="tab in tabs"
           :key="tab.key"
@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useCrmStore } from '@/stores/crm'
 import CrmDashboard   from '@/components/crm/CrmDashboard.vue'
 import CrmClients     from '@/components/crm/CrmClients.vue'
@@ -72,6 +72,15 @@ import SellerView     from '@/views/sellerView.vue'
 const activeTab  = ref('dashboard')
 const pendingEdit = ref(null)
 const crmStore   = useCrmStore()
+const tabsBarRef = ref(null)
+
+watch(activeTab, async () => {
+  await nextTick()
+  const bar = tabsBarRef.value
+  if (!bar) return
+  const active = bar.querySelector('.crm-tab--active')
+  if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+})
 
 function onEditClient(client) {
   pendingEdit.value = client
@@ -83,11 +92,11 @@ const tabs = computed(() => [
   { key: 'dashboard',    label: 'Dashboard',    icon: 'bi bi-speedometer2' },
   { key: 'clientes',     label: 'Clientes',     icon: 'bi bi-people-fill',
     badge: crmStore.visibleClients.length || null },
-  { key: 'pipeline',    label: 'Nuevos Clientes', icon: 'bi bi-kanban-fill' },
+  { key: 'pipeline',    label: 'Pipeline', icon: 'bi bi-kanban-fill' },
   { key: 'cotizaciones', label: 'Cotizaciones', icon: 'bi bi-file-earmark-text-fill' },
   { key: 'actividades',  label: 'Actividades',  icon: 'bi bi-clock-history',
     badge: crmStore.pendingActivitiesCount || null, badgeClass: 'crm-tab-badge--warn' },
-  { key: 'calculadora', label: 'Calculadora m²', icon: 'bi bi-calculator' },
+  { key: 'calculadora', label: 'Calc. m²', icon: 'bi bi-calculator' },
 ])
 
 const calcLargo = ref(null)
@@ -126,6 +135,8 @@ onMounted(() => {
   flex-direction: column;
   padding-top: 0.4rem;
   padding-bottom: 1.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
   max-width: 100%;
   overflow-x: hidden;
 }
@@ -148,6 +159,7 @@ onMounted(() => {
 .crm-tabs-wrap {
   position: relative;
   margin-bottom: 1.25rem;
+  overflow: hidden;
 }
 
 .crm-tabs-fade { display: none; }
@@ -181,14 +193,14 @@ onMounted(() => {
 .crm-tab i { font-size: 1rem; }
 
 .crm-tab:hover:not(.crm-tab--active) {
-  background: rgba(107, 142, 58, 0.07);
+  background: transparent;
   color: var(--color-text);
   transform: none;
   box-shadow: none;
 }
 
 .crm-tab--active {
-  background: rgba(107, 142, 58, 0.1);
+  background: transparent;
   color: var(--color-primary);
   border-bottom-color: var(--color-primary);
   font-weight: 700;
@@ -327,43 +339,34 @@ onMounted(() => {
   }
   .topbar h1 { font-size: 1.2rem; }
 
+  .crm-tabs-wrap { overflow: visible; }
+
   .crm-tabs-bar {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap;
-    gap: 0;
+    gap: 0.15rem;
     padding-bottom: 0;
     scrollbar-width: none;
-    padding-right: 2rem;
+    scroll-behavior: smooth;
   }
   .crm-tabs-bar::-webkit-scrollbar { display: none; }
 
-  .crm-tabs-fade {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 2px;
-    width: 36px;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.95) 40%);
-    pointer-events: none;
-    color: var(--color-muted);
-    font-size: 0.8rem;
-  }
+  .crm-tabs-fade { display: none; }
 
   .crm-tab {
-    padding: 0.45rem 0.55rem;
-    font-size: 0.62rem;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.64rem;
     white-space: nowrap;
     flex-shrink: 0;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.1rem;
     text-align: center;
+    border-radius: 10px 10px 0 0;
   }
-  .crm-tab i { font-size: 1rem; }
-  .crm-tab-badge { position: absolute; top: -2px; right: -2px; min-width: 14px; height: 14px; font-size: 0.58rem; }
+  .crm-tab i { font-size: 1.05rem; }
+  .crm-tab span { display: block; }
+  .crm-tab-badge { position: absolute; top: 0px; right: 0px; min-width: 14px; height: 14px; font-size: 0.58rem; }
 
   .crm-quotes-wrap :deep(.container) { padding: 0.5rem 0.4rem; }
 }

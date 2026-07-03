@@ -183,7 +183,12 @@
             </div>
             <div v-if="product.comentario" class="detail-item full-width">
               <span class="di-label">Comentario</span>
-              <span class="di-value comment-text">{{ product.comentario }}</span>
+              <span class="di-comment-wrap">
+                <span :class="['di-value', 'comment-text', { 'comment-collapsed': !commentExpanded }]">{{ product.comentario }}</span>
+                <button v-if="product.comentario.length > 100" class="comment-toggle" @click="commentExpanded = !commentExpanded">
+                  {{ commentExpanded ? 'Ver menos' : 'Ver más' }}
+                </button>
+              </span>
             </div>
           </div>
 
@@ -249,6 +254,7 @@ const loading = computed(() => store.loading)
 const product = computed(() => store.getById(route.params.id))
 const colorCatalog = ref([])
 const imgExpanded = ref(false)
+const commentExpanded = ref(false)
 const lightboxColor = ref(null)
 
 function authHeader() {
@@ -673,4 +679,34 @@ function stockClass(stock) {
   .detail-price-row { flex-wrap: wrap; }
   .detail-grid { grid-template-columns: 1fr 1fr; }
 }
+
+.di-comment-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.comment-text {
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.comment-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.comment-toggle {
+  all: unset;
+  font-size: 0.8rem;
+  color: #3b6b2e;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.comment-toggle:hover { text-decoration: underline; }
 </style>

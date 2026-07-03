@@ -1,6 +1,6 @@
 <template>
   <div class="subnav-wrap">
-    <nav class="inv-subnav">
+    <nav class="inv-subnav" ref="navRef">
       <router-link to="/inventory" :class="{ active: isActive('/inventory') }">
         <i class="bi bi-grid-3x3-gap"></i>
         <span>Productos</span>
@@ -37,14 +37,23 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const navRef = ref(null)
 
 function isActive(path) {
   if (path === '/inventory') return route.path === '/inventory'
   return route.path.startsWith(path)
 }
+
+onMounted(() => {
+  const nav = navRef.value
+  if (!nav) return
+  const active = nav.querySelector('.active')
+  if (active) active.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' })
+})
 </script>
 
 <style scoped>
@@ -75,13 +84,13 @@ function isActive(path) {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-muted);
-  background: rgba(107, 142, 58, 0.07);
+  background: transparent;
   border: 1px solid transparent;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .inv-subnav a:hover {
-  background: rgba(107, 142, 58, 0.14);
+  background: transparent;
   color: var(--color-text);
 }
 
@@ -96,33 +105,32 @@ function isActive(path) {
 }
 
 @media (max-width: 600px) {
-  .inv-subnav { gap: 0.3rem; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-right: 2rem; }
+  .subnav-wrap { overflow: hidden; }
+
+  .inv-subnav {
+    gap: 0.25rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.75rem;
+    scroll-behavior: smooth;
+  }
   .inv-subnav::-webkit-scrollbar { display: none; }
+
   .inv-subnav a {
     flex-direction: column;
-    gap: 0.15rem;
-    padding: 0.4rem 0.5rem;
-    font-size: 0.6rem;
+    gap: 0.1rem;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.62rem;
     text-align: center;
     flex-shrink: 0;
     border-radius: 10px;
+    white-space: nowrap;
   }
   .inv-subnav a i { font-size: 1rem; }
-  .inv-subnav a span { display: inline; }
+  .inv-subnav a span { display: block; }
 
-  .scroll-fade {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 1rem;
-    width: 36px;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.95) 40%);
-    pointer-events: none;
-    color: var(--color-muted);
-    font-size: 0.8rem;
-  }
+  .scroll-fade { display: none; }
 }
 </style>

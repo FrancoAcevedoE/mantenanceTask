@@ -230,7 +230,15 @@
                               <div v-if="p.m2" class="dex-row"><span class="dex-label">m2</span><span>{{ p.m2 }}</span></div>
                               <div v-if="p.colorMode" class="dex-row"><span class="dex-label">Color</span><span>{{ p.colorMode === 'todos' ? 'TODOS' : (p.selectedColors?.join(', ') || p.color || '—') }}</span></div>
                               <div v-if="p.detalle" class="dex-row full"><span class="dex-label">Detalle</span><span>{{ p.detalle }}</span></div>
-                              <div v-if="p.comentario" class="dex-row full"><span class="dex-label">Comentario</span><span>{{ p.comentario }}</span></div>
+                              <div v-if="p.comentario" class="dex-row full">
+                                <span class="dex-label">Comentario</span>
+                                <span class="comment-wrap">
+                                  <span :class="['comment-text', { 'comment-collapsed': !expandedComments.has(p._id) }]">{{ p.comentario }}</span>
+                                  <button v-if="p.comentario.length > 100" class="comment-toggle" @click="toggleComment(p._id)">
+                                    {{ expandedComments.has(p._id) ? 'Ver menos' : 'Ver más' }}
+                                  </button>
+                                </span>
+                              </div>
                             </div>
                             <div class="dex-prices">
                               <div v-if="p.precioGeneral != null" class="dex-price"><span class="dex-label">General</span><span class="dex-val">${{ formatPrice(p.precioGeneral) }}</span></div>
@@ -516,6 +524,16 @@ function unitLabel(u) {
 
 function formatPrice(n) {
   return (n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+// ── COMENTARIO EXPANDIBLE ───────────────────────────────────────────────────
+
+const expandedComments = ref(new Set())
+
+function toggleComment(id) {
+  const s = new Set(expandedComments.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  expandedComments.value = s
 }
 
 // ── IMPRESIÓN LISTA DE PRECIOS ──────────────────────────────────────────────
@@ -1116,6 +1134,39 @@ function colorStyle(colorName) {
   .btn-vaciar { padding: 0.45rem 0.7rem; }
   .vaciar-label { display: none; }
 }
+
+/* Comentario expandible */
+.comment-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.comment-text {
+  white-space: pre-line;
+  font-size: 0.85rem;
+  color: #374151;
+  line-height: 1.45;
+}
+
+.comment-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.comment-toggle {
+  all: unset;
+  font-size: 0.78rem;
+  color: #3b6b2e;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.comment-toggle:hover { text-decoration: underline; }
 
 /* Modal imprimir */
 .print-modal-overlay {

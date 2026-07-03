@@ -10,11 +10,11 @@
         </div>
         <div class="topbar-right">
           <template v-if="activeTab === 'list'">
-            <button v-if="canManage" class="ghost-button" @click="showPrintEditor = true">
-              <i class="bi bi-pencil-square"></i> Editar impresión
+            <button v-if="canManage" class="ghost-button btn-editar" @click="showPrintEditor = true">
+              <i class="bi bi-pencil-square"></i> Editar
             </button>
-            <button class="primary-button" @click="startNew">
-              <i class="bi bi-plus-lg"></i> Nueva cotización
+            <button class="primary-button btn-nueva" @click="startNew">
+              <i class="bi bi-plus-lg"></i> Nueva
             </button>
           </template>
           <button v-else class="ghost-button" @click="cancelForm">
@@ -128,9 +128,9 @@
                 <td class="title-cell">{{ q.titulo }}</td>
                 <td class="client-cell">{{ q.cliente?.nombre || '—' }}</td>
                 <td class="date-cell">{{ fmtDate(q.createdAt) }}</td>
-                <td class="date-cell">{{ validezFecha(q.createdAt, q.validezDias) }}</td>
+                <td class="date-cell valid-cell">{{ validezFecha(q.createdAt, q.validezDias) }}</td>
                 <td class="price-cell">{{ fmtMoney(totalCotizacion(q)) }}</td>
-                <td><span :class="['badge-estado', q.estado]">{{ labelEstado(q.estado) }}</span></td>
+                <td class="estado-cell"><span :class="['badge-estado', q.estado]">{{ labelEstado(q.estado) }}</span></td>
                 <td class="actions-cell">
                   <button class="icon-btn" title="Imprimir" @click="openPrint(q)"><i class="bi bi-printer"></i></button>
                   <button class="icon-btn send-btn" title="Enviar" @click="openSend(q)"><i class="bi bi-send-fill"></i></button>
@@ -1543,6 +1543,15 @@ function hasCliente(q) {
 .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.6rem; }
 .topbar-left { display: flex; align-items: center; gap: 0.75rem; }
 .topbar-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+.btn-editar, .btn-nueva {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.84rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
 .page-title { margin: 0; font-size: 1.1rem; font-weight: 700; }
 
 /* ── Buscador de cotizaciones ── */
@@ -1822,9 +1831,12 @@ function hasCliente(q) {
 @media (max-width: 700px) { .pe-cols { grid-template-columns: 1fr; } }
 
 @media (max-width: 768px) {
+  /* ── Topbar ── */
   .topbar { gap: 0.4rem; }
-  .topbar-right { width: 100%; justify-content: flex-end; }
+  .topbar-right { width: 100%; justify-content: flex-end; flex-wrap: nowrap; }
+  .btn-label-full { display: none; }
 
+  /* ── Items form table ── */
   .items-table { min-width: 0; font-size: 0.75rem; }
   .items-table thead { display: none; }
   .item-row { display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.5rem; border-top: 1px solid rgba(107,142,58,0.12); }
@@ -1840,12 +1852,60 @@ function hasCliente(q) {
   .col-sub { width: auto; text-align: left; font-weight: 700; color: var(--color-primary, #6b8e3a); }
   .col-del { width: auto; position: absolute; top: 0.4rem; right: 0.3rem; }
   .item-row { position: relative; }
-
   .sel-small, .input-small { font-size: 0.78rem; }
   .input-num { width: 55px; }
 
-  .inv-table { min-width: 0; font-size: 0.78rem; }
-  .title-cell { max-width: 120px; }
+  /* ── Quotes list → cards ── */
+  .table-scroll { overflow-x: unset; }
+  .inv-table { min-width: 0; width: 100%; font-size: 0.82rem; }
+  .inv-table thead { display: none; }
+  .inv-table, .inv-table tbody { display: block; }
+
+  .inv-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.15rem 0.5rem;
+    padding: 0.55rem 0.7rem;
+    border: none;
+    border-bottom: 1px solid rgba(107,142,58,0.1);
+    background: transparent;
+  }
+  .inv-table tbody tr:hover { background: rgba(107,142,58,0.04); }
+
+  .inv-table tbody td {
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    border: none;
+    vertical-align: middle;
+  }
+
+  /* Fila 1: # | estado | [botones] */
+  .num-cell    { order: 1; font-size: 0.78rem; }
+  .estado-cell { order: 2; }
+  .actions-cell { order: 3; margin-left: auto; gap: 0.2rem; }
+
+  /* Fila 2: título (ancho completo, rompe a nueva línea) */
+  .title-cell {
+    order: 4;
+    width: 100%;
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    font-size: 0.86rem;
+    font-weight: 600;
+    padding-top: 0.2rem;
+  }
+
+  /* Fila 3: cliente · fecha · total */
+  .client-cell { order: 5; font-size: 0.73rem; color: var(--color-muted); }
+  .date-cell   { order: 6; font-size: 0.73rem; color: var(--color-muted); }
+  .price-cell  { order: 7; font-size: 0.8rem; font-weight: 700; margin-left: auto; }
+
+  /* Ocultar "válida hasta" en mobile */
+  .valid-cell  { display: none !important; }
 
   .form-grid-2 { grid-template-columns: 1fr; }
 }
