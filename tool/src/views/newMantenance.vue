@@ -22,7 +22,7 @@
             <select v-model="horometroForm.machineId">
               <option value="">Seleccionar máquina</option>
 
-              <option v-for="machine in machines" :key="machine._id" :value="machine.name">
+              <option v-for="machine in machines" :key="machine._id" :value="machine._id">
                 {{ machine.sector ? `${machine.sector} - ${machine.name}` : machine.name }}
               </option>
             </select>

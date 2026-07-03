@@ -119,18 +119,20 @@
         </div>
 
         <div class="danger-zone">
-          <h3>Zona de riesgo</h3>
-          <p>
-            Esta accion elimina todos los registros del historial y las metricas del dashboard.
-          </p>
-          <button
-            type="button"
-            class="danger-zone-button"
-            :disabled="isPurging"
-            @click="purgeMaintenanceData"
-          >
-            {{ isPurging ? 'Limpiando...' : 'Limpiar historial y dashboard' }}
-          </button>
+          <div class="danger-zone-header">
+            <div>
+              <h3>Zona de riesgo</h3>
+              <p>Elimina todos los registros del historial y las métricas del dashboard.</p>
+            </div>
+            <button
+              type="button"
+              class="danger-zone-button"
+              :disabled="isPurging"
+              @click="purgeMaintenanceData"
+            >
+              {{ isPurging ? 'Limpiando...' : 'Limpiar historial' }}
+            </button>
+          </div>
 
           <div class="audit-tools">
             <h4>Log descargable</h4>
@@ -630,7 +632,7 @@ align-items: center;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 1.75rem;
+  padding: 1.25rem 1.5rem;
   background: #ffffff;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
@@ -662,13 +664,14 @@ align-items: center;
 .admin-form input,
 .admin-form select {
   width: 100%;
-  padding: 10px;
-  margin: 10px 0;
+  padding: 8px 12px;
+  margin: 6px 0;
   border-radius: 2rem;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
   color: #1e293b;
   text-align: center;
+  font-size: 0.9rem;
 }
 
 .admin-form input:hover,
@@ -720,26 +723,39 @@ button:hover {
 
 .danger-zone {
   margin-top: 1rem;
-  padding: 1rem;
+  padding: 0.85rem 1rem;
   border-radius: 1rem;
   border: 1px solid #fecaca;
   background: #fef2f2;
 }
 
+.danger-zone-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .danger-zone h3 {
-  margin: 0;
+  margin: 0 0 0.2rem;
   color: #991b1b;
+  font-size: 0.95rem;
 }
 
 .danger-zone p {
-  margin: 0.5rem 0 0;
+  margin: 0;
   color: #6b7280;
+  font-size: 0.78rem;
 }
 
 .danger-zone-button {
-  margin-top: 0.75rem;
-  width: 100%;
+  flex-shrink: 0;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
   background: #c0392b;
+  border-radius: 8px;
 }
 
 .danger-zone-button:hover {
