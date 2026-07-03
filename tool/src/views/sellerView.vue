@@ -82,15 +82,6 @@
             <textarea class="send-textarea" v-model="sendMessage" rows="6"></textarea>
           </div>
 
-          <!-- Adjunto PDF -->
-          <div class="send-pdf-hint">
-            <i class="bi bi-info-circle"></i>
-            Generá el PDF de la cotización y adjuntalo manualmente al enviar.
-            <button class="send-pdf-btn" @click="openSendPrint(quoteToSend)">
-              <i class="bi bi-file-earmark-pdf"></i> Generar PDF
-            </button>
-          </div>
-
           <!-- Acciones -->
           <div class="send-modal-footer">
             <button class="ghost-button" @click="quoteToSend = null">Cancelar</button>
@@ -1495,8 +1486,7 @@ function openSend(q) {
   sendMessage.value = `${greeting}, ${intro}${detalle}${cierre}`
 }
 
-function openSendPrint(q) {
-  if (!q) return
+function buildQuoteHtml(q) {
   const num = String(q.numero).padStart(4, '0')
   const logoHtml = pt.value.logo
     ? `<img src="${pt.value.logo}" style="max-height:60px;max-width:140px;display:block;margin-bottom:4px;">`
@@ -1515,10 +1505,10 @@ function openSendPrint(q) {
   const clientHtml = (q.cliente?.nombre || q.cliente?.empresa || q.cliente?.email || q.cliente?.telefono) ? `
     <div style="margin-bottom:16px;padding:10px 14px;border:1px solid #d0d0d0;border-radius:6px;">
       <div style="font-size:9px;font-weight:700;letter-spacing:.08em;color:#888;margin-bottom:4px;">DESTINATARIO</div>
-      ${q.cliente?.nombre  ? `<div style="font-weight:700;">${q.cliente.nombre}</div>` : ''}
-      ${q.cliente?.empresa ? `<div>${q.cliente.empresa}</div>` : ''}
-      ${q.cliente?.email   ? `<div>${q.cliente.email}</div>` : ''}
-      ${q.cliente?.telefono? `<div>${q.cliente.telefono}</div>` : ''}
+      ${q.cliente?.nombre   ? `<div style="font-weight:700;">${q.cliente.nombre}</div>` : ''}
+      ${q.cliente?.empresa  ? `<div>${q.cliente.empresa}</div>` : ''}
+      ${q.cliente?.email    ? `<div>${q.cliente.email}</div>` : ''}
+      ${q.cliente?.telefono ? `<div>${q.cliente.telefono}</div>` : ''}
     </div>` : ''
 
   const itemsRows = (q.items || []).map(it => `
@@ -1540,7 +1530,7 @@ function openSendPrint(q) {
   const total = totalCotizacion(q)
   const condText = (pt.value.condiciones || 'Oferta válida por {dias} días a partir de la fecha de emisión.').replace('{dias}', String(q.validezDias || 7))
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Cotización #${num}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1565,10 +1555,7 @@ function openSendPrint(q) {
 </style>
 </head><body>
 <div class="header">
-  <div class="header-left">
-    ${logoHtml}
-    ${companyLines}
-  </div>
+  <div class="header-left">${logoHtml}${companyLines}</div>
   <div class="header-right">
     <div class="doc-title">COTIZACIÓN</div>
     <table class="meta-table"><tbody>
@@ -1598,13 +1585,24 @@ ${q.descripcionGeneral ? `<div class="notes"><div class="notes-label">NOTAS Y CO
   ${pt.value.piePagina ? `<div>${pt.value.piePagina}</div>` : ''}
   <div>Cotización generada por ${q.vendedor || ''} — ${fmtDate(q.createdAt)}</div>
 </div>
-<script>window.onload=function(){window.print()}<\/script>
 </body></html>`
+}
 
-  const w = window.open('', '_blank', 'noopener')
-  if (!w) { toast.warning('El navegador bloqueó la ventana emergente. Permití las ventanas emergentes e intentá de nuevo.'); return }
-  w.document.write(html)
-  w.document.close()
+function makeQuoteFile(q) {
+  const num = String(q.numero).padStart(4, '0')
+  const blob = new Blob([buildQuoteHtml(q)], { type: 'text/html' })
+  return new File([blob], `cotizacion-${num}.html`, { type: 'text/html' })
+}
+
+function _downloadFile(file) {
+  const url = URL.createObjectURL(file)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = file.name
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 function normalizePhoneSend(raw) {
@@ -1616,19 +1614,54 @@ function normalizePhoneSend(raw) {
   return n
 }
 
-function doSendWA() {
-  const phone = quoteToSend.value?.cliente?.telefono
+async function doSendWA() {
+  const q = quoteToSend.value
+  const phone = q?.cliente?.telefono
   if (!phone) return
-  const url = `https://wa.me/${normalizePhoneSend(phone)}?text=${encodeURIComponent(sendMessage.value)}`
-  window.open(url, '_blank', 'noopener')
+
+  const file = makeQuoteFile(q)
+  const waUrl = `https://wa.me/${normalizePhoneSend(phone)}?text=${encodeURIComponent(sendMessage.value)}`
+
+  if (navigator.share) {
+    const shareData = (navigator.canShare?.({ files: [file] }))
+      ? { files: [file], title: sendSubject.value, text: sendMessage.value }
+      : { title: sendSubject.value, text: sendMessage.value }
+    try {
+      await navigator.share(shareData)
+      return
+    } catch (e) {
+      if (e.name === 'AbortError') return
+    }
+  }
+
+  _downloadFile(file)
+  window.open(waUrl, '_blank', 'noopener')
 }
 
-function doSendEmail() {
-  const email = quoteToSend.value?.cliente?.email
+async function doSendEmail() {
+  const q = quoteToSend.value
+  const email = q?.cliente?.email
   if (!email) return
+
+  const file = makeQuoteFile(q)
   const sub  = encodeURIComponent(sendSubject.value)
   const body = encodeURIComponent(sendMessage.value)
-  window.location.href = `mailto:${email}?subject=${sub}&body=${body}`
+  const mailtoUrl = `mailto:${email}?subject=${sub}&body=${body}`
+
+  if (navigator.share) {
+    const shareData = (navigator.canShare?.({ files: [file] }))
+      ? { files: [file], title: sendSubject.value, text: sendMessage.value }
+      : { title: sendSubject.value, text: sendMessage.value }
+    try {
+      await navigator.share(shareData)
+      return
+    } catch (e) {
+      if (e.name === 'AbortError') return
+    }
+  }
+
+  _downloadFile(file)
+  window.location.href = mailtoUrl
 }
 
 // ── Eliminar ──────────────────────────────────────────────────────────────────
@@ -2389,34 +2422,4 @@ function hasCliente(q) {
 }
 .email-btn:hover { background: #2563eb; }
 
-.send-pdf-hint {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  font-size: 0.82rem;
-  color: var(--color-muted);
-  background: rgba(0,0,0,0.04);
-  border-radius: 8px;
-  padding: 0.55rem 0.85rem;
-  margin-bottom: 0.5rem;
-}
-.send-pdf-hint i { flex-shrink: 0; }
-
-.send-pdf-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: #dc2626;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-left: auto;
-  white-space: nowrap;
-}
-.send-pdf-btn:hover { background: #b91c1c; }
 </style>
