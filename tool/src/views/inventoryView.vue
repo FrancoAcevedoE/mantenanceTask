@@ -589,6 +589,9 @@ function printPriceList() {
         const gII = p.precioGrupoII != null ? `$${formatPrice(p.precioGrupoII)}` : ''
         const gIII= p.precioGrupoIII!= null ? `$${formatPrice(p.precioGrupoIII)}`  : ''
         const gen = p.precioGeneral != null  ? `$${formatPrice(p.precioGeneral)}`  : ''
+        const comentarioRow = p.comentario
+          ? `<tr class="comment-row"><td colspan="10"><span class="comment-label">Obs:</span> ${p.comentario}</td></tr>`
+          : ''
         return `<tr>
           <td>${p.code || ''}</td>
           <td>${p.name || ''}</td>
@@ -600,7 +603,7 @@ function printPriceList() {
           <td class="price">${gI}</td>
           <td class="price">${gII}</td>
           <td class="price">${gIII}</td>
-        </tr>`
+        </tr>${comentarioRow}`
       }).join('')
 
       rows.push(`
@@ -637,6 +640,8 @@ function printPriceList() {
         table.pt td { padding: 3px 5px; border: 1px solid #e0e0e0; vertical-align: top; }
         table.pt tr:nth-child(even) td { background: #f9fbf6; }
         td.price { text-align: right; white-space: nowrap; }
+        tr.comment-row td { background: #f5f8f0; color: #444; font-size: 7.5pt; font-style: italic; padding: 2px 5px 4px 5px; border-top: none; }
+        .comment-label { font-weight: 700; font-style: normal; color: #3b6b2e; }
         @media print {
           .grupo-block { page-break-inside: avoid; }
           body { padding: 0; }

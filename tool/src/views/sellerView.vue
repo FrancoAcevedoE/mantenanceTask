@@ -33,6 +33,72 @@
         @cancel="quoteToDelete = null"
       />
 
+      <!-- ── MODAL ENVIAR COTIZACIÓN ────────────────────────────────── -->
+      <div v-if="quoteToSend" class="send-modal-overlay" @click.self="quoteToSend = null">
+        <div class="send-modal">
+          <div class="send-modal-header">
+            <span><i class="bi bi-send-fill"></i> Enviar cotización #{{ String(quoteToSend.numero).padStart(4,'0') }}</span>
+            <button class="icon-btn" @click="quoteToSend = null"><i class="bi bi-x-lg"></i></button>
+          </div>
+
+          <!-- Info cliente -->
+          <div class="send-client-info">
+            <strong>{{ quoteToSend.cliente?.nombre || quoteToSend.cliente?.empresa || '—' }}</strong>
+            <span v-if="quoteToSend.cliente?.telefono" class="send-contact-badge wa">
+              <i class="bi bi-whatsapp"></i> {{ quoteToSend.cliente.telefono }}
+            </span>
+            <span v-if="quoteToSend.cliente?.email" class="send-contact-badge em">
+              <i class="bi bi-envelope-fill"></i> {{ quoteToSend.cliente.email }}
+            </span>
+            <span v-if="!quoteToSend.cliente?.telefono && !quoteToSend.cliente?.email" class="send-no-contact">
+              <i class="bi bi-exclamation-triangle"></i> Este cliente no tiene teléfono ni email registrado.
+            </span>
+          </div>
+
+          <!-- Canal -->
+          <div class="send-field">
+            <label class="send-label">Canal de envío</label>
+            <div class="send-channel-row">
+              <label v-if="quoteToSend.cliente?.telefono" :class="['send-ch-opt', { on: sendChannel === 'whatsapp' || sendChannel === 'ambos' }]">
+                <input type="checkbox" v-model="sendUseWA" @change="updateSendChannel" />
+                <i class="bi bi-whatsapp" style="color:#25d366"></i> WhatsApp
+              </label>
+              <label v-if="quoteToSend.cliente?.email" :class="['send-ch-opt', { on: sendChannel === 'email' || sendChannel === 'ambos' }]">
+                <input type="checkbox" v-model="sendUseEmail" @change="updateSendChannel" />
+                <i class="bi bi-envelope-fill" style="color:#3b82f6"></i> Email
+              </label>
+            </div>
+          </div>
+
+          <!-- Asunto (solo email) -->
+          <div v-if="sendUseEmail" class="send-field">
+            <label class="send-label">Asunto</label>
+            <input class="send-input" v-model="sendSubject" />
+          </div>
+
+          <!-- Mensaje -->
+          <div class="send-field">
+            <label class="send-label">Mensaje</label>
+            <textarea class="send-textarea" v-model="sendMessage" rows="6"></textarea>
+          </div>
+
+          <!-- Acciones -->
+          <div class="send-modal-footer">
+            <button class="ghost-button" @click="quoteToSend = null">Cancelar</button>
+            <button v-if="sendUseWA && quoteToSend.cliente?.telefono"
+              class="wa-btn"
+              @click="doSendWA">
+              <i class="bi bi-whatsapp"></i> Enviar por WhatsApp
+            </button>
+            <button v-if="sendUseEmail && quoteToSend.cliente?.email"
+              class="email-btn"
+              @click="doSendEmail">
+              <i class="bi bi-envelope-fill"></i> Enviar por Email
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- ── HISTORIAL ────────────────────────────────────────────────── -->
       <div v-if="activeTab === 'list'">
         <!-- Buscador de cotizaciones -->
@@ -67,6 +133,7 @@
                 <td><span :class="['badge-estado', q.estado]">{{ labelEstado(q.estado) }}</span></td>
                 <td class="actions-cell">
                   <button class="icon-btn" title="Imprimir" @click="openPrint(q)"><i class="bi bi-printer"></i></button>
+                  <button class="icon-btn send-btn" title="Enviar" @click="openSend(q)"><i class="bi bi-send-fill"></i></button>
                   <button class="icon-btn" title="Editar" @click="editQuote(q)"><i class="bi bi-pencil"></i></button>
                   <button v-if="canManage" class="icon-btn danger" title="Eliminar" @click="quoteToDelete = q"><i class="bi bi-trash3"></i></button>
                 </td>
@@ -1375,6 +1442,58 @@ async function openPrint(q) {
   window.print()
 }
 
+// ── Enviar cotización ─────────────────────────────────────────────────────────
+const quoteToSend = ref(null)
+const sendUseWA   = ref(false)
+const sendUseEmail = ref(false)
+const sendChannel = ref('')
+const sendMessage = ref('')
+const sendSubject = ref('')
+
+function updateSendChannel() {
+  if (sendUseWA.value && sendUseEmail.value) sendChannel.value = 'ambos'
+  else if (sendUseWA.value) sendChannel.value = 'whatsapp'
+  else if (sendUseEmail.value) sendChannel.value = 'email'
+  else sendChannel.value = ''
+}
+
+function openSend(q) {
+  quoteToSend.value = q
+  const hasPhone = !!q.cliente?.telefono
+  const hasEmail = !!q.cliente?.email
+  sendUseWA.value    = hasPhone
+  sendUseEmail.value = !hasPhone && hasEmail
+  updateSendChannel()
+  const total = fmtMoney(totalCotizacion(q))
+  const num   = String(q.numero).padStart(4, '0')
+  sendSubject.value = `Cotización #${num} — ${q.titulo}`
+  sendMessage.value = `Hola${q.cliente?.nombre ? ' ' + q.cliente.nombre : ''}, te envío la cotización #${num} "${q.titulo}" por un total de ${total}.\n\nQuedo a disposición para cualquier consulta.`
+}
+
+function normalizePhoneSend(raw) {
+  let n = raw.replace(/\D/g, '')
+  if (n.startsWith('54')) return n
+  if (n.startsWith('0')) n = '54' + n.slice(1)
+  else if (n.length === 10) n = '549' + n
+  else n = '54' + n
+  return n
+}
+
+function doSendWA() {
+  const phone = quoteToSend.value?.cliente?.telefono
+  if (!phone) return
+  const url = `https://wa.me/${normalizePhoneSend(phone)}?text=${encodeURIComponent(sendMessage.value)}`
+  window.open(url, '_blank', 'noopener')
+}
+
+function doSendEmail() {
+  const email = quoteToSend.value?.cliente?.email
+  if (!email) return
+  const sub  = encodeURIComponent(sendSubject.value)
+  const body = encodeURIComponent(sendMessage.value)
+  window.location.href = `mailto:${email}?subject=${sub}&body=${body}`
+}
+
 // ── Eliminar ──────────────────────────────────────────────────────────────────
 const quoteToDelete = ref(null)
 
@@ -1930,4 +2049,146 @@ function hasCliente(q) {
   .print-doc table, .print-doc tr, .print-doc td, .print-doc th { background: #fff !important; }
   .print-total-row td { background: #fff !important; }
 }
+
+/* ── Modal enviar cotización ── */
+.send-btn { color: #3b82f6; }
+.send-btn:hover { color: #1d4ed8; }
+
+.send-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.4rem 1.5rem;
+  width: 460px;
+  max-width: 96vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.send-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: #1e3a5f;
+}
+
+.send-client-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.88rem;
+}
+
+.send-contact-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.send-contact-badge.wa  { background: #dcfce7; color: #15803d; }
+.send-contact-badge.em  { background: #dbeafe; color: #1d4ed8; }
+.send-no-contact        { font-size: 0.82rem; color: #b45309; }
+
+.send-field { display: flex; flex-direction: column; gap: 0.3rem; }
+.send-label { font-size: 0.82rem; font-weight: 600; color: #475569; }
+
+.send-channel-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.send-ch-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.send-ch-opt.on { border-color: #3b82f6; background: #eff6ff; }
+.send-ch-opt input { display: none; }
+
+.send-input {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.88rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.send-textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.88rem;
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.send-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+}
+
+.wa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #25d366;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.wa-btn:hover { background: #1ebe5a; }
+
+.email-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.email-btn:hover { background: #2563eb; }
 </style>

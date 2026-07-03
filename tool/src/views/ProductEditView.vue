@@ -283,7 +283,7 @@
             </div>
             <div class="field full">
               <label>Comentarios</label>
-              <textarea v-model="form.comentario" rows="2" placeholder="Observaciones, condiciones especiales..."></textarea>
+              <textarea v-model="form.comentario" rows="5" placeholder="Observaciones, condiciones especiales..."></textarea>
             </div>
           </div>
 
