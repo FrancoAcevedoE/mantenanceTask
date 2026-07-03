@@ -33,6 +33,36 @@
           <router-link to="/inv-dashboard">
             <button class="secondary-button"><i class="bi bi-bar-chart-line"></i> Dashboard</button>
           </router-link>
+          <button class="secondary-button" @click="openPrintModal">
+            <i class="bi bi-printer"></i> Imprimir precios
+          </button>
+        </div>
+      </div>
+
+      <!-- MODAL IMPRIMIR LISTA DE PRECIOS -->
+      <div v-if="showPrintModal" class="print-modal-overlay" @click.self="showPrintModal = false">
+        <div class="print-modal">
+          <div class="print-modal-header">
+            <h3>Imprimir lista de precios</h3>
+            <button class="ghost-button small" @click="showPrintModal = false"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <p class="print-modal-hint">Seleccioná uno o más grupos para incluir en la impresión.</p>
+          <div class="print-modal-actions-top">
+            <button class="ghost-button small" @click="printSelectedGrupos = [...gruposDisponibles]">Todos</button>
+            <button class="ghost-button small" @click="printSelectedGrupos = []">Ninguno</button>
+          </div>
+          <div class="print-grupo-list">
+            <label v-for="g in gruposDisponibles" :key="g" class="print-grupo-item">
+              <input type="checkbox" :value="g" v-model="printSelectedGrupos" />
+              <span>{{ g }}</span>
+            </label>
+          </div>
+          <div class="print-modal-footer">
+            <button class="ghost-button" @click="showPrintModal = false">Cancelar</button>
+            <button class="primary-button" :disabled="!printSelectedGrupos.length || printLoading" @click="printPriceList">
+              <i class="bi bi-printer"></i> {{ printLoading ? 'Preparando...' : 'Imprimir' }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -488,6 +518,145 @@ function formatPrice(n) {
   return (n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+// ── IMPRESIÓN LISTA DE PRECIOS ──────────────────────────────────────────────
+
+const showPrintModal = ref(false)
+const printSelectedGrupos = ref([])
+const printLoading = ref(false)
+const productGroups = ref([])
+
+const gruposDisponibles = computed(() => {
+  const fromGrupoOrder = GRUPO_ORDER.filter(g => store.uniqueGrupos.includes(g))
+  const extra = store.uniqueGrupos.filter(g => !GRUPO_ORDER.includes(g)).sort()
+  return [...fromGrupoOrder, ...extra]
+})
+
+async function openPrintModal() {
+  showPrintModal.value = true
+  if (!productGroups.value.length) {
+    try {
+      const token = sessionStorage.getItem('token')
+      const { data } = await import('axios').then(m => m.default.get(
+        `${API_BASE_URL}/product-groups`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      ))
+      productGroups.value = Array.isArray(data) ? data : []
+    } catch { /* sin tablas de descuento */ }
+  }
+}
+
+function printPriceList() {
+  printLoading.value = true
+  try {
+    const grupos = printSelectedGrupos.value
+    const win = window.open('', '_blank')
+    if (!win) { toast.error('El navegador bloqueó la ventana emergente'); return }
+
+    const rows = []
+    for (const grupo of grupos) {
+      const pgData = productGroups.value.find(g => g.nombre === grupo)
+      const products = store.products.filter(p => p.grupo === grupo)
+        .sort((a, b) => String(a.code || '').localeCompare(String(b.code || ''), undefined, { numeric: true }))
+
+      // Tabla de descuentos
+      let discountHtml = ''
+      if (pgData?.descuentos?.length) {
+        const filas = pgData.descuentos.map(t => `
+          <tr>
+            <td>${t.nota || (t.hastaHojas ? `${t.desdeHojas} a ${t.hastaHojas} hojas` : `Mayor a ${(t.desdeHojas || 1) - 1} hojas`)}</td>
+            <td>${t.porcCantidad ?? 0}%</td>
+            <td>${t.porcContado ?? 0}%</td>
+            <td>${t.porc30dias ?? 0}%</td>
+            <td>${t.porcCantidadContado ?? 0}%</td>
+            <td>${t.porcCantidad30dias ?? 0}%</td>
+          </tr>`).join('')
+        discountHtml = `
+          <table class="dt">
+            <thead><tr>
+              <th>Comentario</th><th>% Dto cantidad</th><th>% Dto contado</th>
+              <th>% Dto 30 días f.f.</th><th>% Cant+Contado</th><th>% Cant+30días</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>`
+      }
+
+      // Filas de productos
+      const productRows = products.map(p => {
+        const colors = p.colorMode === 'todos' ? 'Todos' : (p.colors || []).join(', ')
+        const esp = (p.thicknesses || []).join(', ') || p.espesor || ''
+        const medida = p.dimensions || p.medida || ''
+        const gI  = p.precioGrupoI  != null ? `$${formatPrice(p.precioGrupoI)}`  : ''
+        const gII = p.precioGrupoII != null ? `$${formatPrice(p.precioGrupoII)}` : ''
+        const gIII= p.precioGrupoIII!= null ? `$${formatPrice(p.precioGrupoIII)}`  : ''
+        const gen = p.precioGeneral != null  ? `$${formatPrice(p.precioGeneral)}`  : ''
+        return `<tr>
+          <td>${p.code || ''}</td>
+          <td>${p.name || ''}</td>
+          <td>${colors}</td>
+          <td>${medida}</td>
+          <td>${esp}</td>
+          <td>${p.terminacion || ''}</td>
+          <td class="price">${gen}</td>
+          <td class="price">${gI}</td>
+          <td class="price">${gII}</td>
+          <td class="price">${gIII}</td>
+        </tr>`
+      }).join('')
+
+      rows.push(`
+        <div class="grupo-block">
+          <h2 class="grupo-title">${grupo}</h2>
+          ${discountHtml}
+          <table class="pt">
+            <thead><tr>
+              <th>Código</th><th>Descripción</th><th>Color</th><th>Medida</th>
+              <th>Espesor</th><th>Terminación</th>
+              <th>Gral</th><th>Grupo I</th><th>Grupo II</th><th>Grupo III</th>
+            </tr></thead>
+            <tbody>${productRows}</tbody>
+          </table>
+        </div>`)
+    }
+
+    win.document.write(`<!DOCTYPE html><html lang="es"><head>
+      <meta charset="UTF-8">
+      <title>Lista de Precios</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; font-size: 9pt; color: #111; padding: 12mm 10mm; }
+        .print-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; border-bottom: 2px solid #3b6b2e; padding-bottom: 8px; }
+        .print-header h1 { font-size: 15pt; color: #2d5220; }
+        .print-header .date { font-size: 8pt; color: #555; }
+        .grupo-block { margin-bottom: 20px; page-break-inside: avoid; }
+        .grupo-title { font-size: 11pt; font-weight: 700; color: #fff; background: #3b6b2e; padding: 5px 10px; margin-bottom: 6px; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 8pt; }
+        table.dt thead th { background: #e8f0e0; color: #2d5220; padding: 4px 6px; text-align: left; border: 1px solid #c8d8b0; font-size: 7.5pt; }
+        table.dt td { padding: 3px 6px; border: 1px solid #ddd; }
+        table.dt tr:nth-child(even) td { background: #f6f9f2; }
+        table.pt thead th { background: #2d5220; color: #fff; padding: 4px 5px; text-align: left; border: 1px solid #1e3d15; font-size: 7.5pt; }
+        table.pt td { padding: 3px 5px; border: 1px solid #e0e0e0; vertical-align: top; }
+        table.pt tr:nth-child(even) td { background: #f9fbf6; }
+        td.price { text-align: right; white-space: nowrap; }
+        @media print {
+          .grupo-block { page-break-inside: avoid; }
+          body { padding: 0; }
+        }
+      </style>
+    </head><body>
+      <div class="print-header">
+        <h1>Lista de Precios</h1>
+        <span class="date">Fecha: ${new Date().toLocaleDateString('es-AR')}</span>
+      </div>
+      ${rows.join('')}
+      <script>window.onload = () => { window.print() }<\/script>
+    </body></html>`)
+    win.document.close()
+  } finally {
+    printLoading.value = false
+    showPrintModal.value = false
+  }
+}
+
 function stockBadge(stock) {
   const n = stock ?? 0
   if (n === 0) return 'badge badge-danger'
@@ -941,5 +1110,88 @@ function colorStyle(colorName) {
 @media (max-width: 768px) {
   .btn-vaciar { padding: 0.45rem 0.7rem; }
   .vaciar-label { display: none; }
+}
+
+/* Modal imprimir */
+.print-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.print-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 420px;
+  max-width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.print-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.print-modal-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2d5220;
+}
+
+.print-modal-hint {
+  font-size: 0.83rem;
+  color: #555;
+  margin: 0;
+}
+
+.print-modal-actions-top {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.print-grupo-list {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  max-height: 320px;
+}
+
+.print-grupo-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+
+.print-grupo-item input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #3b6b2e;
+  cursor: pointer;
+}
+
+.print-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #f0f0f0;
 }
 </style>

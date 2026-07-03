@@ -18,22 +18,30 @@
         <div class="horometro-panel">
           <h2>Actualizar horómetro</h2>
           <div class="horometro-body">
-            <input
-              type="text"
-              v-model="horometroForm.search"
-              placeholder="Buscar por máquina o sector..."
-              class="horometro-search"
-            />
-            <select v-model="horometroForm.sector" @change="horometroForm.machineId = ''">
-              <option value="">Seleccionar sector</option>
-              <option v-for="sector in sectors" :key="sector" :value="sector">{{ sector }}</option>
-            </select>
-            <select v-model="horometroForm.machineId">
-              <option value="">Seleccionar máquina</option>
-              <option v-for="machine in filteredHorometroMachines" :key="machine._id" :value="machine._id">
-                {{ machine.name }}
-              </option>
-            </select>
+            <div class="horometro-autocomplete">
+              <input
+                type="text"
+                v-model="horometroForm.search"
+                placeholder="Buscar máquina o sector..."
+                class="horometro-search"
+                autocomplete="off"
+                @focus="horometroDropdownOpen = true"
+                @blur="onHorometroBlur"
+                @input="horometroForm.machineId = ''; horometroDropdownOpen = true"
+              />
+              <ul v-if="horometroDropdownOpen && filteredHorometroMachines.length" class="horometro-dropdown">
+                <li
+                  v-for="machine in filteredHorometroMachines"
+                  :key="machine._id"
+                  class="horometro-dropdown-item"
+                  :class="{ selected: machine._id === horometroForm.machineId }"
+                  @mousedown.prevent="selectHorometroMachine(machine)"
+                >
+                  <span class="hd-sector">{{ machine.sector || '—' }}</span>
+                  <span class="hd-name">{{ machine.name }}</span>
+                </li>
+              </ul>
+            </div>
             <label>Nuevo horómetro</label>
             <input type="number" min="0" step="1" v-model.number="horometroForm.value" />
             <button type="button" :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro" @click="updateHorometroFromPanel">
@@ -247,9 +255,9 @@ export default {
         value: null,
         expiresAt: 0,
       },
+      horometroDropdownOpen: false,
       horometroForm: {
         search: '',
-        sector: '',
         machineId: '',
         value: null,
       },
@@ -350,18 +358,12 @@ export default {
         )
     },
     filteredHorometroMachines() {
-      let list = this.machines
-      if (this.horometroForm.sector) {
-        list = list.filter(m => m.sector === this.horometroForm.sector)
-      }
-      if (this.horometroForm.search) {
-        const q = this.horometroForm.search.toLowerCase()
-        list = list.filter(m =>
-          (m.name || '').toLowerCase().includes(q) ||
-          (m.sector || '').toLowerCase().includes(q)
-        )
-      }
-      return list
+      const q = (this.horometroForm.search || '').toLowerCase().trim()
+      if (!q) return this.machines
+      return this.machines.filter(m =>
+        (m.name || '').toLowerCase().includes(q) ||
+        (m.sector || '').toLowerCase().includes(q)
+      )
     },
     selectedMachine() {
       if (!this.form.sector || !this.form.machine) return null
@@ -407,6 +409,16 @@ export default {
       } catch {
         return null
       }
+    },
+
+    selectHorometroMachine(machine) {
+      this.horometroForm.machineId = machine._id
+      this.horometroForm.search = machine.sector ? `${machine.sector} - ${machine.name}` : machine.name
+      this.horometroDropdownOpen = false
+    },
+
+    onHorometroBlur() {
+      setTimeout(() => { this.horometroDropdownOpen = false }, 150)
     },
 
     onSectorChange() {
@@ -1097,10 +1109,63 @@ button:hover {
   min-width: fit-content;
 }
 
-.horometro-search {
+.horometro-autocomplete {
+  position: relative;
   width: 100%;
   margin-bottom: 0.5rem;
+}
+
+.horometro-search {
+  width: 100%;
   box-sizing: border-box;
+  margin: 0;
+}
+
+.horometro-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #c8d8b0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+.horometro-dropdown-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.12s;
+}
+
+.horometro-dropdown-item:last-child { border-bottom: none; }
+
+.horometro-dropdown-item:hover,
+.horometro-dropdown-item.selected {
+  background: #eef5e4;
+}
+
+.hd-sector {
+  font-size: 0.72rem;
+  color: #7a9a50;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hd-name {
+  font-size: 0.9rem;
+  color: #2d3a1e;
+  font-weight: 500;
 }
 
 .add-worker-btn:hover {
