@@ -43,10 +43,10 @@ const router = createRouter({
         path: '/adminView', name: 'AdminView', component: adminView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas'] }
       },
       {
-      path: '/newMachine', name: 'NewMachine', component: newMachine, meta: { requiresAuth: true, roles: ['admin'] }
+      path: '/newMachine', name: 'NewMachine', component: newMachine, meta: { requiresAuth: true, roles: ['admin'], bodyClass: 'bg-maintenance' }
     },
       {
-      path: '/new',name: 'New',component: newMantenance, meta: { requiresAuth: true, roles: ['admin', 'operario'] }
+      path: '/new',name: 'New',component: newMantenance, meta: { requiresAuth: true, roles: ['admin', 'operario'], bodyClass: 'bg-maintenance' }
     },
     {
       path: '/history', name: 'History', component: historyView, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }

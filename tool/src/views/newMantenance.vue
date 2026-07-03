@@ -14,22 +14,29 @@
         </div>
       </div>
       <!-- PANEL HOROMETRO -->
-      <!-- PANEL HOROMETRO -->
       <div v-if="activePanel === 'horometro'" class="panel-container step-block">
         <div class="horometro-panel">
           <h2>Actualizar horómetro</h2>
           <div class="horometro-body">
+            <input
+              type="text"
+              v-model="horometroForm.search"
+              placeholder="Buscar por máquina o sector..."
+              class="horometro-search"
+            />
+            <select v-model="horometroForm.sector" @change="horometroForm.machineId = ''">
+              <option value="">Seleccionar sector</option>
+              <option v-for="sector in sectors" :key="sector" :value="sector">{{ sector }}</option>
+            </select>
             <select v-model="horometroForm.machineId">
               <option value="">Seleccionar máquina</option>
-
-              <option v-for="machine in machines" :key="machine._id" :value="machine._id">
-                {{ machine.sector ? `${machine.sector} - ${machine.name}` : machine.name }}
+              <option v-for="machine in filteredHorometroMachines" :key="machine._id" :value="machine._id">
+                {{ machine.name }}
               </option>
             </select>
             <label>Nuevo horómetro</label>
             <input type="number" min="0" step="1" v-model.number="horometroForm.value" />
-            <button type="button" :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro
-              " @click="updateHorometroFromPanel">
+            <button type="button" :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro" @click="updateHorometroFromPanel">
               {{ isUpdatingHorometro ? 'Actualizando...' : 'Actualizar horómetro' }}
             </button>
             <div v-if="selectedHorometroMachine" class="horometro-history">
@@ -37,14 +44,10 @@
                 <strong>Horómetro actual:</strong>
                 {{ selectedHorometroMachine.horometro ?? 0 }}h
               </p>
-              <p>
-                <strong>Historial</strong>
-              </p>
+              <p><strong>Historial</strong></p>
               <ul v-if="orderedHorometroHistory.length" class="horometro-list">
                 <li v-for="entry in orderedHorometroHistory" :key="`${entry.recordedAt}-${entry.value}`">
-                  {{ formatDate(entry.recordedAt) }}
-                  -
-                  {{ entry.value }}h
+                  {{ formatDate(entry.recordedAt) }} - {{ entry.value }}h
                 </li>
               </ul>
               <p v-else>No hay historial registrado.</p>
@@ -245,6 +248,8 @@ export default {
         expiresAt: 0,
       },
       horometroForm: {
+        search: '',
+        sector: '',
         machineId: '',
         value: null,
       },
@@ -285,13 +290,10 @@ export default {
     await this.loadOperarios()
     await this.loadMachines()
 
-    document.body.style.background = 'rgb(103, 111, 62)'
-    document.body.style.backgroundAttachment = 'fixed'
     document.addEventListener('mousedown', this._onClickOutside)
   },
 
   beforeUnmount() {
-    document.body.style.background = ''
     document.removeEventListener('mousedown', this._onClickOutside)
   },
 
@@ -346,6 +348,20 @@ export default {
         .sort((a, b) =>
           String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }),
         )
+    },
+    filteredHorometroMachines() {
+      let list = this.machines
+      if (this.horometroForm.sector) {
+        list = list.filter(m => m.sector === this.horometroForm.sector)
+      }
+      if (this.horometroForm.search) {
+        const q = this.horometroForm.search.toLowerCase()
+        list = list.filter(m =>
+          (m.name || '').toLowerCase().includes(q) ||
+          (m.sector || '').toLowerCase().includes(q)
+        )
+      }
+      return list
     },
     selectedMachine() {
       if (!this.form.sector || !this.form.machine) return null
@@ -1076,6 +1092,15 @@ button:hover {
   background: #00a878;
   margin-top: 0;
   flex-shrink: 0;
+  white-space: nowrap;
+  padding: 0.5rem 0.85rem;
+  min-width: fit-content;
+}
+
+.horometro-search {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  box-sizing: border-box;
 }
 
 .add-worker-btn:hover {
