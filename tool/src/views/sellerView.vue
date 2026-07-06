@@ -1865,6 +1865,11 @@ function normalizePhoneSend(raw) {
   return n
 }
 
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+}
+
 function doSendWA() {
   const phone = quoteToSend.value?.cliente?.telefono
   if (!phone) return
@@ -1872,14 +1877,17 @@ function doSendWA() {
   const file = sendPDF.value
   const waUrl = `https://wa.me/${normalizePhoneSend(phone)}?text=${encodeURIComponent(sendMessage.value)}`
 
-  // Mobile con Web Share API: abre WhatsApp con PDF adjunto
   if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-    navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
+    // iOS no soporta files + text juntos en navigator.share — se comparte solo el archivo
+    const payload = isIOS()
+      ? { files: [file], title: sendSubject.value }
+      : { files: [file], title: sendSubject.value, text: sendMessage.value }
+
+    navigator.share(payload)
       .catch(e => { if (e.name !== 'AbortError') window.open(waUrl, '_blank', 'noopener') })
     return
   }
 
-  // Desktop: abre WhatsApp con el mensaje; descargar PDF manualmente con el botón del modal
   window.open(waUrl, '_blank', 'noopener')
 }
 
@@ -1894,7 +1902,10 @@ function doSendEmail() {
 
   // Mobile con Web Share API: abre mail con PDF adjunto
   if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-    navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
+    const payload = isIOS()
+      ? { files: [file], title: sendSubject.value }
+      : { files: [file], title: sendSubject.value, text: sendMessage.value }
+    navigator.share(payload)
       .catch(e => { if (e.name !== 'AbortError') window.location.href = mailtoUrl })
     return
   }
