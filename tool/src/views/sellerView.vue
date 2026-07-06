@@ -82,15 +82,28 @@
             <textarea class="send-textarea" v-model="sendMessage" rows="6"></textarea>
           </div>
 
+          <!-- Adjunto PDF -->
+          <div class="send-attachment-area">
+            <div v-if="!sendPDFReady" class="send-attachment-chip loading">
+              <i class="bi bi-hourglass-split spin-icon"></i>
+              <span>Generando PDF…</span>
+            </div>
+            <div v-else class="send-attachment-chip ready">
+              <i class="bi bi-file-earmark-pdf-fill"></i>
+              <span>{{ sendPDF?.name }}</span>
+              <span class="send-attach-label">Adjunto</span>
+            </div>
+          </div>
+
           <!-- Acciones -->
           <div class="send-modal-footer">
             <button class="ghost-button" @click="quoteToSend = null">Cancelar</button>
-            <button v-if="sendUseWA && quoteToSend.cliente?.telefono"
+            <button v-if="sendPDFReady && sendUseWA && quoteToSend.cliente?.telefono"
               class="wa-btn"
               @click="doSendWA">
               <i class="bi bi-whatsapp"></i> Enviar por WhatsApp
             </button>
-            <button v-if="sendUseEmail && quoteToSend.cliente?.email"
+            <button v-if="sendPDFReady && sendUseEmail && quoteToSend.cliente?.email"
               class="email-btn"
               @click="doSendEmail">
               <i class="bi bi-envelope-fill"></i> Enviar por Email
@@ -1444,12 +1457,14 @@ async function openPrint(q) {
 }
 
 // ── Enviar cotización ─────────────────────────────────────────────────────────
-const quoteToSend = ref(null)
-const sendUseWA   = ref(false)
-const sendUseEmail = ref(false)
-const sendChannel = ref('')
-const sendMessage = ref('')
-const sendSubject = ref('')
+const quoteToSend   = ref(null)
+const sendUseWA     = ref(false)
+const sendUseEmail  = ref(false)
+const sendChannel   = ref('')
+const sendMessage   = ref('')
+const sendSubject   = ref('')
+const sendPDF       = ref(null)   // File pre-generado al abrir el modal
+const sendPDFReady  = ref(false)  // false mientras se genera
 
 function updateSendChannel() {
   if (sendUseWA.value && sendUseEmail.value) sendChannel.value = 'ambos'
@@ -1458,13 +1473,17 @@ function updateSendChannel() {
   else sendChannel.value = ''
 }
 
-function openSend(q) {
+async function openSend(q) {
   quoteToSend.value = q
+  sendPDF.value = null
+  sendPDFReady.value = false
+
   const hasPhone = !!q.cliente?.telefono
   const hasEmail = !!q.cliente?.email
   sendUseWA.value    = hasPhone
   sendUseEmail.value = !hasPhone && hasEmail
   updateSendChannel()
+
   const total = fmtMoney(totalCotizacion(q))
   const num   = String(q.numero).padStart(4, '0')
   sendSubject.value = `Cotización #${num} — ${q.titulo}`
@@ -1485,6 +1504,10 @@ function openSend(q) {
   const cierre = '\n\nQuedo a disposición para cualquier consulta.'
 
   sendMessage.value = `${greeting}, ${intro}${detalle}${cierre}`
+
+  // Pre-generar el PDF mientras el usuario lee el modal
+  sendPDF.value = await makeQuotePDF(q)
+  sendPDFReady.value = true
 }
 
 function buildQuoteHtml(q) {
@@ -1840,47 +1863,41 @@ function normalizePhoneSend(raw) {
   return n
 }
 
-async function doSendWA() {
+function doSendWA() {
   const q = quoteToSend.value
   const phone = q?.cliente?.telefono
   if (!phone) return
 
+  const file = sendPDF.value
   const waUrl = `https://wa.me/${normalizePhoneSend(phone)}?text=${encodeURIComponent(sendMessage.value)}`
-  const file = await makeQuotePDF(q)
 
-  if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
-      return
-    } catch (e) {
-      if (e.name === 'AbortError') return
-    }
+  if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
+    navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
+      .catch(e => { if (e.name !== 'AbortError') { _downloadFile(file); window.open(waUrl, '_blank', 'noopener') } })
+    return
   }
 
-  _downloadFile(file)
+  if (file) _downloadFile(file)
   window.open(waUrl, '_blank', 'noopener')
 }
 
-async function doSendEmail() {
+function doSendEmail() {
   const q = quoteToSend.value
   const email = q?.cliente?.email
   if (!email) return
 
+  const file = sendPDF.value
   const sub  = encodeURIComponent(sendSubject.value)
   const body = encodeURIComponent(sendMessage.value)
   const mailtoUrl = `mailto:${email}?subject=${sub}&body=${body}`
-  const file = await makeQuotePDF(q)
 
-  if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
-      return
-    } catch (e) {
-      if (e.name === 'AbortError') return
-    }
+  if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
+    navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
+      .catch(e => { if (e.name !== 'AbortError') { _downloadFile(file); window.location.href = mailtoUrl } })
+    return
   }
 
-  _downloadFile(file)
+  if (file) _downloadFile(file)
   window.location.href = mailtoUrl
 }
 
@@ -2642,4 +2659,59 @@ function hasCliente(q) {
 }
 .email-btn:hover { background: #2563eb; }
 
+.send-attachment-area {
+  margin: 0 0 0.75rem;
+}
+
+.send-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.send-attachment-chip.loading {
+  background: rgba(0,0,0,0.05);
+  color: var(--color-muted);
+  border: 1px dashed rgba(0,0,0,0.15);
+}
+
+.send-attachment-chip.ready {
+  background: rgba(220, 38, 38, 0.07);
+  color: #b91c1c;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+}
+
+.send-attachment-chip.ready i {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  color: #dc2626;
+}
+
+.send-attachment-chip span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.send-attach-label {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.spin-icon { display: inline-block; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
