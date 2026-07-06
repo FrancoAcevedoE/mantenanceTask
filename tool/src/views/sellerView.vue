@@ -90,8 +90,10 @@
             </div>
             <div v-else class="send-attachment-chip ready">
               <i class="bi bi-file-earmark-pdf-fill"></i>
-              <span>{{ sendPDF?.name }}</span>
-              <span class="send-attach-label">Adjunto</span>
+              <span class="send-attach-name">{{ sendPDF?.name }}</span>
+              <button class="send-attach-download" title="Descargar PDF" @click="_downloadFile(sendPDF)">
+                <i class="bi bi-download"></i>
+              </button>
             </div>
           </div>
 
@@ -1864,26 +1866,25 @@ function normalizePhoneSend(raw) {
 }
 
 function doSendWA() {
-  const q = quoteToSend.value
-  const phone = q?.cliente?.telefono
+  const phone = quoteToSend.value?.cliente?.telefono
   if (!phone) return
 
   const file = sendPDF.value
   const waUrl = `https://wa.me/${normalizePhoneSend(phone)}?text=${encodeURIComponent(sendMessage.value)}`
 
+  // Mobile con Web Share API: abre WhatsApp con PDF adjunto
   if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
     navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
-      .catch(e => { if (e.name !== 'AbortError') { _downloadFile(file); window.open(waUrl, '_blank', 'noopener') } })
+      .catch(e => { if (e.name !== 'AbortError') window.open(waUrl, '_blank', 'noopener') })
     return
   }
 
-  if (file) _downloadFile(file)
+  // Desktop: abre WhatsApp con el mensaje; descargar PDF manualmente con el botón del modal
   window.open(waUrl, '_blank', 'noopener')
 }
 
 function doSendEmail() {
-  const q = quoteToSend.value
-  const email = q?.cliente?.email
+  const email = quoteToSend.value?.cliente?.email
   if (!email) return
 
   const file = sendPDF.value
@@ -1891,13 +1892,14 @@ function doSendEmail() {
   const body = encodeURIComponent(sendMessage.value)
   const mailtoUrl = `mailto:${email}?subject=${sub}&body=${body}`
 
+  // Mobile con Web Share API: abre mail con PDF adjunto
   if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
     navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
-      .catch(e => { if (e.name !== 'AbortError') { _downloadFile(file); window.location.href = mailtoUrl } })
+      .catch(e => { if (e.name !== 'AbortError') window.location.href = mailtoUrl })
     return
   }
 
-  if (file) _downloadFile(file)
+  // Desktop: abre cliente de correo con el mensaje; descargar PDF manualmente con el botón del modal
   window.location.href = mailtoUrl
 }
 
@@ -2693,24 +2695,27 @@ function hasCliente(q) {
   color: #dc2626;
 }
 
-.send-attachment-chip span:nth-child(2) {
+.send-attach-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
-.send-attach-label {
-  margin-left: auto;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.1);
-  padding: 0.1rem 0.45rem;
-  border-radius: 4px;
+.send-attach-download {
   flex-shrink: 0;
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dc2626;
+  font-size: 1rem;
+  padding: 0 0.15rem;
+  line-height: 1;
+  opacity: 0.8;
 }
+.send-attach-download:hover { opacity: 1; }
 
 .spin-icon { display: inline-block; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
