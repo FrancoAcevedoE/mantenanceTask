@@ -730,6 +730,7 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { jsPDF } from 'jspdf'
 import axios from 'axios'
 import { useProductsStore } from '@/stores/products'
 import { useCrmStore } from '@/stores/crm'
@@ -1588,10 +1589,235 @@ ${q.descripcionGeneral ? `<div class="notes"><div class="notes-label">NOTAS Y CO
 </body></html>`
 }
 
-function makeQuoteFile(q) {
+async function fetchImageAsBase64(src) {
+  try {
+    const res = await fetch(src)
+    const blob = await res.blob()
+    return await new Promise((resolve, reject) => {
+      const r = new FileReader()
+      r.onload = () => resolve(r.result)
+      r.onerror = reject
+      r.readAsDataURL(blob)
+    })
+  } catch {
+    return null
+  }
+}
+
+async function makeQuotePDF(q) {
   const num = String(q.numero).padStart(4, '0')
-  const blob = new Blob([buildQuoteHtml(q)], { type: 'text/html' })
-  return new File([blob], `cotizacion-${num}.html`, { type: 'text/html' })
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const W = 210
+  const ML = 15
+  const MR = 15
+  const CW = W - ML - MR  // 180mm usable width
+
+  let logoB64 = null
+  if (pt.value.logo) {
+    logoB64 = pt.value.logo.startsWith('data:') ? pt.value.logo : await fetchImageAsBase64(pt.value.logo)
+  }
+  if (!logoB64) {
+    logoB64 = await fetchImageAsBase64('/karikal.png')
+  }
+
+  let y = 15
+
+  // ── Encabezado ──────────────────────────────────────────────────────────────
+  const logoW = 35, logoH = 16
+  if (logoB64) {
+    pdf.addImage(logoB64, 'PNG', ML, y, logoW, logoH)
+  }
+
+  // Company info (below logo)
+  pdf.setFontSize(9)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(80, 80, 80)
+  let cy = y + (logoB64 ? logoH + 2 : 0)
+  if (pt.value.razonSocial) {
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(30, 30, 30)
+    pdf.setFontSize(10)
+    pdf.text(pt.value.razonSocial, ML, cy)
+    cy += 5
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8.5)
+    pdf.setTextColor(80, 80, 80)
+  }
+  for (const line of [pt.value.direccion, pt.value.ciudad, pt.value.telefono, pt.value.email, pt.value.web, pt.value.cuit ? `CUIT: ${pt.value.cuit}` : ''].filter(Boolean)) {
+    pdf.text(line, ML, cy); cy += 4
+  }
+
+  // Right side: COTIZACIÓN title + meta
+  const rx = W - MR
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(20)
+  pdf.setTextColor(40, 40, 40)
+  pdf.text('COTIZACIÓN', rx, y + 5, { align: 'right' })
+
+  pdf.setFontSize(9)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(80, 80, 80)
+  let my = y + 12
+  for (const [label, val] of [
+    ['N°', `#${num}`],
+    ['Fecha', fmtDate(q.createdAt)],
+    ['Válida hasta', validezFecha(q.createdAt, q.validezDias)],
+    ['Vendedor', q.vendedor || ''],
+  ]) {
+    pdf.setFont('helvetica', 'normal'); pdf.text(label + ':', rx - 30, my)
+    pdf.setFont('helvetica', 'bold');   pdf.text(val, rx, my, { align: 'right' })
+    my += 5
+  }
+
+  // Divider
+  y = Math.max(cy, my) + 3
+  pdf.setDrawColor(180, 180, 180)
+  pdf.setLineWidth(0.3)
+  pdf.line(ML, y, W - MR, y)
+  y += 6
+
+  // ── Título cotización ────────────────────────────────────────────────────────
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(13)
+  pdf.setTextColor(30, 30, 30)
+  pdf.text(q.titulo || '', ML, y)
+  y += 7
+
+  // ── Cliente ──────────────────────────────────────────────────────────────────
+  const cl = q.cliente || {}
+  if (cl.nombre || cl.empresa || cl.email || cl.telefono) {
+    pdf.setFillColor(245, 245, 245)
+    const boxLines = [cl.nombre, cl.empresa, cl.email, cl.telefono].filter(Boolean)
+    const boxH = 6 + boxLines.length * 4.5
+    pdf.roundedRect(ML, y, CW, boxH, 2, 2, 'F')
+    pdf.setFontSize(7.5)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(140, 140, 140)
+    pdf.text('DESTINATARIO', ML + 3, y + 4)
+    let by = y + 8
+    for (const ln of boxLines) {
+      pdf.setFont('helvetica', ln === cl.nombre ? 'bold' : 'normal')
+      pdf.setTextColor(40, 40, 40)
+      pdf.setFontSize(9)
+      pdf.text(ln, ML + 3, by)
+      by += 4.5
+    }
+    y += boxH + 5
+  }
+
+  // ── Tabla de ítems ───────────────────────────────────────────────────────────
+  // Header row
+  const cols = [
+    { label: 'Producto',      w: 50, align: 'left' },
+    { label: 'Color',         w: 18, align: 'left' },
+    { label: 'Cant.',         w: 12, align: 'center' },
+    { label: 'Unidad',        w: 16, align: 'left' },
+    { label: 'Descuento',     w: 28, align: 'left' },
+    { label: 'Precio unit.',  w: 24, align: 'right' },
+    { label: 'Subtotal',      w: 22, align: 'right' },
+  ]
+  const rowH = 6
+  const thH  = 6
+
+  pdf.setFillColor(50, 50, 50)
+  pdf.rect(ML, y, CW, thH, 'F')
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(7.5)
+  pdf.setTextColor(255, 255, 255)
+  let cx = ML
+  for (const col of cols) {
+    const tx = col.align === 'right' ? cx + col.w - 1 : col.align === 'center' ? cx + col.w / 2 : cx + 1
+    pdf.text(col.label, tx, y + 4, { align: col.align })
+    cx += col.w
+  }
+  y += thH
+
+  // Data rows
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(8)
+  for (let i = 0; i < (q.items || []).length; i++) {
+    const it = q.items[i]
+    if (i % 2 === 1) {
+      pdf.setFillColor(248, 248, 248)
+      pdf.rect(ML, y, CW, rowH, 'F')
+    }
+    pdf.setTextColor(40, 40, 40)
+
+    const productName = [it.nombre, [it.tipo, it.terminacion, it.espesor ? it.espesor + 'mm' : ''].filter(Boolean).join(' · ')].filter(Boolean).join('\n')
+    const vals = [
+      productName,
+      it.color || '—',
+      String(it.cantidad),
+      it.unidad || '',
+      it.discountLabel || '—',
+      `$ ${Number(it.precioUnitario||0).toLocaleString('es-AR',{minimumFractionDigits:2})}`,
+      `$ ${Number(it.subtotal||0).toLocaleString('es-AR',{minimumFractionDigits:2})}`,
+    ]
+
+    cx = ML
+    for (let ci = 0; ci < cols.length; ci++) {
+      const col = cols[ci]
+      const tx = col.align === 'right' ? cx + col.w - 1 : col.align === 'center' ? cx + col.w / 2 : cx + 1
+      pdf.text(vals[ci], tx, y + 4, { align: col.align, maxWidth: col.w - 2 })
+      cx += col.w
+    }
+    y += rowH
+
+    // Check page overflow
+    if (y > 270) {
+      pdf.addPage()
+      y = 15
+    }
+  }
+
+  // Total row
+  pdf.setFillColor(50, 50, 50)
+  pdf.rect(ML, y, CW, 7, 'F')
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(10)
+  pdf.setTextColor(255, 255, 255)
+  pdf.text('TOTAL', W - MR - 24, y + 4.8, { align: 'right' })
+  const totalStr = `$ ${Number(totalCotizacion(q)).toLocaleString('es-AR',{minimumFractionDigits:2})}`
+  pdf.text(totalStr, W - MR - 1, y + 4.8, { align: 'right' })
+  y += 10
+
+  // ── Notas ────────────────────────────────────────────────────────────────────
+  if (q.descripcionGeneral) {
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(7.5)
+    pdf.setTextColor(140, 140, 140)
+    pdf.text('NOTAS Y CONDICIONES', ML, y)
+    y += 4
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8.5)
+    pdf.setTextColor(60, 60, 60)
+    const lines = pdf.splitTextToSize(q.descripcionGeneral, CW)
+    pdf.text(lines, ML, y)
+    y += lines.length * 4 + 3
+  }
+
+  // ── Validez ──────────────────────────────────────────────────────────────────
+  const condText = (pt.value.condiciones || 'Oferta válida por {dias} días a partir de la fecha de emisión. Precios en dólares. No incluyen IVA.').replace('{dias}', String(q.validezDias || 7))
+  pdf.setFont('helvetica', 'italic')
+  pdf.setFontSize(8)
+  pdf.setTextColor(120, 120, 120)
+  const condLines = pdf.splitTextToSize(condText, CW)
+  pdf.text(condLines, ML, y)
+  y += condLines.length * 4 + 4
+
+  // ── Pie ──────────────────────────────────────────────────────────────────────
+  pdf.setDrawColor(180, 180, 180)
+  pdf.setLineWidth(0.2)
+  pdf.line(ML, y, W - MR, y)
+  y += 4
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(7.5)
+  pdf.setTextColor(140, 140, 140)
+  if (pt.value.piePagina) { pdf.text(pt.value.piePagina, ML, y); y += 4 }
+  pdf.text(`Cotización generada por ${q.vendedor || ''} — ${fmtDate(q.createdAt)}`, ML, y)
+
+  const blob = pdf.output('blob')
+  return new File([blob], `cotizacion-${num}.pdf`, { type: 'application/pdf' })
 }
 
 function _downloadFile(file) {
@@ -1619,15 +1845,12 @@ async function doSendWA() {
   const phone = q?.cliente?.telefono
   if (!phone) return
 
-  const file = makeQuoteFile(q)
   const waUrl = `https://wa.me/${normalizePhoneSend(phone)}?text=${encodeURIComponent(sendMessage.value)}`
+  const file = await makeQuotePDF(q)
 
-  if (navigator.share) {
-    const shareData = (navigator.canShare?.({ files: [file] }))
-      ? { files: [file], title: sendSubject.value, text: sendMessage.value }
-      : { title: sendSubject.value, text: sendMessage.value }
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share(shareData)
+      await navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
       return
     } catch (e) {
       if (e.name === 'AbortError') return
@@ -1643,17 +1866,14 @@ async function doSendEmail() {
   const email = q?.cliente?.email
   if (!email) return
 
-  const file = makeQuoteFile(q)
   const sub  = encodeURIComponent(sendSubject.value)
   const body = encodeURIComponent(sendMessage.value)
   const mailtoUrl = `mailto:${email}?subject=${sub}&body=${body}`
+  const file = await makeQuotePDF(q)
 
-  if (navigator.share) {
-    const shareData = (navigator.canShare?.({ files: [file] }))
-      ? { files: [file], title: sendSubject.value, text: sendMessage.value }
-      : { title: sendSubject.value, text: sendMessage.value }
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share(shareData)
+      await navigator.share({ files: [file], title: sendSubject.value, text: sendMessage.value })
       return
     } catch (e) {
       if (e.name === 'AbortError') return
