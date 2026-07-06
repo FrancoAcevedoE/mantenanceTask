@@ -1,70 +1,105 @@
 <template>
   <div class="mp-page">
-    <div class="mp-header">
-      <h2 class="mp-title"><i class="bi bi-boxes"></i> Stock de Materias Primas</h2>
-      <button class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> Nueva materia prima</button>
-    </div>
+    <div class="mp-card-wrap">
 
-    <div class="mp-filters">
-      <input v-model="search" class="mp-search" placeholder="Buscar por nombre o categoría…" />
-      <select v-model="filterCat" class="mp-select">
-        <option value="">Todas las categorías</option>
-        <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
-      </select>
-    </div>
-
-    <div v-if="loading" class="mp-loading">Cargando…</div>
-    <div v-else-if="filtered.length === 0" class="mp-empty">Sin resultados.</div>
-
-    <div v-else class="mp-grid">
-      <div
-        v-for="mp in filtered"
-        :key="mp._id"
-        :class="['mp-card', mp.stock <= mp.stockMinimo ? 'mp-card--low' : '']"
-      >
-        <div class="mp-card-head">
-          <span class="mp-card-name">{{ mp.nombre }}</span>
-          <span class="mp-card-cat">{{ mp.categoria }}</span>
-        </div>
-        <div class="mp-card-body">
-          <div class="mp-stat">
-            <span class="mp-stat-label">Stock</span>
-            <span :class="['mp-stat-val', mp.stock <= mp.stockMinimo ? 'mp-low' : '']">
-              {{ mp.stock }} {{ mp.unidad }}
-            </span>
-          </div>
-          <div class="mp-stat">
-            <span class="mp-stat-label">Mínimo</span>
-            <span class="mp-stat-val">{{ mp.stockMinimo }} {{ mp.unidad }}</span>
-          </div>
-          <div class="mp-stat">
-            <span class="mp-stat-label">Precio unitario</span>
-            <span class="mp-stat-val">${{ formatNum(mp.precio) }}</span>
-          </div>
-          <div v-if="mp.proveedor" class="mp-stat">
-            <span class="mp-stat-label">Proveedor</span>
-            <span class="mp-stat-val mp-prov">{{ mp.proveedor?.nombre || mp.proveedor }}</span>
-          </div>
-        </div>
-        <div class="mp-card-actions">
-          <button class="btn-sm btn-entrada" @click="openMovimiento(mp, 'entrada')">
-            <i class="bi bi-arrow-down-circle"></i> Entrada
-          </button>
-          <button class="btn-sm btn-salida" @click="openMovimiento(mp, 'salida')">
-            <i class="bi bi-arrow-up-circle"></i> Salida
-          </button>
-          <button class="btn-sm btn-historial" @click="openHistorial(mp)">
-            <i class="bi bi-clock-history"></i>
-          </button>
-          <button class="btn-sm btn-edit" @click="openEdit(mp)">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="btn-sm btn-del" @click="confirmDelete(mp)">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
+      <!-- ── Encabezado ── -->
+      <div class="mp-header">
+        <h2 class="mp-title"><i class="bi bi-boxes"></i> Stock de Materias Primas</h2>
+        <button class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> Nueva</button>
       </div>
-    </div>
+
+      <!-- ── Layout principal: lista + dashboard ── -->
+      <div class="mp-main">
+
+        <!-- COLUMNA IZQUIERDA: lista -->
+        <div class="mp-left">
+          <div class="mp-filters">
+            <input v-model="search" class="mp-search" placeholder="Buscar…" />
+            <select v-model="filterCat" class="mp-select">
+              <option value="">Todas</option>
+              <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
+            </select>
+          </div>
+
+          <div v-if="loading" class="mp-loading">Cargando…</div>
+          <div v-else-if="filtered.length === 0" class="mp-empty">Sin resultados.</div>
+
+          <div v-else class="mp-list">
+            <div
+              v-for="mp in filtered"
+              :key="mp._id"
+              :class="['mp-row', mp.stock <= mp.stockMinimo ? 'mp-row--low' : '']"
+            >
+              <div class="mp-row-info">
+                <span class="mp-row-name">{{ mp.nombre }}</span>
+                <span v-if="mp.categoria" class="mp-row-cat">{{ mp.categoria }}</span>
+              </div>
+              <div class="mp-row-stats">
+                <span :class="['mp-row-stock', mp.stock <= mp.stockMinimo ? 'mp-low' : '']">
+                  {{ mp.stock }} <em>{{ mp.unidad }}</em>
+                </span>
+                <span class="mp-row-price">${{ formatNum(mp.precio) }}</span>
+              </div>
+              <div class="mp-row-actions">
+                <button class="btn-sm btn-entrada" @click="openMovimiento(mp, 'entrada')" title="Entrada">
+                  <i class="bi bi-arrow-down-circle"></i>
+                </button>
+                <button class="btn-sm btn-salida" @click="openMovimiento(mp, 'salida')" title="Salida">
+                  <i class="bi bi-arrow-up-circle"></i>
+                </button>
+                <button class="btn-sm btn-historial" @click="openHistorial(mp)" title="Historial">
+                  <i class="bi bi-clock-history"></i>
+                </button>
+                <button class="btn-sm btn-edit" @click="openEdit(mp)" title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn-sm btn-del" @click="confirmDelete(mp)" title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: dashboard -->
+        <div class="mp-right">
+          <div class="dash-title">Dashboard mensual</div>
+
+          <div class="dash-kpis">
+            <div class="kpi-card kpi-green">
+              <span class="kpi-label">Compras este mes</span>
+              <span class="kpi-val">{{ kpiComprasMes }}</span>
+              <span class="kpi-sub">movimientos</span>
+            </div>
+            <div class="kpi-card kpi-orange">
+              <span class="kpi-label">Consumos este mes</span>
+              <span class="kpi-val">{{ kpiConsumosMes }}</span>
+              <span class="kpi-sub">movimientos</span>
+            </div>
+            <div class="kpi-card kpi-red">
+              <span class="kpi-label">Stock bajo mínimo</span>
+              <span class="kpi-val">{{ kpiBajoMinimo }}</span>
+              <span class="kpi-sub">materias primas</span>
+            </div>
+          </div>
+
+          <div class="chart-section">
+            <div class="chart-label">Compras (entradas) — últimos 6 meses</div>
+            <div class="canvas-wrap">
+              <canvas ref="barComprasRef"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-section">
+            <div class="chart-label">Consumo (salidas) — últimos 6 meses</div>
+            <div class="canvas-wrap">
+              <canvas ref="barConsumoRef"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /mp-card-wrap -->
 
     <!-- Modal crear/editar -->
     <div v-if="showForm" class="modal-overlay" @click.self="closeForm">
@@ -185,21 +220,27 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import {
+  Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend
+} from 'chart.js'
+
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
 const authCfg = (extra = {}) => ({ headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }, ...extra })
 const api = {
-  get:    (path, cfg = {})       => axios.get(`${API_BASE_URL}${path}`, { ...authCfg(), ...cfg }),
-  post:   (path, data, cfg = {}) => axios.post(`${API_BASE_URL}${path}`, data, authCfg()),
-  put:    (path, data, cfg = {}) => axios.put(`${API_BASE_URL}${path}`, data, authCfg()),
-  delete: (path, cfg = {})       => axios.delete(`${API_BASE_URL}${path}`, authCfg())
+  get:    (path, cfg = {})  => axios.get(`${API_BASE_URL}${path}`, { ...authCfg(), ...cfg }),
+  post:   (path, data)      => axios.post(`${API_BASE_URL}${path}`, data, authCfg()),
+  put:    (path, data)      => axios.put(`${API_BASE_URL}${path}`, data, authCfg()),
+  delete: (path)            => axios.delete(`${API_BASE_URL}${path}`, authCfg())
 }
 
-const items    = ref([])
-const loading  = ref(true)
-const search   = ref('')
+// ── State ──────────────────────────────────────────────────────────────────
+const items     = ref([])
+const loading   = ref(true)
+const search    = ref('')
 const filterCat = ref('')
 
 const showForm   = ref(false)
@@ -218,6 +259,13 @@ const histItem    = ref(null)
 const histMovs    = ref([])
 const histLoading = ref(false)
 
+// Chart refs
+const barComprasRef = ref(null)
+const barConsumoRef = ref(null)
+let chartCompras = null
+let chartConsumo = null
+
+// ── Computed ───────────────────────────────────────────────────────────────
 const categories = computed(() => {
   const set = new Set(items.value.map(i => i.categoria).filter(Boolean))
   return [...set].sort()
@@ -237,11 +285,122 @@ const filtered = computed(() => {
   return list
 })
 
+// KPIs
+const kpiBajoMinimo = computed(() => items.value.filter(i => i.stock <= i.stockMinimo).length)
+
+const kpiComprasMes = computed(() => {
+  const now = new Date()
+  return allMovimientos.value.filter(m =>
+    m.tipo === 'entrada' &&
+    new Date(m.fecha).getMonth() === now.getMonth() &&
+    new Date(m.fecha).getFullYear() === now.getFullYear()
+  ).length
+})
+
+const kpiConsumosMes = computed(() => {
+  const now = new Date()
+  return allMovimientos.value.filter(m =>
+    m.tipo === 'salida' &&
+    new Date(m.fecha).getMonth() === now.getMonth() &&
+    new Date(m.fecha).getFullYear() === now.getFullYear()
+  ).length
+})
+
+// Todos los movimientos de todos los items
+const allMovimientos = computed(() =>
+  items.value.flatMap(i => (i.movimientos || []))
+)
+
+// ── Helpers de charts ──────────────────────────────────────────────────────
+function getLast6Months() {
+  const months = []
+  const now = new Date()
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    months.push({ year: d.getFullYear(), month: d.getMonth(), label: d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' }) })
+  }
+  return months
+}
+
+function buildChartData(tipo) {
+  const months = getLast6Months()
+  const counts = months.map(({ year, month }) =>
+    allMovimientos.value.filter(m => {
+      const d = new Date(m.fecha)
+      return m.tipo === tipo && d.getFullYear() === year && d.getMonth() === month
+    }).reduce((sum, m) => sum + (m.cantidad || 0), 0)
+  )
+  return { labels: months.map(m => m.label), counts }
+}
+
+function buildCharts() {
+  if (!barComprasRef.value || !barConsumoRef.value) return
+
+  const compras = buildChartData('entrada')
+  const consumo = buildChartData('salida')
+
+  chartCompras?.destroy()
+  chartConsumo?.destroy()
+
+  chartCompras = new Chart(barComprasRef.value, {
+    type: 'bar',
+    data: {
+      labels: compras.labels,
+      datasets: [{
+        label: 'Cantidad comprada',
+        data: compras.counts,
+        backgroundColor: 'rgba(34,197,94,0.7)',
+        borderColor: '#16a34a',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 11 } } }
+      }
+    }
+  })
+
+  chartConsumo = new Chart(barConsumoRef.value, {
+    type: 'bar',
+    data: {
+      labels: consumo.labels,
+      datasets: [{
+        label: 'Cantidad consumida',
+        data: consumo.counts,
+        backgroundColor: 'rgba(249,115,22,0.7)',
+        borderColor: '#ea580c',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 11 } } }
+      }
+    }
+  })
+}
+
+// ── Data ───────────────────────────────────────────────────────────────────
 async function load() {
   loading.value = true
   try {
-    const { data } = await api.get('/materias-primas')
-    items.value = data
+    // Traer cada item con sus movimientos
+    const { data: list } = await api.get('/materias-primas')
+    const details = await Promise.all(list.map(mp => api.get(`/materias-primas/${mp._id}`).then(r => r.data)))
+    items.value = details
   } catch (e) {
     console.error(e)
   } finally {
@@ -249,6 +408,12 @@ async function load() {
   }
 }
 
+watch(items, () => {
+  // Esperar que los canvas estén montados
+  setTimeout(buildCharts, 50)
+}, { deep: false })
+
+// ── CRUD ───────────────────────────────────────────────────────────────────
 function openCreate() {
   editingId.value = null
   form.value = { nombre: '', codigo: '', categoria: '', unidad: 'kg', stock: 0, stockMinimo: 0, precio: 0 }
@@ -341,119 +506,236 @@ function formatDate(d) {
 }
 
 onMounted(load)
+onUnmounted(() => { chartCompras?.destroy(); chartConsumo?.destroy() })
 </script>
 
 <style scoped>
-.mp-page { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+/* ── Página ──────────────────────────────────────────────────────────────── */
+.mp-page {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0.5rem 2rem;
+  background: transparent;
+  box-sizing: border-box;
+}
 
+.mp-card-wrap {
+  width: 100%;
+  max-width: 1300px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 22px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  padding: 1.25rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
 .mp-header {
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem;
-  margin-bottom: 1.25rem;
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  margin-bottom: 1rem; flex-wrap: wrap;
 }
-.mp-title { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; margin: 0; }
+.mp-title {
+  font-size: 1.1rem; font-weight: 700;
+  display: flex; align-items: center; gap: .5rem;
+  margin: 0; color: #1e293b;
+}
 
-.mp-filters { display: flex; gap: .75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-.mp-search { flex: 1; min-width: 200px; padding: .5rem .75rem; border-radius: 8px; border: 1px solid var(--border-color, #ddd); background: var(--input-bg, #fff); color: inherit; }
-.mp-select { padding: .5rem .75rem; border-radius: 8px; border: 1px solid var(--border-color, #ddd); background: var(--input-bg, #fff); color: inherit; }
-
-.mp-loading, .mp-empty { text-align: center; color: #888; padding: 2rem; }
-
-.mp-grid {
+/* ── Layout dos columnas (desktop) ───────────────────────────────────────── */
+.mp-main {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
 }
 
-.mp-card {
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border-color, #e0e0e0);
-  border-radius: 12px;
-  padding: 1rem;
-  display: flex; flex-direction: column; gap: .75rem;
-  transition: box-shadow .2s;
+/* ── Columna izquierda ───────────────────────────────────────────────────── */
+.mp-left { display: flex; flex-direction: column; gap: .625rem; min-width: 0; }
+
+.mp-filters { display: flex; gap: .5rem; flex-wrap: wrap; }
+.mp-search {
+  flex: 1; min-width: 120px;
+  padding: .4rem .75rem; border-radius: 2rem;
+  border: 1px solid #ccc;
+  font-size: 16px; /* Evita zoom automático en iOS */
+  color: #333; background: #fff;
+  box-sizing: border-box;
 }
-.mp-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); }
-.mp-card--low { border-color: #f87171; background: rgba(239,68,68,.04); }
+.mp-select {
+  padding: .4rem .65rem; border-radius: 2rem;
+  border: 1px solid #ccc;
+  font-size: 16px; /* Evita zoom automático en iOS */
+  color: #333; background: #fff;
+  width: auto;
+  max-width: 120px;
+  cursor: pointer;
+  /* Evita que el select nativo se expanda al ancho del contenido */
+  box-sizing: border-box;
+}
 
-.mp-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; }
-.mp-card-name { font-weight: 700; font-size: 1rem; }
-.mp-card-cat { font-size: .7rem; background: rgba(99,102,241,.12); color: #6366f1; padding: 2px 8px; border-radius: 20px; }
+.mp-loading, .mp-empty { text-align: center; color: #888; padding: 1.5rem; font-size: .9rem; }
 
-.mp-card-body { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
-.mp-stat { display: flex; flex-direction: column; gap: 2px; }
-.mp-stat-label { font-size: .7rem; color: #888; }
-.mp-stat-val { font-size: .9rem; font-weight: 600; }
-.mp-low { color: #ef4444; }
-.mp-prov { font-size: .82rem; color: #6366f1; }
+.mp-list {
+  display: flex; flex-direction: column; gap: .35rem;
+  max-height: 55vh; overflow-y: auto; padding-right: 2px;
+}
 
-.mp-card-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.mp-row {
+  display: flex; align-items: center; gap: .4rem;
+  background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: .45rem .625rem;
+  min-width: 0;
+}
+.mp-row--low { border-color: #fca5a5; background: #fff7f7; }
 
+.mp-row-info { flex: 1; min-width: 0; overflow: hidden; }
+.mp-row-name {
+  font-weight: 700; font-size: .85rem; color: #1e293b;
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mp-row-cat {
+  font-size: .65rem; color: #6366f1; background: rgba(99,102,241,.1);
+  padding: 1px 6px; border-radius: 20px; display: inline-block; margin-top: 1px;
+}
+
+.mp-row-stats {
+  display: flex; flex-direction: column; align-items: flex-end;
+  gap: 1px; flex-shrink: 0; min-width: 60px;
+}
+.mp-row-stock { font-size: .85rem; font-weight: 700; color: #374151; white-space: nowrap; }
+.mp-row-stock em { font-style: normal; font-size: .7rem; color: #9ca3af; }
+.mp-low { color: #ef4444 !important; }
+.mp-row-price { font-size: .7rem; color: #6b7280; white-space: nowrap; }
+
+.mp-row-actions { display: flex; gap: .2rem; flex-shrink: 0; }
 .btn-sm {
-  padding: .3rem .6rem; border: none; border-radius: 7px; cursor: pointer;
-  font-size: .78rem; display: flex; align-items: center; gap: .3rem;
-  transition: opacity .15s;
+  padding: .25rem .35rem; border: none; border-radius: 6px;
+  cursor: pointer; font-size: .78rem; display: flex; align-items: center;
+  transition: opacity .15s; line-height: 1;
 }
-.btn-sm:hover { opacity: .85; }
+.btn-sm:active { opacity: .7; }
 .btn-entrada  { background: #d1fae5; color: #065f46; }
 .btn-salida   { background: #fee2e2; color: #991b1b; }
 .btn-historial{ background: #e0e7ff; color: #3730a3; }
 .btn-edit     { background: #fef9c3; color: #713f12; }
-.btn-del      { background: #fee2e2; color: #7f1d1d; margin-left: auto; }
+.btn-del      { background: #fee2e2; color: #7f1d1d; }
+
+/* ── Columna derecha: dashboard ──────────────────────────────────────────── */
+.mp-right {
+  display: flex; flex-direction: column; gap: .875rem;
+  background: #f8fafc; border-radius: 14px; padding: 1rem;
+  border: 1px solid #e5e7eb; min-width: 0;
+}
+
+.dash-title {
+  font-size: .88rem; font-weight: 700; color: #374151;
+  padding-bottom: .5rem; border-bottom: 1px solid #e5e7eb;
+}
+
+.dash-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+.kpi-card {
+  border-radius: 10px; padding: .5rem .5rem;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; gap: 1px;
+}
+.kpi-green  { background: #d1fae5; }
+.kpi-orange { background: #ffedd5; }
+.kpi-red    { background: #fee2e2; }
+.kpi-label  { font-size: .6rem; font-weight: 600; color: #6b7280; text-transform: uppercase; line-height: 1.2; }
+.kpi-val    { font-size: 1.4rem; font-weight: 800; line-height: 1.1; }
+.kpi-green .kpi-val  { color: #065f46; }
+.kpi-orange .kpi-val { color: #9a3412; }
+.kpi-red .kpi-val    { color: #991b1b; }
+.kpi-sub    { font-size: .58rem; color: #9ca3af; }
+
+.chart-section { display: flex; flex-direction: column; gap: .3rem; }
+.chart-label { font-size: .75rem; font-weight: 600; color: #6b7280; }
+.canvas-wrap { position: relative; width: 100%; height: 130px; }
+.canvas-wrap canvas { max-width: 100%; }
+
+/* ── Modales ─────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-box {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.25);
+  padding: 1.25rem;
+  width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: .875rem; color: #333;
+  box-sizing: border-box;
+}
+.modal-box h3 { margin: 0; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; color: #333; }
+.modal-sm { max-width: 360px; }
+.modal-lg { max-width: 780px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .625rem; }
+.form-grid label { display: flex; flex-direction: column; gap: .25rem; font-size: .82rem; font-weight: 600; color: #444; }
+.form-grid input, .form-grid select {
+  width: 100%; padding: 9px 14px; border-radius: 2rem;
+  border: 1px solid #ccc; background: #fff; color: #333;
+  font-size: 16px; /* Evita zoom automático en iOS */
+  box-sizing: border-box;
+}
+.form-grid input:focus, .form-grid select:focus {
+  outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15);
+}
+
+.modal-actions { display: flex; justify-content: flex-end; gap: .625rem; margin-top: .25rem; }
 
 .btn-primary {
-  background: #6366f1; color: #fff; border: none; border-radius: 8px;
-  padding: .5rem 1.1rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: .4rem;
-  transition: background .15s;
+  background: #6366f1; color: #fff; border: none; border-radius: 2rem;
+  padding: .45rem 1.1rem; cursor: pointer; font-weight: 600;
+  display: flex; align-items: center; gap: .35rem; font-size: .88rem;
+  transition: background .15s; white-space: nowrap;
 }
 .btn-primary:hover:not(:disabled) { background: #4f46e5; }
 .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
 .btn-primary.btn-danger { background: #ef4444; }
 .btn-primary.btn-danger:hover:not(:disabled) { background: #dc2626; }
 .btn-ghost {
-  background: transparent; border: 1px solid var(--border-color, #ddd); border-radius: 8px;
-  padding: .5rem 1rem; cursor: pointer; color: inherit;
+  background: transparent; border: 1px solid #ccc; border-radius: 2rem;
+  padding: .45rem 1rem; cursor: pointer; color: #555; font-size: .88rem;
+  white-space: nowrap;
 }
+.btn-ghost:hover { background: #f3f4f6; }
 
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000;
-  display: flex; align-items: center; justify-content: center; padding: 1rem;
-}
-.modal-box {
-  background: var(--card-bg, #fff); border-radius: 14px; padding: 1.5rem;
-  width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 1rem; color: inherit;
-}
-.modal-box h3 { margin: 0; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
-.modal-sm { max-width: 380px; }
-.modal-lg { max-width: 780px; }
-
-.form-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: .75rem;
-}
-.form-grid label {
-  display: flex; flex-direction: column; gap: .3rem; font-size: .85rem; font-weight: 600;
-}
-.form-grid input, .form-grid select {
-  padding: .45rem .65rem; border-radius: 8px;
-  border: 1px solid var(--border-color, #ddd);
-  background: var(--input-bg, #fff); color: inherit; font-size: .9rem;
-}
-
-.modal-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: .5rem; }
-
-.mov-mp-name { font-weight: 700; font-size: 1rem; margin: -.25rem 0 .25rem; }
+.mov-mp-name { font-weight: 700; font-size: .95rem; color: #333; margin: 0; }
 .text-green { color: #22c55e; }
 .text-red   { color: #ef4444; }
 
-.hist-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-.hist-table th { background: rgba(99,102,241,.1); padding: .5rem .75rem; text-align: left; }
-.hist-table td { padding: .45rem .75rem; border-bottom: 1px solid var(--border-color, #eee); }
+/* Historial */
+.hist-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.hist-table th { background: #f3f4f6; padding: .45rem .625rem; text-align: left; color: #374151; font-weight: 600; }
+.hist-table td { padding: .4rem .625rem; border-bottom: 1px solid #e5e7eb; color: #374151; }
+.hist-table tr:last-child td { border-bottom: none; }
 
-.badge { padding: 2px 8px; border-radius: 20px; font-size: .72rem; font-weight: 700; }
+.badge { padding: 2px 7px; border-radius: 20px; font-size: .7rem; font-weight: 700; }
 .badge-green { background: #d1fae5; color: #065f46; }
 .badge-red   { background: #fee2e2; color: #991b1b; }
 
-@media (max-width: 600px) {
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .mp-main { grid-template-columns: 1fr; }
+  .mp-list { max-height: none; }
+}
+
+@media (max-width: 500px) {
+  .mp-card-wrap { border-radius: 14px; padding: 1rem .875rem; }
+  .mp-title { font-size: 1rem; }
   .form-grid { grid-template-columns: 1fr; }
+  /* En mobile ocultar precio para que entren los botones */
+  .mp-row-price { display: none; }
+  /* KPIs en fila única */
+  .dash-kpis { grid-template-columns: repeat(3, 1fr); gap: .35rem; }
+  .kpi-val { font-size: 1.2rem; }
+  /* Historial: scroll horizontal */
+  .modal-lg { max-width: 100%; border-radius: 12px 12px 0 0; }
+  .hist-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 </style>

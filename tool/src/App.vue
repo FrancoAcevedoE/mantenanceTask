@@ -103,23 +103,25 @@ onBeforeUnmount(() => { notificationsStore.stop() })
           <span>Mantenimiento</span>
           <i :class="['mod-chevron bi', openMantenim ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
         </button>
-        <div v-show="openMantenim" class="mod-links">
-          <router-link to="/dashboard" @click="closeMobile">
-            <i class="bi bi-bar-chart-fill"></i><span class="nav-label">Dashboard</span>
-          </router-link>
-          <router-link v-if="canNewWork" to="/new" @click="closeMobile">
-            <i class="bi bi-plus-circle"></i><span class="nav-label">Nuevo trabajo</span>
-          </router-link>
-          <router-link v-if="canHistory" to="/history" @click="closeMobile">
-            <i class="bi bi-clock-history"></i><span class="nav-label">Historial</span>
-          </router-link>
-          <router-link to="/notifications-history" @click="closeMobile">
-            <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
-          </router-link>
-          <router-link v-if="canNewMachine" to="/newMachine" @click="closeMobile">
-            <i class="bi bi-building-add"></i><span class="nav-label">Nueva máquina</span>
-          </router-link>
-        </div>
+        <Transition name="sidebar-collapse">
+          <div v-show="openMantenim" class="mod-links">
+            <router-link to="/dashboard" @click="closeMobile">
+              <i class="bi bi-bar-chart-fill"></i><span class="nav-label">Dashboard</span>
+            </router-link>
+            <router-link v-if="canNewWork" to="/new" @click="closeMobile">
+              <i class="bi bi-plus-circle"></i><span class="nav-label">Nuevo trabajo</span>
+            </router-link>
+            <router-link v-if="canHistory" to="/history" @click="closeMobile">
+              <i class="bi bi-clock-history"></i><span class="nav-label">Historial</span>
+            </router-link>
+            <router-link to="/notifications-history" @click="closeMobile">
+              <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
+            </router-link>
+            <router-link v-if="canNewMachine" to="/newMachine" @click="closeMobile">
+              <i class="bi bi-building-add"></i><span class="nav-label">Nueva máquina</span>
+            </router-link>
+          </div>
+        </Transition>
       </div>
 
       <!-- ── VENTAS ── -->
@@ -129,17 +131,19 @@ onBeforeUnmount(() => { notificationsStore.stop() })
           <span>Ventas</span>
           <i :class="['mod-chevron bi', openVentas ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
         </button>
-        <div v-show="openVentas" class="mod-links">
-          <router-link to="/crm" @click="closeMobile">
-            <i class="bi bi-people-fill"></i><span class="nav-label">CRM</span>
-          </router-link>
-          <router-link to="/inventory" @click="closeMobile">
-            <i class="bi bi-box-seam"></i><span class="nav-label">Inventario</span>
-          </router-link>
-          <router-link to="/notifications-history" @click="closeMobile">
-            <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
-          </router-link>
-        </div>
+        <Transition name="sidebar-collapse">
+          <div v-show="openVentas" class="mod-links">
+            <router-link to="/crm" @click="closeMobile">
+              <i class="bi bi-people-fill"></i><span class="nav-label">CRM</span>
+            </router-link>
+            <router-link to="/inventory" @click="closeMobile">
+              <i class="bi bi-box-seam"></i><span class="nav-label">Inventario</span>
+            </router-link>
+            <router-link to="/notifications-history" @click="closeMobile">
+              <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
+            </router-link>
+          </div>
+        </Transition>
       </div>
 
       <!-- ── COMPRAS ── -->
@@ -149,17 +153,19 @@ onBeforeUnmount(() => { notificationsStore.stop() })
           <span>Compras</span>
           <i :class="['mod-chevron bi', openCompras ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
         </button>
-        <div v-show="openCompras" class="mod-links">
-          <router-link to="/compras/materias-primas" @click="closeMobile">
-            <i class="bi bi-boxes"></i><span class="nav-label">Materias primas</span>
-          </router-link>
-          <router-link to="/compras/proveedores" @click="closeMobile">
-            <i class="bi bi-building"></i><span class="nav-label">Proveedores</span>
-          </router-link>
-          <router-link to="/notifications-history" @click="closeMobile">
-            <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
-          </router-link>
-        </div>
+        <Transition name="sidebar-collapse">
+          <div v-show="openCompras" class="mod-links">
+            <router-link to="/compras/materias-primas" @click="closeMobile">
+              <i class="bi bi-boxes"></i><span class="nav-label">Materias primas</span>
+            </router-link>
+            <router-link to="/compras/proveedores" @click="closeMobile">
+              <i class="bi bi-building"></i><span class="nav-label">Proveedores</span>
+            </router-link>
+            <router-link to="/notifications-history" @click="closeMobile">
+              <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
+            </router-link>
+          </div>
+        </Transition>
       </div>
 
       <!-- ── PRODUCCIÓN ── -->
@@ -334,6 +340,20 @@ main.app-content.nav-open { margin-left: var(--sidebar-w-open); }
 .mod-header i:first-child { font-size: 1.1rem; width: 30px; flex-shrink: 0; text-align: center; }
 .mod-header span { flex: 1; margin-left: 0.6rem; }
 .mod-chevron { font-size: 0.7rem !important; width: auto !important; color: #94a3b8; transition: transform 0.2s; }
+
+/* ── Sidebar collapse transition ── */
+.sidebar-collapse-enter-active {
+  animation: sidebar-expand 0.22s ease;
+  overflow: hidden;
+}
+.sidebar-collapse-leave-active {
+  animation: sidebar-expand 0.18s ease reverse;
+  overflow: hidden;
+}
+@keyframes sidebar-expand {
+  from { max-height: 0; opacity: 0; }
+  to   { max-height: 400px; opacity: 1; }
+}
 
 .mod-links {
   display: flex; flex-direction: column; gap: 0.05rem;

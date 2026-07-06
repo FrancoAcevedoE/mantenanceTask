@@ -1,5 +1,6 @@
 <template>
   <div class="prov-page">
+    <div class="prov-card-wrap">
     <div class="prov-header">
       <h2 class="prov-title"><i class="bi bi-truck"></i> Proveedores</h2>
       <button class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> Nuevo proveedor</button>
@@ -46,6 +47,7 @@
         </div>
       </div>
     </div>
+    </div><!-- /prov-card-wrap -->
 
     <!-- Modal crear/editar proveedor -->
     <div v-if="showForm" class="modal-overlay" @click.self="closeForm">
@@ -295,13 +297,32 @@ onMounted(load)
 </script>
 
 <style scoped>
-.prov-page { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+.prov-page {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1.5rem 0.75rem 2rem;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.prov-card-wrap {
+  width: min(1100px, 100%);
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 22px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
 
 .prov-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin-bottom: 1.25rem; }
-.prov-title { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; margin: 0; }
+.prov-title { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; margin: 0; color: #1e293b; }
 
 .prov-filters { margin-bottom: 1.25rem; }
-.prov-search { width: 100%; max-width: 400px; padding: .5rem .75rem; border-radius: 8px; border: 1px solid var(--border-color, #ddd); background: var(--input-bg, #fff); color: inherit; }
+.prov-search { width: 100%; max-width: 400px; padding: .5rem .75rem; border-radius: 2rem; border: 1px solid #ccc; background: #fff; color: #333; }
 
 .prov-loading, .prov-empty { text-align: center; color: #888; padding: 2rem; }
 
@@ -338,20 +359,34 @@ onMounted(load)
 .btn-edit  { background: #f1f5f9; color: #334155; }
 .btn-del   { background: #fee2e2; color: #7f1d1d; margin-left: auto; }
 
-.btn-primary { background: #6366f1; color: #fff; border: none; border-radius: 8px; padding: .5rem 1.1rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: .4rem; transition: background .15s; }
+.btn-primary { background: #6366f1; color: #fff; border: none; border-radius: 2rem; padding: .5rem 1.25rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: .4rem; transition: background .15s; font-size: .9rem; }
 .btn-primary:hover:not(:disabled) { background: #4f46e5; }
 .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
-.btn-ghost { background: transparent; border: 1px solid var(--border-color, #ddd); border-radius: 8px; padding: .5rem 1rem; cursor: pointer; color: inherit; }
+.btn-ghost { background: transparent; border: 1px solid #ccc; border-radius: 2rem; padding: .5rem 1.1rem; cursor: pointer; color: #555; font-size: .9rem; }
+.btn-ghost:hover { background: #f3f4f6; }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-.modal-box { background: var(--card-bg, #fff); border-radius: 14px; padding: 1.5rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; color: inherit; }
-.modal-box h3 { margin: 0; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
+.modal-box {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.25);
+  padding: 1.5rem;
+  width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 1rem; color: #333;
+}
+.modal-box h3 { margin: 0 0 .25rem; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; color: #333; }
 .modal-sm { max-width: 420px; }
 .modal-lg { max-width: 680px; }
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-.form-grid label { display: flex; flex-direction: column; gap: .3rem; font-size: .85rem; font-weight: 600; }
-.form-grid input { padding: .45rem .65rem; border-radius: 8px; border: 1px solid var(--border-color, #ddd); background: var(--input-bg, #fff); color: inherit; font-size: .9rem; }
+.form-grid label { display: flex; flex-direction: column; gap: .3rem; font-size: .85rem; font-weight: 600; color: #444; }
+.form-grid input {
+  width: 100%; padding: 10px 14px; border-radius: 2rem;
+  border: 1px solid #ccc; background: #fff; color: #333;
+  font-size: 16px; /* Evita zoom automático en iOS */
+  box-sizing: border-box;
+}
+.form-grid input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
 .full-col { grid-column: 1 / -1; }
 
 .modal-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: .25rem; }
@@ -366,7 +401,7 @@ onMounted(load)
 .star-on  { color: #f59e0b; }
 .star-off { color: #d1d5db; }
 .eval-comment-label { display: flex; flex-direction: column; gap: .3rem; font-size: .85rem; font-weight: 600; }
-.eval-comment-label textarea { padding: .5rem .7rem; border-radius: 8px; border: 1px solid var(--border-color, #ddd); background: var(--input-bg, #fff); color: inherit; resize: vertical; font-size: .9rem; }
+.eval-comment-label textarea { padding: .5rem .7rem; border-radius: 8px; border: 1px solid var(--border-color, #ddd); background: var(--input-bg, #fff); color: inherit; resize: vertical; font-size: 16px; /* Evita zoom en iOS */ }
 .text-yellow { color: #f59e0b; }
 
 /* Historial evaluaciones */
