@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import cors from "cors"
 import helmet from "helmet"
 import rateLimit from "express-rate-limit"
+import bcrypt from "bcrypt"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 // esto levanta el servidor e importa las todas las rutas
@@ -68,6 +69,28 @@ const ensureDefaultAdmin = async () => {
       { upsert: true, setDefaultsOnInsert: true }
     )
     console.log("Admin inicial creado")
+  }
+}
+
+// Usuario de prueba: DNI 00000000 / contraseña 0000 / rol admin
+// Se crea/restaura en cada arranque para que funcione tanto local como en Render
+const ensureTestUser = async () => {
+  const TEST_DNI = 0 // Number("00000000") = 0
+  const existing = await User.findOne({ dni: TEST_DNI })
+  if (!existing) {
+    await User.create({
+      name: 'Test',
+      dni: TEST_DNI,
+      password: await bcrypt.hash('0000', 10),
+      role: 'admin',
+      isDeleted: false,
+    })
+    console.log("Usuario de prueba creado (DNI: 00000000)")
+  } else if (existing.isDeleted) {
+    existing.isDeleted = false
+    existing.deletedAt = null
+    await existing.save()
+    console.log("Usuario de prueba restaurado")
   }
 }
 
@@ -143,6 +166,7 @@ mongoose.connect(mongoURI)
   console.log("Mongo conectado")
 
   await ensureDefaultAdmin()
+  await ensureTestUser()
 
   startCronNotifications()
 })

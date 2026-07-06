@@ -58,7 +58,8 @@
       "Bash(xargs sed -i '' \"s/localStorage\\\\.getItem\\('token'\\)/sessionStorage.getItem\\('token'\\)/g; s/localStorage\\\\.getItem\\(\\\\\"token\\\\\"\\)/sessionStorage.getItem\\(\\\\\"token\\\\\"\\)/g; s/localStorage\\\\.setItem\\('token'/sessionStorage.setItem\\('token'/g; s/localStorage\\\\.setItem\\(\\\\\"token\\\\\"/sessionStorage.setItem\\(\\\\\"token\\\\\"/g; s/localStorage\\\\.removeItem\\('token'\\)/sessionStorage.removeItem\\('token'\\)/g; s/localStorage\\\\.removeItem\\(\\\\\"token\\\\\"\\)/sessionStorage.removeItem\\(\\\\\"token\\\\\"\\)/g; s/localStorage\\\\.getItem\\('user'\\)/sessionStorage.getItem\\('user'\\)/g; s/localStorage\\\\.getItem\\(\\\\\"user\\\\\"\\)/sessionStorage.getItem\\(\\\\\"user\\\\\"\\)/g; s/localStorage\\\\.setItem\\('user'/sessionStorage.setItem\\('user'/g; s/localStorage\\\\.setItem\\(\\\\\"user\\\\\"/sessionStorage.setItem\\(\\\\\"user\\\\\"/g; s/localStorage\\\\.removeItem\\('user'\\)/sessionStorage.removeItem\\('user'\\)/g; s/localStorage\\\\.removeItem\\(\\\\\"user\\\\\"\\)/sessionStorage.removeItem\\(\\\\\"user\\\\\"\\)/g\")",
       "Bash(node --input-type=module --check)",
       "Bash(node -e \"const { jsPDF } = await import\\('jspdf'\\); console.log\\('ok'\\); const p = new jsPDF\\(\\); console.log\\(Object.keys\\(p\\).filter\\(k=>k.includes\\('table'\\)||k.includes\\('auto'\\)\\)\\)\")",
-      "Bash(node scripts/createTestUser.js)"
+      "Bash(node scripts/createTestUser.js)",
+      "Bash(timeout 8 node server.js)"
     ]
   }
 }
