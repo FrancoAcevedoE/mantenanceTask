@@ -357,9 +357,10 @@
                     class="input-num" @input="recalc(idx)" @focus="$event.target.select()" />
                 </td>
 
-                <!-- Unidad -->
+                <!-- Unidad: bloqueada si viene del catálogo, editable en líneas manuales -->
                 <td class="col-unit">
-                  <select v-model="item.unidad" class="sel-small">
+                  <span v-if="item._productId" class="unit-locked" :title="`Unidad fija: ${item.unidad}`">{{ item.unidad }}</span>
+                  <select v-else v-model="item.unidad" class="sel-small">
                     <option value="unidad">unidad</option>
                     <option value="m2">m²</option>
                     <option value="ml">ml</option>
@@ -2150,6 +2151,19 @@ function hasCliente(q) {
 }
 
 /* ── Campos genéricos en tabla ── */
+.unit-locked {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b8e3a;
+  background: rgba(107,142,58,0.1);
+  border: 1px solid rgba(107,142,58,0.2);
+  border-radius: 6px;
+  padding: 0.28rem 0.55rem;
+  white-space: nowrap;
+  user-select: none;
+}
+
 .sel-small, .input-small {
   width: 100%; font-size: 0.82rem; padding: 0.38rem 0.55rem;
   border: 1px solid rgba(107,142,58,0.22); border-radius: 7px;
