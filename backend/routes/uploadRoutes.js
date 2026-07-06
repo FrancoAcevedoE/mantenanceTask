@@ -57,7 +57,7 @@ uploadRouter.use((err, _req, res, _next) => {
 
 const filesRouter = express.Router()
 
-filesRouter.get("/:id", verifyToken, async (req, res) => {
+filesRouter.get("/:id", async (req, res) => {
     try {
         const file = await File.findById(req.params.id)
         if (!file) return res.status(404).json({ message: "Archivo no encontrado" })
