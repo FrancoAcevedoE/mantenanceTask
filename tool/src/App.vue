@@ -163,7 +163,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       </div>
 
       <!-- ── PRODUCCIÓN ── -->
-      <div v-if="canProduccion" class="mod-group">
+      <div v-if="false" class="mod-group">
         <button class="mod-header" @click="openProduccion = !openProduccion">
           <i class="bi bi-gear-wide-connected"></i>
           <span>Producción</span>
