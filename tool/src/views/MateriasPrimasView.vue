@@ -5,7 +5,15 @@
       <!-- ── Encabezado ── -->
       <div class="mp-header">
         <h2 class="mp-title"><i class="bi bi-boxes"></i> Stock de Materias Primas</h2>
-        <button class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> Nueva</button>
+        <div class="mp-header-actions">
+          <button class="btn-ghost btn-sm-icon" @click="printStock" title="Imprimir / PDF">
+            <i class="bi bi-printer"></i><span class="btn-label"> Imprimir</span>
+          </button>
+          <button class="btn-ghost btn-sm-icon" @click="exportExcel" title="Exportar Excel">
+            <i class="bi bi-file-earmark-spreadsheet"></i><span class="btn-label"> Excel</span>
+          </button>
+          <button v-if="canManageCompras" class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> Nueva</button>
+        </div>
       </div>
 
       <!-- ── Layout principal: lista + dashboard ── -->
@@ -28,15 +36,21 @@
             <div
               v-for="mp in filtered"
               :key="mp._id"
-              :class="['mp-row', mp.stock <= mp.stockMinimo ? 'mp-row--low' : '']"
+              :class="['mp-row', stockStatus(mp)]"
             >
               <div class="mp-row-info">
                 <span class="mp-row-name">{{ mp.nombre }}</span>
                 <span v-if="mp.categoria" class="mp-row-cat">{{ mp.categoria }}</span>
               </div>
               <div class="mp-row-stats">
-                <span :class="['mp-row-stock', mp.stock <= mp.stockMinimo ? 'mp-low' : '']">
+                <span :class="['mp-row-stock', mp.stock <= mp.stockMinimo ? 'mp-low' : mp.stock <= mp.stockMinimo * 1.2 && mp.stockMinimo > 0 ? 'mp-warn' : '']">
                   {{ mp.stock }} <em>{{ mp.unidad }}</em>
+                </span>
+                <span v-if="mp.stock <= mp.stockMinimo && mp.stockMinimo > 0" class="mp-badge mp-badge--low" title="Stock bajo mínimo">
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                </span>
+                <span v-else-if="mp.stock <= mp.stockMinimo * 1.2 && mp.stockMinimo > 0" class="mp-badge mp-badge--warn" title="Stock cercano al mínimo">
+                  <i class="bi bi-exclamation-circle-fill"></i>
                 </span>
                 <span class="mp-row-price">${{ formatNum(mp.precio) }}</span>
               </div>
@@ -50,10 +64,10 @@
                 <button class="btn-sm btn-historial" @click="openHistorial(mp)" title="Historial">
                   <i class="bi bi-clock-history"></i>
                 </button>
-                <button class="btn-sm btn-edit" @click="openEdit(mp)" title="Editar">
+                <button v-if="canManageCompras" class="btn-sm btn-edit" @click="openEdit(mp)" title="Editar">
                   <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn-sm btn-del" @click="confirmDelete(mp)" title="Eliminar">
+                <button v-if="canManageCompras" class="btn-sm btn-del" @click="confirmDelete(mp)" title="Eliminar">
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
@@ -99,6 +113,40 @@
         </div>
 
       </div>
+    <!-- ── Tabla solo para impresión ── -->
+    <div class="mp-print-only">
+      <div class="mp-print-header">
+        <h2>Stock de Materias Primas</h2>
+        <p>Exportado el {{ printDate }}</p>
+      </div>
+      <table class="mp-print-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Código</th>
+            <th>Categoría</th>
+            <th>Unidad</th>
+            <th>Stock actual</th>
+            <th>Stock mínimo</th>
+            <th>Precio unit.</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="mp in items" :key="mp._id" :class="mp.stock <= mp.stockMinimo && mp.stockMinimo > 0 ? 'print-row-low' : mp.stock <= mp.stockMinimo * 1.2 && mp.stockMinimo > 0 ? 'print-row-warn' : ''">
+            <td>{{ mp.nombre }}</td>
+            <td>{{ mp.codigo || '—' }}</td>
+            <td>{{ mp.categoria || '—' }}</td>
+            <td>{{ mp.unidad }}</td>
+            <td>{{ mp.stock }}</td>
+            <td>{{ mp.stockMinimo }}</td>
+            <td>${{ formatNum(mp.precio) }}</td>
+            <td>{{ mp.stock <= mp.stockMinimo && mp.stockMinimo > 0 ? '⚠ Bajo mínimo' : mp.stock <= mp.stockMinimo * 1.2 && mp.stockMinimo > 0 ? '↓ Cercano' : 'OK' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     </div><!-- /mp-card-wrap -->
 
     <!-- Modal crear/editar -->
@@ -223,11 +271,14 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import { usePermissions } from '@/utils/permissions'
 import {
   Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend
 } from 'chart.js'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
+
+const { canManageCompras, isCompras } = usePermissions()
 
 const authCfg = (extra = {}) => ({ headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }, ...extra })
 const api = {
@@ -464,6 +515,11 @@ function openMovimiento(mp, tipo) {
 
 async function saveMovimiento() {
   if (!movForm.value.cantidad || movForm.value.cantidad <= 0) return
+  // Confirmación extra para el rol compras al descontar stock
+  if (isCompras.value && movTipo.value === 'salida') {
+    const ok = confirm(`¿Confirmar descuento de ${movForm.value.cantidad} ${movItem.value?.unidad} de "${movItem.value?.nombre}"?\n\nEsta acción no se puede revertir.`)
+    if (!ok) return
+  }
   savingMov.value = true
   try {
     await api.post(`/materias-primas/${movItem.value._id}/movimiento`, {
@@ -503,6 +559,56 @@ function formatNum(n) {
 function formatDate(d) {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function stockStatus(mp) {
+  if (!mp.stockMinimo || mp.stockMinimo <= 0) return ''
+  if (mp.stock <= mp.stockMinimo) return 'mp-row--low'
+  if (mp.stock <= mp.stockMinimo * 1.2) return 'mp-row--warn'
+  return ''
+}
+
+const printDate = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+
+function printStock() {
+  window.print()
+}
+
+function exportExcel() {
+  const rows = items.value.map(mp => {
+    let estado = 'OK'
+    if (mp.stockMinimo > 0) {
+      if (mp.stock <= mp.stockMinimo) estado = 'Bajo mínimo'
+      else if (mp.stock <= mp.stockMinimo * 1.2) estado = 'Cercano al mínimo'
+    }
+    return {
+      Nombre: mp.nombre,
+      Código: mp.codigo || '',
+      Categoría: mp.categoria || '',
+      Unidad: mp.unidad,
+      'Stock actual': mp.stock,
+      'Stock mínimo': mp.stockMinimo,
+      'Precio unitario': mp.precio,
+      Estado: estado
+    }
+  })
+
+  const headers = Object.keys(rows[0])
+  const lines = [
+    headers.join(';'),
+    ...rows.map(r => headers.map(h => `"${String(r[h]).replace(/"/g, '""')}"`).join(';'))
+  ]
+  // BOM UTF-8 para que Excel lo abra correctamente
+  const csv = '﻿' + lines.join('\r\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `stock-materias-primas-${new Date().toISOString().slice(0, 10)}.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 onMounted(load)
@@ -719,6 +825,26 @@ onUnmounted(() => { chartCompras?.destroy(); chartConsumo?.destroy() })
 .badge-green { background: #d1fae5; color: #065f46; }
 .badge-red   { background: #fee2e2; color: #991b1b; }
 
+/* ── Header acciones ─────────────────────────────────────────────────────── */
+.mp-header-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.btn-sm-icon {
+  display: flex; align-items: center; gap: .25rem;
+  padding: .4rem .75rem; font-size: .82rem;
+}
+.btn-sm-icon i { font-size: .9rem; }
+
+/* ── Badges de stock ─────────────────────────────────────────────────────── */
+.mp-warn { color: #f97316 !important; }
+.mp-badge {
+  font-size: .7rem; line-height: 1; flex-shrink: 0;
+}
+.mp-badge--low { color: #ef4444; }
+.mp-badge--warn { color: #f97316; }
+.mp-row--warn { background: #fff7ed; border-left: 3px solid #f97316; }
+
+/* ── Tabla de impresión (oculta en pantalla) ─────────────────────────────── */
+.mp-print-only { display: none; }
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .mp-main { grid-template-columns: 1fr; }
@@ -729,13 +855,35 @@ onUnmounted(() => { chartCompras?.destroy(); chartConsumo?.destroy() })
   .mp-card-wrap { border-radius: 14px; padding: 1rem .875rem; }
   .mp-title { font-size: 1rem; }
   .form-grid { grid-template-columns: 1fr; }
-  /* En mobile ocultar precio para que entren los botones */
   .mp-row-price { display: none; }
-  /* KPIs en fila única */
   .dash-kpis { grid-template-columns: repeat(3, 1fr); gap: .35rem; }
   .kpi-val { font-size: 1.2rem; }
-  /* Historial: scroll horizontal */
   .modal-lg { max-width: 100%; border-radius: 12px 12px 0 0; }
   .hist-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .btn-label { display: none; }
+}
+
+/* ── @media print ────────────────────────────────────────────────────────── */
+@media print {
+  .mp-page { padding: 0; background: white; min-height: unset; }
+  .mp-card-wrap { box-shadow: none; border-radius: 0; padding: 0; background: white; }
+  .mp-header-actions, .mp-filters, .mp-main, .modal-overlay { display: none !important; }
+  .mp-print-only { display: block !important; }
+
+  .mp-print-header { margin-bottom: 1rem; }
+  .mp-print-header h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+  .mp-print-header p { margin: .2rem 0 0; font-size: .8rem; color: #555; }
+
+  .mp-print-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  .mp-print-table th {
+    background: #f3f4f6; padding: .4rem .5rem; text-align: left;
+    font-weight: 600; border: 1px solid #d1d5db;
+  }
+  .mp-print-table td { padding: .35rem .5rem; border: 1px solid #e5e7eb; }
+  .mp-print-table .print-row-low { background: #fee2e2; }
+  .mp-print-table .print-row-warn { background: #fff7ed; }
+
+  body { background: white !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>

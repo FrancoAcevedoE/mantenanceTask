@@ -96,10 +96,10 @@ const router = createRouter({
       path: '/crm', name: 'CRM', component: CrmView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'], bodyClass: 'bg-maintenance' }
     },
     {
-      path: '/compras/materias-primas', name: 'MateriasPrimas', component: MateriasPrimasView, meta: { requiresAuth: true, roles: ['admin', 'compras'], bodyClass: 'bg-maintenance' }
+      path: '/compras/materias-primas', name: 'MateriasPrimas', component: MateriasPrimasView, meta: { requiresAuth: true, roles: ['admin', 'admin_compras', 'compras'], bodyClass: 'bg-maintenance' }
     },
     {
-      path: '/compras/proveedores', name: 'Proveedores', component: ProveedoresView, meta: { requiresAuth: true, roles: ['admin', 'compras'], bodyClass: 'bg-maintenance' }
+      path: '/compras/proveedores', name: 'Proveedores', component: ProveedoresView, meta: { requiresAuth: true, roles: ['admin', 'admin_compras', 'compras'], bodyClass: 'bg-maintenance' }
     },
     {
       path: '/produccion/resinas', name: 'ProduccionResinas', component: ResinaPlantaView, meta: { requiresAuth: true, roles: ['admin', 'produccion'], bodyClass: 'bg-maintenance' }

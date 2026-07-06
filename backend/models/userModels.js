@@ -16,7 +16,7 @@ default:""
 
 role:{
 type:String,
-enum:["admin","admin_ventas","operario","supervisor","vendedor","compras","produccion"],
+enum:["admin","admin_ventas","operario","supervisor","vendedor","compras","admin_compras","produccion"],
 default:"operario"
 },
 

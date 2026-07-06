@@ -1,10 +1,14 @@
 import express from 'express'
 import Proveedor from '../models/proveedorModel.js'
 import { verifyToken } from '../middlewares/authMiddleware.js'
+import { checkRole } from '../middlewares/roleMiddleware.js'
+
+const CAN_MANAGE_COMPRAS = ['admin', 'admin_compras']
+const CAN_USE_COMPRAS    = ['admin', 'admin_compras', 'compras']
 
 const router = express.Router()
 
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', verifyToken, checkRole(...CAN_USE_COMPRAS), async (req, res) => {
   try {
     const items = await Proveedor.find({ activo: true }).sort({ nombre: 1 })
     res.json(items)
@@ -13,7 +17,7 @@ router.get('/', verifyToken, async (req, res) => {
   }
 })
 
-router.get('/:id', verifyToken, async (req, res) => {
+router.get('/:id', verifyToken, checkRole(...CAN_USE_COMPRAS), async (req, res) => {
   try {
     const item = await Proveedor.findById(req.params.id)
     if (!item) return res.status(404).json({ error: 'No encontrado' })
@@ -23,7 +27,7 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 })
 
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', verifyToken, checkRole(...CAN_MANAGE_COMPRAS), async (req, res) => {
   try {
     const item = new Proveedor(req.body)
     await item.save()
@@ -33,7 +37,7 @@ router.post('/', verifyToken, async (req, res) => {
   }
 })
 
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', verifyToken, checkRole(...CAN_MANAGE_COMPRAS), async (req, res) => {
   try {
     const { evaluaciones, ...data } = req.body
     const item = await Proveedor.findByIdAndUpdate(req.params.id, data, { new: true })
@@ -44,7 +48,7 @@ router.put('/:id', verifyToken, async (req, res) => {
   }
 })
 
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', verifyToken, checkRole(...CAN_MANAGE_COMPRAS), async (req, res) => {
   try {
     await Proveedor.findByIdAndUpdate(req.params.id, { activo: false })
     res.json({ ok: true })
@@ -54,7 +58,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
 })
 
 // POST /api/proveedores/:id/evaluacion
-router.post('/:id/evaluacion', verifyToken, async (req, res) => {
+router.post('/:id/evaluacion', verifyToken, checkRole(...CAN_USE_COMPRAS), async (req, res) => {
   try {
     const item = await Proveedor.findById(req.params.id)
     if (!item) return res.status(404).json({ error: 'No encontrado' })
@@ -67,7 +71,7 @@ router.post('/:id/evaluacion', verifyToken, async (req, res) => {
 })
 
 // DELETE /api/proveedores/:id/evaluacion/:evId
-router.delete('/:id/evaluacion/:evId', verifyToken, async (req, res) => {
+router.delete('/:id/evaluacion/:evId', verifyToken, checkRole(...CAN_USE_COMPRAS), async (req, res) => {
   try {
     const item = await Proveedor.findById(req.params.id)
     if (!item) return res.status(404).json({ error: 'No encontrado' })

@@ -3,7 +3,7 @@
     <div class="prov-card-wrap">
     <div class="prov-header">
       <h2 class="prov-title"><i class="bi bi-truck"></i> Proveedores</h2>
-      <button class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> Nuevo proveedor</button>
+      <button v-if="canManageCompras" class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> Nuevo proveedor</button>
     </div>
 
     <div class="prov-filters">
@@ -42,8 +42,8 @@
           <button class="btn-sm btn-hist" @click="openEvalHist(p)">
             <i class="bi bi-list-stars"></i> Evaluaciones ({{ p.evaluaciones?.length || 0 }})
           </button>
-          <button class="btn-sm btn-edit" @click="openEdit(p)"><i class="bi bi-pencil"></i></button>
-          <button class="btn-sm btn-del" @click="confirmDelete(p)"><i class="bi bi-trash"></i></button>
+          <button v-if="canManageCompras" class="btn-sm btn-edit" @click="openEdit(p)"><i class="bi bi-pencil"></i></button>
+          <button v-if="canManageCompras" class="btn-sm btn-del" @click="confirmDelete(p)"><i class="bi bi-trash"></i></button>
         </div>
       </div>
     </div>
@@ -156,6 +156,9 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import { usePermissions } from '@/utils/permissions'
+
+const { canManageCompras } = usePermissions()
 
 const authCfg = () => ({ headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } })
 const api = {

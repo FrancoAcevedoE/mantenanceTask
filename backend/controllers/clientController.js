@@ -30,7 +30,8 @@ export const createClient = async (req, res) => {
       observaciones: observaciones || '',
       estado: estado || 'activo',
       pipelineEstado: pipelineEstado || 'nuevo_lead',
-      tipoCliente: req.body.tipoCliente || 'potencial',
+      // vendedor solo puede crear como potencial
+      tipoCliente: req.user?.role === 'vendedor' ? 'potencial' : (req.body.tipoCliente || 'potencial'),
       lugar: (lugar || '').trim(),
       latitud: latitud != null ? Number(latitud) : null,
       longitud: longitud != null ? Number(longitud) : null,
@@ -116,7 +117,10 @@ export const updateClient = async (req, res) => {
     if (lugar !== undefined) update.lugar = lugar.trim()
     if (latitud !== undefined) update.latitud = latitud != null ? Number(latitud) : null
     if (longitud !== undefined) update.longitud = longitud != null ? Number(longitud) : null
-    if (req.body.tipoCliente !== undefined) update.tipoCliente = req.body.tipoCliente
+    // vendedor no puede cambiar tipoCliente una vez creado el cliente
+    if (req.body.tipoCliente !== undefined && req.user?.role !== 'vendedor') {
+      update.tipoCliente = req.body.tipoCliente
+    }
 
     const client = await Client.findByIdAndUpdate(
       req.params.id,
