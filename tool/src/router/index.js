@@ -17,6 +17,11 @@ import ProductLogView from '@/views/ProductLogView.vue'
 import ProductGroupView from '@/views/ProductGroupView.vue'
 import ColorCatalogView from '@/views/ColorCatalogView.vue'
 import CrmView from '@/views/CrmView.vue'
+import MateriasPrimasView from '@/views/MateriasPrimasView.vue'
+import ProveedoresView from '@/views/ProveedoresView.vue'
+import ResinaPlantaView from '@/views/ResinaPlantaView.vue'
+import ProduccionProgramacionView from '@/views/ProduccionProgramacionView.vue'
+import ProduccionSeguimientoView from '@/views/ProduccionSeguimientoView.vue'
 
 const getStoredUser = () => {
   try {
@@ -89,6 +94,21 @@ const router = createRouter({
     },
     {
       path: '/crm', name: 'CRM', component: CrmView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'], bodyClass: 'bg-maintenance' }
+    },
+    {
+      path: '/compras/materias-primas', name: 'MateriasPrimas', component: MateriasPrimasView, meta: { requiresAuth: true, roles: ['admin', 'compras'], bodyClass: 'bg-maintenance' }
+    },
+    {
+      path: '/compras/proveedores', name: 'Proveedores', component: ProveedoresView, meta: { requiresAuth: true, roles: ['admin', 'compras'], bodyClass: 'bg-maintenance' }
+    },
+    {
+      path: '/produccion/resinas', name: 'ProduccionResinas', component: ResinaPlantaView, meta: { requiresAuth: true, roles: ['admin', 'produccion'], bodyClass: 'bg-maintenance' }
+    },
+    {
+      path: '/produccion/programacion', name: 'ProduccionProgramacion', component: ProduccionProgramacionView, meta: { requiresAuth: true, roles: ['admin', 'produccion'], bodyClass: 'bg-maintenance' }
+    },
+    {
+      path: '/produccion/seguimiento', name: 'ProduccionSeguimiento', component: ProduccionSeguimientoView, meta: { requiresAuth: true, roles: ['admin', 'produccion'], bodyClass: 'bg-maintenance' }
     }
 
   ]
