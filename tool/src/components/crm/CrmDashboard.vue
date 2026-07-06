@@ -25,6 +25,16 @@
         </button>
       </div>
 
+      <!-- Botones export solo en modo vendedor -->
+      <template v-if="viewMode === 'sellers' && sellers.length">
+        <button class="sellers-export-btn" @click="exportSellersCSV" title="Exportar Excel">
+          <i class="bi bi-file-earmark-spreadsheet"></i> Excel
+        </button>
+        <button class="sellers-export-btn sellers-export-btn--pdf" @click="printSellers" title="Exportar PDF">
+          <i class="bi bi-file-earmark-pdf"></i> PDF
+        </button>
+      </template>
+
       <button class="dash-report-btn" @click="showReport = true">
         <i class="bi bi-file-earmark-bar-graph-fill"></i> Reportes
       </button>
@@ -183,41 +193,134 @@ function sellerClients(sellerId) {
   return crmStore.visibleClients.filter(c => c.assignedToId === sellerId || c.createdBy === sellers.value.find(s => String(s._id) === sellerId)?.name)
 }
 
+async function loadSellerStats(id) {
+  if (sellerStats.value[id]) return
+  const { data } = await axios.get(`${API_BASE_URL}/dashboard/stats?year=${selYear.value}&month=${selMonth.value}&sellerId=${id}`, authH())
+  sellerStats.value = { ...sellerStats.value, [id]: data }
+}
+
+async function loadSellerHistory(id) {
+  if (sellerHistory.value[id]) return
+  const { data } = await axios.get(`${API_BASE_URL}/dashboard/history?months=12&sellerId=${id}`, authH())
+  sellerHistory.value = { ...sellerHistory.value, [id]: data }
+}
+
 async function onSellerMode() {
   viewMode.value = 'sellers'
   if (!sellers.value.length) {
-    const { data } = await axios.get(`${API_BASE_URL}/dashboard/sellers`, authH())
-    sellers.value = data
+    loading.value = true
+    try {
+      const { data } = await axios.get(`${API_BASE_URL}/dashboard/sellers`, authH())
+      sellers.value = data
+      // Precarga todos los stats en paralelo — no esperar a que el usuario expanda
+      await Promise.all(sellers.value.map(s => loadSellerStats(s._id)))
+    } finally {
+      loading.value = false
+    }
   }
 }
 
 async function toggleSeller(id) {
   if (expandedSeller.value === id) { expandedSeller.value = null; return }
   expandedSeller.value = id
-  if (!sellerStats.value[id]) await loadSellerData(id)
-}
-
-async function loadSellerData(id) {
-  const [sRes, hRes] = await Promise.all([
-    axios.get(`${API_BASE_URL}/dashboard/stats?year=${selYear.value}&month=${selMonth.value}&sellerId=${id}`, authH()),
-    axios.get(`${API_BASE_URL}/dashboard/history?months=12&sellerId=${id}`, authH()),
-  ])
-  sellerStats.value   = { ...sellerStats.value,   [id]: sRes.data }
-  sellerHistory.value = { ...sellerHistory.value, [id]: hRes.data }
+  // Solo carga el historial al expandir (no se precarga para no sobrecargar)
+  if (!sellerHistory.value[id]) await loadSellerHistory(id)
 }
 
 async function selectHistoryMonthSeller(id, { year, month }) {
   selYear.value = year; selMonth.value = month
   delete sellerStats.value[id]
-  await loadSellerData(id)
+  delete sellerHistory.value[id]
+  await Promise.all([loadSellerStats(id), loadSellerHistory(id)])
 }
 
 watch([selYear, selMonth], async () => {
-  if (viewMode.value === 'sellers' && expandedSeller.value) {
-    delete sellerStats.value[expandedSeller.value]
-    await loadSellerData(expandedSeller.value)
+  if (viewMode.value === 'sellers' && sellers.value.length) {
+    loading.value = true
+    sellerStats.value  = {}
+    sellerHistory.value = {}
+    try {
+      await Promise.all(sellers.value.map(s => loadSellerStats(s._id)))
+      if (expandedSeller.value) await loadSellerHistory(expandedSeller.value)
+    } finally {
+      loading.value = false
+    }
   }
 })
+
+// ── Export vendedores ──
+function exportSellersCSV() {
+  const rows = [
+    ['Vendedor', 'Nuevos clientes', 'Cotiz. total', 'Pendientes', 'Aprobadas', 'Rechazadas', 'Total cotizado', 'Total vendido'],
+  ]
+  for (const s of sellers.value) {
+    const st = sellerStats.value[s._id]
+    const q  = st?.quotes || {}
+    rows.push([
+      s.name,
+      st?.newClients ?? 0,
+      q.total    ?? 0,
+      q.pending  ?? 0,
+      q.approved ?? 0,
+      q.rejected ?? 0,
+      q.totalAmount ?? 0,
+      q.soldAmount  ?? 0,
+    ])
+  }
+  const csv  = '﻿' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url
+  a.download = `vendedores-${monthLabel.value.replace(' ', '-')}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function printSellers() {
+  const colStyle = 'border:1px solid #ddd;padding:6px 10px;text-align:right;'
+  const colLeft  = 'border:1px solid #ddd;padding:6px 10px;text-align:left;'
+  const rows = sellers.value.map(s => {
+    const st = sellerStats.value[s._id]
+    const q  = st?.quotes || {}
+    return `<tr>
+      <td style="${colLeft}">${s.name}</td>
+      <td style="${colStyle}">${st?.newClients ?? '—'}</td>
+      <td style="${colStyle}">${q.total    ?? '—'}</td>
+      <td style="${colStyle}">${q.pending  ?? '—'}</td>
+      <td style="${colStyle}">${q.approved ?? '—'}</td>
+      <td style="${colStyle}">${q.rejected ?? '—'}</td>
+      <td style="${colStyle}">${fmt(q.totalAmount  || 0)}</td>
+      <td style="${colStyle}">${fmt(q.soldAmount   || 0)}</td>
+    </tr>`
+  }).join('')
+  const thStyle = 'background:#6b8e3a;color:#fff;border:1px solid #5a7a30;padding:7px 10px;'
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>Vendedores ${monthLabel.value}</title>
+    <style>body{font-family:Arial,sans-serif;font-size:12px;margin:24px}h2{color:#2d5220;margin-bottom:4px}p{color:#888;margin:0 0 14px;font-size:11px}table{border-collapse:collapse;width:100%}tr:nth-child(even){background:#f8f8f8}</style>
+  </head><body>
+    <h2>Resumen por vendedor</h2>
+    <p>${monthLabel.value} · Generado ${new Date().toLocaleDateString('es-AR')}</p>
+    <table>
+      <thead><tr>
+        <th style="${thStyle}text-align:left">Vendedor</th>
+        <th style="${thStyle}">Nuevos clientes</th>
+        <th style="${thStyle}">Cotiz. total</th>
+        <th style="${thStyle}">Pendientes</th>
+        <th style="${thStyle}">Aprobadas</th>
+        <th style="${thStyle}">Rechazadas</th>
+        <th style="${thStyle}">Total cotizado</th>
+        <th style="${thStyle}">Total vendido</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </body></html>`
+  const win = window.open('', '_blank')
+  win.document.write(html)
+  win.document.close()
+  win.focus()
+  win.print()
+}
 
 // ── Helpers visuales ──
 const fmt = (n) => new Intl.NumberFormat('es-AR', { style:'currency', currency:'ARS', maximumFractionDigits:0 }).format(n)
@@ -432,6 +535,27 @@ const HistoryPanel = defineComponent({
   letter-spacing: 0.04em;
 }
 .vt-btn.active { background: #fff; color: var(--color-primary); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+.sellers-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 9px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1.5px solid rgba(34,197,94,.35);
+  background: rgba(34,197,94,.08);
+  color: #16a34a;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sellers-export-btn:hover { background: rgba(34,197,94,.16); border-color: rgba(34,197,94,.55); }
+.sellers-export-btn--pdf  { border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.07); color: #dc2626; }
+.sellers-export-btn--pdf:hover { background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.55); }
 
 .dash-report-btn {
   margin-left: auto;
