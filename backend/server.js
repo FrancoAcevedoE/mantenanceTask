@@ -73,6 +73,9 @@ const ensureDefaultAdmin = async () => {
 
 const app = express()
 
+// Render (y cualquier reverse proxy) añade X-Forwarded-For; sin esto express-rate-limit falla
+app.set('trust proxy', 1)
+
 const allowedOriginsFromEnv = String(process.env.CORS_ORIGINS || "")
   .split(",")
   .map(origin => origin.trim())
