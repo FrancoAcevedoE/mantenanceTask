@@ -1,5 +1,6 @@
 import User from "../models/userModels.js"
 import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt"
 import {
     getPushPublicConfig,
     removeUserPushSubscription,
@@ -7,72 +8,62 @@ import {
 } from "../services/pushService.js"
 import AuditLog from "../models/auditLogModel.js"
 import { buildAuditCsv, registerAuditEvent } from "../services/auditService.js"
+import { JWT_SECRET } from "../middlewares/authMiddleware.js"
 
-const JWT_SECRET = process.env.JWT_SECRET || "secretkey"
+const BCRYPT_ROUNDS = 10
+
+async function verifyAndMigratePassword(stored, candidate) {
+    // Contraseña ya hasheada con bcrypt
+    if (String(stored).startsWith("$2")) {
+        return bcrypt.compare(candidate, stored)
+    }
+    // Contraseña legacy (número en texto o número) — comparar y migrar en caliente
+    if (String(stored) === String(candidate)) {
+        return true
+    }
+    return false
+}
 
 export const login = async (req, res) => {
-
     try {
-
         const dniRaw = String(req.body.dni ?? "").trim()
         const passwordRaw = String(req.body.password ?? "").trim()
 
         if (!/^\d{8}$/.test(dniRaw)) {
-            return res.status(400).json({
-                message: "El usuario debe ser un DNI de 8 digitos numericos"
-            })
+            return res.status(400).json({ message: "El usuario debe ser un DNI de 8 digitos numericos" })
         }
 
         if (!/^\d{4}$/.test(passwordRaw)) {
-            return res.status(400).json({
-                message: "La contrasena debe tener 4 digitos numericos"
-            })
+            return res.status(400).json({ message: "La contrasena debe tener 4 digitos numericos" })
         }
 
-        const dniNumber = Number(dniRaw)
-        const passwordNumber = Number(passwordRaw)
+        const user = await User.findOne({ dni: Number(dniRaw), isDeleted: { $ne: true } })
 
-        const user = await User.findOne({
-            dni: dniNumber,
-            password: passwordNumber,
-            isDeleted: { $ne: true }
-        })
+        const valid = user ? await verifyAndMigratePassword(user.password, passwordRaw) : false
 
-        if (!user) {
-            return res.status(401).json({
-                message: "Credenciales invalidas"
-            })
+        if (!user || !valid) {
+            return res.status(401).json({ message: "Credenciales invalidas" })
+        }
+
+        // Migración transparente: si la contraseña no está hasheada, hashearla ahora
+        if (!String(user.password).startsWith("$2")) {
+            user.password = await bcrypt.hash(passwordRaw, BCRYPT_ROUNDS)
+            await user.save()
         }
 
         const token = jwt.sign(
-            {
-                id: user._id,
-                name: user.name,
-                role: user.role
-            },
+            { id: user._id, name: user.name, role: user.role },
             JWT_SECRET,
             { expiresIn: "4h" }
         )
 
         res.json({
             token,
-            user: {
-                id: user._id,
-                name: user.name,
-                dni: user.dni,
-                role: user.role
-            }
+            user: { id: user._id, name: user.name, dni: user.dni, role: user.role }
         })
     } catch (error) {
-        console.error("[login] Error:", {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
-        })
-        res.status(500).json({
-            message: "Error al iniciar sesion",
-            detail: error.message
-        })
+        console.error("[login] Error:", error.message)
+        res.status(500).json({ message: "Error al iniciar sesion" })
     }
 }
 
@@ -180,7 +171,7 @@ export const createUser = async (req, res) => {
         }
 
         const dni = Number(dniRaw)
-        const password = Number(passwordRaw)
+        const hashedPassword = await bcrypt.hash(passwordRaw, BCRYPT_ROUNDS)
 
         const existingUser = await User.findOne({ dni })
 
@@ -195,7 +186,7 @@ export const createUser = async (req, res) => {
         const user = await User.create({
             name,
             dni,
-            password,
+            password: hashedPassword,
             role: role || "operario",
             photo
         })
@@ -251,7 +242,7 @@ export const updateUser = async (req, res) => {
         }
 
         if (role !== undefined) {
-            const validRoles = ["admin", "admin_ventas", "operario", "supervisor", "vendedor"]
+            const validRoles = ["admin", "admin_ventas", "operario", "supervisor", "vendedor", "compras", "produccion"]
             if (!validRoles.includes(role)) {
                 return res.status(400).json({ message: "Rol invalido" })
             }
@@ -287,7 +278,7 @@ export const updateUser = async (req, res) => {
                     message: "La contrasena debe tener exactamente 4 digitos numericos"
                 })
             }
-            updateData.password = Number(passwordRaw)
+            updateData.password = await bcrypt.hash(passwordRaw, BCRYPT_ROUNDS)
         }
 
         if (req.body.photo !== undefined) {

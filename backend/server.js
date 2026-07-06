@@ -2,6 +2,8 @@ import express from "express"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 import cors from "cors"
+import helmet from "helmet"
+import rateLimit from "express-rate-limit"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 // esto levanta el servidor e importa las todas las rutas
@@ -104,6 +106,9 @@ const corsOptions = {
   optionsSuccessStatus: 204
 }
 
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}))
 app.use(cors(corsOptions))
 app.options(/.*/, cors(corsOptions))
 
@@ -111,7 +116,16 @@ app.use((req, res, next) => {
   res.header("X-CORS-Version", "v5-cors-middleware")
   next()
 })
-app.use(express.json())
+app.use(express.json({ limit: "3mb" }))
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Demasiados intentos. Intentá de nuevo en 15 minutos." }
+})
+app.use("/api/users/login", loginLimiter)
 // conexion con mongoose
 
 const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/mantenanceDB"

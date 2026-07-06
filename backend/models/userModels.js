@@ -9,11 +9,14 @@ type:Number,
 unique:true
 },
 
-password:Number,
+password:{
+type:String,
+default:""
+},
 
 role:{
 type:String,
-enum:["admin","admin_ventas","operario","supervisor","vendedor"],
+enum:["admin","admin_ventas","operario","supervisor","vendedor","compras","produccion"],
 default:"operario"
 },
 
