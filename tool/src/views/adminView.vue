@@ -1,187 +1,158 @@
 <template>
   <div class="page-container">
-    <div :class="['admin-layout', { 'single-column': !showCreateForm }]">
-      <div v-if="showCreateForm" class="panel-card admin-form">
-        <h2 class="title">Panel de Admin</h2>
+    <div class="admin-outer">
 
-        <!-- Foto de perfil -->
-        <div class="photo-picker-wrap">
-          <div class="photo-preview" @click="triggerPhotoInput" :title="user.photo ? 'Cambiar foto' : 'Agregar foto'">
-            <img v-if="user.photo" :src="user.photo" class="photo-img" alt="foto" />
-            <div v-else class="photo-placeholder">
-              <i class="bi bi-person-fill"></i>
+      <!-- Columna izquierda: formulario (condicional) + lista de usuarios -->
+      <div class="admin-left">
+        <div v-if="showCreateForm" class="panel-card admin-form">
+          <h2 class="title">Panel de Admin</h2>
+
+          <!-- Foto de perfil -->
+          <div class="photo-picker-wrap">
+            <div class="photo-preview" @click="triggerPhotoInput" :title="user.photo ? 'Cambiar foto' : 'Agregar foto'">
+              <img v-if="user.photo" :src="user.photo" class="photo-img" alt="foto" />
+              <div v-else class="photo-placeholder">
+                <i class="bi bi-person-fill"></i>
+              </div>
+              <div class="photo-overlay"><i class="bi bi-camera-fill"></i></div>
             </div>
-            <div class="photo-overlay"><i class="bi bi-camera-fill"></i></div>
+            <div class="photo-actions">
+              <button type="button" class="photo-btn" @click="triggerPhotoInput">
+                <i class="bi bi-upload"></i> Subir foto
+              </button>
+              <button type="button" class="photo-btn photo-btn--camera" @click="triggerCamera">
+                <i class="bi bi-camera-fill"></i> Tomar foto
+              </button>
+              <button v-if="user.photo" type="button" class="photo-btn photo-btn--remove" @click="user.photo = ''">
+                <i class="bi bi-trash-fill"></i> Quitar
+              </button>
+            </div>
+            <input ref="photoInputRef" type="file" accept="image/*" class="photo-input-hidden" @change="onPhotoFile" />
+            <input ref="cameraInputRef" type="file" accept="image/*" capture="user" class="photo-input-hidden" @change="onPhotoFile" />
           </div>
-          <div class="photo-actions">
-            <button type="button" class="photo-btn" @click="triggerPhotoInput">
-              <i class="bi bi-upload"></i> Subir foto
-            </button>
-            <button type="button" class="photo-btn photo-btn--camera" @click="triggerCamera">
-              <i class="bi bi-camera-fill"></i> Tomar foto
-            </button>
-            <button v-if="user.photo" type="button" class="photo-btn photo-btn--remove" @click="user.photo = ''">
-              <i class="bi bi-trash-fill"></i> Quitar
-            </button>
+
+          <input type="text" id="name" v-model="user.name" placeholder="Nombre"/>
+          <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" placeholder="Documento"/>
+
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" placeholder="Contraseña"/>
+
+          <label for="role">Rol</label>
+          <select id="role" v-model="user.role" :disabled="currentUserRole === 'admin_ventas'">
+            <option v-if="currentUserRole !== 'admin_ventas'" value="operario">Operario</option>
+            <option v-if="currentUserRole !== 'admin_ventas'" value="supervisor">Supervisor</option>
+            <option value="vendedor">Vendedor</option>
+            <option v-if="currentUserRole !== 'admin_ventas'" value="admin_ventas">Admin de ventas</option>
+            <option v-if="currentUserRole !== 'admin_ventas'" value="admin">Admin</option>
+          </select>
+
+          <p v-if="message" class="message">{{ message }}</p>
+
+          <div class="actions">
+            <button @click="createUser">{{ editingUserId ? 'Guardar cambios' : 'Guardar usuario' }}</button>
+            <button class="secondary-button" @click="resetForm">Limpiar</button>
+            <button class="secondary-button" @click="toggleCreateForm">Cerrar formulario</button>
           </div>
-          <input ref="photoInputRef" type="file" accept="image/*" class="photo-input-hidden" @change="onPhotoFile" />
-          <input ref="cameraInputRef" type="file" accept="image/*" capture="user" class="photo-input-hidden" @change="onPhotoFile" />
         </div>
 
-        <input type="text" id="name" v-model="user.name" placeholder="Nombre"/>
-        <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" placeholder="Documento"/>
+        <div class="panel-card users-panel">
+          <div class="panel-header">
+            <h2 class="title">Usuarios</h2>
+            <button class="toggle-form-button" @click="toggleCreateForm">
+              {{ showCreateForm ? "Ocultar formulario" : "Crear usuario" }}
+            </button>
+          </div>
 
-        <label for="password">Contraseña</label>
-        <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" placeholder="Contraseña"/>
+          <p v-if="!users.length" class="empty-state">
+            No hay usuarios cargados todavía.
+          </p>
 
-        <label for="role">Rol</label>
-        <select id="role" v-model="user.role" :disabled="currentUserRole === 'admin_ventas'">
-          <option v-if="currentUserRole !== 'admin_ventas'" value="operario">Operario</option>
-          <option v-if="currentUserRole !== 'admin_ventas'" value="supervisor">Supervisor</option>
-          <option value="vendedor">Vendedor</option>
-          <option v-if="currentUserRole !== 'admin_ventas'" value="admin_ventas">Admin de ventas</option>
-          <option v-if="currentUserRole !== 'admin_ventas'" value="admin">Admin</option>
-        </select>
+          <div v-else class="users-list">
+            <div v-for="createdUser in users" :key="createdUser._id" class="user-item">
+              <div class="user-avatar-sm">
+                <img v-if="createdUser.photo" :src="createdUser.photo" class="user-avatar-img" :alt="createdUser.name" />
+                <span v-else class="user-avatar-initials" :style="{ background: avatarColor(createdUser.name) }">{{ initials(createdUser.name) }}</span>
+              </div>
+              <div class="user-info">
+                <strong>{{ createdUser.name }}</strong>
+                <span class="user-meta">DNI {{ createdUser.dni }} · {{ roleLabel(createdUser.role) }}</span>
+              </div>
+              <div class="user-actions">
+                <button type="button" class="edit-button" @click="editUser(createdUser)" title="Modificar">
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
+                <button type="button" class="danger-button" @click="deleteUser(createdUser._id)" title="Ocultar">
+                  <i class="bi bi-eye-slash-fill"></i>
+                </button>
+              </div>
+            </div>
+          </div>
 
-        <p v-if="message" class="message">{{ message }}</p>
+          <div v-if="deletedUsers.length" class="deleted-zone">
+            <h3>Usuarios ocultos</h3>
+            <p>
+              Estos usuarios no aparecen en formularios ni login. Desde aca podes eliminarlos definitivamente.
+            </p>
+            <div class="users-list">
+              <div v-for="deletedUser in deletedUsers" :key="deletedUser._id" class="user-item deleted-item">
+                <div class="user-info">
+                  <strong>{{ deletedUser.name }}</strong>
+                  <span>Documento: {{ deletedUser.dni }}</span>
+                  <span>Rol: {{ roleLabel(deletedUser.role) }}</span>
+                </div>
+                <button type="button" class="restore-button" @click="restoreUser(deletedUser._id)">
+                  Restaurar
+                </button>
+                <button type="button" class="danger-button hard-delete-button" @click="deleteUserPermanent(deletedUser._id)">
+                  Borrar definitivamente
+                </button>
+              </div>
+            </div>
+          </div>
 
-        <div class="actions">
-          <button @click="createUser">{{ editingUserId ? 'Guardar cambios' : 'Guardar usuario' }}</button>
-          <button class="secondary-button" @click="resetForm">Limpiar</button>
-          <button class="secondary-button" @click="toggleCreateForm">Cerrar formulario</button>
+          <div class="danger-zone">
+            <div class="danger-zone-header">
+              <div>
+                <h3>Zona de riesgo</h3>
+                <p>Elimina todos los registros del historial y las métricas del dashboard.</p>
+              </div>
+              <button type="button" class="danger-zone-button" :disabled="isPurging" @click="purgeMaintenanceData">
+                {{ isPurging ? 'Limpiando...' : 'Limpiar historial' }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="panel-card users-panel">
-        <div class="panel-header">
-          <h2 class="title">Usuarios creados</h2>
-          <button class="toggle-form-button" @click="toggleCreateForm">
-            {{ showCreateForm ? "Ocultar formulario" : "Crear usuario" }}
+      <!-- Columna derecha: panel de logs -->
+      <div class="panel-card logs-panel">
+        <h3 class="logs-title"><i class="bi bi-journal-code"></i> Log de auditoría</h3>
+        <p class="logs-desc">Genera un bloque tipo bloc de notas con toda la auditoría del sistema y exportalo.</p>
+
+        <div class="audit-tools-actions">
+          <button type="button" class="audit-button" :disabled="isLoadingAuditLog" @click="generateAuditNotepad">
+            {{ isLoadingAuditLog ? 'Generando log...' : 'Generar log' }}
+          </button>
+          <button type="button" class="audit-button secondary" :disabled="!auditLogText" @click="downloadAuditTxt">
+            <i class="bi bi-file-earmark-text"></i> Descargar TXT
+          </button>
+          <button type="button" class="audit-button secondary" :disabled="isExportingExcel" @click="exportAuditToExcelCsv">
+            <i class="bi bi-file-earmark-spreadsheet"></i> {{ isExportingExcel ? 'Exportando...' : 'Exportar Excel (.csv)' }}
           </button>
         </div>
 
-        <p v-if="!users.length" class="empty-state">
-          No hay usuarios cargados todavía.
-        </p>
+        <textarea
+          v-model="auditLogText"
+          class="audit-notepad"
+          readonly
+          placeholder="El log se mostrará acá cuando lo generes."
+        ></textarea>
 
-        <div v-else class="users-list">
-          <div v-for="createdUser in users" :key="createdUser._id" class="user-item">
-            <div class="user-avatar-sm">
-              <img v-if="createdUser.photo" :src="createdUser.photo" class="user-avatar-img" :alt="createdUser.name" />
-              <span v-else class="user-avatar-initials" :style="{ background: avatarColor(createdUser.name) }">{{ initials(createdUser.name) }}</span>
-            </div>
-            <div class="user-info">
-              <strong>{{ createdUser.name }}</strong>
-              <span class="user-meta">DNI {{ createdUser.dni }} · {{ roleLabel(createdUser.role) }}</span>
-            </div>
-            <div class="user-actions">
-              <button type="button" class="edit-button" @click="editUser(createdUser)" title="Modificar">
-                <i class="bi bi-pencil-fill"></i>
-              </button>
-              <button type="button" class="danger-button" @click="deleteUser(createdUser._id)" title="Ocultar">
-                <i class="bi bi-eye-slash-fill"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="deletedUsers.length" class="deleted-zone">
-          <h3>Usuarios ocultos</h3>
-          <p>
-            Estos usuarios no aparecen en formularios ni login. Desde aca podes eliminarlos definitivamente.
-          </p>
-
-          <div class="users-list">
-            <div v-for="deletedUser in deletedUsers" :key="deletedUser._id" class="user-item deleted-item">
-              <div class="user-info">
-                <strong>{{ deletedUser.name }}</strong>
-                <span>Documento: {{ deletedUser.dni }}</span>
-                <span>Rol: {{ roleLabel(deletedUser.role) }}</span>
-              </div>
-
-              <button
-                type="button"
-                class="restore-button"
-                @click="restoreUser(deletedUser._id)"
-              >
-                Restaurar
-              </button>
-
-              <button
-                type="button"
-                class="danger-button hard-delete-button"
-                @click="deleteUserPermanent(deletedUser._id)"
-              >
-                Borrar definitivamente
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="danger-zone">
-          <div class="danger-zone-header">
-            <div>
-              <h3>Zona de riesgo</h3>
-              <p>Elimina todos los registros del historial y las métricas del dashboard.</p>
-            </div>
-            <button
-              type="button"
-              class="danger-zone-button"
-              :disabled="isPurging"
-              @click="purgeMaintenanceData"
-            >
-              {{ isPurging ? 'Limpiando...' : 'Limpiar historial' }}
-            </button>
-          </div>
-
-          <div class="audit-tools">
-            <h4>Log descargable</h4>
-            <p>
-              Genera un bloque tipo bloc de notas con toda la auditoria del sistema y exportalo.
-            </p>
-
-            <div class="audit-tools-actions">
-              <button
-                type="button"
-                class="audit-button"
-                :disabled="isLoadingAuditLog"
-                @click="generateAuditNotepad"
-              >
-                {{ isLoadingAuditLog ? 'Generando log...' : 'Generar bloque de notas' }}
-              </button>
-
-              <button
-                type="button"
-                class="audit-button secondary"
-                :disabled="!auditLogText"
-                @click="downloadAuditTxt"
-              >
-                Descargar log TXT
-              </button>
-
-              <button
-                type="button"
-                class="audit-button secondary"
-                :disabled="isExportingExcel"
-                @click="exportAuditToExcelCsv"
-              >
-                {{ isExportingExcel ? 'Exportando...' : 'Transpilar todo a Excel (.csv)' }}
-              </button>
-            </div>
-
-            <textarea
-              v-model="auditLogText"
-              class="audit-notepad"
-              readonly
-              placeholder="El log se mostrara aca cuando lo generes."
-            ></textarea>
-
-            <small v-if="auditLogGeneratedAt" class="audit-meta">
-              Ultima generacion: {{ formatAuditGeneratedAt(auditLogGeneratedAt) }} | Eventos: {{ auditLogCount }}
-            </small>
-          </div>
-        </div>
+        <small v-if="auditLogGeneratedAt" class="audit-meta">
+          Última generación: {{ formatAuditGeneratedAt(auditLogGeneratedAt) }} | Eventos: {{ auditLogCount }}
+        </small>
       </div>
+
     </div>
     <ConfirmDialog
       :visible="confirmDialog.visible"
@@ -609,21 +580,29 @@ document.body.style.backgroundAttachment = 'fixed'
   min-height: 100vh;
   display: flex;
   justify-content: center;
-align-items: center;
+  align-items: flex-start;
   padding: 1rem;
 }
 
-.admin-layout {
-  width: min(1080px, 100%);
-  max-width: unset;
+.admin-outer {
+  width: min(1200px, 100%);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr 360px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.admin-left {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.admin-layout.single-column {
-  max-width: unset;
-  grid-template-columns: 1fr;
+.logs-panel {
+  position: sticky;
+  top: 1rem;
+  align-items: stretch;
+  text-align: left;
 }
 
 .panel-card {
@@ -767,24 +746,26 @@ button:hover {
   cursor: not-allowed;
 }
 
-.audit-tools {
-  margin-top: 1rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid #f0cccc;
+.logs-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
-.audit-tools h4 {
-  margin: 0;
-  color: #6f1d1d;
-}
-
-.audit-tools p {
-  margin: 0.4rem 0 0.7rem;
+.logs-desc {
+  margin: 0 0 0.85rem;
+  font-size: 0.8rem;
+  color: #64748b;
 }
 
 .audit-tools-actions {
   display: grid;
   gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .audit-button {
@@ -1079,11 +1060,17 @@ button:hover {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
-  .admin-layout {
+@media (max-width: 900px) {
+  .admin-outer {
     grid-template-columns: 1fr;
   }
 
+  .logs-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
   .panel-card {
     padding: 1rem;
   }
@@ -1093,7 +1080,6 @@ button:hover {
   }
 
   .user-item {
-    grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
   }

@@ -259,7 +259,13 @@
                     <tr v-if="pdfId === p._id" class="pdf-expand-row">
                       <td colspan="9">
                         <div class="pdf-expand-box">
-                          <div class="pdf-expand-title"><i class="bi bi-paperclip"></i> Archivos adjuntos — {{ p.name }}</div>
+                          <div class="pdf-expand-head">
+                            <div class="pdf-expand-title"><i class="bi bi-paperclip"></i> Archivos adjuntos — {{ p.name }}</div>
+                            <div v-if="p.image" class="pdf-thumb-wrap" @click="lightboxImgSrc = resolveUrl(p.image)" title="Ampliar imagen">
+                              <img :src="resolveUrl(p.image)" class="pdf-thumb" :alt="p.name" />
+                              <span class="pdf-thumb-zoom"><i class="bi bi-zoom-in"></i></span>
+                            </div>
+                          </div>
                           <div v-if="!hasPdfs(p)" class="pdf-empty">Sin archivos PDF adjuntos.</div>
                           <div v-else class="pdf-list">
                             <a v-if="p.catalogo" :href="resolveUrl(p.catalogo)" target="_blank" rel="noopener" class="pdf-item">
@@ -362,7 +368,13 @@
                   <tr v-if="pdfId === p._id" class="pdf-expand-row">
                     <td colspan="9">
                       <div class="pdf-expand-box">
-                        <div class="pdf-expand-title"><i class="bi bi-paperclip"></i> Archivos adjuntos — {{ p.name }}</div>
+                        <div class="pdf-expand-head">
+                          <div class="pdf-expand-title"><i class="bi bi-paperclip"></i> Archivos adjuntos — {{ p.name }}</div>
+                          <div v-if="p.image" class="pdf-thumb-wrap" @click="lightboxImgSrc = resolveUrl(p.image)" title="Ampliar imagen">
+                            <img :src="resolveUrl(p.image)" class="pdf-thumb" :alt="p.name" />
+                            <span class="pdf-thumb-zoom"><i class="bi bi-zoom-in"></i></span>
+                          </div>
+                        </div>
                         <div v-if="!hasPdfs(p)" class="pdf-empty">Sin archivos PDF adjuntos.</div>
                         <div v-else class="pdf-list">
                           <a v-if="p.catalogo" :href="resolveUrl(p.catalogo)" target="_blank" rel="noopener" class="pdf-item">
@@ -404,6 +416,12 @@
       </div>
     </div>
   </div>
+  <Teleport to="body">
+    <div v-if="lightboxImgSrc" class="lb-overlay" @click="lightboxImgSrc = ''">
+      <button class="lb-close" @click.stop="lightboxImgSrc = ''"><i class="bi bi-x-lg"></i></button>
+      <img :src="lightboxImgSrc" class="lb-img" @click.stop />
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -420,8 +438,9 @@ const { canManage } = usePermissions()
 const store = useProductsStore()
 const toast = useToast()
 
-const expandedId = ref(null)
-const pdfId      = ref(null)
+const expandedId     = ref(null)
+const pdfId          = ref(null)
+const lightboxImgSrc = ref('')
 
 function toggleDetail(id) {
   expandedId.value = expandedId.value === id ? null : id
@@ -1362,4 +1381,116 @@ function colorStyle(colorName) {
   padding-top: 0.25rem;
   border-top: 1px solid #f0f0f0;
 }
+
+/* ── Scroll-lock: topbar stays fixed, only table scrolls ─────────────────── */
+.page-container {
+  height: 100%;
+  align-items: stretch;
+  overflow: hidden;
+}
+.container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.inv-layout {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+.inv-sidebar { align-self: start; }
+.inv-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.table-scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto;
+}
+.pagination { flex-shrink: 0; }
+
+/* ── PDF expand: image thumbnail ─────────────────────────────────────────── */
+.pdf-expand-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+.pdf-expand-head .pdf-expand-title { margin-bottom: 0; }
+
+.pdf-thumb-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(107, 142, 58, 0.2);
+  cursor: zoom-in;
+  flex-shrink: 0;
+}
+.pdf-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.15s;
+}
+.pdf-thumb-wrap:hover .pdf-thumb { opacity: 0.75; }
+.pdf-thumb-zoom {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.1rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+.pdf-thumb-wrap:hover .pdf-thumb-zoom { opacity: 1; }
+
+/* ── Lightbox ─────────────────────────────────────────────────────────────── */
+.lb-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+.lb-img {
+  max-width: 90vw;
+  max-height: 88vh;
+  border-radius: 10px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  cursor: default;
+  display: block;
+}
+.lb-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.lb-close:hover { background: rgba(255,255,255,0.28); }
 </style>
