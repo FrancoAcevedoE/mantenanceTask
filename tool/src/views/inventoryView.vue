@@ -176,8 +176,11 @@
                     <tr :class="{ selected: store.selectedIds.includes(p._id) }">
                       <td><input type="checkbox" :checked="store.selectedIds.includes(p._id)" @change="store.toggleSelect(p._id)" /></td>
                       <td><code class="code-badge">{{ p.code }}</code></td>
-                      <td class="desc-cell">
+                      <td :class="['desc-cell', hasPdfs(p) ? 'desc-cell--clickable' : '']" @click="hasPdfs(p) && togglePdf(p._id)" :title="hasPdfs(p) ? (pdfId === p._id ? 'Ocultar archivos' : 'Ver archivos PDF') : undefined">
                         <span class="desc-name">{{ p.name }}</span>
+                        <span v-if="hasPdfs(p)" :class="['pdf-pill', pdfId === p._id ? 'pdf-pill--active' : '']">
+                          <i class="bi bi-file-earmark-pdf-fill"></i>
+                        </span>
                         <div v-if="p.tipo || p.terminacion" class="desc-meta-row">
                           <span v-if="p.tipo" class="desc-meta">{{ p.tipo }}</span>
                           <span v-if="p.tipo && p.terminacion" class="desc-meta-sep">·</span>
@@ -253,6 +256,28 @@
                         </div>
                       </td>
                     </tr>
+                    <tr v-if="pdfId === p._id" class="pdf-expand-row">
+                      <td colspan="9">
+                        <div class="pdf-expand-box">
+                          <div class="pdf-expand-title"><i class="bi bi-paperclip"></i> Archivos adjuntos — {{ p.name }}</div>
+                          <div v-if="!hasPdfs(p)" class="pdf-empty">Sin archivos PDF adjuntos.</div>
+                          <div v-else class="pdf-list">
+                            <a v-if="p.catalogo" :href="resolveUrl(p.catalogo)" target="_blank" rel="noopener" class="pdf-item">
+                              <i class="bi bi-file-earmark-pdf-fill pdf-icon-red"></i>
+                              <span>Catálogo</span>
+                            </a>
+                            <a v-if="p.fichaTecnica" :href="resolveUrl(p.fichaTecnica)" target="_blank" rel="noopener" class="pdf-item">
+                              <i class="bi bi-file-earmark-text-fill pdf-icon-blue"></i>
+                              <span>Ficha técnica</span>
+                            </a>
+                            <a v-for="arch in (p.archivos || [])" :key="arch.url" :href="resolveUrl(arch.url)" target="_blank" rel="noopener" class="pdf-item">
+                              <i class="bi bi-file-earmark-fill pdf-icon-gray"></i>
+                              <span>{{ arch.titulo || 'Archivo' }}</span>
+                            </a>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
                     </template>
                   </template>
                   <tr v-if="groupedFiltered.length === 0">
@@ -266,8 +291,11 @@
                   <tr :class="{ selected: store.selectedIds.includes(p._id) }">
                     <td><input type="checkbox" :checked="store.selectedIds.includes(p._id)" @change="store.toggleSelect(p._id)" /></td>
                     <td><code class="code-badge">{{ p.code }}</code></td>
-                    <td class="desc-cell">
+                    <td :class="['desc-cell', hasPdfs(p) ? 'desc-cell--clickable' : '']" @click="hasPdfs(p) && togglePdf(p._id)" :title="hasPdfs(p) ? (pdfId === p._id ? 'Ocultar archivos' : 'Ver archivos PDF') : undefined">
                       <span class="desc-name">{{ p.name }}</span>
+                      <span v-if="hasPdfs(p)" :class="['pdf-pill', pdfId === p._id ? 'pdf-pill--active' : '']">
+                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                      </span>
                       <span v-if="p.tipo" class="desc-meta">{{ p.tipo }}</span>
                       <span v-if="p.terminacion" class="desc-meta desc-terminacion">{{ p.terminacion }}</span>
                       <span v-if="p.espesor" class="desc-espesor">{{ p.espesor }}mm</span>
@@ -331,6 +359,28 @@
                       </div>
                     </td>
                   </tr>
+                  <tr v-if="pdfId === p._id" class="pdf-expand-row">
+                    <td colspan="9">
+                      <div class="pdf-expand-box">
+                        <div class="pdf-expand-title"><i class="bi bi-paperclip"></i> Archivos adjuntos — {{ p.name }}</div>
+                        <div v-if="!hasPdfs(p)" class="pdf-empty">Sin archivos PDF adjuntos.</div>
+                        <div v-else class="pdf-list">
+                          <a v-if="p.catalogo" :href="resolveUrl(p.catalogo)" target="_blank" rel="noopener" class="pdf-item">
+                            <i class="bi bi-file-earmark-pdf-fill pdf-icon-red"></i>
+                            <span>Catálogo</span>
+                          </a>
+                          <a v-if="p.fichaTecnica" :href="resolveUrl(p.fichaTecnica)" target="_blank" rel="noopener" class="pdf-item">
+                            <i class="bi bi-file-earmark-text-fill pdf-icon-blue"></i>
+                            <span>Ficha técnica</span>
+                          </a>
+                          <a v-for="arch in (p.archivos || [])" :key="arch.url" :href="resolveUrl(arch.url)" target="_blank" rel="noopener" class="pdf-item">
+                            <i class="bi bi-file-earmark-fill pdf-icon-gray"></i>
+                            <span>{{ arch.titulo || 'Archivo' }}</span>
+                          </a>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
                   </template>
                   <tr v-if="paged.length === 0">
                     <td colspan="8" class="empty-row">Sin resultados para los filtros aplicados.</td>
@@ -371,9 +421,20 @@ const store = useProductsStore()
 const toast = useToast()
 
 const expandedId = ref(null)
+const pdfId      = ref(null)
 
 function toggleDetail(id) {
   expandedId.value = expandedId.value === id ? null : id
+  if (expandedId.value === id) pdfId.value = null // mutually exclusive
+}
+
+function togglePdf(id) {
+  pdfId.value = pdfId.value === id ? null : id
+  if (pdfId.value === id) expandedId.value = null // mutually exclusive
+}
+
+function hasPdfs(p) {
+  return !!(p.catalogo || p.fichaTecnica || p.archivos?.length)
 }
 
 function resolveUrl(path) {
@@ -1057,6 +1118,55 @@ function colorStyle(colorName) {
   .toolbar-actions { flex-wrap: wrap; gap: 0.4rem; }
 }
 
+/* PDF indicator pill on product name */
+.desc-cell--clickable { cursor: pointer; }
+.desc-cell--clickable:hover .desc-name { color: var(--color-primary); text-decoration: underline; }
+
+.pdf-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 4px;
+  background: rgba(239, 68, 68, 0.1); color: #ef4444;
+  font-size: 0.7rem; margin-left: 4px; vertical-align: middle;
+  flex-shrink: 0; transition: background 0.15s, color 0.15s;
+}
+.pdf-pill--active {
+  background: #ef4444; color: #fff;
+}
+
+/* PDF expand row */
+.pdf-expand-row td { padding: 0 !important; }
+.pdf-expand-box {
+  background: rgba(239, 68, 68, 0.03);
+  border-top: 1px solid rgba(239, 68, 68, 0.15);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+  padding: 0.75rem 1rem;
+}
+.pdf-expand-title {
+  font-size: 0.75rem; font-weight: 700; color: #6b7280;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.35rem;
+}
+.pdf-empty {
+  font-size: 0.82rem; color: #9ca3af; font-style: italic;
+}
+.pdf-list {
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+}
+.pdf-item {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.35rem 0.75rem; border-radius: 8px;
+  background: #fff; border: 1px solid #e5e7eb;
+  font-size: 0.82rem; font-weight: 500; color: #374151;
+  text-decoration: none; transition: background 0.15s, border-color 0.15s;
+}
+.pdf-item:hover {
+  background: #f9fafb; border-color: #d1d5db;
+}
+.pdf-item i { font-size: 1.1rem; flex-shrink: 0; }
+.pdf-icon-red  { color: #ef4444; }
+.pdf-icon-blue { color: #3b82f6; }
+.pdf-icon-gray { color: #6b7280; }
+
 /* Detail expand */
 .detail-expand-row td { padding: 0 !important; }
 .detail-expand-box {
@@ -1098,20 +1208,22 @@ function colorStyle(colorName) {
   .inv-table tbody td { padding: 0.35rem 0.45rem; }
 
   .inv-table th:nth-child(1),
-  .inv-table td:nth-child(1):not(.detail-expand-row td),
+  .inv-table td:nth-child(1):not(.detail-expand-row td):not(.pdf-expand-row td),
   .inv-table th:nth-child(2),
-  .inv-table td:nth-child(2):not(.detail-expand-row td),
+  .inv-table td:nth-child(2):not(.detail-expand-row td):not(.pdf-expand-row td),
   .inv-table th:nth-child(4),
-  .inv-table td:nth-child(4):not(.detail-expand-row td),
+  .inv-table td:nth-child(4):not(.detail-expand-row td):not(.pdf-expand-row td),
   .inv-table th:nth-child(6),
-  .inv-table td:nth-child(6):not(.detail-expand-row td),
+  .inv-table td:nth-child(6):not(.detail-expand-row td):not(.pdf-expand-row td),
   .inv-table th:nth-child(7),
-  .inv-table td:nth-child(7):not(.detail-expand-row td) {
+  .inv-table td:nth-child(7):not(.detail-expand-row td):not(.pdf-expand-row td) {
     display: none;
   }
 
   .detail-expand-row td { display: table-cell !important; }
+  .pdf-expand-row td { display: table-cell !important; }
   .detail-expand-box { padding: 0.6rem 0.5rem; }
+  .pdf-expand-box { padding: 0.6rem 0.5rem; }
   .dex-info { grid-template-columns: 1fr; }
 
   .desc-cell { max-width: none; min-width: 0; }
