@@ -544,7 +544,19 @@ export default {
 
   async mounted() {
 
-    document.body.style.background = 'rgb(103, 111, 62)'
+    const isDark = localStorage.getItem('darkMode') === 'true'
+    document.body.style.background = isDark
+      ? 'radial-gradient(ellipse at 15% 15%, rgba(120,50,220,0.18) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(255,102,0,0.14) 0%, transparent 55%), #070b14'
+      : 'rgb(103, 111, 62)'
+
+    this._darkObserver = new MutationObserver(() => {
+      const dark = document.documentElement.getAttribute('data-theme') === 'dark'
+      document.body.style.background = dark
+        ? 'radial-gradient(ellipse at 15% 15%, rgba(120,50,220,0.18) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(255,102,0,0.14) 0%, transparent 55%), #070b14'
+        : 'rgb(103, 111, 62)'
+      this.renderCharts()
+    })
+    this._darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
 
     this.setDefaultPeriod()
     this.syncPeriodSelectorsFromPeriod()
@@ -576,6 +588,8 @@ export default {
     document.body.style.background = ''
 
     this.destroyCharts()
+
+    this._darkObserver?.disconnect()
 
     window.removeEventListener("resize", this.updateRecentBottomScrollbar)
 
@@ -690,6 +704,10 @@ export default {
 
       this.destroyCharts()
 
+      const dark = document.documentElement.getAttribute('data-theme') === 'dark'
+      const tickColor = dark ? 'rgba(255,255,255,0.5)' : undefined
+      const gridColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'
+
       const chartData = this.stats.charts || {}
 
       const statusData = chartData.statusBreakdown || []
@@ -709,7 +727,9 @@ export default {
             labels: statusData.map(item => this.formatStatus(item.status)),
             datasets: [{
               data: statusData.map(item => item.count),
-              backgroundColor: ["#2e7d32", "#f9a825", "#c62828", "#607d8b"]
+              backgroundColor: dark
+                ? ["#22c55e", "#f59e0b", "#ef4444", "#64748b"]
+                : ["#2e7d32", "#f9a825", "#c62828", "#607d8b"]
             }]
           },
           options: {
@@ -717,7 +737,8 @@ export default {
             maintainAspectRatio: false,
             plugins: {
               legend: {
-                position: "bottom"
+                position: "bottom",
+                labels: { color: tickColor }
               },
               tooltip: {
                 enabled: true,
@@ -744,8 +765,8 @@ export default {
             datasets: [{
               label: "Mantenimientos",
               data: dailyData.map(item => item.count),
-              borderColor: "#00a878",
-              backgroundColor: "rgba(0, 168, 120, 0.2)",
+              borderColor: dark ? "#22c55e" : "#00a878",
+              backgroundColor: dark ? "rgba(34,197,94,0.15)" : "rgba(0, 168, 120, 0.2)",
               fill: true,
               tension: 0.35,
               pointRadius: 4
@@ -754,7 +775,14 @@ export default {
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            resizeDelay: 100
+            resizeDelay: 100,
+            scales: {
+              x: { ticks: { color: tickColor }, grid: { color: gridColor } },
+              y: { ticks: { color: tickColor }, grid: { color: gridColor } }
+            },
+            plugins: {
+              legend: { labels: { color: tickColor } }
+            }
           }
         })
       }

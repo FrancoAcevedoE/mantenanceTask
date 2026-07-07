@@ -615,13 +615,14 @@ function snoozeAndOpen(client) {
 .cc-card-body { cursor: pointer; }
 .cc-card-body:hover { background: rgba(107,142,58,.03); }
 
-/* Tooltip de la burbuja */
+/* Tooltip de la burbuja — siempre abre hacia abajo-izquierda desde el badge */
 .cc-stale-tooltip {
   display: none;
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  width: 210px;
+  left: auto;
+  width: min(230px, calc(100vw - 24px));
   background: #1e293b;
   color: #f1f5f9;
   font-size: 0.72rem;
@@ -632,27 +633,27 @@ function snoozeAndOpen(client) {
   box-shadow: 0 4px 16px rgba(0,0,0,.3);
   white-space: normal;
   pointer-events: none;
-  z-index: 20;
+  z-index: 100;
 }
 .cc-stale-tooltip::before {
   content: '';
   position: absolute;
   bottom: 100%;
   right: 8px;
+  left: auto;
   border: 5px solid transparent;
   border-bottom-color: #1e293b;
 }
 .cc-stale-badge:hover .cc-stale-tooltip { display: block; }
 
-/* Tooltip de la burbuja naranja (cotización) — abre hacia la izquierda para no salirse */
+/* El tooltip de cotización también abre a la izquierda — sin override de left */
 .cc-stale-tooltip--quote {
-  right: auto;
-  left: 0;
-  width: 230px;
+  right: 0;
+  left: auto;
 }
 .cc-stale-tooltip--quote::before {
-  right: auto;
-  left: 8px;
+  right: 8px;
+  left: auto;
 }
 
 /* ── Toolbar ── */

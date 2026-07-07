@@ -108,6 +108,7 @@ import {
 } from 'chart.js'
 import { useProductsStore } from '@/stores/products'
 import InventorySubNav from '@/components/InventorySubNav.vue'
+import { useDarkMode } from '@/composables/useDarkMode'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, DoughnutController, ArcElement, Tooltip, Legend, Title)
 
@@ -117,7 +118,10 @@ const doughnutRef = ref(null)
 let barChart = null
 let doughnutChart = null
 
-const COLORS = ['#6b8e3a','#9eb88c','#4a6d26','#c5d9a8','#2d4d18','#e8f0df','#7aac4a','#3a5c1e','#b8d98a','#8ec060']
+const COLORS_LIGHT = ['#6b8e3a','#9eb88c','#4a6d26','#c5d9a8','#2d4d18','#e8f0df','#7aac4a','#3a5c1e','#b8d98a','#8ec060']
+const COLORS_DARK  = ['#22c55e','#ef4444','#f59e0b','#3b82f6','#a855f7','#ec4899','#14b8a6','#f97316','#84cc16','#06b6d4']
+
+const { isDark } = useDarkMode()
 
 onMounted(async () => {
   if (!store.products.length) await store.fetchProducts()
@@ -135,8 +139,20 @@ watch(() => store.products, () => {
   buildCharts()
 }, { deep: false })
 
+watch(isDark, () => {
+  barChart?.destroy()
+  doughnutChart?.destroy()
+  buildCharts()
+})
+
 function buildCharts() {
   if (!barRef.value || !doughnutRef.value) return
+
+  const dark = isDark.value
+  const COLORS = dark ? COLORS_DARK : COLORS_LIGHT
+  const tickColor = dark ? 'rgba(255,255,255,0.5)' : undefined
+  const gridColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(107,142,58,0.1)'
+  const borderColor = dark ? 'rgba(13,18,35,0.8)' : '#fff'
 
   // Bar: top 10 by price
   const top10 = [...store.products]
@@ -168,10 +184,11 @@ function buildCharts() {
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 } } },
         y: {
-          grid: { color: 'rgba(107,142,58,0.1)' },
+          grid: { color: gridColor },
           ticks: {
+            color: tickColor,
             callback: v => '$' + v.toLocaleString('es-AR'),
             font: { size: 11 }
           }
@@ -197,14 +214,17 @@ function buildCharts() {
         data,
         backgroundColor: COLORS,
         borderWidth: 2,
-        borderColor: '#fff'
+        borderColor
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
+        legend: {
+          position: 'bottom',
+          labels: { color: tickColor, font: { size: 11 }, padding: 12 }
+        },
         tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} productos` } }
       },
       cutout: '62%'

@@ -24,7 +24,7 @@
         </div>
 
         <!-- Contenido del historial solo para otros roles -->
-        <div v-else>
+        <div v-else class="notif-body">
           <section class="notification-history-filters">
             <select v-model="readFilter">
               <option value="all">Todas</option>
@@ -380,7 +380,10 @@ export default {
       this.markAsRead(id)
     }
 
-    document.body.style.background = 'rgb(103, 111, 62)'
+    const isDark = localStorage.getItem('darkMode') === 'true'
+    document.body.style.background = isDark
+      ? 'radial-gradient(ellipse at 15% 15%, rgba(120,50,220,0.18) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(255,102,0,0.14) 0%, transparent 55%), #070b14'
+      : 'rgb(103, 111, 62)'
     document.body.style.backgroundAttachment = 'fixed'
 
     const user = JSON.parse(sessionStorage.getItem('user') || '{}')
@@ -889,5 +892,159 @@ export default {
 
 .seller-message button:hover {
   background: #5a7d3a;
+}
+
+/* ── Scroll-lock: header/filtros fijos, solo lista scrollea ─── */
+.page-container {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+.container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.notification-history-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.notif-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.history-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .page-container {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .container,
+  .notification-history-card,
+  .notif-body {
+    overflow: visible;
+    flex: unset;
+  }
+  .history-list {
+    overflow-y: visible;
+    flex: unset;
+  }
+}
+
+/* ── Dark mode overrides ── */
+[data-theme="dark"] .notification-history-card {
+  background: rgba(13,18,35,0.82) !important;
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .notification-history-header {
+  background: rgba(13,18,35,0.6) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+[data-theme="dark"] .notification-history-header p,
+[data-theme="dark"] .notification-history-header h1,
+[data-theme="dark"] .notification-history-header h2,
+[data-theme="dark"] .notification-history-header h3 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .notification-history-summary article {
+  background: rgba(13,18,35,0.72) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .notification-history-summary article strong {
+  color: #FF8C42 !important;
+}
+
+[data-theme="dark"] .notification-history-summary article span {
+  color: rgba(255,255,255,0.6) !important;
+}
+
+[data-theme="dark"] .notification-history-filters select,
+[data-theme="dark"] .notification-history-filters input[type="date"],
+[data-theme="dark"] .notification-history-filters input[type="text"] {
+  background: rgba(13,18,35,0.8) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .notification-history-filters button {
+  background: linear-gradient(135deg, #FF6600, #ff3d00) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(255,102,0,0.3);
+}
+
+[data-theme="dark"] .ghost-button {
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.8) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+[data-theme="dark"] .ghost-button:hover {
+  background: rgba(255,102,0,0.15) !important;
+  color: #FF8C42 !important;
+}
+
+[data-theme="dark"] .history-item {
+  background: rgba(13,18,35,0.55) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .history-item:hover {
+  background: rgba(255,102,0,0.07) !important;
+}
+
+[data-theme="dark"] .history-item.expanded {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,102,0,0.25) !important;
+}
+
+[data-theme="dark"] .notification-title {
+  color: rgba(255,255,255,0.95) !important;
+}
+
+[data-theme="dark"] .notification-text,
+[data-theme="dark"] .notification-details,
+[data-theme="dark"] .notification-meta {
+  color: rgba(255,255,255,0.7) !important;
+}
+
+[data-theme="dark"] .notification-date,
+[data-theme="dark"] .notification-time {
+  color: rgba(255,255,255,0.45) !important;
+}
+
+[data-theme="dark"] .notif-body {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .seller-message {
+  background: rgba(13,18,35,0.72) !important;
+  color: rgba(255,255,255,0.8) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
 }
 </style>

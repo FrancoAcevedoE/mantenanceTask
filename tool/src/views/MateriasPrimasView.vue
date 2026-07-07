@@ -275,8 +275,11 @@ import { usePermissions } from '@/utils/permissions'
 import {
   Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend
 } from 'chart.js'
+import { useDarkMode } from '@/composables/useDarkMode'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
+
+const { isDark } = useDarkMode()
 
 const { canManageCompras, isCompras } = usePermissions()
 
@@ -387,6 +390,10 @@ function buildChartData(tipo) {
 function buildCharts() {
   if (!barComprasRef.value || !barConsumoRef.value) return
 
+  const dark = isDark.value
+  const tickColor = dark ? 'rgba(255,255,255,0.5)' : undefined
+  const gridColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,.05)'
+
   const compras = buildChartData('entrada')
   const consumo = buildChartData('salida')
 
@@ -400,8 +407,8 @@ function buildCharts() {
       datasets: [{
         label: 'Cantidad comprada',
         data: compras.counts,
-        backgroundColor: 'rgba(34,197,94,0.7)',
-        borderColor: '#16a34a',
+        backgroundColor: dark ? 'rgba(34,197,94,0.75)' : 'rgba(34,197,94,0.7)',
+        borderColor: dark ? '#22c55e' : '#16a34a',
         borderWidth: 1,
         borderRadius: 6,
         borderSkipped: false
@@ -412,8 +419,8 @@ function buildCharts() {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 11 } } }
+        x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 } } },
+        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 } } }
       }
     }
   })
@@ -425,8 +432,8 @@ function buildCharts() {
       datasets: [{
         label: 'Cantidad consumida',
         data: consumo.counts,
-        backgroundColor: 'rgba(249,115,22,0.7)',
-        borderColor: '#ea580c',
+        backgroundColor: dark ? 'rgba(239,68,68,0.75)' : 'rgba(249,115,22,0.7)',
+        borderColor: dark ? '#ef4444' : '#ea580c',
         borderWidth: 1,
         borderRadius: 6,
         borderSkipped: false
@@ -437,8 +444,8 @@ function buildCharts() {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 11 } } }
+        x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 } } },
+        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 } } }
       }
     }
   })
@@ -460,9 +467,12 @@ async function load() {
 }
 
 watch(items, () => {
-  // Esperar que los canvas estén montados
   setTimeout(buildCharts, 50)
 }, { deep: false })
+
+watch(isDark, () => {
+  setTimeout(buildCharts, 50)
+})
 
 // ── CRUD ───────────────────────────────────────────────────────────────────
 function openCreate() {

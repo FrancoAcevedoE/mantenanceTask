@@ -69,6 +69,39 @@ const logout = async () => {
   await router.push('/logUser')
 }
 
+// Dark mode — apply immediately to avoid flash
+const darkMode = ref(localStorage.getItem('darkMode') === 'true')
+if (darkMode.value) document.documentElement.setAttribute('data-theme', 'dark')
+
+function toggleDark() {
+  darkMode.value = !darkMode.value
+  document.documentElement.setAttribute('data-theme', darkMode.value ? 'dark' : 'light')
+  localStorage.setItem('darkMode', String(darkMode.value))
+}
+
+// Locale
+const locale = ref(localStorage.getItem('locale') || 'es')
+function toggleLocale() {
+  locale.value = locale.value === 'es' ? 'pt' : 'es'
+  localStorage.setItem('locale', locale.value)
+}
+
+const nav = computed(() => locale.value === 'pt' ? {
+  maintenance: 'Manutenção', newJob: 'Novo trabalho', history: 'Histórico',
+  notifications: 'Notificações', newMachine: 'Nova máquina',
+  sales: 'Vendas', crm: 'CRM', inventory: 'Inventário',
+  purchases: 'Compras', rawMaterials: 'Matérias-primas', suppliers: 'Fornecedores',
+  users: 'Usuários', logout: 'Sair', manual: 'Manual do usuário',
+  darkMode: 'Modo escuro', lightMode: 'Modo claro', language: 'ES',
+} : {
+  maintenance: 'Mantenimiento', newJob: 'Nuevo trabajo', history: 'Historial',
+  notifications: 'Notificaciones', newMachine: 'Nueva máquina',
+  sales: 'Ventas', crm: 'CRM', inventory: 'Inventario',
+  purchases: 'Compras', rawMaterials: 'Materias primas', suppliers: 'Proveedores',
+  users: 'Usuarios', logout: 'Cerrar sesión', manual: 'Manual de usuario',
+  darkMode: 'Modo oscuro', lightMode: 'Modo claro', language: 'PT',
+})
+
 const syncNotifications = async () => {
   if (showNav.value) { await notificationsStore.initialize(); return }
   notificationsStore.reset()
@@ -100,7 +133,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       <div v-if="canMantenim" class="mod-group">
         <button class="mod-header" @click="openMantenim = !openMantenim">
           <i class="bi bi-wrench-adjustable-circle"></i>
-          <span>Mantenimiento</span>
+          <span>{{ nav.maintenance }}</span>
           <i :class="['mod-chevron bi', openMantenim ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
         </button>
         <Transition name="sidebar-collapse">
@@ -109,16 +142,16 @@ onBeforeUnmount(() => { notificationsStore.stop() })
               <i class="bi bi-bar-chart-fill"></i><span class="nav-label">Dashboard</span>
             </router-link>
             <router-link v-if="canNewWork" to="/new" @click="closeMobile">
-              <i class="bi bi-plus-circle"></i><span class="nav-label">Nuevo trabajo</span>
+              <i class="bi bi-plus-circle"></i><span class="nav-label">{{ nav.newJob }}</span>
             </router-link>
             <router-link v-if="canHistory" to="/history" @click="closeMobile">
-              <i class="bi bi-clock-history"></i><span class="nav-label">Historial</span>
+              <i class="bi bi-clock-history"></i><span class="nav-label">{{ nav.history }}</span>
             </router-link>
             <router-link to="/notifications-history" @click="closeMobile">
-              <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
+              <i class="bi bi-bell"></i><span class="nav-label">{{ nav.notifications }}</span>
             </router-link>
             <router-link v-if="canNewMachine" to="/newMachine" @click="closeMobile">
-              <i class="bi bi-building-add"></i><span class="nav-label">Nueva máquina</span>
+              <i class="bi bi-building-add"></i><span class="nav-label">{{ nav.newMachine }}</span>
             </router-link>
           </div>
         </Transition>
@@ -128,19 +161,19 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       <div v-if="canVentas" class="mod-group">
         <button class="mod-header" @click="openVentas = !openVentas">
           <i class="bi bi-graph-up-arrow"></i>
-          <span>Ventas</span>
+          <span>{{ nav.sales }}</span>
           <i :class="['mod-chevron bi', openVentas ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
         </button>
         <Transition name="sidebar-collapse">
           <div v-show="openVentas" class="mod-links">
             <router-link to="/crm" @click="closeMobile">
-              <i class="bi bi-people-fill"></i><span class="nav-label">CRM</span>
+              <i class="bi bi-people-fill"></i><span class="nav-label">{{ nav.crm }}</span>
             </router-link>
             <router-link to="/inventory" @click="closeMobile">
-              <i class="bi bi-box-seam"></i><span class="nav-label">Inventario</span>
+              <i class="bi bi-box-seam"></i><span class="nav-label">{{ nav.inventory }}</span>
             </router-link>
             <router-link to="/notifications-history" @click="closeMobile">
-              <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
+              <i class="bi bi-bell"></i><span class="nav-label">{{ nav.notifications }}</span>
             </router-link>
           </div>
         </Transition>
@@ -150,19 +183,19 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       <div v-if="canCompras" class="mod-group">
         <button class="mod-header" @click="openCompras = !openCompras">
           <i class="bi bi-cart3"></i>
-          <span>Compras</span>
+          <span>{{ nav.purchases }}</span>
           <i :class="['mod-chevron bi', openCompras ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
         </button>
         <Transition name="sidebar-collapse">
           <div v-show="openCompras" class="mod-links">
             <router-link to="/compras/materias-primas" @click="closeMobile">
-              <i class="bi bi-boxes"></i><span class="nav-label">Materias primas</span>
+              <i class="bi bi-boxes"></i><span class="nav-label">{{ nav.rawMaterials }}</span>
             </router-link>
             <router-link to="/compras/proveedores" @click="closeMobile">
-              <i class="bi bi-building"></i><span class="nav-label">Proveedores</span>
+              <i class="bi bi-building"></i><span class="nav-label">{{ nav.suppliers }}</span>
             </router-link>
             <router-link to="/notifications-history" @click="closeMobile">
-              <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
+              <i class="bi bi-bell"></i><span class="nav-label">{{ nav.notifications }}</span>
             </router-link>
           </div>
         </Transition>
@@ -191,7 +224,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       <!-- ── ADMIN ── -->
       <div v-if="canUsers" class="mod-group mod-group--admin">
         <router-link to="/adminView" @click="closeMobile" class="mod-link-flat">
-          <i class="bi bi-person-plus-fill"></i><span class="nav-label">Usuarios</span>
+          <i class="bi bi-person-plus-fill"></i><span class="nav-label">{{ nav.users }}</span>
         </router-link>
       </div>
 
@@ -200,11 +233,19 @@ onBeforeUnmount(() => { notificationsStore.stop() })
     <div class="sidebar-bottom-actions">
       <button class="sidebar-manual-btn" @click="$refs.manual.open = true; closeMobile()" type="button">
         <i class="bi bi-question-circle-fill"></i>
-        <span class="nav-label">Manual de usuario</span>
+        <span class="nav-label">{{ nav.manual }}</span>
+      </button>
+      <button class="sidebar-dark-btn" @click="toggleDark" type="button">
+        <i :class="darkMode ? 'bi bi-sun-fill' : 'bi bi-moon-fill'"></i>
+        <span class="nav-label">{{ darkMode ? nav.lightMode : nav.darkMode }}</span>
+      </button>
+      <button class="sidebar-lang-btn" @click="toggleLocale" type="button">
+        <i class="bi bi-globe2"></i>
+        <span class="nav-label">{{ nav.language }}</span>
       </button>
       <button class="sidebar-logout" @click="logout" type="button">
         <i class="bi bi-box-arrow-right"></i>
-        <span class="nav-label">Cerrar sesión</span>
+        <span class="nav-label">{{ nav.logout }}</span>
       </button>
     </div>
   </aside>
@@ -403,8 +444,110 @@ main.app-content.nav-open { margin-left: var(--sidebar-w-open); }
 .sidebar-manual-btn { display: none; color: #64748b; }
 .sidebar-manual-btn:hover { background: rgba(59,107,46,0.07); color: #1e293b; }
 
+.sidebar-dark-btn, .sidebar-lang-btn {
+  display: flex; align-items: center; width: 100%; gap: 0;
+  padding: 0.55rem 0.6rem; border-radius: 10px; border: none;
+  background: transparent; font-weight: 500; font-size: 0.85rem;
+  cursor: pointer; white-space: nowrap; box-shadow: none;
+  color: #64748b; transition: background 0.15s, color 0.15s;
+}
+.sidebar-dark-btn i, .sidebar-lang-btn i { font-size: 1.1rem; flex-shrink: 0; width: 28px; text-align: center; }
+.sidebar-dark-btn:hover, .sidebar-lang-btn:hover { background: rgba(59,107,46,0.07); color: #1e293b; }
+
 @media (max-width: 768px) {
   main.app-content.nav-open { margin-left: 0; }
   .sidebar-manual-btn { display: flex; }
 }
+
+/* ── DARK MODE ──────────────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  --color-bg: #070b14;
+  --color-surface: rgba(255,255,255,0.05);
+  --color-surface-2: rgba(255,255,255,0.03);
+  --color-border: rgba(255,255,255,0.08);
+  --color-text: #ffffff;
+  --color-muted: rgba(255,255,255,0.45);
+  --color-primary: #FF6600;
+  --color-primary-hover: #ff4400;
+  --sidebar-bg: rgba(7,11,20,0.88);
+  --sidebar-text: rgba(255,255,255,0.65);
+  --sidebar-accent: #FF6600;
+}
+
+/* body — same aurora gradient as style.css, !important to beat inline class styles */
+[data-theme="dark"] body,
+[data-theme="dark"] body.bg-login,
+[data-theme="dark"] body.bg-app,
+[data-theme="dark"] body.bg-dashboard,
+[data-theme="dark"] body.bg-notifications,
+[data-theme="dark"] body.bg-maintenance {
+  background:
+    radial-gradient(ellipse at 15% 15%, rgba(120,50,220,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 85%, rgba(255,102,0,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(30,60,180,0.12) 0%, transparent 50%),
+    #070b14 !important;
+}
+
+/* ── Sidebar: glassmorphism dark ── */
+[data-theme="dark"] .sidebar {
+  background: rgba(7,11,20,0.82);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-right: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 4px 0 32px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .mod-header { color: rgba(255,255,255,0.6); }
+[data-theme="dark"] .mod-header:hover { background: rgba(255,102,0,0.1); color: #ffffff; }
+[data-theme="dark"] .mod-chevron { color: rgba(255,255,255,0.35); }
+
+[data-theme="dark"] .mod-links a,
+[data-theme="dark"] .mod-link-flat { color: rgba(255,255,255,0.5) !important; }
+[data-theme="dark"] .mod-links a span,
+[data-theme="dark"] .mod-links a i,
+[data-theme="dark"] .mod-link-flat span,
+[data-theme="dark"] .mod-link-flat i { color: rgba(255,255,255,0.5) !important; }
+
+[data-theme="dark"] .mod-links a:hover,
+[data-theme="dark"] .mod-link-flat:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9) !important; }
+[data-theme="dark"] .mod-links a:hover span,
+[data-theme="dark"] .mod-links a:hover i,
+[data-theme="dark"] .mod-link-flat:hover span,
+[data-theme="dark"] .mod-link-flat:hover i { color: rgba(255,255,255,0.9) !important; }
+
+[data-theme="dark"] .mod-links a.router-link-active,
+[data-theme="dark"] .mod-link-flat.router-link-active {
+  background: rgba(255,102,0,0.15);
+  color: #FF8C42 !important;
+  border-left: 2px solid #FF6600;
+}
+[data-theme="dark"] .mod-links a.router-link-active span,
+[data-theme="dark"] .mod-links a.router-link-active i,
+[data-theme="dark"] .mod-link-flat.router-link-active span,
+[data-theme="dark"] .mod-link-flat.router-link-active i { color: #FF8C42 !important; }
+
+[data-theme="dark"] .mod-group--admin { border-top-color: rgba(255,255,255,0.07); }
+[data-theme="dark"] .sidebar-bottom-actions { border-top-color: rgba(255,255,255,0.07); }
+
+[data-theme="dark"] .sidebar-logout { color: rgba(255,255,255,0.5); }
+[data-theme="dark"] .sidebar-logout:hover { background: rgba(239,68,68,0.12); color: #fc8181; }
+
+[data-theme="dark"] .sidebar-manual-btn,
+[data-theme="dark"] .sidebar-dark-btn,
+[data-theme="dark"] .sidebar-lang-btn { color: rgba(255,255,255,0.5); }
+
+[data-theme="dark"] .sidebar-manual-btn:hover,
+[data-theme="dark"] .sidebar-dark-btn:hover,
+[data-theme="dark"] .sidebar-lang-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+
+/* ── Mobile toggle: glassmorphism ── */
+[data-theme="dark"] .mobile-toggle {
+  background: rgba(7,11,20,0.8);
+  backdrop-filter: blur(12px);
+  border-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.85);
+}
+[data-theme="dark"] .mobile-toggle:hover { color: #FF6600; }
+
+[data-theme="dark"] main.app-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
 </style>

@@ -849,3 +849,420 @@ select {
     font-size: 1.5rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK MODE — Premium glassmorphism · KTM orange · deep navy
+   ═══════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #070b14;
+  --color-surface: rgba(255,255,255,0.05);
+  --color-card-top: rgba(255,255,255,0.08);
+  --color-primary: #FF6600;
+  --color-accent: #ff4400;
+  --color-text: #ffffff;
+  --color-muted: rgba(255,255,255,0.45);
+  --shadow-soft: 0 8px 40px rgba(0,0,0,0.6);
+  --border-soft: rgba(255,255,255,0.08);
+}
+
+/* ── Background: deep navy with aurora glow ── */
+[data-theme="dark"] body {
+  background:
+    radial-gradient(ellipse at 15% 15%, rgba(120,50,220,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 85%, rgba(255,102,0,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(30,60,180,0.12) 0%, transparent 50%),
+    #070b14 !important;
+  color: #ffffff;
+}
+
+/* ── Text ── */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 { color: #ffffff; }
+
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] label { color: rgba(255,255,255,0.75); }
+
+/* ── Page container: transparent to show body gradient ── */
+[data-theme="dark"] .page-container { background: transparent !important; }
+
+/* ── Cards / panels: dark glassmorphism ── */
+[data-theme="dark"] .container,
+[data-theme="dark"] .box,
+[data-theme="dark"] .panel-card,
+[data-theme="dark"] .notification-history-card,
+[data-theme="dark"] .login-box,
+[data-theme="dark"] .tab-content,
+[data-theme="dark"] .machine-layout > .box,
+[data-theme="dark"] .admin-form,
+[data-theme="dark"] .users-panel {
+  background: rgba(13,18,35,0.72) !important;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+
+[data-theme="dark"] .container {
+  background: rgba(13,18,35,0.78) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+
+/* ── Inputs / selects ── */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder { color: rgba(255,255,255,0.32); }
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  border-color: rgba(255,102,0,0.65) !important;
+  box-shadow: 0 0 0 3px rgba(255,102,0,0.15), 0 0 20px rgba(255,102,0,0.1);
+}
+
+/* ── Buttons: gradient orange with glow ── */
+[data-theme="dark"] button {
+  background: linear-gradient(135deg, #FF6600 0%, #ff3d00 100%) !important;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(255,102,0,0.4), 0 1px 0 rgba(255,255,255,0.1) inset;
+  border: none;
+}
+[data-theme="dark"] button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ff7a1a 0%, #ff5500 100%) !important;
+  box-shadow: 0 6px 28px rgba(255,102,0,0.55), 0 1px 0 rgba(255,255,255,0.12) inset;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] button.secondary-button {
+  background: rgba(255,102,0,0.1) !important;
+  color: #FF8C42;
+  border: 1px solid rgba(255,102,0,0.3) !important;
+  box-shadow: none;
+}
+[data-theme="dark"] button.secondary-button:hover:not(:disabled) {
+  background: rgba(255,102,0,0.18) !important;
+  border-color: rgba(255,102,0,0.5) !important;
+  box-shadow: 0 4px 16px rgba(255,102,0,0.2);
+}
+
+[data-theme="dark"] button.ghost-button {
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none;
+}
+[data-theme="dark"] button.ghost-button:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1) !important;
+}
+
+[data-theme="dark"] button.danger-button,
+[data-theme="dark"] button.danger-zone-button {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 4px 16px rgba(220,38,38,0.35);
+}
+
+[data-theme="dark"] button:disabled {
+  background: rgba(255,102,0,0.18) !important;
+  box-shadow: none;
+  opacity: 0.55;
+}
+
+/* ── Filters ── */
+[data-theme="dark"] .notification-history-filters input,
+[data-theme="dark"] .notification-history-filters select {
+  background: rgba(255,255,255,0.06) !important;
+}
+
+/* ── Summary cards ── */
+[data-theme="dark"] .notification-history-summary article {
+  background: rgba(255,102,0,0.07);
+  border: 1px solid rgba(255,102,0,0.18);
+}
+
+/* ── Empty states ── */
+[data-theme="dark"] .state-text,
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .no-data,
+[data-theme="dark"] .no-products-message,
+[data-theme="dark"] .no-discounts,
+[data-theme="dark"] .no-product-selected { color: rgba(255,255,255,0.4); }
+
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .no-data,
+[data-theme="dark"] .no-products-message,
+[data-theme="dark"] .no-product-selected {
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,102,0,0.22);
+}
+
+/* ── History items ── */
+[data-theme="dark"] .history-item {
+  background: rgba(13,18,35,0.6) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3) !important;
+  backdrop-filter: blur(12px);
+}
+[data-theme="dark"] .history-item.unread {
+  border-left: 4px solid #FF6600 !important;
+  background: rgba(255,102,0,0.07) !important;
+}
+[data-theme="dark"] .history-item-top p,
+[data-theme="dark"] .history-item-meta { color: rgba(255,255,255,0.45); }
+
+/* ── Tables ── */
+[data-theme="dark"] .history-table thead th {
+  color: rgba(255,255,255,0.55);
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .history-table tbody tr {
+  background: rgba(13,18,35,0.5) !important;
+}
+[data-theme="dark"] .history-table tbody tr:hover {
+  background: rgba(255,102,0,0.06) !important;
+}
+[data-theme="dark"] .history-table td { border-bottom-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .description-preview { color: rgba(255,255,255,0.75); }
+
+/* ── Step blocks ── */
+[data-theme="dark"] .step-block {
+  background: rgba(13,18,35,0.6) !important;
+  border: 1px solid rgba(255,102,0,0.15) !important;
+  backdrop-filter: blur(12px);
+}
+
+/* ── Modal ── */
+[data-theme="dark"] .modal { background: rgba(0,0,0,0.72); }
+[data-theme="dark"] .modal-box {
+  background: rgba(7,11,20,0.96) !important;
+  backdrop-filter: blur(28px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── List items ── */
+[data-theme="dark"] .user-item,
+[data-theme="dark"] .machine-item,
+[data-theme="dark"] .quote-item,
+[data-theme="dark"] .product-item {
+  background: rgba(13,18,35,0.6) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+[data-theme="dark"] .product-details,
+[data-theme="dark"] .quote-preview {
+  background: rgba(255,102,0,0.06);
+  border: 1px solid rgba(255,102,0,0.14);
+}
+
+/* ── Tabs ── */
+[data-theme="dark"] .tabs button {
+  background: rgba(13,18,35,0.55) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.65);
+  box-shadow: none;
+}
+[data-theme="dark"] .tabs button.active {
+  background: linear-gradient(135deg, #FF6600, #ff3d00) !important;
+  color: #fff;
+  border-color: transparent !important;
+  box-shadow: 0 4px 18px rgba(255,102,0,0.4);
+}
+[data-theme="dark"] .tabs button:hover:not(.active):not(:disabled) {
+  background: rgba(255,255,255,0.08) !important;
+}
+
+/* ── Compact toggle ── */
+[data-theme="dark"] .compact-toggle {
+  background: rgba(13,18,35,0.55) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.7);
+  box-shadow: none;
+}
+
+/* ── Admin form ── */
+[data-theme="dark"] .admin-form label { color: rgba(255,255,255,0.55); }
+
+/* ── Action buttons (non-danger) ── */
+[data-theme="dark"] .action-buttons button:not(.danger-button) {
+  background: rgba(13,18,35,0.55) !important;
+  color: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: none;
+}
+[data-theme="dark"] .action-buttons button:not(.danger-button):hover:not(:disabled) {
+  background: rgba(255,102,0,0.12) !important;
+  border-color: rgba(255,102,0,0.3) !important;
+}
+
+/* ── Sticky scroll bar ── */
+[data-theme="dark"] .fixed-horizontal-scroll {
+  background: rgba(7,11,20,0.75);
+  border-top-color: rgba(255,255,255,0.07);
+  backdrop-filter: blur(12px);
+}
+
+/* ── Social boxes ── */
+[data-theme="dark"] .pwa-qr-box,
+[data-theme="dark"] .social-box {
+  background: rgba(13,18,35,0.65) !important;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── Chips ── */
+[data-theme="dark"] .part-chip,
+[data-theme="dark"] .worker-chip {
+  background: rgba(255,102,0,0.1);
+  border: 1px solid rgba(255,102,0,0.2);
+}
+
+/* ── Social icons ── */
+[data-theme="dark"] .social-links a {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DARK MODE: Normalización global de texto y fondos
+   ────────────────────────────────────────────────────────────────────
+   :root[data-theme="dark"] prefix → especificidad (0,2,1) para
+   elementos, (0,3,0) para clases. Ambas SUPERAN los estilos Vue
+   scoped (.clase[data-v-xxx] = 0,2,0) sin necesitar !important.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Encabezados → blanco puro ── */
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3,
+:root[data-theme="dark"] h4,
+:root[data-theme="dark"] h5,
+:root[data-theme="dark"] h6 { color: #ffffff !important; }
+
+/* ── Texto de cuerpo → blanco suave ── */
+:root[data-theme="dark"] p { color: rgba(255,255,255,0.82) !important; }
+:root[data-theme="dark"] li { color: rgba(255,255,255,0.82) !important; }
+:root[data-theme="dark"] dt,
+:root[data-theme="dark"] dd { color: rgba(255,255,255,0.75) !important; }
+:root[data-theme="dark"] strong,
+:root[data-theme="dark"] b  { color: rgba(255,255,255,0.92) !important; }
+:root[data-theme="dark"] em,
+:root[data-theme="dark"] small,
+:root[data-theme="dark"] time { color: rgba(255,255,255,0.62) !important; }
+
+/* ── Spans (texto inline) ── */
+:root[data-theme="dark"] span { color: rgba(255,255,255,0.82) !important; }
+
+/* ── Etiquetas de formulario ── */
+:root[data-theme="dark"] label { color: rgba(255,255,255,0.6) !important; }
+
+/* ── Links ── */
+:root[data-theme="dark"] a { color: #FF8C42 !important; }
+:root[data-theme="dark"] a.router-link-active { color: #FF8C42 !important; }
+
+/* ── Tabla: celdas y headers ── */
+:root[data-theme="dark"] td { color: rgba(255,255,255,0.82) !important; }
+:root[data-theme="dark"] th { color: rgba(255,255,255,0.52) !important; }
+:root[data-theme="dark"] thead { background: transparent !important; }
+:root[data-theme="dark"] tbody tr {
+  background: rgba(13,18,35,0.45) !important;
+  color: rgba(255,255,255,0.82);
+}
+:root[data-theme="dark"] tbody tr:hover {
+  background: rgba(255,102,0,0.07) !important;
+}
+
+/* ── Botones: restaurar texto blanco (el span dentro del botón hereda el override de span) ── */
+:root[data-theme="dark"] button { color: #ffffff !important; }
+:root[data-theme="dark"] button span,
+:root[data-theme="dark"] button i  { color: #ffffff !important; }
+:root[data-theme="dark"] button.secondary-button,
+:root[data-theme="dark"] button.secondary-button span { color: #FF8C42 !important; }
+:root[data-theme="dark"] button.ghost-button,
+:root[data-theme="dark"] button.ghost-button span { color: rgba(255,255,255,0.85) !important; }
+
+/* ── Íconos Bootstrap (bi-*) ── */
+:root[data-theme="dark"] i[class*="bi-"] { color: inherit; }
+
+/* ── Badges de severidad ── */
+:root[data-theme="dark"] .severity-success { background: rgba(16,185,129,0.14) !important; color: #6ee7b7 !important; }
+:root[data-theme="dark"] .severity-warning { background: rgba(245,158,11,0.14) !important; color: #fcd34d !important; }
+:root[data-theme="dark"] .severity-error   { background: rgba(239,68,68,0.14)  !important; color: #fca5a5 !important; }
+:root[data-theme="dark"] .severity-info    { background: rgba(59,130,246,0.14) !important; color: #93c5fd !important; }
+
+/* ── Inputs y select: texto blanco ── */
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder { color: rgba(255,255,255,0.85) !important; }
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder { color: rgba(255,255,255,0.32) !important; }
+
+/* ── Select option (desplegable nativo del sistema) ── */
+:root[data-theme="dark"] option {
+  background: #0d1223;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Fondos blancos/claros comunes en componentes ─────────────────────
+   Forzar con !important ya que los scoped del componente no ceden
+   ──────────────────────────────────────────────────────────────────── */
+
+/* Cualquier div/section/article/aside con fondo blanco → vidrio oscuro */
+:root[data-theme="dark"] div,
+:root[data-theme="dark"] section,
+:root[data-theme="dark"] article,
+:root[data-theme="dark"] aside,
+:root[data-theme="dark"] header,
+:root[data-theme="dark"] footer,
+:root[data-theme="dark"] main {
+  border-color: rgba(255,255,255,0.07);
+  /* NO override background aquí para no romper transparencias */
+}
+
+/* Clases con fondo blanco explícito en componentes (scoped) */
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .panel,
+:root[data-theme="dark"] [class$="-card"]:not(button),
+:root[data-theme="dark"] [class$="-panel"]:not(button),
+:root[data-theme="dark"] [class$="-box"]:not(button):not(input),
+:root[data-theme="dark"] [class$="-row"]:not(button):not(input):not(tr),
+:root[data-theme="dark"] [class$="-item"]:not(button):not(li):not(input),
+:root[data-theme="dark"] [class$="-head"]:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(button),
+:root[data-theme="dark"] [class$="-header"]:not(button),
+:root[data-theme="dark"] [class$="-body"]:not(button),
+:root[data-theme="dark"] [class$="-section"]:not(button),
+:root[data-theme="dark"] [class$="-content"]:not(button),
+:root[data-theme="dark"] [class$="-wrap"]:not(button),
+:root[data-theme="dark"] [class$="-wrapper"]:not(button),
+:root[data-theme="dark"] [class*="-stat"]:not(button),
+:root[data-theme="dark"] [class*="stat-"]:not(button) {
+  background-color: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  color: rgba(255,255,255,0.82);
+}
+
+/* Excepciones: elementos que deben mantener su estilo de color */
+:root[data-theme="dark"] .severity-badge,
+:root[data-theme="dark"] [class*="severity"],
+:root[data-theme="dark"] [class*="badge"],
+:root[data-theme="dark"] [class*="tag"],
+:root[data-theme="dark"] [class*="chip"] {
+  background-color: revert !important;
+  color: revert !important;
+}
+:root[data-theme="dark"] .severity-success { background: rgba(16,185,129,0.14) !important; color: #6ee7b7 !important; }
+:root[data-theme="dark"] .severity-warning { background: rgba(245,158,11,0.14) !important; color: #fcd34d !important; }
+:root[data-theme="dark"] .severity-error   { background: rgba(239,68,68,0.14)  !important; color: #fca5a5 !important; }
+:root[data-theme="dark"] .severity-info    { background: rgba(59,130,246,0.14) !important; color: #93c5fd !important; }
