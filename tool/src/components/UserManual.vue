@@ -96,7 +96,7 @@
                   <div class="sales-doc-pdf-section">
                     <div v-if="docs.perfil_puesto.pdfUrl" class="sales-doc-pdf-row">
                       <i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444;font-size:1.1rem;flex-shrink:0"></i>
-                      <a :href="docs.perfil_puesto.pdfUrl" target="_blank" rel="noopener" class="sales-doc-pdf-link">
+                      <a :href="resolveFileUrl(docs.perfil_puesto.pdfUrl)" target="_blank" rel="noopener" class="sales-doc-pdf-link">
                         {{ docs.perfil_puesto.pdfName || 'Perfil de puesto.pdf' }}
                       </a>
                       <button v-if="canEdit" class="sales-doc-pdf-del" @click="removePdf('perfil_puesto')" title="Quitar PDF">
@@ -689,6 +689,15 @@ async function removePdf(key) {
   } catch (e) {
     alert(e.response?.data?.message || 'Error al quitar el PDF')
   }
+}
+
+// Converts a relative /api/files/:id path to an absolute backend URL.
+// In dev, API_BASE_URL is '/api' so the result stays relative (Vite proxy handles it).
+// In production, API_BASE_URL is 'https://backend.onrender.com/api' so the link hits the backend directly.
+function resolveFileUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return API_BASE_URL + url.replace(/^\/api/, '')
 }
 
 function fmtDate(d) {
