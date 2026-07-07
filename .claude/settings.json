@@ -64,7 +64,8 @@
       "Bash(grep -rn \"background:.*#f[0-9a-f]\\\\|color:.*#[23456][0-9a-f]\\\\{4,5\\\\}\" \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views\" --include=\"*.vue\" -l)",
       "Bash(awk 'NR<=425' \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views/inventoryView.vue\")",
       "Bash(grep -v \"^$\\\\|^  *$\")",
-      "Bash(awk 'NR<=745' \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views/sellerView.vue\")"
+      "Bash(awk 'NR<=745' \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views/sellerView.vue\")",
+      "Bash(npm list *)"
     ]
   }
 }

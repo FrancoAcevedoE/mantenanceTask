@@ -19,6 +19,10 @@
       <button class="cc-btn-add" @click="openNew">
         <i class="bi bi-person-plus-fill"></i> Nuevo cliente
       </button>
+      <button class="cc-btn-import" @click="xlsxInput.click()">
+        <i class="bi bi-file-earmark-spreadsheet"></i> Cargar desde Excel
+      </button>
+      <input ref="xlsxInput" type="file" accept=".xlsx,.xls" style="display:none" @change="onXlsxFile" />
     </div>
 
     <!-- Loading -->
@@ -297,6 +301,47 @@
       </div>
     </Teleport>
 
+    <!-- ── Excel import preview ── -->
+    <Teleport to="body">
+      <div v-if="importModal" class="crm-backdrop" @click.self="importModal = false">
+        <div class="crm-modal crm-modal--sm">
+          <div class="crm-modal-hd">
+            <h2><i class="bi bi-file-earmark-spreadsheet"></i> Importar clientes</h2>
+            <button class="crm-close" @click="importModal = false"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="crm-modal-bd">
+            <div class="ci-summary">
+              <div class="ci-badge ci-badge--new">
+                <span class="ci-num">{{ importPreview.length }}</span>
+                <span class="ci-lbl">a importar</span>
+              </div>
+              <div class="ci-badge ci-badge--skip">
+                <span class="ci-num">{{ importSkipped }}</span>
+                <span class="ci-lbl">ya existen</span>
+              </div>
+            </div>
+            <div v-if="importPreview.length" class="ci-list">
+              <div v-for="c in importPreview" :key="c.razonSocial" class="ci-row">
+                <i class="bi bi-person-check" style="color:var(--color-primary)"></i>
+                <span>{{ c.razonSocial }}</span>
+                <small v-if="c.lugar" class="ci-lugar">{{ c.lugar }}</small>
+              </div>
+            </div>
+            <p v-if="!importPreview.length" class="ci-empty">
+              Todos los clientes del archivo ya existen en el sistema.
+            </p>
+          </div>
+          <div class="crm-modal-ft">
+            <button class="secondary-button" @click="importModal = false">Cancelar</button>
+            <button :disabled="importing || !importPreview.length" @click="doImport">
+              <div v-if="importing" class="btn-spin"></div>
+              <span v-else>Importar {{ importPreview.length }} cliente{{ importPreview.length !== 1 ? 's' : '' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- ── Delete confirm ── -->
     <Teleport to="body">
       <div v-if="deleting" class="crm-backdrop" @click.self="deleting = null">
@@ -328,8 +373,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useCrmStore } from '@/stores/crm'
 import { usePermissions } from '@/utils/permissions'
+import * as XLSX from 'xlsx'
+import { useToast } from 'vue-toastification'
 
 const { canManage } = usePermissions()
+const toast = useToast()
 
 const props = defineProps({ pendingEdit: { type: Object, default: null } })
 
@@ -524,6 +572,106 @@ function clearLocation() {
   form.value.lugar    = ''
 }
 
+// ── Excel import ──
+const xlsxInput   = ref(null)
+const importModal  = ref(false)
+const importPreview = ref([])
+const importSkipped = ref(0)
+const importing    = ref(false)
+
+function normalizePhone(raw) {
+  return String(raw ?? '').trim().replace(/\s+/g, ' ')
+}
+
+function onXlsxFile(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  e.target.value = ''
+
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
+
+      // Set de razonSocial existentes (case-insensitive)
+      const existing = new Set(
+        crmStore.visibleClients.map(c => (c.razonSocial || c.name || '').trim().toLowerCase())
+      )
+
+      const toImport = []
+      let skipped = 0
+
+      for (const row of rows) {
+        const razonSocial = String(row['Razón social'] ?? row['Razon social'] ?? row['razonSocial'] ?? '').trim()
+        if (!razonSocial) continue
+
+        if (existing.has(razonSocial.toLowerCase())) {
+          skipped++
+          continue
+        }
+        existing.add(razonSocial.toLowerCase()) // evitar duplicados dentro del mismo archivo
+
+        // Teléfonos
+        const telefonos = []
+        const tel1 = normalizePhone(row['Teléfono'] ?? row['Telefono'] ?? '')
+        const tel2 = normalizePhone(row['Teléfono 2'] ?? row['Telefono 2'] ?? '')
+        const movil = normalizePhone(row['Móvil'] ?? row['Movil'] ?? '')
+        if (tel1) telefonos.push({ numero: tel1, sector: 'General' })
+        if (tel2) telefonos.push({ numero: tel2, sector: 'General' })
+        if (movil) telefonos.push({ numero: movil, sector: 'General' })
+        if (!telefonos.length) telefonos.push({ numero: '', sector: 'General' })
+
+        const codCliente = String(row['Cód. cliente'] ?? row['Cod. cliente'] ?? '').trim()
+
+        toImport.push({
+          razonSocial,
+          nombreComercial:  String(row['Grupo Empresario'] ?? '').trim(),
+          contactoPrincipal: '',
+          cuitCuil:         '',
+          telefonos,
+          email:            String(row['E-mail'] ?? row['Email'] ?? '').trim(),
+          direccion:        String(row['Domicilio'] ?? '').trim(),
+          lugar:            String(row['Localidad'] ?? '').trim(),
+          observaciones:    codCliente ? `Cód. cliente: ${codCliente}` : '',
+          estado:           'activo',
+          pipelineEstado:   'nuevo_lead',
+          tipoCliente:      'normal',
+          latitud:          null,
+          longitud:         null,
+        })
+      }
+
+      importPreview.value = toImport
+      importSkipped.value = skipped
+      importModal.value   = true
+    } catch {
+      toast.error('No se pudo leer el archivo Excel')
+    }
+  }
+  reader.readAsArrayBuffer(file)
+}
+
+async function doImport() {
+  importing.value = true
+  let ok = 0
+  let fail = 0
+  for (const client of importPreview.value) {
+    try {
+      await crmStore.createClient(client)
+      ok++
+    } catch {
+      fail++
+    }
+  }
+  importing.value = false
+  importModal.value = false
+  importPreview.value = []
+  if (ok)   toast.success(`${ok} cliente${ok !== 1 ? 's' : ''} importado${ok !== 1 ? 's' : ''} correctamente`)
+  if (fail) toast.error(`${fail} cliente${fail !== 1 ? 's' : ''} no pudieron importarse`)
+}
+
 function staleDays(client) {
   if (client.tipoCliente !== 'potencial') return 0
   // Una cotización también cuenta como contacto y resetea el contador
@@ -699,6 +847,60 @@ function snoozeAndOpen(client) {
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+.cc-btn-import {
+  padding: 0.55rem 1rem;
+  font-size: 0.8rem;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1.5px solid var(--color-primary, #6b8e3a);
+  color: var(--color-primary, #6b8e3a);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.15s, color 0.15s;
+}
+.cc-btn-import:hover {
+  background: var(--color-primary, #6b8e3a);
+  color: #fff;
+}
+
+/* ── Import preview modal ── */
+.ci-summary {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.ci-badge {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--color-surface, #f8fafc);
+}
+.ci-badge--new { border: 2px solid var(--color-primary, #6b8e3a); }
+.ci-badge--skip { border: 2px solid var(--color-muted, #94a3b8); }
+.ci-num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+.ci-badge--new .ci-num { color: var(--color-primary, #6b8e3a); }
+.ci-badge--skip .ci-num { color: var(--color-muted, #94a3b8); }
+.ci-lbl { font-size: 0.7rem; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+.ci-list { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.ci-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  background: var(--color-surface, #f8fafc);
+}
+.ci-lugar { color: var(--color-muted); font-size: 0.72rem; margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+.ci-empty { font-size: 0.82rem; color: var(--color-muted); text-align: center; padding: 1rem 0; }
 
 /* ── State: loading / empty ── */
 .cc-state {
