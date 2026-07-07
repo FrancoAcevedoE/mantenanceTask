@@ -42,6 +42,7 @@ import formulasResinaRoutes from "./routes/formulasResinaRoutes.js"
 import produccionRoutes     from "./routes/produccionRoutes.js"
 import { uploadRouter, filesRouter } from "./routes/uploadRoutes.js"
 import User from "./models/userModels.js"
+import { demoGuard } from "./middlewares/demoGuard.js"
 
 console.log("[server] imported routes and models")
 
@@ -143,6 +144,7 @@ app.use((req, res, next) => {
   next()
 })
 app.use(express.json({ limit: "3mb" }))
+app.use(demoGuard)
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

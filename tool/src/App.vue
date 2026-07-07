@@ -22,6 +22,7 @@ const currentUser = computed(() => { route.fullPath; return getStoredUser() })
 const showNav = computed(() => route.name !== 'LogUser' && Boolean(sessionStorage.getItem('token')))
 
 const role = computed(() => currentUser.value?.role)
+const isDemoMode     = computed(() => currentUser.value?.isDemo === true)
 const isAdmin        = computed(() => role.value === 'admin')
 const canMantenim    = computed(() => ['admin', 'operario', 'supervisor'].includes(role.value))
 const canVentas      = computed(() => ['admin', 'admin_ventas', 'vendedor'].includes(role.value))
@@ -251,6 +252,10 @@ onBeforeUnmount(() => { notificationsStore.stop() })
   </aside>
 
   <main :class="['app-content', { 'with-nav': showNav, 'nav-open': showNav && mobileOpen }]">
+    <div v-if="isDemoMode && showNav" class="demo-banner">
+      <i class="bi bi-flask-fill"></i>
+      <span>Modo demo — los cambios no se guardan y se revierten al cerrar sesión</span>
+    </div>
     <router-view />
   </main>
 </template>
@@ -550,4 +555,24 @@ main.app-content.nav-open { margin-left: var(--sidebar-w-open); }
 [data-theme="dark"] .mobile-toggle:hover { color: #FF6600; }
 
 [data-theme="dark"] main.app-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
+
+/* ── Demo mode banner ── */
+.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(234,179,8,0.12);
+  border-bottom: 1px solid rgba(234,179,8,0.3);
+  color: #92400e;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  letter-spacing: 0.02em;
+}
+.demo-banner i { font-size: 0.85rem; flex-shrink: 0; }
+[data-theme="dark"] .demo-banner {
+  background: rgba(234,179,8,0.1);
+  border-bottom-color: rgba(234,179,8,0.2);
+  color: #fde68a;
+}
 </style>
