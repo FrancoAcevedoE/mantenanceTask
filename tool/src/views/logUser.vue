@@ -74,6 +74,7 @@
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
 import { useLocale } from '@/composables/useLocale'
+import { useDarkModeToggle } from '@/composables/useDarkModeToggle'
 
 const PWA_URL = import.meta.env.VITE_PWA_URL || "https://mantenance-task-francoacevedoes-projects.vercel.app/logUser"
 
@@ -111,7 +112,8 @@ const TRANSLATIONS = {
 export default {
   setup() {
     const { locale, toggleLocale } = useLocale()
-    return { locale, toggleLocale }
+    const { darkMode, toggleDark: _toggleDark } = useDarkModeToggle()
+    return { locale, toggleLocale, darkMode, _toggleDark }
   },
 
   data() {
@@ -122,7 +124,6 @@ export default {
       loading: false,
       pwaUrl: PWA_URL,
       qrUrl: '',
-      darkMode: localStorage.getItem('darkMode') === 'true',
     }
   },
 
@@ -169,9 +170,7 @@ export default {
     },
 
     toggleDark() {
-      this.darkMode = !this.darkMode
-      document.documentElement.setAttribute('data-theme', this.darkMode ? 'dark' : 'light')
-      localStorage.setItem('darkMode', String(this.darkMode))
+      this._toggleDark()
       this._applyLoginBg()
     },
 

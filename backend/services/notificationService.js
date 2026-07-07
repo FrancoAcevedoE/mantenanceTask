@@ -2,6 +2,8 @@ import Maintenance from "../models/mantenanceModels.js"
 import Machine from "../models/machineModels.js"
 import NotificationLog from "../models/notificationLogModel.js"
 import { sendPushNotificationToAllUsers } from "./pushService.js"
+import Activity from "../models/activityModel.js"
+import MateriaPrima from "../models/materiaPrimaModel.js"
 
 const WEBHOOK_URL = String(process.env.NOTIFICATION_WEBHOOK_URL || "").trim()
 const NOTIFICATION_ITEM_LIMIT = 8
@@ -487,4 +489,112 @@ export const sendMaintenanceStatusAlert = async ({ status, machine, sector, unfi
       status
     }
   })
+}
+
+const TYPE_LABELS = {
+  llamada: "Llamada",
+  reunion: "Reunión",
+  correo: "Correo",
+  nota: "Nota",
+  difusion: "Difusión",
+}
+
+export const getCrmNotificationsFeed = async () => {
+  const now = new Date()
+  const todayStart = new Date(now)
+  todayStart.setHours(0, 0, 0, 0)
+  const todayEnd = new Date(now)
+  todayEnd.setHours(23, 59, 59, 999)
+
+  const [overdueActivities, todayActivities] = await Promise.all([
+    Activity.find({
+      completada: false,
+      fechaProgramada: { $lt: todayStart },
+    })
+      .select("tipo titulo clienteNombre fechaProgramada")
+      .sort({ fechaProgramada: 1 })
+      .limit(NOTIFICATION_ITEM_LIMIT)
+      .lean(),
+
+    Activity.find({
+      completada: false,
+      fechaProgramada: { $gte: todayStart, $lte: todayEnd },
+    })
+      .select("tipo titulo clienteNombre fechaProgramada")
+      .sort({ fechaProgramada: 1 })
+      .limit(4)
+      .lean(),
+  ])
+
+  const overdueItems = overdueActivities.map((act) => ({
+    id: `crm-overdue-${act._id}`,
+    type: "crm-overdue",
+    title: `${TYPE_LABELS[act.tipo] || act.tipo} vencida`,
+    message: `${act.titulo}${act.clienteNombre ? ` · ${act.clienteNombre}` : ""}`,
+    createdAt: act.fechaProgramada,
+    severity: "warning",
+  }))
+
+  const todayItems = todayActivities.map((act) => ({
+    id: `crm-today-${act._id}`,
+    type: "crm-today",
+    title: `Hoy: ${TYPE_LABELS[act.tipo] || act.tipo}`,
+    message: `${act.titulo}${act.clienteNombre ? ` · ${act.clienteNombre}` : ""}`,
+    createdAt: act.fechaProgramada,
+    severity: "info",
+  }))
+
+  const items = [...overdueItems, ...todayItems]
+
+  return {
+    summary: {
+      overdueCount: overdueActivities.length,
+      todayCount: todayActivities.length,
+      totalActive: items.length,
+    },
+    items,
+  }
+}
+
+export const getComprasNotificationsFeed = async () => {
+  const lowStockMaterials = await MateriaPrima.find({
+    activo: { $ne: false },
+    stockMinimo: { $gt: 0 },
+    $expr: { $lte: ["$stock", "$stockMinimo"] },
+  })
+    .select("nombre stock stockMinimo unidad categoria")
+    .sort({ stock: 1 })
+    .limit(NOTIFICATION_ITEM_LIMIT)
+    .lean()
+
+  const criticalMaterials = lowStockMaterials.filter((m) => m.stock <= 0)
+  const lowMaterials = lowStockMaterials.filter((m) => m.stock > 0)
+
+  const items = [
+    ...criticalMaterials.map((m) => ({
+      id: `compras-critical-${m._id}`,
+      type: "stock-critical",
+      title: `Sin stock: ${m.nombre}`,
+      message: `Stock: ${m.stock} ${m.unidad}${m.categoria ? ` · ${m.categoria}` : ""} — Mínimo: ${m.stockMinimo} ${m.unidad}`,
+      createdAt: new Date(),
+      severity: "error",
+    })),
+    ...lowMaterials.map((m) => ({
+      id: `compras-low-${m._id}`,
+      type: "stock-low",
+      title: `Stock bajo: ${m.nombre}`,
+      message: `Stock: ${m.stock} ${m.unidad}${m.categoria ? ` · ${m.categoria}` : ""} — Mínimo: ${m.stockMinimo} ${m.unidad}`,
+      createdAt: new Date(),
+      severity: "warning",
+    })),
+  ]
+
+  return {
+    summary: {
+      criticalCount: criticalMaterials.length,
+      lowStockCount: lowMaterials.length,
+      totalActive: items.length,
+    },
+    items,
+  }
 }

@@ -5,6 +5,7 @@ import NotificationBell from '@/components/NotificationBell.vue'
 import UserManual from '@/components/UserManual.vue'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useLocale } from '@/composables/useLocale'
+import { useDarkModeToggle } from '@/composables/useDarkModeToggle'
 
 const route = useRoute()
 const router = useRouter()
@@ -71,15 +72,7 @@ const logout = async () => {
   await router.push('/logUser')
 }
 
-// Dark mode — apply immediately to avoid flash
-const darkMode = ref(localStorage.getItem('darkMode') === 'true')
-if (darkMode.value) document.documentElement.setAttribute('data-theme', 'dark')
-
-function toggleDark() {
-  darkMode.value = !darkMode.value
-  document.documentElement.setAttribute('data-theme', darkMode.value ? 'dark' : 'light')
-  localStorage.setItem('darkMode', String(darkMode.value))
-}
+const { darkMode, toggleDark } = useDarkModeToggle()
 
 // Locale
 const { locale, toggleLocale } = useLocale()

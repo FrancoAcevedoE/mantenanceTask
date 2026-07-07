@@ -169,7 +169,7 @@
         <div class="form-grid-2">
           <div class="field full">
             <label>Título *</label>
-            <input v-model="form.titulo" type="text" placeholder="Ej: Cotización revestimiento oficinas" />
+            <input v-model="form.titulo" type="text" placeholder="Ej: Cotización revestimiento oficinas" maxlength="60" />
           </div>
           <div class="field">
             <label>Fecha</label>
@@ -1344,9 +1344,6 @@ function discountOptions(descuentos) {
     const to = t.hastaHojas
     const range = to != null ? `${from}–${to} uds.` : `+${from - 1} uds.`
     const prefix = t.nota?.trim() || range
-    if (t.porcCantidad) {
-      opts.push({ label: `${prefix} · ${fmtPct(t.porcCantidad)}%`, pct: t.porcCantidad })
-    }
     if (t.porcCantidadContado) {
       opts.push({ label: `${prefix} · ${fmtPct(t.porcCantidadContado)}% (contado)`, pct: t.porcCantidadContado })
     }

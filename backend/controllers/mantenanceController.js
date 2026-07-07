@@ -6,6 +6,8 @@ import mongoose from "mongoose"
 import {
     getMaintenanceNotificationSummary,
     getMaintenanceNotificationsFeed,
+    getCrmNotificationsFeed,
+    getComprasNotificationsFeed,
     sendMaintenanceStatusAlert,
     sendMaintenanceSummaryNotification
 } from "../services/notificationService.js"
@@ -806,7 +808,15 @@ export const notificationsController = async (req, res) => {
 
     try {
 
-        const notificationsFeed = await getMaintenanceNotificationsFeed()
+        const role = req.user?.role
+        const SALES_ROLES = new Set(["vendedor", "admin_ventas"])
+        const COMPRAS_ROLES = new Set(["compras", "admin_compras"])
+
+        const notificationsFeed = SALES_ROLES.has(role)
+          ? await getCrmNotificationsFeed()
+          : COMPRAS_ROLES.has(role)
+          ? await getComprasNotificationsFeed()
+          : await getMaintenanceNotificationsFeed()
 
         const user = await User.findById(req.user.id)
             .select("notificationReadIds")

@@ -71,22 +71,6 @@ export const useNotificationsStore = defineStore('notifications', {
         return
       }
 
-      // No cargar notificaciones de mantenimiento para vendedores
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      if (user.role === 'vendedor') {
-        // Inicializar con datos vacíos para vendedores
-        this.items = []
-        this.summary = {
-          stoppedMachinesCount: 0,
-          pendingMaintenancesCount: 0,
-          totalActive: 0
-        }
-        this.readIds = []
-        this.knownItemIds = []
-        this.initialized = true
-        return
-      }
-
       if (!silent) {
         this.isLoading = true
       }
