@@ -142,6 +142,84 @@
               </div>
             </template>
 
+            <!-- MANTENIMIENTO -->
+            <template v-if="activeSection === 'maintenance'">
+              <div class="manual-section">
+                <h3>Mantenimiento de máquinas</h3>
+                <h4>Registrar una máquina nueva</h4>
+                <ol>
+                  <li>Menú lateral → <strong>Nueva máquina</strong>.</li>
+                  <li>Completá nombre, sector, descripción y tipo.</li>
+                  <li>Click <strong>Guardar</strong>. La máquina queda disponible para asignar trabajos.</li>
+                </ol>
+                <h4>Crear un trabajo de mantenimiento</h4>
+                <ol>
+                  <li>Menú lateral → <strong>Nuevo trabajo</strong>.</li>
+                  <li>Seleccioná la <strong>máquina</strong> afectada.</li>
+                  <li>Elegí el <strong>tipo de mantenimiento</strong> (correctivo, preventivo, etc.) y el <strong>estado inicial</strong>.</li>
+                  <li>Completá la descripción del problema o tarea.</li>
+                  <li>Asigná uno o más <strong>operarios</strong> desde el selector.</li>
+                  <li>Opcionalmente registrá el <strong>horómetro</strong> actual.</li>
+                  <li>Click <strong>Guardar</strong>. El trabajo queda en estado Pendiente.</li>
+                </ol>
+                <h4>Historial de mantenimientos</h4>
+                <ol>
+                  <li>Menú lateral → <strong>Historial</strong>.</li>
+                  <li>Usá los filtros de sector, operario, estado o búsqueda por máquina.</li>
+                  <li>Click en <strong>Ver detalle</strong> para expandir la información completa de un trabajo.</li>
+                  <li>Los trabajos se pueden marcar como <strong>Finalizado</strong> desde el detalle (solo admin y supervisor).</li>
+                  <li>Los trabajos finalizados pueden ser eliminados solo por admin.</li>
+                </ol>
+                <h4>Estados de un trabajo</h4>
+                <ul>
+                  <li><strong>Pendiente:</strong> registrado, esperando atención.</li>
+                  <li><strong>En curso:</strong> el operario está trabajando.</li>
+                  <li><strong>Detenida:</strong> la máquina está fuera de servicio.</li>
+                  <li><strong>Finalizado:</strong> trabajo completado y cerrado.</li>
+                </ul>
+                <div class="manual-tip">💡 Las máquinas con estado <em>Detenida</em> o <em>Pendiente</em> generan alertas automáticas en el dashboard y notificaciones al admin y supervisor.</div>
+              </div>
+            </template>
+
+            <!-- DASHBOARD -->
+            <template v-if="activeSection === 'dashboard'">
+              <div class="manual-section">
+                <h3>Dashboard de mantenimiento</h3>
+                <h4>Tarjetas de resumen</h4>
+                <ul>
+                  <li><strong>Total de trabajos:</strong> cantidad de mantenimientos en el período seleccionado.</li>
+                  <li><strong>Equipos registrados:</strong> total de máquinas en el sistema.</li>
+                  <li><strong>Pendientes:</strong> trabajos sin finalizar. Click para filtrar en la tabla.</li>
+                  <li><strong>Detenidas:</strong> máquinas fuera de servicio. Click para ver solo esos trabajos.</li>
+                </ul>
+                <h4>Seleccionar período</h4>
+                <ol>
+                  <li>Usá los selectores de <strong>mes y año de inicio/fin</strong> en la sección "Período de gráficos".</li>
+                  <li>Click <strong>Aplicar período</strong> para actualizar los gráficos.</li>
+                  <li>Click <strong>Último año</strong> para ver los últimos 12 meses.</li>
+                </ol>
+                <h4>Gráficos</h4>
+                <ul>
+                  <li><strong>Estados:</strong> distribución de trabajos por estado (dona).</li>
+                  <li><strong>Por operario:</strong> cantidad de trabajos por técnico (barras horizontales — click para ver detalle).</li>
+                  <li><strong>Por sector:</strong> trabajos agrupados por área de planta.</li>
+                  <li><strong>Evolución diaria:</strong> tendencia de mantenimientos en el tiempo (línea).</li>
+                </ul>
+                <h4>Últimos trabajos</h4>
+                <ol>
+                  <li>La tabla muestra los trabajos recientes con estado, máquina, sector y operario.</li>
+                  <li>Filtrá por máquina, estado u operario con los campos de la barra.</li>
+                  <li>Los trabajos pendientes se marcan en amarillo, los detenidos en rojo.</li>
+                </ol>
+                <h4>Estado actual de máquinas</h4>
+                <ol>
+                  <li>Las tarjetas muestran cada máquina con su último estado.</li>
+                  <li>Verde = operativa, amarillo = pendiente, rojo = detenida.</li>
+                  <li>Hover para ver el resumen del último trabajo.</li>
+                </ol>
+              </div>
+            </template>
+
             <!-- INVENTARIO -->
             <template v-if="activeSection === 'inventory'">
               <div class="manual-section">
@@ -479,6 +557,35 @@
                 <div class="manual-tip">💡 El admin de ventas solo puede crear y gestionar usuarios con rol Vendedor.</div>
               </div>
             </template>
+
+            <!-- INTERFAZ -->
+            <template v-if="activeSection === 'interfaz'">
+              <div class="manual-section">
+                <h3>Preferencias de interfaz</h3>
+                <h4>Modo oscuro</h4>
+                <ol>
+                  <li>En la barra lateral (menú izquierdo), hacé click en el ícono <strong>🌙 luna</strong> para activar el modo oscuro.</li>
+                  <li>El ícono cambia a <strong>☀️ sol</strong> cuando está activo.</li>
+                  <li>La preferencia se guarda automáticamente: la próxima vez que inicies sesión, se aplicará el mismo modo.</li>
+                  <li>En la pantalla de login también hay un botón de modo oscuro en la <strong>esquina superior derecha</strong>.</li>
+                </ol>
+                <h4>Cambiar idioma</h4>
+                <ol>
+                  <li>En la barra lateral, hacé click en el botón <strong>PT</strong> para cambiar a portugués, o <strong>ES</strong> para volver al español.</li>
+                  <li>El cambio aplica al menú de navegación y a la pantalla de login.</li>
+                  <li>La preferencia de idioma también se guarda automáticamente.</li>
+                  <li>El idioma también se puede cambiar desde la pantalla de login (botón en la esquina superior derecha).</li>
+                </ol>
+                <h4>Instalación como app (PWA)</h4>
+                <ol>
+                  <li>En el navegador, hacé click en el ícono de instalación (generalmente en la barra de dirección).</li>
+                  <li>Seleccioná <strong>Instalar</strong>. La app aparece en tu escritorio o pantalla de inicio.</li>
+                  <li>Una vez instalada, funciona sin necesidad de abrir el navegador.</li>
+                  <li>Las actualizaciones se aplican automáticamente en segundo plano.</li>
+                </ol>
+                <div class="manual-tip">💡 El modo oscuro no afecta los documentos PDF generados. Los PDFs siempre se generan con fondo blanco para mejor legibilidad al imprimir.</div>
+              </div>
+            </template>
           </div>
         </aside>
       </Transition>
@@ -596,24 +703,30 @@ const SALES_SECTIONS = [
 ]
 
 const sections = [
-  { id: 'inventory', label: 'Inventario',  icon: 'bi-box-seam' },
-  { id: 'sku',       label: 'SKU',         icon: 'bi-upc-scan' },
-  { id: 'quotes',    label: 'Cotizaciones', icon: 'bi-file-earmark-text' },
-  { id: 'crm',       label: 'CRM',         icon: 'bi-graph-up-arrow' },
-  { id: 'difusion',  label: 'Difusión',    icon: 'bi-megaphone' },
-  { id: 'prices',    label: 'Precios',     icon: 'bi-tags' },
-  { id: 'stock',     label: 'Stock',       icon: 'bi-archive' },
-  { id: 'notifs',    label: 'Notificaciones', icon: 'bi-bell' },
-  { id: 'roles',     label: 'Roles',       icon: 'bi-people' },
+  { id: 'maintenance', label: 'Mantenimiento', icon: 'bi-tools' },
+  { id: 'dashboard',   label: 'Dashboard',     icon: 'bi-speedometer2' },
+  { id: 'inventory',   label: 'Inventario',    icon: 'bi-box-seam' },
+  { id: 'sku',         label: 'SKU',           icon: 'bi-upc-scan' },
+  { id: 'quotes',      label: 'Cotizaciones',  icon: 'bi-file-earmark-text' },
+  { id: 'crm',         label: 'CRM',           icon: 'bi-graph-up-arrow' },
+  { id: 'difusion',    label: 'Difusión',      icon: 'bi-megaphone' },
+  { id: 'prices',      label: 'Precios',       icon: 'bi-tags' },
+  { id: 'stock',       label: 'Stock',         icon: 'bi-archive' },
+  { id: 'notifs',      label: 'Notificaciones', icon: 'bi-bell' },
+  { id: 'roles',       label: 'Roles',         icon: 'bi-people' },
+  { id: 'interfaz',    label: 'Interfaz',      icon: 'bi-palette' },
 ]
 
 // Abre en la sección relevante según la ruta actual
 const sectionByRoute = {
+  Dashboard: 'dashboard',
+  HistoryView: 'maintenance', NewMaintenance: 'maintenance', NewMachine: 'maintenance',
   InventoryView: 'inventory', ProductCreate: 'sku', ProductDetail: 'sku',
   ProductEdit: 'sku', BulkPrice: 'prices', StockManagement: 'stock',
   ProductGroups: 'inventory', ColorCatalog: 'inventory',
   CRM: 'crm', CrmView: 'crm',
   NotificationsHistory: 'notifs',
+  AdminView: 'roles',
 }
 
 const activeSection = ref('guia_ventas')
@@ -1051,4 +1164,115 @@ a.sales-doc-pdf-link:hover { text-decoration: underline; color: #ef4444; }
 }
 .sales-doc-upload-btn:hover:not(.disabled) { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
 .sales-doc-upload-btn.disabled { opacity: 0.6; cursor: not-allowed; }
+</style>
+
+<style>
+/* ── Manual dark mode ──────────────────────────────────────────── */
+[data-theme="dark"] .manual-btn {
+  background: rgba(13,18,35,0.85) !important;
+  color: rgba(255,255,255,0.7) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+[data-theme="dark"] .manual-btn:hover {
+  background: rgba(255,102,0,0.15) !important;
+  color: #FF8C42 !important;
+}
+[data-theme="dark"] .manual-panel {
+  background: rgba(10,14,28,0.98) !important;
+  color: rgba(255,255,255,0.88) !important;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.7) !important;
+}
+[data-theme="dark"] .manual-header {
+  background: rgba(7,11,20,0.95) !important;
+  border-bottom-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .manual-nav {
+  background: rgba(13,18,35,0.6) !important;
+  border-bottom-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .manual-nav-btn {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.72) !important;
+}
+[data-theme="dark"] .manual-nav-btn:hover {
+  background: rgba(255,102,0,0.1) !important;
+  border-color: rgba(255,102,0,0.3) !important;
+  color: #FF8C42 !important;
+}
+[data-theme="dark"] .manual-nav-btn.active {
+  background: rgba(255,102,0,0.85) !important;
+  border-color: #FF6600 !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .manual-nav-btn--sales.active {
+  background: rgba(59,130,246,0.8) !important;
+  border-color: #3b82f6 !important;
+}
+[data-theme="dark"] .manual-nav-btn--sales:not(.active) {
+  border-color: rgba(59,130,246,0.25) !important;
+  color: #93c5fd !important;
+}
+[data-theme="dark"] .manual-nav-group-label { color: rgba(255,255,255,0.35) !important; }
+[data-theme="dark"] .manual-nav-divider { background: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .manual-body {
+  background: rgba(10,14,28,0.98) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .manual-section h3 {
+  color: #FF8C42 !important;
+  border-bottom-color: rgba(255,102,0,0.2) !important;
+}
+[data-theme="dark"] .manual-section h4 { color: rgba(255,255,255,0.88) !important; }
+[data-theme="dark"] .manual-section p  { color: rgba(255,255,255,0.72) !important; }
+[data-theme="dark"] .manual-section li { color: rgba(255,255,255,0.72) !important; }
+[data-theme="dark"] .manual-tip {
+  background: rgba(245,158,11,0.1) !important;
+  border-left-color: #f59e0b !important;
+  color: #fde68a !important;
+}
+[data-theme="dark"] .sku-part.prefix { background: rgba(34,197,94,0.15)  !important; color: #86efac !important; }
+[data-theme="dark"] .sku-part.color  { background: rgba(59,130,246,0.15)  !important; color: #93c5fd !important; }
+[data-theme="dark"] .sku-part.term   { background: rgba(236,72,153,0.15)  !important; color: #f9a8d4 !important; }
+[data-theme="dark"] .sku-sep { color: rgba(255,255,255,0.3) !important; }
+[data-theme="dark"] .role-row { background: rgba(13,18,35,0.55) !important; color: rgba(255,255,255,0.72) !important; }
+[data-theme="dark"] .role-row.header { background: rgba(7,11,20,0.9) !important; color: #ffffff !important; }
+[data-theme="dark"] .role-badge.admin        { background: rgba(239,68,68,0.15)   !important; color: #fca5a5 !important; }
+[data-theme="dark"] .role-badge.admin-ventas { background: rgba(59,130,246,0.15)  !important; color: #93c5fd !important; }
+[data-theme="dark"] .role-badge.vendedor     { background: rgba(34,197,94,0.15)   !important; color: #86efac !important; }
+[data-theme="dark"] .role-badge.operario     { background: rgba(245,158,11,0.15)  !important; color: #fde68a !important; }
+[data-theme="dark"] .role-badge.supervisor   { background: rgba(168,85,247,0.15)  !important; color: #d8b4fe !important; }
+[data-theme="dark"] .sales-doc-content {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.82) !important;
+}
+[data-theme="dark"] .sales-doc-edit-btn {
+  background: rgba(59,130,246,0.12) !important;
+  border-color: rgba(59,130,246,0.25) !important;
+  color: #93c5fd !important;
+}
+[data-theme="dark"] .sales-doc-edit-btn:hover { background: rgba(59,130,246,0.2) !important; }
+[data-theme="dark"] .sales-doc-cancel-btn {
+  background: rgba(13,18,35,0.6) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.6) !important;
+}
+[data-theme="dark"] .sales-doc-cancel-btn:hover { background: rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .sales-doc-pdf-row {
+  background: rgba(239,68,68,0.08) !important;
+  border-color: rgba(239,68,68,0.2) !important;
+}
+[data-theme="dark"] .sales-doc-pdf-link { color: #93c5fd !important; }
+[data-theme="dark"] .sales-doc-upload-btn {
+  background: rgba(13,18,35,0.6) !important;
+  border-color: rgba(255,255,255,0.15) !important;
+  color: rgba(255,255,255,0.6) !important;
+}
+[data-theme="dark"] .sales-doc-upload-btn:hover:not(.disabled) {
+  border-color: #ef4444 !important; color: #fca5a5 !important; background: rgba(239,68,68,0.1) !important;
+}
+[data-theme="dark"] .sales-doc-meta { color: rgba(255,255,255,0.35) !important; }
+[data-theme="dark"] .sales-doc-empty { color: rgba(255,255,255,0.4) !important; }
+[data-theme="dark"] .sales-doc-loading { color: rgba(255,255,255,0.4) !important; }
 </style>

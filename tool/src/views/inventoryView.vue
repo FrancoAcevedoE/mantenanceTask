@@ -1494,3 +1494,43 @@ function colorStyle(colorName) {
 }
 .lb-close:hover { background: rgba(255,255,255,0.28); }
 </style>
+
+<style>
+[data-theme="dark"] .inv-table thead th {
+  background: rgba(13,18,35,0.85) !important;
+  color: rgba(255,255,255,0.55) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .inv-sidebar {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .inv-table tbody tr:hover {
+  background: rgba(255,102,0,0.06) !important;
+}
+[data-theme="dark"] .inv-table tbody tr.selected {
+  background: rgba(255,102,0,0.1) !important;
+}
+[data-theme="dark"] .group-header-row {
+  background: rgba(255,102,0,0.08) !important;
+}
+[data-theme="dark"] .group-header-row:hover {
+  background: rgba(255,102,0,0.12) !important;
+}
+[data-theme="dark"] .group-header-cell {
+  border-top-color: rgba(255,102,0,0.2) !important;
+}
+[data-theme="dark"] .group-header-label,
+[data-theme="dark"] .group-icon { color: #FF8C42 !important; }
+[data-theme="dark"] .selection-bar {
+  background: rgba(255,102,0,0.1) !important;
+  border-color: rgba(255,102,0,0.18) !important;
+}
+[data-theme="dark"] .table-scroll {
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .filter-count {
+  border-top-color: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.45) !important;
+}
+</style>

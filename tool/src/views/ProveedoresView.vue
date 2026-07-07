@@ -426,3 +426,19 @@ onMounted(load)
   .form-grid { grid-template-columns: 1fr; }
 }
 </style>
+
+<style>
+[data-theme="dark"] .prov-card-wrap {
+  background: rgba(13,18,35,0.82) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.55) !important;
+}
+[data-theme="dark"] .prov-title { color: #ffffff !important; }
+[data-theme="dark"] .btn-eval  { background: rgba(245,158,11,0.15) !important; color: #fde68a !important; }
+[data-theme="dark"] .btn-edit  { background: rgba(59,130,246,0.15) !important; color: #93c5fd !important; }
+[data-theme="dark"] .btn-del   { background: rgba(239,68,68,0.15)  !important; color: #fca5a5 !important; }
+[data-theme="dark"] .btn-ghost:hover { background: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .eval-label-sm,
+[data-theme="dark"] .eval-hist-comment { color: rgba(255,255,255,0.5) !important; }
+[data-theme="dark"] .star-off-sm { color: rgba(255,255,255,0.2) !important; }
+</style>

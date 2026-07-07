@@ -1048,3 +1048,16 @@ button:hover {
   }
 }
 </style>
+
+<style>
+[data-theme="dark"] .form-panel,
+[data-theme="dark"] .machines-panel {
+  background: rgba(13,18,35,0.82) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.55) !important;
+}
+[data-theme="dark"] .machine-item {
+  background: rgba(13,18,35,0.65) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+</style>

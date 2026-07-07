@@ -149,7 +149,10 @@ export default {
   },
 
   async mounted() {
-    document.body.style.background = 'rgb(103, 111, 62)'
+    const isDark = localStorage.getItem('darkMode') === 'true'
+    document.body.style.background = isDark
+      ? 'radial-gradient(ellipse at 15% 15%, rgba(120,50,220,0.18) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(255,102,0,0.14) 0%, transparent 55%), #070b14'
+      : 'rgb(103, 111, 62)'
     const currentUser = this.getStoredUser()
     this.currentUserRole = currentUser?.role || ""
     if (currentUser?.role === 'vendedor') return
@@ -618,5 +621,16 @@ button:hover { background: #8f8f8f; }
   gap: 0.75rem;
   margin-top: 1.25rem;
   justify-content: flex-end;
+}
+
+[data-theme="dark"] .modal-box {
+  background: rgba(10,14,28,0.97) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+}
+[data-theme="dark"] .modal-box h3 { color: #ffffff !important; }
+[data-theme="dark"] .modal-box label { color: rgba(255,255,255,0.6) !important; }
+[data-theme="dark"] .detail-text {
+  background: rgba(13,18,35,0.7) !important;
+  color: rgba(255,255,255,0.82) !important;
 }
 </style>

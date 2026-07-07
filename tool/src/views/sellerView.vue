@@ -2745,3 +2745,46 @@ function hasCliente(q) {
 .spin-icon { display: inline-block; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
+
+<style>
+[data-theme="dark"] .inv-table thead th,
+[data-theme="dark"] .items-table thead th {
+  background: rgba(13,18,35,0.85) !important;
+  color: rgba(255,255,255,0.5) !important;
+}
+[data-theme="dark"] .inv-table tbody tr:hover {
+  background: rgba(255,102,0,0.06) !important;
+}
+[data-theme="dark"] .badge-estado.borrador {
+  background: rgba(255,102,0,0.12) !important; color: #FF8C42 !important;
+}
+[data-theme="dark"] .badge-estado.enviada {
+  background: rgba(59,130,246,0.15) !important; color: #93c5fd !important;
+}
+[data-theme="dark"] .badge-estado.aceptada {
+  background: rgba(16,185,129,0.15) !important; color: #6ee7b7 !important;
+}
+[data-theme="dark"] .badge-estado.rechazada {
+  background: rgba(239,68,68,0.15) !important; color: #fca5a5 !important;
+}
+[data-theme="dark"] .psw-input,
+[data-theme="dark"] .disc-input,
+[data-theme="dark"] .qty-input {
+  background: rgba(13,18,35,0.8) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .sp-code,
+[data-theme="dark"] .sp-tag--espesor,
+[data-theme="dark"] .badge-exento {
+  background: rgba(255,102,0,0.1) !important;
+  color: #FF8C42 !important;
+  border-color: rgba(255,102,0,0.2) !important;
+}
+[data-theme="dark"] .total-row {
+  background: rgba(13,18,35,0.6) !important;
+}
+[data-theme="dark"] .icon-btn:hover {
+  background: rgba(255,102,0,0.1) !important; color: #FF8C42 !important;
+}
+</style>

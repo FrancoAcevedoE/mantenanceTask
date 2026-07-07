@@ -566,8 +566,11 @@ export default {
   },
   mounted() {
     this.loadUsers()
-document.body.style.background = 'rgb(103, 111, 62)'
-document.body.style.backgroundAttachment = 'fixed'
+    const isDark = localStorage.getItem('darkMode') === 'true'
+    document.body.style.background = isDark
+      ? 'radial-gradient(ellipse at 15% 15%, rgba(120,50,220,0.18) 0%, transparent 55%), radial-gradient(ellipse at 85% 85%, rgba(255,102,0,0.14) 0%, transparent 55%), #070b14'
+      : 'rgb(103, 111, 62)'
+    document.body.style.backgroundAttachment = 'fixed'
   },
   beforeUnmount() {
     document.body.style.background = '';
@@ -1092,5 +1095,33 @@ button:hover {
   .panel-header button {
     width: 100%;
   }
+}
+</style>
+
+<style>
+[data-theme="dark"] .panel-card {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .title { color: #ffffff !important; }
+[data-theme="dark"] .user-item {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .audit-notepad {
+  background: rgba(13,18,35,0.8) !important;
+  color: rgba(255,255,255,0.85) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+[data-theme="dark"] .audit-meta { color: rgba(255,255,255,0.45) !important; }
+[data-theme="dark"] .deleted-zone {
+  background: rgba(120,53,15,0.15) !important;
+  border-color: rgba(245,158,11,0.25) !important;
+}
+[data-theme="dark"] .deleted-zone h3 { color: #fde68a !important; }
+[data-theme="dark"] .deleted-zone p  { color: rgba(255,255,255,0.6) !important; }
+[data-theme="dark"] .deleted-item {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(245,158,11,0.2) !important;
 }
 </style>
