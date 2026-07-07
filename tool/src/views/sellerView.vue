@@ -2787,4 +2787,82 @@ function hasCliente(q) {
 [data-theme="dark"] .icon-btn:hover {
   background: rgba(255,102,0,0.1) !important; color: #FF8C42 !important;
 }
+
+/* ── Modal enviar cotización ── */
+[data-theme="dark"] .send-modal {
+  background: rgba(10,14,28,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .send-modal-header { color: rgba(255,255,255,0.95) !important; }
+[data-theme="dark"] .send-client-info {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.8) !important;
+}
+[data-theme="dark"] .send-label { color: rgba(255,255,255,0.55) !important; }
+[data-theme="dark"] .send-ch-opt {
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.75) !important;
+}
+[data-theme="dark"] .send-ch-opt.on {
+  background: rgba(59,130,246,0.15) !important;
+  border-color: #3b82f6 !important;
+  color: #93c5fd !important;
+}
+[data-theme="dark"] .send-input,
+[data-theme="dark"] .send-textarea {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .send-modal-footer { border-color: rgba(255,255,255,0.07) !important; }
+
+/* ── Inputs del formulario de cotización ── */
+[data-theme="dark"] .sel-small,
+[data-theme="dark"] .input-small,
+[data-theme="dark"] .input-num,
+[data-theme="dark"] .disc-pct-input,
+[data-theme="dark"] .agregado-qty-input {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .disabled-input {
+  background: rgba(13,18,35,0.35) !important;
+  color: rgba(255,255,255,0.3) !important;
+}
+[data-theme="dark"] .crm-cp-drop {
+  background: rgba(10,14,28,0.97) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+[data-theme="dark"] .crm-cp-opt { color: rgba(255,255,255,0.8) !important; }
+[data-theme="dark"] .crm-cp-opt:hover { background: rgba(255,102,0,0.08) !important; }
+[data-theme="dark"] .quote-search-input {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+
+/* ── Modal editor de impresión ── */
+[data-theme="dark"] .pe-modal {
+  background: rgba(10,14,28,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .pe-hd {
+  border-color: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.9) !important;
+}
+[data-theme="dark"] .pe-ft { border-color: rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .pe-field input,
+[data-theme="dark"] .pe-field textarea {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .pe-preview-doc {
+  background: rgba(13,18,35,0.6) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.8) !important;
+}
 </style>
