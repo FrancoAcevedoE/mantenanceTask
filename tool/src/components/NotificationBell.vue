@@ -3,9 +3,59 @@ import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useLocale } from '@/composables/useLocale'
 
+const { locale } = useLocale()
 const notificationsStore = useNotificationsStore()
 const router = useRouter()
+
+const TRANSLATIONS = {
+  es: {
+    alertCenter: 'Centro de alertas',
+    notifications: 'Notificaciones',
+    markAllRead: 'Marcar todo como leído',
+    viewHistory: 'Ver historial completo',
+    loadingAlerts: 'Cargando alertas...',
+    noAlerts: 'No hay alertas activas en este momento.',
+    stoppedMachines: 'Máquinas detenidas',
+    pendingJobs: 'Trabajos pendientes',
+    overdueActivities: 'Actividades vencidas',
+    todayActivities: 'Actividades hoy',
+    criticalStock: 'Sin stock',
+    lowStock: 'Stock bajo',
+    permUnsupported: 'Tu navegador no soporta notificaciones del sistema',
+    permGranted: 'Notificaciones del sistema activadas',
+    permDenied: 'Las notificaciones del sistema están bloqueadas en este navegador',
+    permActivate: 'Activar notificaciones del sistema',
+    permActive: 'Además de la campana, la app puede avisarte en el sistema cuando aparezcan alertas nuevas.',
+    pushDisable: 'Desactivar push con app cerrada',
+    pushEnable: 'Activar push con app cerrada',
+    pushUnsupported: 'Este navegador no soporta notificaciones push web.',
+  },
+  pt: {
+    alertCenter: 'Central de alertas',
+    notifications: 'Notificações',
+    markAllRead: 'Marcar tudo como lido',
+    viewHistory: 'Ver histórico completo',
+    loadingAlerts: 'Carregando alertas...',
+    noAlerts: 'Não há alertas ativos no momento.',
+    stoppedMachines: 'Máquinas paradas',
+    pendingJobs: 'Trabalhos pendentes',
+    overdueActivities: 'Atividades vencidas',
+    todayActivities: 'Atividades hoje',
+    criticalStock: 'Sem estoque',
+    lowStock: 'Estoque baixo',
+    permUnsupported: 'Seu navegador não suporta notificações do sistema',
+    permGranted: 'Notificações do sistema ativadas',
+    permDenied: 'As notificações do sistema estão bloqueadas neste navegador',
+    permActivate: 'Ativar notificações do sistema',
+    permActive: 'Além do sino, o app pode avisá-lo no sistema quando aparecerem novos alertas.',
+    pushDisable: 'Desativar push com app fechado',
+    pushEnable: 'Ativar push com app fechado',
+    pushUnsupported: 'Este navegador não suporta notificações push web.',
+  },
+}
+const t = computed(() => TRANSLATIONS[locale.value] || TRANSLATIONS.es)
 
 const {
   items,
@@ -20,20 +70,37 @@ const {
   pushLoading
 } = storeToRefs(notificationsStore)
 
+const userRole = computed(() => {
+  try { return JSON.parse(sessionStorage.getItem('user') || '{}').role || '' }
+  catch { return '' }
+})
+const isSalesRole = computed(() => ['vendedor', 'admin_ventas'].includes(userRole.value))
+const isComprasRole = computed(() => ['compras', 'admin_compras'].includes(userRole.value))
+
+const summaryCards = computed(() => {
+  if (isSalesRole.value) {
+    return [
+      { count: summary.value.overdueCount ?? 0, label: t.value.overdueActivities, severity: 'danger', path: '/crm', query: {} },
+      { count: summary.value.todayCount ?? 0, label: t.value.todayActivities, severity: 'warning', path: '/crm', query: {} },
+    ]
+  }
+  if (isComprasRole.value) {
+    return [
+      { count: summary.value.criticalCount ?? 0, label: t.value.criticalStock, severity: 'danger', path: '/compras', query: {} },
+      { count: summary.value.lowStockCount ?? 0, label: t.value.lowStock, severity: 'warning', path: '/compras', query: {} },
+    ]
+  }
+  return [
+    { count: summary.value.stoppedMachinesCount ?? 0, label: t.value.stoppedMachines, severity: 'danger', path: '/dashboard', query: { filter: 'stopped' } },
+    { count: summary.value.pendingMaintenancesCount ?? 0, label: t.value.pendingJobs, severity: 'warning', path: '/dashboard', query: { filter: 'pending' } },
+  ]
+})
+
 const permissionLabel = computed(() => {
-  if (!hasBrowserNotificationsSupport.value) {
-    return 'Tu navegador no soporta notificaciones del sistema'
-  }
-
-  if (browserPermission.value === 'granted') {
-    return 'Notificaciones del sistema activadas'
-  }
-
-  if (browserPermission.value === 'denied') {
-    return 'Las notificaciones del sistema están bloqueadas en este navegador'
-  }
-
-  return 'Activar notificaciones del sistema'
+  if (!hasBrowserNotificationsSupport.value) return t.value.permUnsupported
+  if (browserPermission.value === 'granted') return t.value.permGranted
+  if (browserPermission.value === 'denied') return t.value.permDenied
+  return t.value.permActivate
 })
 
 const panelClasses = computed(() => [
@@ -95,41 +162,28 @@ onBeforeUnmount(() => {
     <aside :class="panelClasses" @click.stop>
       <header class="notification-panel__header">
         <div>
-          <p class="notification-panel__eyebrow">Centro de alertas</p>
-          <h2>Notificaciones</h2>
+          <p class="notification-panel__eyebrow">{{ t.alertCenter }}</p>
+          <h2>{{ t.notifications }}</h2>
         </div>
         <button type="button" class="notification-text-button" @click="notificationsStore.markAllAsRead()">
-          Marcar todo como leído
+          {{ t.markAllRead }}
         </button>
       </header>
 
-   <section class="notification-summary-grid">
+      <section class="notification-summary-grid">
+        <article
+          v-for="card in summaryCards"
+          :key="card.label"
+          :class="`notification-summary-card notification-summary-card--${card.severity}`"
+          @click="$router.push({ path: card.path, query: card.query })"
+        >
+          <strong>{{ card.count }}</strong>
+          <span>{{ card.label }}</span>
+        </article>
+      </section>
 
-  <article 
-    class="notification-summary-card notification-summary-card--danger"
-    @click="$router.push({ 
-      path: '/dashboard', 
-      query: { filter: 'stopped' } 
-    })"
-  >
-    <strong>{{ summary.stoppedMachinesCount }}</strong>
-    <span>Máquinas detenidas</span>
-  </article>
-
-  <article 
-    class="notification-summary-card notification-summary-card--warning"
-    @click="$router.push({ 
-      path: '/dashboard', 
-      query: { filter: 'pending' } 
-    })"
-  >
-    <strong>{{ summary.pendingMaintenancesCount }}</strong>
-    <span>Trabajos pendientes</span>
-  </article>
-
-</section>
       <button type="button" class="notification-history-button" @click="goToHistory">
-        Ver historial completo
+        {{ t.viewHistory }}
       </button>
 
       <button
@@ -141,7 +195,7 @@ onBeforeUnmount(() => {
       >
         {{ permissionLabel }}
       </button>
-      <p v-else class="notification-permission-text">Además de la campana, la app puede avisarte en el sistema cuando aparezcan alertas nuevas.</p>
+      <p v-else class="notification-permission-text">{{ t.permActive }}</p>
 
       <button
         v-if="hasPushSupport"
@@ -150,12 +204,12 @@ onBeforeUnmount(() => {
         :disabled="pushLoading"
         @click="onPushToggle"
       >
-        {{ pushEnabled ? 'Desactivar push con app cerrada' : 'Activar push con app cerrada' }}
+        {{ pushEnabled ? t.pushDisable : t.pushEnable }}
       </button>
-      <p v-else class="notification-permission-text">Este navegador no soporta notificaciones push web.</p>
+      <p v-else class="notification-permission-text">{{ t.pushUnsupported }}</p>
 
-      <div v-if="isLoading" class="notification-state">Cargando alertas...</div>
-      <div v-else-if="!items.length" class="notification-state">No hay alertas activas en este momento.</div>
+      <div v-if="isLoading" class="notification-state">{{ t.loadingAlerts }}</div>
+      <div v-else-if="!items.length" class="notification-state">{{ t.noAlerts }}</div>
 
       <ul v-else class="notification-list">
         <li

@@ -5,24 +5,24 @@
         <!-- HOROMETRO -->
         <div class="action-card" @click="activePanel = activePanel === 'horometro' ? '' : 'horometro'">
           <i class="bi bi-stopwatch"></i>
-          <p class="action-title">ACTUALIZAR HORÓMETRO</p>
+          <p class="action-title">{{ t.panelHorometer }}</p>
         </div>
         <!-- NUEVO TRABAJO -->
         <div class="action-card" @click="activePanel = activePanel === 'trabajo' ? '' : 'trabajo'">
           <i class="bi bi-clipboard-data"></i>
-          <p class="action-title">NUEVO TRABAJO</p>
+          <p class="action-title">{{ t.panelNewJob }}</p>
         </div>
       </div>
       <!-- PANEL HOROMETRO -->
       <div v-if="activePanel === 'horometro'" class="panel-container step-block">
         <div class="horometro-panel">
-          <h2>Actualizar horómetro</h2>
+          <h2>{{ t.horometerTitle }}</h2>
           <div class="horometro-body">
             <div class="horometro-autocomplete">
               <input
                 type="text"
                 v-model="horometroForm.search"
-                placeholder="Buscar máquina o sector..."
+                :placeholder="t.horometerSearch"
                 class="horometro-search"
                 autocomplete="off"
                 @focus="horometroDropdownOpen = true"
@@ -42,44 +42,44 @@
                 </li>
               </ul>
             </div>
-            <label>Nuevo horómetro</label>
+            <label>{{ t.horometerNew }}</label>
             <input type="number" min="0" step="1" v-model.number="horometroForm.value" />
             <button type="button" :disabled="!horometroForm.machineId || horometroForm.value === null || isUpdatingHorometro" @click="updateHorometroFromPanel">
-              {{ isUpdatingHorometro ? 'Actualizando...' : 'Actualizar horómetro' }}
+              {{ isUpdatingHorometro ? t.horometerUpdating : t.horometerBtn }}
             </button>
             <div v-if="selectedHorometroMachine" class="horometro-history">
               <p>
-                <strong>Horómetro actual:</strong>
+                <strong>{{ t.horometerCurrent }}</strong>
                 {{ selectedHorometroMachine.horometro ?? 0 }}h
               </p>
-              <p><strong>Historial</strong></p>
+              <p><strong>{{ t.horometerHistory }}</strong></p>
               <ul v-if="orderedHorometroHistory.length" class="horometro-list">
                 <li v-for="entry in orderedHorometroHistory" :key="`${entry.recordedAt}-${entry.value}`">
                   {{ formatDate(entry.recordedAt) }} - {{ entry.value }}h
                 </li>
               </ul>
-              <p v-else>No hay historial registrado.</p>
+              <p v-else>{{ t.horometerNoHistory }}</p>
             </div>
           </div>
         </div>
       </div>
       <!-- PANEL NUEVO TRABAJO -->
       <div v-if="activePanel === 'trabajo'" class="panel-container step-block">
-        <h2>NUEVA TAREA</h2>
+        <h2>{{ t.newTaskTitle }}</h2>
         <form @submit.prevent="saveMaintenance">
           <select v-model="form.sector" required @change="onSectorChange">
-            <option value="">SELECCIONAR SECTOR</option>
+            <option value="">{{ t.selectSector }}</option>
             <option v-for="sector in sectors" :key="sector" :value="sector">
               {{ sector }}
             </option>
           </select>
           <select v-model="form.machine" required @change="onMachineChange">
-            <option value="">SELECCIONAR MÁQUINA</option>
+            <option value="">{{ t.selectMachine }}</option>
             <option v-for="machine in filteredMachinesBySector" :key="machine._id" :value="machine._id">
               {{ machine.name }}
             </option>
           </select>
-          <label>PARTES DE LA MÁQUINA</label>
+          <label>{{ t.machineParts }}</label>
 
           <div class="multi-select">
             <div class="multi-select-header" @click="showPartsDropdown = !showPartsDropdown">
@@ -88,7 +88,7 @@
               </span>
 
               <span v-else>
-                Seleccionar partes
+                {{ t.selectParts }}
               </span>
 
               <span class="dropdown-arrow">
@@ -104,13 +104,13 @@
               </label>
 
               <div v-if="!selectedMachinePart.length" class="multi-empty">
-                La máquina no tiene partes configuradas.
+                {{ t.noParts }}
               </div>
             </div>
           </div>
-          <label>OPERARIO</label>
+          <label>{{ t.operario }}</label>
           <select v-model="form.clientId">
-            <option value="">Seleccionar operario</option>
+            <option value="">{{ t.selectOperario }}</option>
             <option v-for="op in operarios" :key="op._id" :value="op._id">
               {{ op.name }}
             </option>
@@ -124,18 +124,18 @@
           </div>
           <div v-if="availableAdditionalWorkers.length" class="add-worker-row">
             <select v-model="selectedAdditionalWorker">
-              <option value="">Agregar otro operario</option>
+              <option value="">{{ t.addOtherWorker }}</option>
               <option v-for="op in availableAdditionalWorkers" :key="op._id" :value="op._id">
                 {{ op.name }}
               </option>
             </select>
             <button type="button" class="add-worker-btn" :disabled="!selectedAdditionalWorker" @click="addWorker">
-              Agregar
+              {{ t.btnAdd }}
             </button>
           </div>
 
           <select v-model="form.maintenanceType">
-            <option value="">SELECCIONAR TIPO DE TRABAJO</option>
+            <option value="">{{ t.selectJobType }}</option>
             <option value="Preventivo predictivo">Preventivo predictivo</option>
             <option value="Preventivo de mejora continua">Preventivo de mejora continua</option>
             <option value="Preventivo de correctivo">Preventivo de correctivo</option>
@@ -144,25 +144,25 @@
             <option value="Limpieza">Limpieza</option>
             <option value="Puesta en marcha (maquina parada)">Puesta en marcha (maquina parada)</option>
           </select>
-          <label>DESCRIPCIÓN</label>
+          <label>{{ t.description }}</label>
           <textarea v-model="form.workDescription"></textarea>
-          <label>HORAS TRABAJADAS</label>
+          <label>{{ t.hoursWorked }}</label>
           <input type="number" min="0.5" step="0.5" v-model.number="form.hoursWorked" />
-          <label>MÁQUINA EN FUNCIONAMIENTO?</label>
+          <label>{{ t.machineRunning }}</label>
           <select v-model="form.machineRunning">
-            <option :value="null">Seleccionar</option>
-            <option :value="true">Sí</option>
-            <option :value="false">No</option>
+            <option :value="null">{{ t.selectOption }}</option>
+            <option :value="true">{{ t.yes }}</option>
+            <option :value="false">{{ t.no }}</option>
           </select>
-          <label>TRABAJO TERMINADO?</label>
+          <label>{{ t.jobFinished }}</label>
           <select v-model="form.jobFinished">
-            <option :value="null">Seleccionar</option>
-            <option :value="true">Sí</option>
-            <option :value="false">No</option>
+            <option :value="null">{{ t.selectOption }}</option>
+            <option :value="true">{{ t.yes }}</option>
+            <option :value="false">{{ t.no }}</option>
           </select>
 
           <div v-if="form.jobFinished === false || form.machineRunning === false" class="unfinished-block">
-            <label class="unfinished-title">MOTIVO DE NO FINALIZACIÓN</label>
+            <label class="unfinished-title">{{ t.unfinishedTitle }}</label>
             <div class="reason-list">
               <label
                 v-for="option in unfinishedReasonOptions"
@@ -182,37 +182,37 @@
             <textarea
               v-if="form.unfinishedReasonCategory === 'Otros'"
               v-model="form.unfinishedReason"
-              placeholder="Describe el motivo..."
+              :placeholder="t.otherReason"
               class="reason-textarea"
             ></textarea>
           </div>
 
-          <button type="submit">Guardar mantenimiento</button>
+          <button type="submit">{{ t.btnSave }}</button>
         </form>
       </div>
       <!-- MODAL -->
       <div v-if="showMachineDetailModal" class="modal">
         <div class="modal-box modal-box-detail">
-          <h3>Detalle de máquina</h3>
+          <h3>{{ t.modalMachineTitle }}</h3>
           <div style="text-align: left; line-height: 1.8">
             <p>
-              <strong>Sector:</strong>
+              <strong>{{ t.labelSector }}</strong>
               {{ selectedMachine?.sector || '-' }}
             </p>
             <p>
-              <strong>Máquina:</strong>
+              <strong>{{ t.labelMachine }}</strong>
               {{ selectedMachine?.name || '-' }}
             </p>
             <p>
-              <strong>Horómetro:</strong>
+              <strong>{{ t.labelHorometer }}</strong>
               {{ selectedMachine?.horometro ?? 0 }}h
             </p>
             <p>
-              <strong>Partes:</strong>
+              <strong>{{ t.labelParts }}</strong>
               {{ selectedMachinePart.length ? selectedMachinePart.join(', ') : '-' }}
             </p>
             <p>
-              <strong>Instrucciones/observaciones:</strong>
+              <strong>{{ t.labelInstructions }}</strong>
             </p>
             <p style="
                 background: #f5f5f5;
@@ -224,7 +224,7 @@
             </p>
           </div>
           <button type="button" @click="closeMachineDetailModal" style="margin-top: 1rem">
-            Cerrar
+            {{ t.btnClose }}
           </button>
         </div>
       </div>
@@ -235,8 +235,66 @@
 <script>
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import { useLocale } from '@/composables/useLocale'
+
+const TRANSLATIONS = {
+  es: {
+    panelHorometer: 'ACTUALIZAR HORÓMETRO', panelNewJob: 'NUEVO TRABAJO',
+    horometerTitle: 'Actualizar horómetro',
+    horometerSearch: 'Buscar máquina o sector...', horometerNew: 'Nuevo horómetro',
+    horometerUpdating: 'Actualizando...', horometerBtn: 'Actualizar horómetro',
+    horometerCurrent: 'Horómetro actual:', horometerHistory: 'Historial',
+    horometerNoHistory: 'No hay historial registrado.',
+    newTaskTitle: 'NUEVA TAREA',
+    selectSector: 'SELECCIONAR SECTOR', selectMachine: 'SELECCIONAR MÁQUINA',
+    machineParts: 'PARTES DE LA MÁQUINA', selectParts: 'Seleccionar partes',
+    noParts: 'La máquina no tiene partes configuradas.',
+    operario: 'OPERARIO', selectOperario: 'Seleccionar operario',
+    addOtherWorker: 'Agregar otro operario', btnAdd: 'Agregar',
+    selectJobType: 'SELECCIONAR TIPO DE TRABAJO',
+    description: 'DESCRIPCIÓN', hoursWorked: 'HORAS TRABAJADAS',
+    machineRunning: 'MÁQUINA EN FUNCIONAMIENTO?',
+    jobFinished: 'TRABAJO TERMINADO?',
+    selectOption: 'Seleccionar', yes: 'Sí', no: 'No',
+    unfinishedTitle: 'MOTIVO DE NO FINALIZACIÓN',
+    otherReason: 'Describe el motivo...', btnSave: 'Guardar mantenimiento',
+    modalMachineTitle: 'Detalle de máquina',
+    labelSector: 'Sector:', labelMachine: 'Máquina:', labelHorometer: 'Horómetro:',
+    labelParts: 'Partes:', labelInstructions: 'Instrucciones/observaciones:',
+    btnClose: 'Cerrar',
+  },
+  pt: {
+    panelHorometer: 'ATUALIZAR HORÍMETRO', panelNewJob: 'NOVO TRABALHO',
+    horometerTitle: 'Atualizar horímetro',
+    horometerSearch: 'Pesquisar máquina ou setor...', horometerNew: 'Novo horímetro',
+    horometerUpdating: 'Atualizando...', horometerBtn: 'Atualizar horímetro',
+    horometerCurrent: 'Horímetro atual:', horometerHistory: 'Histórico',
+    horometerNoHistory: 'Não há histórico registrado.',
+    newTaskTitle: 'NOVA TAREFA',
+    selectSector: 'SELECIONAR SETOR', selectMachine: 'SELECIONAR MÁQUINA',
+    machineParts: 'PARTES DA MÁQUINA', selectParts: 'Selecionar peças',
+    noParts: 'A máquina não tem peças configuradas.',
+    operario: 'OPERÁRIO', selectOperario: 'Selecionar operário',
+    addOtherWorker: 'Adicionar outro operário', btnAdd: 'Adicionar',
+    selectJobType: 'SELECIONAR TIPO DE TRABALHO',
+    description: 'DESCRIÇÃO', hoursWorked: 'HORAS TRABALHADAS',
+    machineRunning: 'MÁQUINA EM FUNCIONAMENTO?',
+    jobFinished: 'TRABALHO CONCLUÍDO?',
+    selectOption: 'Selecionar', yes: 'Sim', no: 'Não',
+    unfinishedTitle: 'MOTIVO DE NÃO FINALIZAÇÃO',
+    otherReason: 'Descreva o motivo...', btnSave: 'Salvar manutenção',
+    modalMachineTitle: 'Detalhes da máquina',
+    labelSector: 'Setor:', labelMachine: 'Máquina:', labelHorometer: 'Horímetro:',
+    labelParts: 'Peças:', labelInstructions: 'Instruções/observações:',
+    btnClose: 'Fechar',
+  },
+}
 
 export default {
+  setup() {
+    const { locale } = useLocale()
+    return { locale }
+  },
   data() {
     return {
       activePanel: '',
@@ -306,6 +364,8 @@ export default {
   },
 
   computed: {
+    t() { return TRANSLATIONS[this.locale] || TRANSLATIONS.es },
+
     isSectorComplete() {
       return Boolean(this.form.sector)
     },

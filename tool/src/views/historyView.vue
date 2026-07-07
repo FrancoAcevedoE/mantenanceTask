@@ -2,29 +2,29 @@
   <div class="page-container">
     <div class="container">
       <div class="topbar">
-        <p>HISTORIAL</p>
-        <button @click="$router.push('/dashboard')">Ir al Dashboard</button>
+        <p>{{ t.title }}</p>
+        <button @click="$router.push('/dashboard')">{{ t.goDashboard }}</button>
       </div>
 
       <div v-if="currentUserRole === 'vendedor'" class="seller-message">
-        <p>Como vendedor, tienes acceso al historial de cotizaciones.</p>
-        <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
+        <p>{{ t.sellerMsg }}</p>
+        <button @click="$router.push('/seller')">{{ t.goSeller }}</button>
       </div>
 
       <div v-else-if="isLoading" class="loading-state">
         <div class="spinner"></div>
-        <p>Cargando historial...</p>
+        <p>{{ t.loading }}</p>
       </div>
 
       <div v-else>
         <div class="filters">
-          <input v-model="searchMachine" placeholder="Buscar por máquina" />
+          <input v-model="searchMachine" :placeholder="t.searchMachine" />
           <select v-model="filterSector">
-            <option value="">Todos los sectores</option>
+            <option value="">{{ t.allSectors }}</option>
             <option v-for="sector in sectors" :key="sector" :value="sector">{{ sector }}</option>
           </select>
           <select v-model="filterOperario">
-            <option value="">Todos los operarios</option>
+            <option value="">{{ t.allOperarios }}</option>
             <option v-for="op in operarios" :key="op.value" :value="op.value">{{ op.label }}</option>
           </select>
           <input type="date" v-model="filterDate" />
@@ -34,10 +34,10 @@
           <table class="history-table">
             <thead>
               <tr>
-                <th>Nombre</th>
-                <th class="col-hide-mobile">Fecha</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th>{{ t.colName }}</th>
+                <th class="col-hide-mobile">{{ t.colDate }}</th>
+                <th>{{ t.colStatus }}</th>
+                <th>{{ t.colActions }}</th>
               </tr>
             </thead>
             <tbody>
@@ -69,41 +69,41 @@
     <Teleport to="body">
       <div v-if="showDetailModal" class="modal" @click.self="closeDetailModal">
         <div class="modal-box modal-box-detail">
-          <h3>Detalles del mantenimiento</h3>
+          <h3>{{ t.modalTitle }}</h3>
           <div class="detail-content">
-            <p><strong>Operario:</strong> {{ formatOperarioName(selectedDetail?.clientId) }}</p>
+            <p><strong>{{ t.labelOperario }}</strong> {{ formatOperarioName(selectedDetail?.clientId) }}</p>
             <p v-if="selectedDetail?.additionalWorkers?.length">
-              <strong>Otros operarios:</strong>
+              <strong>{{ t.labelOthers }}</strong>
               {{ selectedDetail.additionalWorkers.map(w => formatOperarioName(w)).join(', ') }}
             </p>
-            <p><strong>Sector:</strong> {{ selectedDetail?.sector }}</p>
-            <p><strong>Máquina:</strong> {{ selectedDetail?.machine }}</p>
-            <p><strong>Partes:</strong> {{ Array.isArray(selectedDetail?.machinePart) ? selectedDetail.machinePart.join(', ') : selectedDetail?.machinePart }}</p>
-            <p><strong>Tipo de mantenimiento:</strong> {{ selectedDetail?.maintenanceType }}</p>
-            <p><strong>Horas trabajadas:</strong> {{ selectedDetail?.hoursWorked }}</p>
-            <p><strong>Estado:</strong> {{ formatStatus(selectedDetail?.status) }}</p>
-            <p><strong>Fecha:</strong> {{ formatDate(selectedDetail?.createdAt) }}</p>
-            <p><strong>Hora:</strong> {{ formatTime(selectedDetail?.createdAt) }}</p>
-            <p><strong>Descripción del trabajo:</strong></p>
+            <p><strong>{{ t.labelSector }}</strong> {{ selectedDetail?.sector }}</p>
+            <p><strong>{{ t.labelMachine }}</strong> {{ selectedDetail?.machine }}</p>
+            <p><strong>{{ t.labelParts }}</strong> {{ Array.isArray(selectedDetail?.machinePart) ? selectedDetail.machinePart.join(', ') : selectedDetail?.machinePart }}</p>
+            <p><strong>{{ t.labelType }}</strong> {{ selectedDetail?.maintenanceType }}</p>
+            <p><strong>{{ t.labelHours }}</strong> {{ selectedDetail?.hoursWorked }}</p>
+            <p><strong>{{ t.labelStatus }}</strong> {{ formatStatus(selectedDetail?.status) }}</p>
+            <p><strong>{{ t.labelDate }}</strong> {{ formatDate(selectedDetail?.createdAt) }}</p>
+            <p><strong>{{ t.labelTime }}</strong> {{ formatTime(selectedDetail?.createdAt) }}</p>
+            <p><strong>{{ t.labelDesc }}</strong></p>
             <p class="detail-text">{{ selectedDetail?.workDescription || '-' }}</p>
-            <p><strong>Repuestos utilizados:</strong></p>
+            <p><strong>{{ t.labelParts2 }}</strong></p>
             <p class="detail-text">{{ selectedDetail?.spareParts || '-' }}</p>
           </div>
           <div class="modal-actions">
-            <button v-if="selectedDetail?.status !== 'finished'" class="btn-finish" @click="openFinishFromDetail">Terminar</button>
-            <button class="btn-close" @click="closeDetailModal">Cerrar</button>
+            <button v-if="selectedDetail?.status !== 'finished'" class="btn-finish" @click="openFinishFromDetail">{{ t.btnFinish }}</button>
+            <button class="btn-close" @click="closeDetailModal">{{ t.btnClose }}</button>
           </div>
         </div>
       </div>
 
       <div v-if="showFinishModal" class="modal" @click.self="closeFinishModal">
         <div class="modal-box">
-          <h3>Finalizar mantenimiento</h3>
-          <label>Horas adicionales</label>
+          <h3>{{ t.modalFinish }}</h3>
+          <label>{{ t.labelExtraHours }}</label>
           <input type="number" min="0.5" step="0.5" v-model.number="extraHours" />
           <div class="modal-actions">
-            <button class="btn-finish" @click="finishMaintenance">Guardar</button>
-            <button class="btn-close" @click="closeFinishModal">Cancelar</button>
+            <button class="btn-finish" @click="finishMaintenance">{{ t.btnSave }}</button>
+            <button class="btn-close" @click="closeFinishModal">{{ t.btnCancel }}</button>
           </div>
         </div>
       </div>
@@ -124,9 +124,54 @@
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useLocale } from '@/composables/useLocale'
+
+const TRANSLATIONS = {
+  es: {
+    title: 'HISTORIAL', goDashboard: 'Ir al Dashboard',
+    sellerMsg: 'Como vendedor, tienes acceso al historial de cotizaciones.',
+    goSeller: 'Ir a Cotizaciones', loading: 'Cargando historial...',
+    searchMachine: 'Buscar por máquina', allSectors: 'Todos los sectores',
+    allOperarios: 'Todos los operarios',
+    colName: 'Nombre', colDate: 'Fecha', colStatus: 'Estado', colActions: 'Acciones',
+    modalTitle: 'Detalles del mantenimiento',
+    labelOperario: 'Operario:', labelOthers: 'Otros operarios:',
+    labelSector: 'Sector:', labelMachine: 'Máquina:', labelParts: 'Partes:',
+    labelType: 'Tipo de mantenimiento:', labelHours: 'Horas trabajadas:',
+    labelStatus: 'Estado:', labelDate: 'Fecha:', labelTime: 'Hora:',
+    labelDesc: 'Descripción del trabajo:', labelParts2: 'Repuestos utilizados:',
+    btnFinish: 'Terminar', btnClose: 'Cerrar',
+    modalFinish: 'Finalizar mantenimiento', labelExtraHours: 'Horas adicionales',
+    btnSave: 'Guardar', btnCancel: 'Cancelar',
+    statusFinished: 'Terminado', statusPending: 'Pendiente', statusStopped: 'Máquina parada',
+  },
+  pt: {
+    title: 'HISTÓRICO', goDashboard: 'Ir ao Dashboard',
+    sellerMsg: 'Como vendedor, tens acesso ao histórico de cotações.',
+    goSeller: 'Ir a Cotações', loading: 'Carregando histórico...',
+    searchMachine: 'Pesquisar por máquina', allSectors: 'Todos os setores',
+    allOperarios: 'Todos os operários',
+    colName: 'Nome', colDate: 'Data', colStatus: 'Status', colActions: 'Ações',
+    modalTitle: 'Detalhes da manutenção',
+    labelOperario: 'Operário:', labelOthers: 'Outros operários:',
+    labelSector: 'Setor:', labelMachine: 'Máquina:', labelParts: 'Peças:',
+    labelType: 'Tipo de manutenção:', labelHours: 'Horas trabalhadas:',
+    labelStatus: 'Status:', labelDate: 'Data:', labelTime: 'Hora:',
+    labelDesc: 'Descrição do trabalho:', labelParts2: 'Peças utilizadas:',
+    btnFinish: 'Concluir', btnClose: 'Fechar',
+    modalFinish: 'Finalizar manutenção', labelExtraHours: 'Horas adicionais',
+    btnSave: 'Salvar', btnCancel: 'Cancelar',
+    statusFinished: 'Concluído', statusPending: 'Pendente', statusStopped: 'Máquina parada',
+  },
+}
 
 export default {
   components: { ConfirmDialog },
+
+  setup() {
+    const { locale } = useLocale()
+    return { locale }
+  },
 
   data() {
     return {
@@ -164,6 +209,8 @@ export default {
   },
 
   computed: {
+    t() { return TRANSLATIONS[this.locale] || TRANSLATIONS.es },
+
     filteredHistory() {
       return this.history.filter(item => {
         const machineMatch = String(item.machine || '').toLowerCase().includes(this.searchMachine.toLowerCase())
@@ -238,9 +285,9 @@ export default {
     },
 
     formatStatus(status) {
-      if (status === "finished") return "Terminado"
-      if (status === "pending") return "Pendiente"
-      if (status === "stopped") return "Máquina parada"
+      if (status === "finished") return this.t.statusFinished
+      if (status === "pending") return this.t.statusPending
+      if (status === "stopped") return this.t.statusStopped
       return status || "-"
     },
 

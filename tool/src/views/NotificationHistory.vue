@@ -4,61 +4,60 @@
       <div class="notification-history-card">
         <header class="notification-history-header">
           <div>
-            <p>HISTORIAL DE NOTIFICACIONES</p>
+            <p>{{ t.title }}</p>
           </div>
           <div class="notification-history-actions">
             <button type="button" class="ghost-button" @click="markVisibleAsRead"
               :disabled="isLoading || !hasUnreadVisible">
-              Marcar visibles como leidas
+              {{ t.btnMarkVisible }}
             </button>
             <button type="button" class="ghost-button" @click="clearReadFilter" :disabled="isLoading">
-              Limpiar leidas
+              {{ t.btnClearRead }}
             </button>
           </div>
         </header>
 
         <!-- Mensaje para vendedores -->
         <div v-if="currentUser?.role === 'vendedor'" class="seller-message">
-          <p>Como vendedor, no tienes acceso al historial de notificaciones de mantenimiento.</p>
-          <button @click="$router.push('/seller')">Ir a Cotizaciones</button>
+          <p>{{ t.sellerMsg }}</p>
+          <button @click="$router.push('/seller')">{{ t.goSeller }}</button>
         </div>
 
         <!-- Contenido del historial solo para otros roles -->
         <div v-else class="notif-body">
           <section class="notification-history-filters">
             <select v-model="readFilter">
-              <option value="all">Todas</option>
-              <option value="unread">No leidas</option>
-              <option value="read">Leidas</option>
+              <option value="all">{{ t.filterAll }}</option>
+              <option value="unread">{{ t.filterUnread }}</option>
+              <option value="read">{{ t.filterRead }}</option>
             </select>
 
             <input v-model="fromDate" type="date" />
             <input v-model="toDate" type="date" />
-            <input v-model="searchText" type="text" placeholder="Buscar por titulo o detalle" />
+            <input v-model="searchText" type="text" :placeholder="t.searchPlaceholder" />
 
             <button type="button" @click="loadHistory" :disabled="isLoading">
-              Aplicar filtros
+              {{ t.btnApply }}
             </button>
           </section>
 
           <section class="notification-history-summary">
             <article>
               <strong>{{ summary.total }}</strong>
-              <span>Total</span>
+              <span>{{ t.labelTotal }}</span>
             </article>
             <article>
               <strong>{{ summary.unread }}</strong>
-              <span>No leidas</span>
+              <span>{{ t.labelUnread }}</span>
             </article>
             <article>
               <strong>{{ summary.read }}</strong>
-              <span>Leidas</span>
+              <span>{{ t.labelRead }}</span>
             </article>
           </section>
 
-          <p v-if="isLoading" class="state-text">Cargando historial...</p>
-          <p v-else-if="!filteredItems.length" class="state-text">No hay notificaciones para los filtros seleccionados.
-          </p>
+          <p v-if="isLoading" class="state-text">{{ t.loading }}</p>
+          <p v-else-if="!filteredItems.length" class="state-text">{{ t.empty }}</p>
 
           <ul v-else class="history-list">
 
@@ -116,25 +115,23 @@
                 <pre class="notification-text">{{ item.body }}</pre>
 
                 <div v-if="item.machine" class="detail-row">
-                  <strong>Máquina:</strong>
+                  <strong>{{ t.detailMachine }}</strong>
                   <span>{{ item.machine }}</span>
                 </div>
 
                 <div v-if="item.sector" class="detail-row">
-                  <strong>Sector:</strong>
+                  <strong>{{ t.detailSector }}</strong>
                   <span>{{ item.sector }}</span>
                 </div>
 
                 <div class="detail-row">
-                  <strong>Estado:</strong>
-                  <span>
-                    {{ item.read ? 'Leída' : 'No leída' }}
-                  </span>
+                  <strong>{{ t.detailStatus }}</strong>
+                  <span>{{ item.read ? t.statusRead : t.statusUnread }}</span>
                 </div>
 
                 <button v-if="expandedNotification === String(item.id) && !item.read" type="button"
                   class="mark-read-button" @click.stop="markAsRead(item.id)">
-                  Marcar leída
+                  {{ t.btnMarkRead }}
                 </button>
 
               </div>
@@ -151,8 +148,51 @@
 <script>
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import { useLocale } from '@/composables/useLocale'
+
+const TRANSLATIONS = {
+  es: {
+    title: 'HISTORIAL DE NOTIFICACIONES',
+    btnMarkVisible: 'Marcar visibles como leidas',
+    btnClearRead: 'Limpiar leidas',
+    sellerMsg: 'Como vendedor, no tienes acceso al historial de notificaciones de mantenimiento.',
+    goSeller: 'Ir a Cotizaciones',
+    filterAll: 'Todas', filterUnread: 'No leidas', filterRead: 'Leidas',
+    searchPlaceholder: 'Buscar por titulo o detalle',
+    btnApply: 'Aplicar filtros',
+    labelTotal: 'Total', labelUnread: 'No leidas', labelRead: 'Leidas',
+    loading: 'Cargando historial...',
+    empty: 'No hay notificaciones para los filtros seleccionados.',
+    detailMachine: 'Máquina:', detailSector: 'Sector:', detailStatus: 'Estado:',
+    statusRead: 'Leída', statusUnread: 'No leída',
+    btnMarkRead: 'Marcar leída',
+    severitySuccess: 'Éxito', severityWarning: 'Atención', severityError: 'Urgente', severityInfo: 'Info',
+  },
+  pt: {
+    title: 'HISTÓRICO DE NOTIFICAÇÕES',
+    btnMarkVisible: 'Marcar visíveis como lidas',
+    btnClearRead: 'Limpar lidas',
+    sellerMsg: 'Como vendedor, não tens acesso ao histórico de notificações de manutenção.',
+    goSeller: 'Ir a Cotações',
+    filterAll: 'Todas', filterUnread: 'Não lidas', filterRead: 'Lidas',
+    searchPlaceholder: 'Pesquisar por título ou detalhe',
+    btnApply: 'Aplicar filtros',
+    labelTotal: 'Total', labelUnread: 'Não lidas', labelRead: 'Lidas',
+    loading: 'Carregando histórico...',
+    empty: 'Não há notificações para os filtros selecionados.',
+    detailMachine: 'Máquina:', detailSector: 'Setor:', detailStatus: 'Status:',
+    statusRead: 'Lida', statusUnread: 'Não lida',
+    btnMarkRead: 'Marcar como lida',
+    severitySuccess: 'Sucesso', severityWarning: 'Atenção', severityError: 'Urgente', severityInfo: 'Info',
+  },
+}
 
 export default {
+  setup() {
+    const { locale } = useLocale()
+    return { locale }
+  },
+
   data() {
     return {
       items: [],
@@ -171,6 +211,8 @@ export default {
   },
 
   computed: {
+    t() { return TRANSLATIONS[this.locale] || TRANSLATIONS.es },
+
     filteredItems() {
       const query = this.searchText.trim().toLowerCase()
 
@@ -362,13 +404,12 @@ export default {
 
     formatSeverity(value) {
       const map = {
-        success: 'Exito',
-        warning: 'Atención',
-        error: 'Urgente',
-        info: 'Info'
+        success: this.t.severitySuccess,
+        warning: this.t.severityWarning,
+        error: this.t.severityError,
+        info: this.t.severityInfo,
       }
-
-      return map[value] || 'Info'
+      return map[value] || this.t.severityInfo
     }
   },
 

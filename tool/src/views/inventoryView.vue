@@ -2,39 +2,39 @@
   <div class="page-container">
     <div class="container">
       <div class="topbar">
-        <h2 class="title">Inventario</h2>
+        <h2 class="title">{{ t.title }}</h2>
         <div class="toolbar-actions">
           <div class="search-wrap">
             <i class="bi bi-search search-icon"></i>
             <input
               v-model="search"
               class="search-input"
-              placeholder="Buscar código, descripción, color..."
+              :placeholder="t.searchPlaceholder"
             />
           </div>
           <button class="secondary-button" @click="filtersOpen = !filtersOpen">
-            <i class="bi bi-funnel"></i> Filtros
+            <i class="bi bi-funnel"></i> {{ t.filters }}
           </button>
           <router-link v-if="canManage" to="/product/new">
-            <button class="primary-button"><i class="bi bi-plus-lg"></i> Nuevo producto</button>
+            <button class="primary-button"><i class="bi bi-plus-lg"></i> {{ t.newProduct }}</button>
           </router-link>
-          <button v-if="canManage" class="danger-button btn-vaciar" @click="showDeleteAllConfirm = true" title="Vaciar inventario">
-            <i class="bi bi-trash"></i><span class="vaciar-label"> Vaciar</span>
+          <button v-if="canManage" class="danger-button btn-vaciar" @click="showDeleteAllConfirm = true" :title="t.vaciarTitle">
+            <i class="bi bi-trash"></i><span class="vaciar-label"> {{ t.vaciar }}</span>
           </button>
           <ConfirmDialog
             :visible="showDeleteAllConfirm"
-            title="Vaciar inventario"
-            message="¿Estas seguro de eliminar TODOS los productos? Esta accion no se puede deshacer."
-            confirm-text="Eliminar todo"
+            :title="t.vaciarTitle"
+            :message="t.vaciarMsg"
+            :confirm-text="t.deleteAll"
             type="danger"
             @confirm="deleteAll(); showDeleteAllConfirm = false"
             @cancel="showDeleteAllConfirm = false"
           />
           <router-link to="/inv-dashboard">
-            <button class="secondary-button"><i class="bi bi-bar-chart-line"></i> Dashboard</button>
+            <button class="secondary-button"><i class="bi bi-bar-chart-line"></i> {{ t.dashboard }}</button>
           </router-link>
           <button class="secondary-button" @click="openPrintModal">
-            <i class="bi bi-printer"></i> Imprimir precios
+            <i class="bi bi-printer"></i> {{ t.printPrices }}
           </button>
         </div>
       </div>
@@ -43,13 +43,13 @@
       <div v-if="showPrintModal" class="print-modal-overlay" @click.self="showPrintModal = false">
         <div class="print-modal">
           <div class="print-modal-header">
-            <h3>Imprimir lista de precios</h3>
+            <h3>{{ t.printModalTitle }}</h3>
             <button class="ghost-button small" @click="showPrintModal = false"><i class="bi bi-x-lg"></i></button>
           </div>
-          <p class="print-modal-hint">Seleccioná uno o más grupos para incluir en la impresión.</p>
+          <p class="print-modal-hint">{{ t.printModalHint }}</p>
           <div class="print-modal-actions-top">
-            <button class="ghost-button small" @click="printSelectedGrupos = [...gruposDisponibles]">Todos</button>
-            <button class="ghost-button small" @click="printSelectedGrupos = []">Ninguno</button>
+            <button class="ghost-button small" @click="printSelectedGrupos = [...gruposDisponibles]">{{ t.all }}</button>
+            <button class="ghost-button small" @click="printSelectedGrupos = []">{{ t.none }}</button>
           </div>
           <div class="print-grupo-list">
             <label v-for="g in gruposDisponibles" :key="g" class="print-grupo-item">
@@ -58,9 +58,9 @@
             </label>
           </div>
           <div class="print-modal-footer">
-            <button class="ghost-button" @click="showPrintModal = false">Cancelar</button>
+            <button class="ghost-button" @click="showPrintModal = false">{{ t.cancel }}</button>
             <button class="primary-button" :disabled="!printSelectedGrupos.length || printLoading" @click="printPriceList">
-              <i class="bi bi-printer"></i> {{ printLoading ? 'Preparando...' : 'Imprimir' }}
+              <i class="bi bi-printer"></i> {{ printLoading ? t.preparing : t.print }}
             </button>
           </div>
         </div>
@@ -68,73 +68,73 @@
 
       <InventorySubNav />
 
-      <div v-if="store.loading" class="empty-state">Cargando productos...</div>
+      <div v-if="store.loading" class="empty-state">{{ t.loadingProducts }}</div>
       <div v-else-if="store.error" class="empty-state" style="color:#dc2626">{{ store.error }}</div>
 
       <div v-else class="inv-layout">
         <!-- Sidebar Filters -->
         <aside :class="['inv-sidebar', { open: filtersOpen }]">
           <div class="filter-header">
-            <strong>Filtros</strong>
-            <button class="ghost-button small" @click="clearFilters">Limpiar</button>
+            <strong>{{ t.filters }}</strong>
+            <button class="ghost-button small" @click="clearFilters">{{ t.clear }}</button>
           </div>
 
           <div class="filter-group">
-            <label>Grupo</label>
+            <label>{{ t.grupo }}</label>
             <select v-model="filters.grupo">
-              <option value="">Todos</option>
+              <option value="">{{ t.allM }}</option>
               <option v-for="g in store.uniqueGrupos" :key="g" :value="g">{{ g }}</option>
             </select>
           </div>
           <div class="filter-group">
-            <label>Color</label>
+            <label>{{ t.color }}</label>
             <select v-model="filters.color">
-              <option value="">Todos</option>
+              <option value="">{{ t.allM }}</option>
               <option v-for="c in store.uniqueColors" :key="c" :value="c">{{ c }}</option>
             </select>
           </div>
           <div class="filter-group">
-            <label>Medida</label>
+            <label>{{ t.medida }}</label>
             <select v-model="filters.medida">
-              <option value="">Todas</option>
+              <option value="">{{ t.allF }}</option>
               <option v-for="m in store.uniqueMedidas" :key="m" :value="m">{{ m }}</option>
             </select>
           </div>
           <div class="filter-group">
-            <label>Terminación</label>
+            <label>{{ t.terminacion }}</label>
             <select v-model="filters.terminacion">
-              <option value="">Todas</option>
-              <option v-for="t in store.uniqueTerminaciones" :key="t" :value="t">{{ t }}</option>
+              <option value="">{{ t.allF }}</option>
+              <option v-for="tr in store.uniqueTerminaciones" :key="tr" :value="tr">{{ tr }}</option>
             </select>
           </div>
           <div class="filter-group">
-            <label>Textura</label>
+            <label>{{ t.textura }}</label>
             <select v-model="filters.textura">
-              <option value="">Todas</option>
-              <option v-for="t in store.uniqueTexturas" :key="t" :value="t">{{ t }}</option>
+              <option value="">{{ t.allF }}</option>
+              <option v-for="tx in store.uniqueTexturas" :key="tx" :value="tx">{{ tx }}</option>
             </select>
           </div>
           <div class="filter-group">
-            <label>Espesor</label>
+            <label>{{ t.espesor }}</label>
             <select v-model="filters.espesor">
-              <option value="">Todos</option>
+              <option value="">{{ t.allM }}</option>
               <option v-for="e in store.uniqueEspesores" :key="e" :value="e">{{ e }}</option>
             </select>
           </div>
 
           <div class="filter-count">
-            <span>{{ filtered.length }} producto{{ filtered.length !== 1 ? 's' : '' }}</span>
+            <span>{{ filtered.length }} {{ filtered.length !== 1 ? t.products : t.product }}</span>
           </div>
         </aside>
 
         <!-- Table -->
         <div class="inv-content">
           <div class="selection-bar" v-if="store.selectedIds.length > 0">
-            <span>{{ store.selectedIds.length }} seleccionado{{ store.selectedIds.length !== 1 ? 's' : '' }}</span>
+            <span>{{ store.selectedIds.length }} {{ store.selectedIds.length !== 1 ? t.selectedPl : t.selected }}</span>
             <router-link to="/bulk-price">
-              <button><i class="bi bi-tags"></i> Actualizar precios</button>
+              <button><i class="bi bi-tags"></i> {{ t.updatePrices }}</button>
             </router-link>
-            <button class="secondary-button" @click="store.clearSelection()">Deseleccionar</button>
+            <button class="secondary-button" @click="store.clearSelection()">{{ t.deselect }}</button>
           </div>
 
           <div class="table-scroll">
@@ -145,20 +145,20 @@
                     <input type="checkbox" :checked="allSelected" @change="toggleAll" />
                   </th>
                   <th @click="sortBy('code')" class="sortable">
-                    Código <i :class="sortIcon('code')"></i>
+                    {{ t.colCode }} <i :class="sortIcon('code')"></i>
                   </th>
                   <th @click="sortBy('name')" class="sortable">
-                    Descripción / Tipo / Terminación / Espesor <i :class="sortIcon('name')"></i>
+                    {{ t.colDesc }} <i :class="sortIcon('name')"></i>
                   </th>
-                  <th>Color</th>
-                  <th>Medida</th>
+                  <th>{{ t.colColor }}</th>
+                  <th>{{ t.colMedida }}</th>
                   <th @click="sortBy('precioGrupoI')" class="sortable">
-                    Precio unitario <i :class="sortIcon('precioGrupoI')"></i>
+                    {{ t.colPrice }} <i :class="sortIcon('precioGrupoI')"></i>
                   </th>
                   <th @click="sortBy('stock')" class="sortable">
-                    Stock <i :class="sortIcon('stock')"></i>
+                    {{ t.colStock }} <i :class="sortIcon('stock')"></i>
                   </th>
-                  <th>Acciones</th>
+                  <th>{{ t.colActions }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,7 +169,7 @@
                       <td colspan="9" class="group-header-cell">
                         <i class="bi bi-layers group-icon"></i>
                         <span class="group-header-label">{{ group.grupo }}</span>
-                        <span class="group-count">{{ group.items.length }} producto{{ group.items.length !== 1 ? 's' : '' }}</span>
+                        <span class="group-count">{{ group.items.length }} {{ group.items.length !== 1 ? t.products : t.product }}</span>
                       </td>
                     </tr>
                     <template v-for="p in group.items" :key="p._id">
@@ -224,34 +224,34 @@
                               <img :src="resolveUrl(p.image)" :alt="p.name" />
                             </div>
                             <div class="dex-info">
-                              <div class="dex-row"><span class="dex-label">SKU</span><code>{{ p.code }}</code></div>
-                              <div v-if="p.grupo" class="dex-row"><span class="dex-label">Grupo</span><span>{{ p.grupo }}</span></div>
-                              <div v-if="p.tipo" class="dex-row"><span class="dex-label">Tipo</span><span>{{ p.tipo }}</span></div>
-                              <div v-if="p.terminacion" class="dex-row"><span class="dex-label">Terminacion</span><span>{{ p.terminacion }}</span></div>
-                              <div v-if="p.espesor" class="dex-row"><span class="dex-label">Espesor</span><span>{{ p.espesor }}mm</span></div>
-                              <div v-if="p.dimensions" class="dex-row"><span class="dex-label">Medida</span><span>{{ p.dimensions }}</span></div>
+                              <div class="dex-row"><span class="dex-label">{{ t.labelSKU }}</span><code>{{ p.code }}</code></div>
+                              <div v-if="p.grupo" class="dex-row"><span class="dex-label">{{ t.labelGrupo }}</span><span>{{ p.grupo }}</span></div>
+                              <div v-if="p.tipo" class="dex-row"><span class="dex-label">{{ t.labelTipo }}</span><span>{{ p.tipo }}</span></div>
+                              <div v-if="p.terminacion" class="dex-row"><span class="dex-label">{{ t.labelTerminacion }}</span><span>{{ p.terminacion }}</span></div>
+                              <div v-if="p.espesor" class="dex-row"><span class="dex-label">{{ t.labelEspesor }}</span><span>{{ p.espesor }}mm</span></div>
+                              <div v-if="p.dimensions" class="dex-row"><span class="dex-label">{{ t.labelMedida }}</span><span>{{ p.dimensions }}</span></div>
                               <div v-if="p.m2" class="dex-row"><span class="dex-label">m2</span><span>{{ p.m2 }}</span></div>
-                              <div v-if="p.colorMode" class="dex-row"><span class="dex-label">Color</span><span>{{ p.colorMode === 'todos' ? 'TODOS' : (p.selectedColors?.join(', ') || p.color || '—') }}</span></div>
-                              <div v-if="p.detalle" class="dex-row full"><span class="dex-label">Detalle</span><span>{{ p.detalle }}</span></div>
+                              <div v-if="p.colorMode" class="dex-row"><span class="dex-label">{{ t.labelColor }}</span><span>{{ p.colorMode === 'todos' ? 'TODOS' : (p.selectedColors?.join(', ') || p.color || '—') }}</span></div>
+                              <div v-if="p.detalle" class="dex-row full"><span class="dex-label">{{ t.labelDetalle }}</span><span>{{ p.detalle }}</span></div>
                               <div v-if="p.comentario" class="dex-row full">
-                                <span class="dex-label">Comentario</span>
+                                <span class="dex-label">{{ t.labelComentario }}</span>
                                 <span class="comment-wrap">
                                   <span :class="['comment-text', { 'comment-collapsed': !expandedComments.has(p._id) }]">{{ p.comentario }}</span>
                                   <button v-if="p.comentario.length > 100" class="comment-toggle" @click="toggleComment(p._id)">
-                                    {{ expandedComments.has(p._id) ? 'Ver menos' : 'Ver más' }}
+                                    {{ expandedComments.has(p._id) ? t.viewLess : t.viewMore }}
                                   </button>
                                 </span>
                               </div>
                             </div>
                             <div class="dex-prices">
-                              <div v-if="p.precioGeneral != null" class="dex-price"><span class="dex-label">General</span><span class="dex-val">${{ formatPrice(p.precioGeneral) }}</span></div>
-                              <div v-if="p.precioGrupoI != null" class="dex-price"><span class="dex-label">Grupo I</span><span class="dex-val">${{ formatPrice(p.precioGrupoI) }}</span></div>
-                              <div v-if="p.precioGrupoII != null" class="dex-price"><span class="dex-label">Grupo II</span><span class="dex-val">${{ formatPrice(p.precioGrupoII) }}</span></div>
-                              <div v-if="p.precioGrupoIII != null" class="dex-price"><span class="dex-label">Grupo III</span><span class="dex-val">${{ formatPrice(p.precioGrupoIII) }}</span></div>
+                              <div v-if="p.precioGeneral != null" class="dex-price"><span class="dex-label">{{ t.labelGeneral }}</span><span class="dex-val">${{ formatPrice(p.precioGeneral) }}</span></div>
+                              <div v-if="p.precioGrupoI != null" class="dex-price"><span class="dex-label">{{ t.labelGrupoI }}</span><span class="dex-val">${{ formatPrice(p.precioGrupoI) }}</span></div>
+                              <div v-if="p.precioGrupoII != null" class="dex-price"><span class="dex-label">{{ t.labelGrupoII }}</span><span class="dex-val">${{ formatPrice(p.precioGrupoII) }}</span></div>
+                              <div v-if="p.precioGrupoIII != null" class="dex-price"><span class="dex-label">{{ t.labelGrupoIII }}</span><span class="dex-val">${{ formatPrice(p.precioGrupoIII) }}</span></div>
                             </div>
                           </div>
                           <div class="dex-footer">
-                            <router-link :to="`/product/${p._id}`"><button class="btn-sm"><i class="bi bi-box-arrow-up-right"></i> Ver completo</button></router-link>
+                            <router-link :to="`/product/${p._id}`"><button class="btn-sm"><i class="bi bi-box-arrow-up-right"></i> {{ t.viewFull }}</button></router-link>
                           </div>
                         </div>
                       </td>
@@ -266,7 +266,7 @@
                               <span class="pdf-thumb-zoom"><i class="bi bi-zoom-in"></i></span>
                             </div>
                           </div>
-                          <div v-if="!hasPdfs(p)" class="pdf-empty">Sin archivos PDF adjuntos.</div>
+                          <div v-if="!hasPdfs(p)" class="pdf-empty">{{ t.noPDF }}</div>
                           <div v-else class="pdf-list">
                             <a v-if="p.catalogo" :href="resolveUrl(p.catalogo)" target="_blank" rel="noopener" class="pdf-item">
                               <i class="bi bi-file-earmark-pdf-fill pdf-icon-red"></i>
@@ -278,7 +278,7 @@
                             </a>
                             <a v-for="arch in (p.archivos || [])" :key="arch.url" :href="resolveUrl(arch.url)" target="_blank" rel="noopener" class="pdf-item">
                               <i class="bi bi-file-earmark-fill pdf-icon-gray"></i>
-                              <span>{{ arch.titulo || 'Archivo' }}</span>
+                              <span>{{ arch.titulo || t.file }}</span>
                             </a>
                           </div>
                         </div>
@@ -287,7 +287,7 @@
                     </template>
                   </template>
                   <tr v-if="groupedFiltered.length === 0">
-                    <td colspan="8" class="empty-row">Sin resultados para los filtros aplicados.</td>
+                    <td colspan="8" class="empty-row">{{ t.noResults }}</td>
                   </tr>
                 </template>
 
@@ -342,15 +342,15 @@
                             <img :src="resolveUrl(p.image)" :alt="p.name" />
                           </div>
                           <div class="dex-info">
-                            <div class="dex-row"><span class="dex-label">SKU</span><code>{{ p.code }}</code></div>
+                            <div class="dex-row"><span class="dex-label">{{ t.labelSKU }}</span><code>{{ p.code }}</code></div>
                             <div v-if="p.grupo" class="dex-row"><span class="dex-label">Grupo</span><span>{{ p.grupo }}</span></div>
                             <div v-if="p.tipo" class="dex-row"><span class="dex-label">Tipo</span><span>{{ p.tipo }}</span></div>
                             <div v-if="p.terminacion" class="dex-row"><span class="dex-label">Terminacion</span><span>{{ p.terminacion }}</span></div>
                             <div v-if="p.espesor" class="dex-row"><span class="dex-label">Espesor</span><span>{{ p.espesor }}mm</span></div>
                             <div v-if="p.dimensions" class="dex-row"><span class="dex-label">Medida</span><span>{{ p.dimensions }}</span></div>
                             <div v-if="p.m2" class="dex-row"><span class="dex-label">m2</span><span>{{ p.m2 }}</span></div>
-                            <div v-if="p.colorMode" class="dex-row"><span class="dex-label">Color</span><span>{{ p.colorMode === 'todos' ? 'TODOS' : (p.selectedColors?.join(', ') || p.color || '—') }}</span></div>
-                            <div v-if="p.detalle" class="dex-row full"><span class="dex-label">Detalle</span><span>{{ p.detalle }}</span></div>
+                            <div v-if="p.colorMode" class="dex-row"><span class="dex-label">{{ t.labelColor }}</span><span>{{ p.colorMode === 'todos' ? 'TODOS' : (p.selectedColors?.join(', ') || p.color || '—') }}</span></div>
+                            <div v-if="p.detalle" class="dex-row full"><span class="dex-label">{{ t.labelDetalle }}</span><span>{{ p.detalle }}</span></div>
                           </div>
                           <div class="dex-prices">
                             <div v-if="p.precioGeneral != null" class="dex-price"><span class="dex-label">General</span><span class="dex-val">${{ formatPrice(p.precioGeneral) }}</span></div>
@@ -360,7 +360,7 @@
                           </div>
                         </div>
                         <div class="dex-footer">
-                          <router-link :to="`/product/${p._id}`"><button class="btn-sm"><i class="bi bi-box-arrow-up-right"></i> Ver completo</button></router-link>
+                          <router-link :to="`/product/${p._id}`"><button class="btn-sm"><i class="bi bi-box-arrow-up-right"></i> {{ t.viewFull }}</button></router-link>
                         </div>
                       </div>
                     </td>
@@ -375,19 +375,19 @@
                             <span class="pdf-thumb-zoom"><i class="bi bi-zoom-in"></i></span>
                           </div>
                         </div>
-                        <div v-if="!hasPdfs(p)" class="pdf-empty">Sin archivos PDF adjuntos.</div>
+                        <div v-if="!hasPdfs(p)" class="pdf-empty">{{ t.noPDF }}</div>
                         <div v-else class="pdf-list">
                           <a v-if="p.catalogo" :href="resolveUrl(p.catalogo)" target="_blank" rel="noopener" class="pdf-item">
                             <i class="bi bi-file-earmark-pdf-fill pdf-icon-red"></i>
-                            <span>Catálogo</span>
+                            <span>{{ t.catalog }}</span>
                           </a>
                           <a v-if="p.fichaTecnica" :href="resolveUrl(p.fichaTecnica)" target="_blank" rel="noopener" class="pdf-item">
                             <i class="bi bi-file-earmark-text-fill pdf-icon-blue"></i>
-                            <span>Ficha técnica</span>
+                            <span>{{ t.techSheet }}</span>
                           </a>
                           <a v-for="arch in (p.archivos || [])" :key="arch.url" :href="resolveUrl(arch.url)" target="_blank" rel="noopener" class="pdf-item">
                             <i class="bi bi-file-earmark-fill pdf-icon-gray"></i>
-                            <span>{{ arch.titulo || 'Archivo' }}</span>
+                            <span>{{ arch.titulo || t.file }}</span>
                           </a>
                         </div>
                       </div>
@@ -395,7 +395,7 @@
                   </tr>
                   </template>
                   <tr v-if="paged.length === 0">
-                    <td colspan="8" class="empty-row">Sin resultados para los filtros aplicados.</td>
+                    <td colspan="8" class="empty-row">{{ t.noResults }}</td>
                   </tr>
                 </template>
               </tbody>
@@ -407,7 +407,7 @@
             <button class="secondary-button" :disabled="page === 1" @click="page--">
               <i class="bi bi-chevron-left"></i>
             </button>
-            <span>Página {{ page }} de {{ totalPages }}</span>
+            <span>{{ t.page }} {{ page }} {{ t.of }} {{ totalPages }}</span>
             <button class="secondary-button" :disabled="page === totalPages" @click="page++">
               <i class="bi bi-chevron-right"></i>
             </button>
@@ -432,6 +432,143 @@ import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { usePermissions } from '@/utils/permissions'
+import { useLocale } from '@/composables/useLocale'
+
+const { locale } = useLocale()
+
+const TRANSLATIONS = {
+  es: {
+    title: 'Inventario',
+    searchPlaceholder: 'Buscar código, descripción, color...',
+    filters: 'Filtros',
+    newProduct: 'Nuevo producto',
+    vaciar: 'Vaciar',
+    vaciarTitle: 'Vaciar inventario',
+    vaciarMsg: '¿Estas seguro de eliminar TODOS los productos? Esta accion no se puede deshacer.',
+    deleteAll: 'Eliminar todo',
+    dashboard: 'Dashboard',
+    printPrices: 'Imprimir precios',
+    printModalTitle: 'Imprimir lista de precios',
+    printModalHint: 'Seleccioná uno o más grupos para incluir en la impresión.',
+    all: 'Todos',
+    none: 'Ninguno',
+    cancel: 'Cancelar',
+    preparing: 'Preparando...',
+    print: 'Imprimir',
+    loadingProducts: 'Cargando productos...',
+    clear: 'Limpiar',
+    grupo: 'Grupo',
+    color: 'Color',
+    medida: 'Medida',
+    terminacion: 'Terminación',
+    textura: 'Textura',
+    espesor: 'Espesor',
+    allM: 'Todos',
+    allF: 'Todas',
+    product: 'producto',
+    products: 'productos',
+    selected: 'seleccionado',
+    selectedPl: 'seleccionados',
+    updatePrices: 'Actualizar precios',
+    deselect: 'Deseleccionar',
+    colCode: 'Código',
+    colDesc: 'Descripción / Tipo / Terminación / Espesor',
+    colColor: 'Color',
+    colMedida: 'Medida',
+    colPrice: 'Precio unitario',
+    colStock: 'Stock',
+    colActions: 'Acciones',
+    viewFull: 'Ver completo',
+    viewMore: 'Ver más',
+    viewLess: 'Ver menos',
+    noPDF: 'Sin archivos PDF adjuntos.',
+    catalog: 'Catálogo',
+    techSheet: 'Ficha técnica',
+    file: 'Archivo',
+    noResults: 'Sin resultados para los filtros aplicados.',
+    page: 'Página',
+    of: 'de',
+    labelSKU: 'SKU',
+    labelGrupo: 'Grupo',
+    labelTipo: 'Tipo',
+    labelTerminacion: 'Terminacion',
+    labelEspesor: 'Espesor',
+    labelMedida: 'Medida',
+    labelColor: 'Color',
+    labelDetalle: 'Detalle',
+    labelComentario: 'Comentario',
+    labelGeneral: 'General',
+    labelGrupoI: 'Grupo I',
+    labelGrupoII: 'Grupo II',
+    labelGrupoIII: 'Grupo III',
+  },
+  pt: {
+    title: 'Inventário',
+    searchPlaceholder: 'Pesquisar código, descrição, cor...',
+    filters: 'Filtros',
+    newProduct: 'Novo produto',
+    vaciar: 'Esvaziar',
+    vaciarTitle: 'Esvaziar inventário',
+    vaciarMsg: 'Tem certeza que deseja excluir TODOS os produtos? Esta ação não pode ser desfeita.',
+    deleteAll: 'Excluir tudo',
+    dashboard: 'Dashboard',
+    printPrices: 'Imprimir preços',
+    printModalTitle: 'Imprimir lista de preços',
+    printModalHint: 'Selecione um ou mais grupos para incluir na impressão.',
+    all: 'Todos',
+    none: 'Nenhum',
+    cancel: 'Cancelar',
+    preparing: 'Preparando...',
+    print: 'Imprimir',
+    loadingProducts: 'Carregando produtos...',
+    clear: 'Limpar',
+    grupo: 'Grupo',
+    color: 'Cor',
+    medida: 'Medida',
+    terminacion: 'Acabamento',
+    textura: 'Textura',
+    espesor: 'Espessura',
+    allM: 'Todos',
+    allF: 'Todas',
+    product: 'produto',
+    products: 'produtos',
+    selected: 'selecionado',
+    selectedPl: 'selecionados',
+    updatePrices: 'Atualizar preços',
+    deselect: 'Desmarcar',
+    colCode: 'Código',
+    colDesc: 'Descrição / Tipo / Acabamento / Espessura',
+    colColor: 'Cor',
+    colMedida: 'Medida',
+    colPrice: 'Preço unitário',
+    colStock: 'Estoque',
+    colActions: 'Ações',
+    viewFull: 'Ver completo',
+    viewMore: 'Ver mais',
+    viewLess: 'Ver menos',
+    noPDF: 'Sem arquivos PDF anexados.',
+    catalog: 'Catálogo',
+    techSheet: 'Ficha técnica',
+    file: 'Arquivo',
+    noResults: 'Sem resultados para os filtros aplicados.',
+    page: 'Página',
+    of: 'de',
+    labelSKU: 'SKU',
+    labelGrupo: 'Grupo',
+    labelTipo: 'Tipo',
+    labelTerminacion: 'Acabamento',
+    labelEspesor: 'Espessura',
+    labelMedida: 'Medida',
+    labelColor: 'Cor',
+    labelDetalle: 'Detalhe',
+    labelComentario: 'Comentário',
+    labelGeneral: 'Geral',
+    labelGrupoI: 'Grupo I',
+    labelGrupoII: 'Grupo II',
+    labelGrupoIII: 'Grupo III',
+  }
+}
+const t = computed(() => TRANSLATIONS[locale.value] || TRANSLATIONS.es)
 
 const { canManage } = usePermissions()
 

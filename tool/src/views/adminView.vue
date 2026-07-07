@@ -5,7 +5,7 @@
       <!-- Columna izquierda: formulario (condicional) + lista de usuarios -->
       <div class="admin-left">
         <div v-if="showCreateForm" class="panel-card admin-form">
-          <h2 class="title">Panel de Admin</h2>
+          <h2 class="title">{{ t.panelTitle }}</h2>
 
           <!-- Foto de perfil -->
           <div class="photo-picker-wrap">
@@ -18,26 +18,26 @@
             </div>
             <div class="photo-actions">
               <button type="button" class="photo-btn" @click="triggerPhotoInput">
-                <i class="bi bi-upload"></i> Subir foto
+                <i class="bi bi-upload"></i> {{ t.btnUploadPhoto }}
               </button>
               <button type="button" class="photo-btn photo-btn--camera" @click="triggerCamera">
-                <i class="bi bi-camera-fill"></i> Tomar foto
+                <i class="bi bi-camera-fill"></i> {{ t.btnTakePhoto }}
               </button>
               <button v-if="user.photo" type="button" class="photo-btn photo-btn--remove" @click="user.photo = ''">
-                <i class="bi bi-trash-fill"></i> Quitar
+                <i class="bi bi-trash-fill"></i> {{ t.btnRemovePhoto }}
               </button>
             </div>
             <input ref="photoInputRef" type="file" accept="image/*" class="photo-input-hidden" @change="onPhotoFile" />
             <input ref="cameraInputRef" type="file" accept="image/*" capture="user" class="photo-input-hidden" @change="onPhotoFile" />
           </div>
 
-          <input type="text" id="name" v-model="user.name" placeholder="Nombre"/>
-          <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" placeholder="Documento"/>
+          <input type="text" id="name" v-model="user.name" :placeholder="t.phName"/>
+          <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" :placeholder="t.phDni"/>
 
-          <label for="password">Contraseña</label>
-          <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" placeholder="Contraseña"/>
+          <label for="password">{{ t.labelPassword }}</label>
+          <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" :placeholder="t.phPassword"/>
 
-          <label for="role">Rol</label>
+          <label for="role">{{ t.labelRole }}</label>
           <select id="role" v-model="user.role" :disabled="currentUserRole === 'admin_ventas'">
             <option v-if="currentUserRole !== 'admin_ventas'" value="operario">Operario</option>
             <option v-if="currentUserRole !== 'admin_ventas'" value="supervisor">Supervisor</option>
@@ -49,22 +49,22 @@
           <p v-if="message" class="message">{{ message }}</p>
 
           <div class="actions">
-            <button @click="createUser">{{ editingUserId ? 'Guardar cambios' : 'Guardar usuario' }}</button>
-            <button class="secondary-button" @click="resetForm">Limpiar</button>
-            <button class="secondary-button" @click="toggleCreateForm">Cerrar formulario</button>
+            <button @click="createUser">{{ editingUserId ? t.btnSaveChanges : t.btnSaveUser }}</button>
+            <button class="secondary-button" @click="resetForm">{{ t.btnClear }}</button>
+            <button class="secondary-button" @click="toggleCreateForm">{{ t.btnCloseForm }}</button>
           </div>
         </div>
 
         <div class="panel-card users-panel">
           <div class="panel-header">
-            <h2 class="title">Usuarios</h2>
+            <h2 class="title">{{ t.titleUsers }}</h2>
             <button class="toggle-form-button" @click="toggleCreateForm">
-              {{ showCreateForm ? "Ocultar formulario" : "Crear usuario" }}
+              {{ showCreateForm ? t.btnHideForm : t.btnCreateUser }}
             </button>
           </div>
 
           <p v-if="!users.length" class="empty-state">
-            No hay usuarios cargados todavía.
+            {{ t.emptyUsers }}
           </p>
 
           <div v-else class="users-list">
@@ -75,7 +75,7 @@
               </div>
               <div class="user-info">
                 <strong>{{ createdUser.name }}</strong>
-                <span class="user-meta">DNI {{ createdUser.dni }} · {{ roleLabel(createdUser.role) }}</span>
+                <span class="user-meta">{{ t.roleDni }} {{ createdUser.dni }} · {{ roleLabel(createdUser.role) }}</span>
               </div>
               <div class="user-actions">
                 <button type="button" class="edit-button" @click="editUser(createdUser)" title="Modificar">
@@ -89,10 +89,8 @@
           </div>
 
           <div v-if="deletedUsers.length" class="deleted-zone">
-            <h3>Usuarios ocultos</h3>
-            <p>
-              Estos usuarios no aparecen en formularios ni login. Desde aca podes eliminarlos definitivamente.
-            </p>
+            <h3>{{ t.titleHidden }}</h3>
+            <p>{{ t.hiddenDesc }}</p>
             <div class="users-list">
               <div v-for="deletedUser in deletedUsers" :key="deletedUser._id" class="user-item deleted-item">
                 <div class="user-info">
@@ -101,10 +99,10 @@
                   <span>Rol: {{ roleLabel(deletedUser.role) }}</span>
                 </div>
                 <button type="button" class="restore-button" @click="restoreUser(deletedUser._id)">
-                  Restaurar
+                  {{ t.btnRestore }}
                 </button>
                 <button type="button" class="danger-button hard-delete-button" @click="deleteUserPermanent(deletedUser._id)">
-                  Borrar definitivamente
+                  {{ t.btnDeletePermanent }}
                 </button>
               </div>
             </div>
@@ -113,11 +111,11 @@
           <div class="danger-zone">
             <div class="danger-zone-header">
               <div>
-                <h3>Zona de riesgo</h3>
-                <p>Elimina todos los registros del historial y las métricas del dashboard.</p>
+                <h3>{{ t.dangerTitle }}</h3>
+                <p>{{ t.dangerDesc }}</p>
               </div>
               <button type="button" class="danger-zone-button" :disabled="isPurging" @click="purgeMaintenanceData">
-                {{ isPurging ? 'Limpiando...' : 'Limpiar historial' }}
+                {{ isPurging ? t.btnPurging : t.btnPurge }}
               </button>
             </div>
           </div>
@@ -126,18 +124,18 @@
 
       <!-- Columna derecha: panel de logs -->
       <div class="panel-card logs-panel">
-        <h3 class="logs-title"><i class="bi bi-journal-code"></i> Log de auditoría</h3>
-        <p class="logs-desc">Genera un bloque tipo bloc de notas con toda la auditoría del sistema y exportalo.</p>
+        <h3 class="logs-title"><i class="bi bi-journal-code"></i> {{ t.logsTitle }}</h3>
+        <p class="logs-desc">{{ t.logsDesc }}</p>
 
         <div class="audit-tools-actions">
           <button type="button" class="audit-button" :disabled="isLoadingAuditLog" @click="generateAuditNotepad">
-            {{ isLoadingAuditLog ? 'Generando log...' : 'Generar log' }}
+            {{ isLoadingAuditLog ? t.btnGenerating : t.btnGenerate }}
           </button>
           <button type="button" class="audit-button secondary" :disabled="!auditLogText" @click="downloadAuditTxt">
-            <i class="bi bi-file-earmark-text"></i> Descargar TXT
+            <i class="bi bi-file-earmark-text"></i> {{ t.btnDownloadTxt }}
           </button>
           <button type="button" class="audit-button secondary" :disabled="isExportingExcel" @click="exportAuditToExcelCsv">
-            <i class="bi bi-file-earmark-spreadsheet"></i> {{ isExportingExcel ? 'Exportando...' : 'Exportar Excel (.csv)' }}
+            <i class="bi bi-file-earmark-spreadsheet"></i> {{ isExportingExcel ? t.btnExporting : t.btnExportExcel }}
           </button>
         </div>
 
@@ -145,11 +143,11 @@
           v-model="auditLogText"
           class="audit-notepad"
           readonly
-          placeholder="El log se mostrará acá cuando lo generes."
+          :placeholder="t.auditPlaceholder"
         ></textarea>
 
         <small v-if="auditLogGeneratedAt" class="audit-meta">
-          Última generación: {{ formatAuditGeneratedAt(auditLogGeneratedAt) }} | Eventos: {{ auditLogCount }}
+          {{ t.auditMeta(formatAuditGeneratedAt(auditLogGeneratedAt), auditLogCount) }}
         </small>
       </div>
 
@@ -170,6 +168,56 @@
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useLocale } from '@/composables/useLocale'
+
+const TRANSLATIONS = {
+  es: {
+    panelTitle: 'Panel de Admin',
+    btnUploadPhoto: 'Subir foto', btnTakePhoto: 'Tomar foto', btnRemovePhoto: 'Quitar',
+    phName: 'Nombre', phDni: 'Documento', phPassword: 'Contraseña',
+    labelPassword: 'Contraseña', labelRole: 'Rol',
+    btnSaveChanges: 'Guardar cambios', btnSaveUser: 'Guardar usuario',
+    btnClear: 'Limpiar', btnCloseForm: 'Cerrar formulario',
+    titleUsers: 'Usuarios',
+    btnHideForm: 'Ocultar formulario', btnCreateUser: 'Crear usuario',
+    emptyUsers: 'No hay usuarios cargados todavía.',
+    titleHidden: 'Usuarios ocultos',
+    hiddenDesc: 'Estos usuarios no aparecen en formularios ni login. Desde aca podes eliminarlos definitivamente.',
+    btnRestore: 'Restaurar', btnDeletePermanent: 'Borrar definitivamente',
+    dangerTitle: 'Zona de riesgo', dangerDesc: 'Elimina todos los registros del historial y las métricas del dashboard.',
+    btnPurging: 'Limpiando...', btnPurge: 'Limpiar historial',
+    logsTitle: 'Log de auditoría', logsDesc: 'Genera un bloque tipo bloc de notas con toda la auditoría del sistema y exportalo.',
+    btnGenerating: 'Generando log...', btnGenerate: 'Generar log',
+    btnDownloadTxt: 'Descargar TXT', btnExporting: 'Exportando...', btnExportExcel: 'Exportar Excel (.csv)',
+    auditPlaceholder: 'El log se mostrará acá cuando lo generes.',
+    auditMeta: (date, count) => `Última generación: ${date} | Eventos: ${count}`,
+    roleDni: 'DNI',
+    roles: { admin: 'Admin', admin_ventas: 'Admin de ventas', vendedor: 'Vendedor', operario: 'Operario', supervisor: 'Supervisor', compras: 'Compras', admin_compras: 'Admin de compras', produccion: 'Producción' },
+  },
+  pt: {
+    panelTitle: 'Painel de Admin',
+    btnUploadPhoto: 'Enviar foto', btnTakePhoto: 'Tirar foto', btnRemovePhoto: 'Remover',
+    phName: 'Nome', phDni: 'Documento', phPassword: 'Senha',
+    labelPassword: 'Senha', labelRole: 'Função',
+    btnSaveChanges: 'Salvar alterações', btnSaveUser: 'Salvar usuário',
+    btnClear: 'Limpar', btnCloseForm: 'Fechar formulário',
+    titleUsers: 'Usuários',
+    btnHideForm: 'Ocultar formulário', btnCreateUser: 'Criar usuário',
+    emptyUsers: 'Nenhum usuário registrado ainda.',
+    titleHidden: 'Usuários ocultos',
+    hiddenDesc: 'Estes usuários não aparecem em formulários nem no login. Aqui você pode excluí-los definitivamente.',
+    btnRestore: 'Restaurar', btnDeletePermanent: 'Excluir definitivamente',
+    dangerTitle: 'Zona de risco', dangerDesc: 'Exclui todos os registros do histórico e as métricas do dashboard.',
+    btnPurging: 'Limpando...', btnPurge: 'Limpar histórico',
+    logsTitle: 'Log de auditoria', logsDesc: 'Gera um bloco tipo bloco de notas com toda a auditoria do sistema e exporta.',
+    btnGenerating: 'Gerando log...', btnGenerate: 'Gerar log',
+    btnDownloadTxt: 'Baixar TXT', btnExporting: 'Exportando...', btnExportExcel: 'Exportar Excel (.csv)',
+    auditPlaceholder: 'O log será exibido aqui quando gerado.',
+    auditMeta: (date, count) => `Última geração: ${date} | Eventos: ${count}`,
+    roleDni: 'Doc.',
+    roles: { admin: 'Admin', admin_ventas: 'Admin de vendas', vendedor: 'Vendedor', operario: 'Operário', supervisor: 'Supervisor', compras: 'Compras', admin_compras: 'Admin de compras', produccion: 'Produção' },
+  },
+}
 
 function getCurrentUser() {
   try { return JSON.parse(sessionStorage.getItem('user') || '{}') } catch { return {} }
@@ -179,6 +227,12 @@ const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#f59e0b','#6366f1','#22c55e','#ec489
 
 export default {
   components: { ConfirmDialog },
+
+  setup() {
+    const { locale } = useLocale()
+    return { locale }
+  },
+
   data() {
     const currentUser = getCurrentUser()
     return {
@@ -204,10 +258,13 @@ export default {
       auditLogGeneratedAt: null
     }
   },
+  computed: {
+    t() { return TRANSLATIONS[this.locale] || TRANSLATIONS.es },
+  },
+
   methods: {
     roleLabel(role) {
-      const map = { admin: 'Admin', admin_ventas: 'Admin de ventas', vendedor: 'Vendedor', operario: 'Operario', supervisor: 'Supervisor' }
-      return map[role] || role
+      return this.t.roles[role] || role
     },
     avatarColor(name) {
       let n = 0; for (const c of (name || '')) n += c.charCodeAt(0)

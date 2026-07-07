@@ -6,28 +6,28 @@
       <!-- Topbar -->
       <div class="topbar">
         <div class="topbar-left">
-          <h2 class="page-title">Cotizaciones</h2>
+          <h2 class="page-title">{{ t.title }}</h2>
         </div>
         <div class="topbar-right">
           <template v-if="activeTab === 'list'">
             <button v-if="canManage" class="ghost-button btn-editar" @click="showPrintEditor = true">
-              <i class="bi bi-pencil-square"></i> Editar
+              <i class="bi bi-pencil-square"></i> {{ t.edit }}
             </button>
             <button class="primary-button btn-nueva" @click="startNew">
-              <i class="bi bi-plus-lg"></i> Nueva
+              <i class="bi bi-plus-lg"></i> {{ t.newQuote }}
             </button>
           </template>
           <button v-else class="ghost-button" @click="cancelForm">
-            <i class="bi bi-arrow-left"></i> Volver al historial
+            <i class="bi bi-arrow-left"></i> {{ t.back }}
           </button>
         </div>
       </div>
 
       <ConfirmDialog
         :visible="!!quoteToDelete"
-        title="Eliminar cotizacion"
+        :title="t.deleteTitle"
         :message="quoteToDelete ? `¿Eliminar cotización #${String(quoteToDelete.numero).padStart(4,'0')} '${quoteToDelete.titulo}'?` : ''"
-        confirm-text="Eliminar"
+        :confirm-text="t.deleteConfirm"
         type="danger"
         @confirm="doDeleteQuote"
         @cancel="quoteToDelete = null"
@@ -37,7 +37,7 @@
       <div v-if="quoteToSend" class="send-modal-overlay" @click.self="quoteToSend = null">
         <div class="send-modal">
           <div class="send-modal-header">
-            <span><i class="bi bi-send-fill"></i> Enviar cotización #{{ String(quoteToSend.numero).padStart(4,'0') }}</span>
+            <span><i class="bi bi-send-fill"></i> {{ t.sendTitle }} #{{ String(quoteToSend.numero).padStart(4,'0') }}</span>
             <button class="icon-btn" @click="quoteToSend = null"><i class="bi bi-x-lg"></i></button>
           </div>
 
@@ -51,13 +51,13 @@
               <i class="bi bi-envelope-fill"></i> {{ quoteToSend.cliente.email }}
             </span>
             <span v-if="!quoteToSend.cliente?.telefono && !quoteToSend.cliente?.email" class="send-no-contact">
-              <i class="bi bi-exclamation-triangle"></i> Este cliente no tiene teléfono ni email registrado.
+              <i class="bi bi-exclamation-triangle"></i> {{ t.noContact }}
             </span>
           </div>
 
           <!-- Canal -->
           <div class="send-field">
-            <label class="send-label">Canal de envío</label>
+            <label class="send-label">{{ t.sendChannel }}</label>
             <div class="send-channel-row">
               <label v-if="quoteToSend.cliente?.telefono" :class="['send-ch-opt', { on: sendChannel === 'whatsapp' || sendChannel === 'ambos' }]">
                 <input type="checkbox" v-model="sendUseWA" @change="updateSendChannel" />
@@ -72,13 +72,13 @@
 
           <!-- Asunto (solo email) -->
           <div v-if="sendUseEmail" class="send-field">
-            <label class="send-label">Asunto</label>
+            <label class="send-label">{{ t.subject }}</label>
             <input class="send-input" v-model="sendSubject" />
           </div>
 
           <!-- Mensaje -->
           <div class="send-field">
-            <label class="send-label">Mensaje</label>
+            <label class="send-label">{{ t.message }}</label>
             <textarea class="send-textarea" v-model="sendMessage" rows="6"></textarea>
           </div>
 
@@ -86,7 +86,7 @@
           <div class="send-attachment-area">
             <div v-if="!sendPDFReady" class="send-attachment-chip loading">
               <i class="bi bi-hourglass-split spin-icon"></i>
-              <span>Generando PDF…</span>
+              <span>{{ t.generatingPDF }}</span>
             </div>
             <div v-else class="send-attachment-chip ready">
               <i class="bi bi-file-earmark-pdf-fill"></i>
@@ -99,16 +99,16 @@
 
           <!-- Acciones -->
           <div class="send-modal-footer">
-            <button class="ghost-button" @click="quoteToSend = null">Cancelar</button>
+            <button class="ghost-button" @click="quoteToSend = null">{{ t.cancel }}</button>
             <button v-if="sendPDFReady && sendUseWA && quoteToSend.cliente?.telefono"
               class="wa-btn"
               @click="doSendWA">
-              <i class="bi bi-whatsapp"></i> Enviar por WhatsApp
+              <i class="bi bi-whatsapp"></i> {{ t.sendWA }}
             </button>
             <button v-if="sendPDFReady && sendUseEmail && quoteToSend.cliente?.email"
               class="email-btn"
               @click="doSendEmail">
-              <i class="bi bi-envelope-fill"></i> Enviar por Email
+              <i class="bi bi-envelope-fill"></i> {{ t.sendEmail }}
             </button>
           </div>
         </div>
@@ -119,22 +119,22 @@
         <!-- Buscador de cotizaciones -->
         <div class="quote-search-bar">
           <i class="bi bi-search quote-search-ico"></i>
-          <input v-model="quoteSearch" type="text" placeholder="Buscar por título, cliente, estado, número…" class="quote-search-input" />
+          <input v-model="quoteSearch" type="text" :placeholder="t.searchPlaceholder" class="quote-search-input" />
           <button v-if="quoteSearch" class="quote-search-clear" @click="quoteSearch = ''" title="Limpiar">
             <i class="bi bi-x"></i>
           </button>
         </div>
-        <div v-if="loadingQuotes" class="empty-state">Cargando cotizaciones…</div>
+        <div v-if="loadingQuotes" class="empty-state">{{ t.loadingQuotes }}</div>
         <div v-else-if="!filteredQuotes.length" class="empty-state">
           <i class="bi bi-file-earmark-text" style="font-size:2rem; opacity:.35"></i>
-          <p>{{ quoteSearch ? 'Sin resultados para "' + quoteSearch + '"' : 'No hay cotizaciones todavía.' }}</p>
+          <p>{{ quoteSearch ? t.noResults + ' "' + quoteSearch + '"' : t.noQuotes }}</p>
         </div>
         <div v-else class="table-scroll">
           <table class="inv-table">
             <thead>
               <tr>
-                <th>#</th><th>Título</th><th>Cliente</th><th>Fecha</th>
-                <th>Válida hasta</th><th>Total</th><th>Estado</th><th></th>
+                <th>#</th><th>{{ t.colTitle }}</th><th>{{ t.colClient }}</th><th>{{ t.colDate }}</th>
+                <th>{{ t.colValid }}</th><th>{{ t.colTotal }}</th><th>{{ t.colStatus }}</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -162,30 +162,30 @@
       <div v-if="activeTab === 'form'" class="quote-form">
 
         <div class="form-section-title">
-          {{ editingId ? `Editando cotización #${String(form.numero || '').padStart(4,'0')}` : 'Nueva cotización' }}
+          {{ editingId ? t.formEditTitle + ' #' + String(form.numero || '').padStart(4,'0') : t.formNewTitle }}
         </div>
 
         <!-- Datos generales -->
         <div class="form-grid-2">
           <div class="field full">
-            <label>Título *</label>
+            <label>{{ t.fieldTitle }}</label>
             <input v-model="form.titulo" type="text" placeholder="Ej: Cotización revestimiento oficinas" maxlength="60" />
           </div>
           <div class="field">
-            <label>Fecha</label>
+            <label>{{ t.fieldDate }}</label>
             <input :value="fmtDate(form.fecha)" type="text" disabled class="disabled-input" />
           </div>
           <div class="field">
-            <label>Válida por (días)</label>
+            <label>{{ t.fieldValid }}</label>
             <input v-model.number="form.validezDias" type="number" min="1" max="365" />
           </div>
           <div class="field">
-            <label>Estado</label>
+            <label>{{ t.fieldStatus }}</label>
             <select v-model="form.estado">
-              <option value="borrador">Borrador</option>
-              <option value="enviada">Enviada</option>
-              <option value="aceptada">Aceptada</option>
-              <option value="rechazada">Rechazada</option>
+              <option value="borrador">{{ t.statusDraft }}</option>
+              <option value="enviada">{{ t.statusSent }}</option>
+              <option value="aceptada">{{ t.statusAccepted }}</option>
+              <option value="rechazada">{{ t.statusRejected }}</option>
             </select>
           </div>
         </div>
@@ -193,11 +193,11 @@
         <!-- Cliente (opcional) -->
         <div class="collapsible-header" @click="showCliente = !showCliente">
           <i :class="showCliente ? 'bi bi-chevron-down' : 'bi bi-chevron-right'"></i>
-          <span>Datos del cliente <em class="optional-tag">(opcional)</em></span>
+          <span>{{ t.clientSection }} <em class="optional-tag">{{ t.optional }}</em></span>
         </div>
         <div v-if="showCliente" class="form-grid-2 collapsible-body">
           <div class="field">
-            <label>Nombre</label>
+            <label>{{ t.fieldName }}</label>
             <div style="position:relative">
               <input
                 v-model="form.cliente.nombre"
@@ -227,34 +227,34 @@
             </div>
           </div>
           <div class="field">
-            <label>Empresa</label>
+            <label>{{ t.fieldCompany }}</label>
             <input v-model="form.cliente.empresa" type="text" placeholder="Razón social" />
           </div>
           <div class="field">
-            <label>Email</label>
+            <label>{{ t.fieldEmail }}</label>
             <input v-model="form.cliente.email" type="email" placeholder="correo@ejemplo.com" />
           </div>
           <div class="field">
-            <label>Teléfono</label>
+            <label>{{ t.fieldPhone }}</label>
             <input v-model="form.cliente.telefono" type="tel" placeholder="+54 11 0000-0000" />
           </div>
         </div>
 
         <!-- Items -->
-        <div class="section-label">Productos / Materiales</div>
+        <div class="section-label">{{ t.itemsSection }}</div>
         <div class="items-scroll">
           <table class="items-table">
             <thead>
               <tr>
-                <th class="col-producto">Producto</th>
-                <th class="col-tipo">Tipo</th>
-                <th class="col-color">Color</th>
-                <th class="col-qty">Cant.</th>
-                <th class="col-unit">Unidad</th>
-                <th class="col-disc">Descuento <HelpTooltip tip="Elegí el descuento del grupo o escribí uno manual. Se aplica sobre el precio unitario. Los agregados opcionales NO tienen descuento." /></th>
-                <th class="col-price">Precio unit.</th>
-                <th class="col-desc">Descripción <HelpTooltip tip="Observaciones por ítem. Se amplía mientras escribís y vuelve al tamaño original al salir." /></th>
-                <th class="col-sub">Subtotal</th>
+                <th class="col-producto">{{ t.colProduct }}</th>
+                <th class="col-tipo">{{ t.colType }}</th>
+                <th class="col-color">{{ t.colColor }}</th>
+                <th class="col-qty">{{ t.colQty }}</th>
+                <th class="col-unit">{{ t.colUnit }}</th>
+                <th class="col-disc">{{ t.colDiscount }} <HelpTooltip :tip="t.discountTip" /></th>
+                <th class="col-price">{{ t.colPrice }}</th>
+                <th class="col-desc">{{ t.colDesc }} <HelpTooltip :tip="t.descTip" /></th>
+                <th class="col-sub">{{ t.colSub }}</th>
                 <th class="col-del"></th>
               </tr>
             </thead>
@@ -301,7 +301,7 @@
                         <span v-if="item.terminacion" class="sp-tag sp-tag--italic">{{ item.terminacion }}</span>
                       </div>
                       <div v-if="item._espesores?.length > 1" class="sp-espesor-wrap">
-                        <label class="sp-espesor-label">Espesor</label>
+                        <label class="sp-espesor-label">{{ t.espLabel }}</label>
                         <select v-model="item.espesor" class="sel-small">
                           <option v-for="e in item._espesores" :key="e" :value="e">{{ e }}mm</option>
                         </select>
@@ -315,7 +315,7 @@
                 <td class="col-tipo">
                   <template v-if="item._variantes?.length > 1">
                     <select v-model="item._varianteIdx" class="sel-small" @change="onTipoChange(idx)">
-                      <option :value="-1">Seleccionar tipo</option>
+                      <option :value="-1">{{ t.selectType }}</option>
                       <option v-for="(v, vi) in item._variantes" :key="vi" :value="vi">
                         {{ [v.tipoProducto, v.tipoTerminacion].filter(Boolean).join(' / ') || v.terminacion }}
                       </option>
@@ -330,7 +330,7 @@
                 <td class="col-color">
                   <template v-if="item._colorMode === 'todos' || (item._selectedColors?.length > 1)">
                     <select v-model="item.color" class="sel-small" @change="onColorChange(idx)">
-                      <option value="">Seleccionar color</option>
+                      <option value="">{{ t.selectColor }}</option>
                       <optgroup label="Grupo I" v-if="colorOptionsForItem(item).g1.length">
                         <option v-for="c in colorOptionsForItem(item).g1" :key="c.code" :value="c.code">
                           {{ c.code }} — {{ c.name }}
@@ -373,7 +373,7 @@
 
                 <!-- Descuento -->
                 <td class="col-disc">
-                  <span v-if="!item._admiteDescuentos" class="badge-exento" title="Este producto está exento de descuentos">Exento</span>
+                  <span v-if="!item._admiteDescuentos" class="badge-exento" title="Este producto está exento de descuentos">{{ t.exempt }}</span>
                   <div v-else class="disc-wrap">
                     <select
                       v-model="item._discountLabel"
@@ -404,7 +404,7 @@
                       <button
                         v-if="item._discountPct > 0"
                         class="disc-clear-btn"
-                        title="Quitar descuento"
+                        :title="t.clearDiscount"
                         @click="clearDiscount(idx)"
                       ><i class="bi bi-x-lg"></i></button>
                     </div>
@@ -427,7 +427,7 @@
                 <td class="col-desc">
                   <textarea
                     v-model="item.descripcion"
-                    placeholder="Observaciones…"
+                    :placeholder="t.observations"
                     class="input-small desc-textarea"
                     rows="1"
                     @input="autoResize($event)"
@@ -451,10 +451,10 @@
                   <div class="agregado-check-label">
                     <input type="checkbox" v-model="item._incluirAgregado" @change="recalc(idx)" />
                     <span class="agregado-check-name">{{ item._agregadoNombre }}</span>
-                    <span class="agregado-check-price">{{ fmtMoney(item._agregadoPrecio) }} / u &nbsp;·&nbsp; sin descuento</span>
+                    <span class="agregado-check-price">{{ fmtMoney(item._agregadoPrecio) }} / u &nbsp;·&nbsp; {{ t.noDiscount }}</span>
                     <template v-if="item._incluirAgregado">
                       <div class="agregado-qty-wrap">
-                        <span class="agregado-qty-label">Cant.</span>
+                        <span class="agregado-qty-label">{{ t.cantQty }}</span>
                         <input
                           v-model.number="item._agregadoCantidad"
                           type="number" min="1" step="1"
@@ -476,32 +476,32 @@
         </div>
 
         <button class="add-row-btn" @click="addItem">
-          <i class="bi bi-plus-circle"></i> Agregar ítem
+          <i class="bi bi-plus-circle"></i> {{ t.addItem }}
         </button>
 
         <!-- Total -->
         <div class="total-row">
-          <span class="total-label">Total</span>
+          <span class="total-label">{{ t.total }}</span>
           <span class="total-value">{{ fmtMoney(totalForm) }}</span>
         </div>
 
         <!-- Notas -->
         <div class="field">
-          <label>Notas / Condiciones</label>
+          <label>{{ t.notesField }}</label>
           <textarea v-model="form.descripcionGeneral" rows="3"
-            placeholder="Observaciones generales, condiciones de pago, plazo de entrega…"></textarea>
+            :placeholder="t.notesPlaceholder"></textarea>
         </div>
 
         <!-- Footer -->
         <div class="form-footer">
           <button class="primary-button" :disabled="saving" @click="saveQuote()">
             <i class="bi" :class="saving ? 'bi-hourglass-split' : 'bi-floppy2'"></i>
-            {{ saving ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Crear cotización' }}
+            {{ saving ? t.saving : editingId ? t.saveChanges : t.createQuote }}
           </button>
           <button class="secondary-button" :disabled="saving" @click="saveAndPrint">
-            <i class="bi bi-printer"></i> Guardar e imprimir
+            <i class="bi bi-printer"></i> {{ t.saveAndPrint }}
           </button>
-          <button class="ghost-button" @click="cancelForm">Cancelar</button>
+          <button class="ghost-button" @click="cancelForm">{{ t.cancel }}</button>
         </div>
       </div>
 
@@ -536,7 +536,7 @@
       <div class="pe-modal">
         <div class="pe-hd">
           <i class="bi bi-pencil-square"></i>
-          <span>Editar plantilla de impresión</span>
+          <span>{{ t.editTemplate }}</span>
           <button class="pe-close" @click="showPrintEditor = false"><i class="bi bi-x-lg"></i></button>
         </div>
 
@@ -545,7 +545,7 @@
 
             <!-- Formulario -->
             <div class="pe-form">
-              <div class="pe-sec-label">Logo de empresa</div>
+              <div class="pe-sec-label">{{ t.companyLogo }}</div>
               <div class="pe-logo-row">
                 <div class="pe-logo-thumb">
                   <img v-if="pt.logo" :src="pt.logo" alt="Logo" class="pe-logo-img" />
@@ -553,39 +553,39 @@
                 </div>
                 <div class="pe-logo-btns">
                   <label class="secondary-button pe-upload-lbl">
-                    <i class="bi bi-upload"></i> Subir imagen
+                    <i class="bi bi-upload"></i> {{ t.uploadImg }}
                     <input type="file" accept="image/*" style="display:none" @change="onLogoFile" />
                   </label>
                   <button v-if="pt.logo" class="ghost-button" @click="pt.logo = ''">
-                    <i class="bi bi-trash3"></i> Quitar
+                    <i class="bi bi-trash3"></i> {{ t.removeBtn }}
                   </button>
                 </div>
               </div>
 
-              <div class="pe-sec-label">Datos de la empresa</div>
+              <div class="pe-sec-label">{{ t.companyData }}</div>
               <div class="pe-fields">
                 <div class="pe-field pe-field--full">
-                  <label>Razón social</label>
+                  <label>{{ t.razonSocial }}</label>
                   <input v-model="pt.razonSocial" type="text" placeholder="Mi Empresa S.A." maxlength="120" />
                 </div>
                 <div class="pe-field pe-field--full">
-                  <label>Dirección</label>
+                  <label>{{ t.address }}</label>
                   <input v-model="pt.direccion" type="text" placeholder="Av. Corrientes 1234, Piso 3" maxlength="150" />
                 </div>
                 <div class="pe-field pe-field--full">
-                  <label>Ciudad / Provincia</label>
+                  <label>{{ t.cityState }}</label>
                   <input v-model="pt.ciudad" type="text" placeholder="Buenos Aires, CABA" maxlength="100" />
                 </div>
                 <div class="pe-field">
-                  <label>Teléfono</label>
+                  <label>{{ t.phone }}</label>
                   <input v-model="pt.telefono" type="text" placeholder="+54 11 0000-0000" maxlength="40" />
                 </div>
                 <div class="pe-field">
-                  <label>Email</label>
+                  <label>{{ t.fieldEmail }}</label>
                   <input v-model="pt.email" type="email" placeholder="info@empresa.com" maxlength="100" />
                 </div>
                 <div class="pe-field">
-                  <label>Sitio web</label>
+                  <label>{{ t.website }}</label>
                   <input v-model="pt.web" type="text" placeholder="www.empresa.com" maxlength="100" />
                 </div>
                 <div class="pe-field">
@@ -595,14 +595,14 @@
                 </div>
               </div>
 
-              <div class="pe-sec-label">Texto de condiciones</div>
+              <div class="pe-sec-label">{{ t.conditionsText }}</div>
               <div class="pe-field pe-field--full">
                 <textarea v-model="pt.condiciones" rows="3"
                   placeholder="Oferta válida por {dias} días a partir de la fecha de emisión. Precios en dólares. No incluyen IVA." />
-                <span class="pe-hint">Usá <code>{dias}</code> para insertar los días de validez de cada cotización.</span>
+                <span class="pe-hint" v-html="t.conditionsHint"></span>
               </div>
 
-              <div class="pe-sec-label">Pie de página</div>
+              <div class="pe-sec-label">{{ t.footer }}</div>
               <div class="pe-field pe-field--full">
                 <textarea v-model="pt.piePagina" rows="2"
                   placeholder="Texto adicional al pie (contacto, datos bancarios, etc.)" />
@@ -611,7 +611,7 @@
 
             <!-- Preview -->
             <div class="pe-preview">
-              <div class="pe-preview-label">Vista previa del encabezado</div>
+              <div class="pe-preview-label">{{ t.previewTitle }}</div>
               <div class="pe-preview-doc">
                 <div class="pe-prev-header">
                   <div class="pe-prev-left">
@@ -626,9 +626,9 @@
                     <div v-if="pt.cuit" class="pe-prev-detail">CUIT: {{ pt.cuit }}</div>
                   </div>
                   <div class="pe-prev-right">
-                    <div class="pe-prev-title">COTIZACIÓN</div>
+                    <div class="pe-prev-title">{{ t.printDocTitle }}</div>
                     <div class="pe-prev-meta-row"><span>N°</span><strong>#0001</strong></div>
-                    <div class="pe-prev-meta-row"><span>Fecha</span>{{ new Date().toLocaleDateString('es-AR') }}</div>
+                    <div class="pe-prev-meta-row"><span>{{ t.colDate }}</span>{{ new Date().toLocaleDateString('es-AR') }}</div>
                   </div>
                 </div>
                 <div v-if="pt.condiciones || pt.piePagina" class="pe-prev-footer-area">
@@ -644,9 +644,9 @@
         </div>
 
         <div class="pe-ft">
-          <button class="ghost-button" @click="showPrintEditor = false">Cancelar</button>
+          <button class="ghost-button" @click="showPrintEditor = false">{{ t.cancel }}</button>
           <button class="primary-button" @click="savePt">
-            <i class="bi bi-floppy2"></i> Guardar plantilla
+            <i class="bi bi-floppy2"></i> {{ t.saveTemplate }}
           </button>
         </div>
       </div>
@@ -668,12 +668,12 @@
         <div v-if="pt.cuit" class="print-company-detail">CUIT: {{ pt.cuit }}</div>
       </div>
       <div class="print-company">
-        <div class="print-doc-title">COTIZACIÓN</div>
+        <div class="print-doc-title">{{ t.printDocTitle }}</div>
         <table class="print-meta-table">
           <tbody>
             <tr><td>N°</td><td><strong>#{{ String(quoteToPrint.numero).padStart(4,'0') }}</strong></td></tr>
-            <tr><td>Fecha</td><td>{{ fmtDate(quoteToPrint.createdAt) }}</td></tr>
-            <tr><td>Válida hasta</td><td>{{ validezFecha(quoteToPrint.createdAt, quoteToPrint.validezDias) }}</td></tr>
+            <tr><td>{{ t.colDate }}</td><td>{{ fmtDate(quoteToPrint.createdAt) }}</td></tr>
+            <tr><td>{{ t.colValid }}</td><td>{{ validezFecha(quoteToPrint.createdAt, quoteToPrint.validezDias) }}</td></tr>
             <tr><td>Vendedor</td><td>{{ quoteToPrint.vendedor }}</td></tr>
           </tbody>
         </table>
@@ -683,7 +683,7 @@
     <div class="print-titulo">{{ quoteToPrint.titulo }}</div>
 
     <div v-if="hasCliente(quoteToPrint)" class="print-client-box">
-      <div class="print-section-label">DESTINATARIO</div>
+      <div class="print-section-label">{{ t.printRecipient }}</div>
       <div v-if="quoteToPrint.cliente.nombre" class="print-client-name">{{ quoteToPrint.cliente.nombre }}</div>
       <div v-if="quoteToPrint.cliente.empresa" class="print-client-detail">{{ quoteToPrint.cliente.empresa }}</div>
       <div v-if="quoteToPrint.cliente.email" class="print-client-detail">{{ quoteToPrint.cliente.email }}</div>
@@ -693,14 +693,14 @@
     <table class="print-items">
       <thead>
         <tr>
-          <th class="pi-product">Producto / Material</th>
-          <th class="pi-color">Color</th>
-          <th class="pi-qty">Cant.</th>
-          <th class="pi-unit">Unidad</th>
-          <th class="pi-disc">Descuento</th>
-          <th class="pi-price">Precio unit.</th>
-          <th class="pi-desc">Descripción</th>
-          <th class="pi-sub">Subtotal</th>
+          <th class="pi-product">{{ t.printProduct }}</th>
+          <th class="pi-color">{{ t.colColor }}</th>
+          <th class="pi-qty">{{ t.colQty }}</th>
+          <th class="pi-unit">{{ t.colUnit }}</th>
+          <th class="pi-disc">{{ t.colDiscount }}</th>
+          <th class="pi-price">{{ t.colPrice }}</th>
+          <th class="pi-desc">{{ t.colDesc }}</th>
+          <th class="pi-sub">{{ t.colSub }}</th>
         </tr>
       </thead>
       <tbody>
@@ -723,23 +723,23 @@
       </tbody>
       <tfoot>
         <tr class="print-total-row">
-          <td colspan="7" class="print-total-label">TOTAL</td>
+          <td colspan="7" class="print-total-label">{{ t.printTotal }}</td>
           <td class="print-total-value">{{ fmtMoney(totalCotizacion(quoteToPrint)) }}</td>
         </tr>
       </tfoot>
     </table>
 
     <div v-if="quoteToPrint.descripcionGeneral" class="print-notes">
-      <div class="print-section-label">NOTAS Y CONDICIONES</div>
+      <div class="print-section-label">{{ t.printNotes }}</div>
       <p class="print-notes-text">{{ quoteToPrint.descripcionGeneral }}</p>
     </div>
 
     <div class="print-validity">
-      {{ (pt.condiciones || 'Oferta válida por {dias} días a partir de la fecha de emisión. Precios en dólares. No incluyen IVA.').replace('{dias}', String(quoteToPrint.validezDias)) }}
+      {{ (pt.condiciones || t.defaultConditions).replace('{dias}', String(quoteToPrint.validezDias)) }}
     </div>
     <div class="print-footer">
       <div v-if="pt.piePagina" class="print-footer-extra">{{ pt.piePagina }}</div>
-      <div>Cotización generada por {{ quoteToPrint.vendedor }} — {{ fmtDate(quoteToPrint.createdAt) }}</div>
+      <div>{{ t.generatedBy }} {{ quoteToPrint.vendedor }} — {{ fmtDate(quoteToPrint.createdAt) }}</div>
     </div>
   </div>
 </template>
@@ -755,6 +755,199 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { API_BASE_URL } from '@/utils/api'
 import { usePermissions } from '@/utils/permissions'
 import HelpTooltip from '@/components/HelpTooltip.vue'
+import { useLocale } from '@/composables/useLocale'
+
+const { locale } = useLocale()
+
+const TRANSLATIONS = {
+  es: {
+    title: 'Cotizaciones',
+    edit: 'Editar',
+    newQuote: 'Nueva',
+    back: 'Volver al historial',
+    deleteTitle: 'Eliminar cotizacion',
+    deleteConfirm: 'Eliminar',
+    sendTitle: 'Enviar cotización',
+    noContact: 'Este cliente no tiene teléfono ni email registrado.',
+    sendChannel: 'Canal de envío',
+    subject: 'Asunto',
+    message: 'Mensaje',
+    generatingPDF: 'Generando PDF…',
+    cancel: 'Cancelar',
+    sendWA: 'Enviar por WhatsApp',
+    sendEmail: 'Enviar por Email',
+    searchPlaceholder: 'Buscar por título, cliente, estado, número…',
+    loadingQuotes: 'Cargando cotizaciones…',
+    noResults: 'Sin resultados para',
+    noQuotes: 'No hay cotizaciones todavía.',
+    colTitle: 'Título',
+    colClient: 'Cliente',
+    colDate: 'Fecha',
+    colValid: 'Válida hasta',
+    colTotal: 'Total',
+    colStatus: 'Estado',
+    formEditTitle: 'Editando cotización',
+    formNewTitle: 'Nueva cotización',
+    fieldTitle: 'Título *',
+    fieldDate: 'Fecha',
+    fieldValid: 'Válida por (días)',
+    fieldStatus: 'Estado',
+    statusDraft: 'Borrador',
+    statusSent: 'Enviada',
+    statusAccepted: 'Aceptada',
+    statusRejected: 'Rechazada',
+    clientSection: 'Datos del cliente',
+    optional: '(opcional)',
+    fieldName: 'Nombre',
+    fieldCompany: 'Empresa',
+    fieldEmail: 'Email',
+    fieldPhone: 'Teléfono',
+    itemsSection: 'Productos / Materiales',
+    colProduct: 'Producto',
+    colType: 'Tipo',
+    colColor: 'Color',
+    colQty: 'Cant.',
+    colUnit: 'Unidad',
+    colDiscount: 'Descuento',
+    discountTip: 'Elegí el descuento del grupo o escribí uno manual. Se aplica sobre el precio unitario. Los agregados opcionales NO tienen descuento.',
+    colPrice: 'Precio unit.',
+    colDesc: 'Descripción',
+    descTip: 'Observaciones por ítem. Se amplía mientras escribís y vuelve al tamaño original al salir.',
+    colSub: 'Subtotal',
+    selectType: 'Seleccionar tipo',
+    selectColor: 'Seleccionar color',
+    exempt: 'Exento',
+    clearDiscount: 'Quitar descuento',
+    observations: 'Observaciones…',
+    noDiscount: 'sin descuento',
+    cantQty: 'Cant.',
+    addItem: 'Agregar ítem',
+    total: 'Total',
+    notesField: 'Notas / Condiciones',
+    notesPlaceholder: 'Observaciones generales, condiciones de pago, plazo de entrega…',
+    saving: 'Guardando…',
+    saveChanges: 'Guardar cambios',
+    createQuote: 'Crear cotización',
+    saveAndPrint: 'Guardar e imprimir',
+    editTemplate: 'Editar plantilla de impresión',
+    companyLogo: 'Logo de empresa',
+    uploadImg: 'Subir imagen',
+    removeBtn: 'Quitar',
+    companyData: 'Datos de la empresa',
+    razonSocial: 'Razón social',
+    address: 'Dirección',
+    cityState: 'Ciudad / Provincia',
+    phone: 'Teléfono',
+    website: 'Sitio web',
+    conditionsText: 'Texto de condiciones',
+    footer: 'Pie de página',
+    previewTitle: 'Vista previa del encabezado',
+    saveTemplate: 'Guardar plantilla',
+    printDocTitle: 'COTIZACIÓN',
+    printRecipient: 'DESTINATARIO',
+    printNotes: 'NOTAS Y CONDICIONES',
+    printTotal: 'TOTAL',
+    printProduct: 'Producto / Material',
+    defaultConditions: 'Oferta válida por {dias} días a partir de la fecha de emisión. Precios en dólares. No incluyen IVA.',
+    generatedBy: 'Cotización generada por',
+    espLabel: 'Espesor',
+    conditionsHint: 'Usá <code>{dias}</code> para insertar los días de validez de cada cotización.',
+  },
+  pt: {
+    title: 'Cotações',
+    edit: 'Editar',
+    newQuote: 'Nova',
+    back: 'Voltar ao histórico',
+    deleteTitle: 'Excluir cotação',
+    deleteConfirm: 'Excluir',
+    sendTitle: 'Enviar cotação',
+    noContact: 'Este cliente não tem telefone nem e-mail registrado.',
+    sendChannel: 'Canal de envio',
+    subject: 'Assunto',
+    message: 'Mensagem',
+    generatingPDF: 'Gerando PDF…',
+    cancel: 'Cancelar',
+    sendWA: 'Enviar por WhatsApp',
+    sendEmail: 'Enviar por E-mail',
+    searchPlaceholder: 'Pesquisar por título, cliente, estado, número…',
+    loadingQuotes: 'Carregando cotações…',
+    noResults: 'Sem resultados para',
+    noQuotes: 'Nenhuma cotação ainda.',
+    colTitle: 'Título',
+    colClient: 'Cliente',
+    colDate: 'Data',
+    colValid: 'Válida até',
+    colTotal: 'Total',
+    colStatus: 'Estado',
+    formEditTitle: 'Editando cotação',
+    formNewTitle: 'Nova cotação',
+    fieldTitle: 'Título *',
+    fieldDate: 'Data',
+    fieldValid: 'Válida por (dias)',
+    fieldStatus: 'Estado',
+    statusDraft: 'Rascunho',
+    statusSent: 'Enviada',
+    statusAccepted: 'Aceita',
+    statusRejected: 'Recusada',
+    clientSection: 'Dados do cliente',
+    optional: '(opcional)',
+    fieldName: 'Nome',
+    fieldCompany: 'Empresa',
+    fieldEmail: 'E-mail',
+    fieldPhone: 'Telefone',
+    itemsSection: 'Produtos / Materiais',
+    colProduct: 'Produto',
+    colType: 'Tipo',
+    colColor: 'Cor',
+    colQty: 'Qtd.',
+    colUnit: 'Unidade',
+    colDiscount: 'Desconto',
+    discountTip: 'Escolha o desconto do grupo ou escreva um manual. É aplicado sobre o preço unitário. Os adicionais opcionais NÃO têm desconto.',
+    colPrice: 'Preço unit.',
+    colDesc: 'Descrição',
+    descTip: 'Observações por item. Expande enquanto você digita e volta ao tamanho original ao sair.',
+    colSub: 'Subtotal',
+    selectType: 'Selecionar tipo',
+    selectColor: 'Selecionar cor',
+    exempt: 'Isento',
+    clearDiscount: 'Remover desconto',
+    observations: 'Observações…',
+    noDiscount: 'sem desconto',
+    cantQty: 'Qtd.',
+    addItem: 'Adicionar item',
+    total: 'Total',
+    notesField: 'Notas / Condições',
+    notesPlaceholder: 'Observações gerais, condições de pagamento, prazo de entrega…',
+    saving: 'Salvando…',
+    saveChanges: 'Salvar alterações',
+    createQuote: 'Criar cotação',
+    saveAndPrint: 'Salvar e imprimir',
+    editTemplate: 'Editar modelo de impressão',
+    companyLogo: 'Logo da empresa',
+    uploadImg: 'Enviar imagem',
+    removeBtn: 'Remover',
+    companyData: 'Dados da empresa',
+    razonSocial: 'Razão social',
+    address: 'Endereço',
+    cityState: 'Cidade / Estado',
+    phone: 'Telefone',
+    website: 'Site',
+    conditionsText: 'Texto de condições',
+    footer: 'Rodapé',
+    previewTitle: 'Pré-visualização do cabeçalho',
+    saveTemplate: 'Salvar modelo',
+    printDocTitle: 'COTAÇÃO',
+    printRecipient: 'DESTINATÁRIO',
+    printNotes: 'NOTAS E CONDIÇÕES',
+    printTotal: 'TOTAL',
+    printProduct: 'Produto / Material',
+    defaultConditions: 'Oferta válida por {dias} dias a partir da data de emissão. Preços em dólares. Não incluem IVA.',
+    generatedBy: 'Cotação gerada por',
+    espLabel: 'Espessura',
+    conditionsHint: 'Use <code>{dias}</code> para inserir os dias de validade de cada cotação.',
+  }
+}
+const t = computed(() => TRANSLATIONS[locale.value] || TRANSLATIONS.es)
 
 const { canManage, userId } = usePermissions()
 
@@ -1552,7 +1745,7 @@ function buildQuoteHtml(q) {
     </tr>`).join('')
 
   const total = totalCotizacion(q)
-  const condText = (pt.value.condiciones || 'Oferta válida por {dias} días a partir de la fecha de emisión.').replace('{dias}', String(q.validezDias || 7))
+  const condText = (pt.value.condiciones || t.value.defaultConditions).replace('{dias}', String(q.validezDias || 7))
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Cotización #${num}</title>
@@ -1581,11 +1774,11 @@ function buildQuoteHtml(q) {
 <div class="header">
   <div class="header-left">${logoHtml}${companyLines}</div>
   <div class="header-right">
-    <div class="doc-title">COTIZACIÓN</div>
+    <div class="doc-title">${t.value.printDocTitle}</div>
     <table class="meta-table"><tbody>
       <tr><td>N°</td><td><strong>#${num}</strong></td></tr>
-      <tr><td>Fecha</td><td>${fmtDate(q.createdAt)}</td></tr>
-      <tr><td>Válida hasta</td><td>${validezFecha(q.createdAt, q.validezDias)}</td></tr>
+      <tr><td>${t.value.colDate}</td><td>${fmtDate(q.createdAt)}</td></tr>
+      <tr><td>${t.value.colValid}</td><td>${validezFecha(q.createdAt, q.validezDias)}</td></tr>
       <tr><td>Vendedor</td><td>${q.vendedor || ''}</td></tr>
     </tbody></table>
   </div>
@@ -1594,20 +1787,20 @@ function buildQuoteHtml(q) {
 ${clientHtml}
 <table class="items">
   <thead><tr>
-    <th>Producto / Material</th><th>Color</th><th>Cant.</th><th>Unidad</th>
-    <th>Descuento</th><th style="text-align:right">Precio unit.</th><th>Descripción</th><th style="text-align:right">Subtotal</th>
+    <th>${t.value.printProduct}</th><th>${t.value.colColor}</th><th>${t.value.colQty}</th><th>${t.value.colUnit}</th>
+    <th>${t.value.colDiscount}</th><th style="text-align:right">${t.value.colPrice}</th><th>${t.value.colDesc}</th><th style="text-align:right">${t.value.colSub}</th>
   </tr></thead>
   <tbody>${itemsRows}</tbody>
   <tfoot><tr class="total-row">
-    <td colspan="7" style="text-align:right;padding:8px;">TOTAL</td>
+    <td colspan="7" style="text-align:right;padding:8px;">${t.value.printTotal}</td>
     <td style="text-align:right;padding:8px;">$ ${Number(total).toLocaleString('es-AR',{minimumFractionDigits:2})}</td>
   </tr></tfoot>
 </table>
-${q.descripcionGeneral ? `<div class="notes"><div class="notes-label">NOTAS Y CONDICIONES</div><p>${q.descripcionGeneral}</p></div>` : ''}
+${q.descripcionGeneral ? `<div class="notes"><div class="notes-label">${t.value.printNotes}</div><p>${q.descripcionGeneral}</p></div>` : ''}
 <div class="validity">${condText}</div>
 <div class="footer">
   ${pt.value.piePagina ? `<div>${pt.value.piePagina}</div>` : ''}
-  <div>Cotización generada por ${q.vendedor || ''} — ${fmtDate(q.createdAt)}</div>
+  <div>${t.value.generatedBy} ${q.vendedor || ''} — ${fmtDate(q.createdAt)}</div>
 </div>
 </body></html>`
 }
@@ -1675,7 +1868,7 @@ async function makeQuotePDF(q) {
   pdf.setFont('helvetica', 'bold')
   pdf.setFontSize(20)
   pdf.setTextColor(40, 40, 40)
-  pdf.text('COTIZACIÓN', rx, y + 5, { align: 'right' })
+  pdf.text(t.value.printDocTitle, rx, y + 5, { align: 'right' })
 
   pdf.setFontSize(9)
   pdf.setFont('helvetica', 'normal')
@@ -1683,8 +1876,8 @@ async function makeQuotePDF(q) {
   let my = y + 12
   for (const [label, val] of [
     ['N°', `#${num}`],
-    ['Fecha', fmtDate(q.createdAt)],
-    ['Válida hasta', validezFecha(q.createdAt, q.validezDias)],
+    [t.value.colDate, fmtDate(q.createdAt)],
+    [t.value.colValid, validezFecha(q.createdAt, q.validezDias)],
     ['Vendedor', q.vendedor || ''],
   ]) {
     pdf.setFont('helvetica', 'normal'); pdf.text(label + ':', rx - 30, my)
@@ -1716,7 +1909,7 @@ async function makeQuotePDF(q) {
     pdf.setFontSize(7.5)
     pdf.setFont('helvetica', 'bold')
     pdf.setTextColor(140, 140, 140)
-    pdf.text('DESTINATARIO', ML + 3, y + 4)
+    pdf.text(t.value.printRecipient, ML + 3, y + 4)
     let by = y + 8
     for (const ln of boxLines) {
       pdf.setFont('helvetica', ln === cl.nombre ? 'bold' : 'normal')
@@ -1731,13 +1924,13 @@ async function makeQuotePDF(q) {
   // ── Tabla de ítems ───────────────────────────────────────────────────────────
   // Header row
   const cols = [
-    { label: 'Producto',      w: 50, align: 'left' },
-    { label: 'Color',         w: 18, align: 'left' },
-    { label: 'Cant.',         w: 12, align: 'center' },
-    { label: 'Unidad',        w: 16, align: 'left' },
-    { label: 'Descuento',     w: 28, align: 'left' },
-    { label: 'Precio unit.',  w: 24, align: 'right' },
-    { label: 'Subtotal',      w: 22, align: 'right' },
+    { label: t.value.colProduct,   w: 50, align: 'left' },
+    { label: t.value.colColor,     w: 18, align: 'left' },
+    { label: t.value.colQty,       w: 12, align: 'center' },
+    { label: t.value.colUnit,      w: 16, align: 'left' },
+    { label: t.value.colDiscount,  w: 28, align: 'left' },
+    { label: t.value.colPrice,     w: 24, align: 'right' },
+    { label: t.value.colSub,       w: 22, align: 'right' },
   ]
   const rowH = 6
   const thH  = 6
@@ -1799,7 +1992,7 @@ async function makeQuotePDF(q) {
   pdf.setFont('helvetica', 'bold')
   pdf.setFontSize(10)
   pdf.setTextColor(255, 255, 255)
-  pdf.text('TOTAL', W - MR - 24, y + 4.8, { align: 'right' })
+  pdf.text(t.value.printTotal, W - MR - 24, y + 4.8, { align: 'right' })
   const totalStr = `$ ${Number(totalCotizacion(q)).toLocaleString('es-AR',{minimumFractionDigits:2})}`
   pdf.text(totalStr, W - MR - 1, y + 4.8, { align: 'right' })
   y += 10
@@ -1809,7 +2002,7 @@ async function makeQuotePDF(q) {
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(7.5)
     pdf.setTextColor(140, 140, 140)
-    pdf.text('NOTAS Y CONDICIONES', ML, y)
+    pdf.text(t.value.printNotes, ML, y)
     y += 4
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(8.5)
@@ -1820,7 +2013,7 @@ async function makeQuotePDF(q) {
   }
 
   // ── Validez ──────────────────────────────────────────────────────────────────
-  const condText = (pt.value.condiciones || 'Oferta válida por {dias} días a partir de la fecha de emisión. Precios en dólares. No incluyen IVA.').replace('{dias}', String(q.validezDias || 7))
+  const condText = (pt.value.condiciones || t.value.defaultConditions).replace('{dias}', String(q.validezDias || 7))
   pdf.setFont('helvetica', 'italic')
   pdf.setFontSize(8)
   pdf.setTextColor(120, 120, 120)
@@ -1837,7 +2030,7 @@ async function makeQuotePDF(q) {
   pdf.setFontSize(7.5)
   pdf.setTextColor(140, 140, 140)
   if (pt.value.piePagina) { pdf.text(pt.value.piePagina, ML, y); y += 4 }
-  pdf.text(`Cotización generada por ${q.vendedor || ''} — ${fmtDate(q.createdAt)}`, ML, y)
+  pdf.text(`${t.value.generatedBy} ${q.vendedor || ''} — ${fmtDate(q.createdAt)}`, ML, y)
 
   const blob = pdf.output('blob')
   return new File([blob], `cotizacion-${num}.pdf`, { type: 'application/pdf' })

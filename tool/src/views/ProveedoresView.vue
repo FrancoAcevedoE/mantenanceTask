@@ -2,16 +2,16 @@
   <div class="prov-page">
     <div class="prov-card-wrap">
     <div class="prov-header">
-      <h2 class="prov-title"><i class="bi bi-truck"></i> Proveedores</h2>
-      <button v-if="canManageCompras" class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> Nuevo proveedor</button>
+      <h2 class="prov-title"><i class="bi bi-truck"></i> {{ t.title }}</h2>
+      <button v-if="canManageCompras" class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> {{ t.btnNew }}</button>
     </div>
 
     <div class="prov-filters">
-      <input v-model="search" class="prov-search" placeholder="Buscar por nombre, CUIT, categoría…" />
+      <input v-model="search" class="prov-search" :placeholder="t.search" />
     </div>
 
-    <div v-if="loading" class="prov-loading">Cargando…</div>
-    <div v-else-if="filtered.length === 0" class="prov-empty">Sin proveedores registrados.</div>
+    <div v-if="loading" class="prov-loading">{{ t.loading }}</div>
+    <div v-else-if="filtered.length === 0" class="prov-empty">{{ t.empty }}</div>
 
     <div v-else class="prov-list">
       <div v-for="p in filtered" :key="p._id" class="prov-card">
@@ -37,10 +37,10 @@
 
         <div class="prov-card-actions">
           <button class="btn-sm btn-eval" @click="openEval(p)">
-            <i class="bi bi-star-fill"></i> Evaluar
+            <i class="bi bi-star-fill"></i> {{ t.btnEval }}
           </button>
           <button class="btn-sm btn-hist" @click="openEvalHist(p)">
-            <i class="bi bi-list-stars"></i> Evaluaciones ({{ p.evaluaciones?.length || 0 }})
+            <i class="bi bi-list-stars"></i> {{ t.evalCount(p.evaluaciones?.length || 0) }}
           </button>
           <button v-if="canManageCompras" class="btn-sm btn-edit" @click="openEdit(p)"><i class="bi bi-pencil"></i></button>
           <button v-if="canManageCompras" class="btn-sm btn-del" @click="confirmDelete(p)"><i class="bi bi-trash"></i></button>
@@ -52,37 +52,37 @@
     <!-- Modal crear/editar proveedor -->
     <div v-if="showForm" class="modal-overlay" @click.self="closeForm">
       <div class="modal-box">
-        <h3>{{ editingId ? 'Editar proveedor' : 'Nuevo proveedor' }}</h3>
+        <h3>{{ editingId ? t.modalEdit : t.modalCreate }}</h3>
         <div class="form-grid">
-          <label>Nombre *
-            <input v-model="form.nombre" placeholder="Nombre comercial" />
+          <label>{{ t.fNombre }}
+            <input v-model="form.nombre" :placeholder="t.phNombre" />
           </label>
-          <label>Razón social
-            <input v-model="form.razonSocial" placeholder="Razón social" />
+          <label>{{ t.fRazon }}
+            <input v-model="form.razonSocial" :placeholder="t.fRazon" />
           </label>
-          <label>CUIT
+          <label>{{ t.fCuit }}
             <input v-model="form.cuit" placeholder="20-12345678-9" />
           </label>
-          <label>Categoría
-            <input v-model="form.categoria" placeholder="Ej: Químicos, Envases…" />
+          <label>{{ t.fCategoria }}
+            <input v-model="form.categoria" :placeholder="t.phCategoria" />
           </label>
-          <label>Contacto
-            <input v-model="form.contacto" placeholder="Nombre del contacto" />
+          <label>{{ t.fContacto }}
+            <input v-model="form.contacto" :placeholder="t.phContacto" />
           </label>
-          <label>Teléfono
+          <label>{{ t.fTelefono }}
             <input v-model="form.telefono" placeholder="+54 9 …" />
           </label>
-          <label class="full-col">Email
+          <label class="full-col">{{ t.fEmail }}
             <input v-model="form.email" type="email" placeholder="correo@empresa.com" />
           </label>
-          <label class="full-col">Dirección
-            <input v-model="form.direccion" placeholder="Calle, ciudad…" />
+          <label class="full-col">{{ t.fDireccion }}
+            <input v-model="form.direccion" :placeholder="t.phDireccion" />
           </label>
         </div>
         <div class="modal-actions">
-          <button class="btn-ghost" @click="closeForm">Cancelar</button>
+          <button class="btn-ghost" @click="closeForm">{{ t.btnCancel }}</button>
           <button class="btn-primary" :disabled="savingForm" @click="saveForm">
-            {{ savingForm ? 'Guardando…' : 'Guardar' }}
+            {{ savingForm ? t.btnSaving : t.btnSave }}
           </button>
         </div>
       </div>
@@ -91,7 +91,7 @@
     <!-- Modal evaluar proveedor -->
     <div v-if="showEval" class="modal-overlay" @click.self="showEval = false">
       <div class="modal-box modal-sm">
-        <h3><i class="bi bi-star-fill text-yellow"></i> Evaluar — {{ evalItem?.nombre }}</h3>
+        <h3><i class="bi bi-star-fill text-yellow"></i> {{ t.evalTitle(evalItem?.nombre) }}</h3>
         <div class="eval-criteria">
           <div v-for="(label, key) in evalKeys" :key="key" class="eval-row">
             <span class="eval-label">{{ label }}</span>
@@ -107,13 +107,13 @@
             </div>
           </div>
         </div>
-        <label class="eval-comment-label">Comentario
-          <textarea v-model="evalForm.comentario" rows="3" placeholder="Observaciones…"></textarea>
+        <label class="eval-comment-label">{{ t.evalComment }}
+          <textarea v-model="evalForm.comentario" rows="3" :placeholder="t.phComment"></textarea>
         </label>
         <div class="modal-actions">
-          <button class="btn-ghost" @click="showEval = false">Cancelar</button>
+          <button class="btn-ghost" @click="showEval = false">{{ t.btnCancel }}</button>
           <button class="btn-primary" :disabled="savingEval" @click="saveEval">
-            {{ savingEval ? 'Guardando…' : 'Guardar evaluación' }}
+            {{ savingEval ? t.btnSaving : t.btnSaveEval }}
           </button>
         </div>
       </div>
@@ -122,8 +122,8 @@
     <!-- Modal historial de evaluaciones -->
     <div v-if="showEvalHist" class="modal-overlay" @click.self="showEvalHist = false">
       <div class="modal-box modal-lg">
-        <h3><i class="bi bi-list-stars"></i> Evaluaciones — {{ evalHistItem?.nombre }}</h3>
-        <div v-if="!evalHistItem?.evaluaciones?.length" class="prov-empty">Sin evaluaciones aún.</div>
+        <h3><i class="bi bi-list-stars"></i> {{ t.histTitle(evalHistItem?.nombre) }}</h3>
+        <div v-if="!evalHistItem?.evaluaciones?.length" class="prov-empty">{{ t.noEvals }}</div>
         <div v-else class="eval-hist-list">
           <div v-for="ev in evalHistItem.evaluaciones.slice().reverse()" :key="ev._id" class="eval-hist-card">
             <div class="eval-hist-head">
@@ -145,7 +145,7 @@
           </div>
         </div>
         <div class="modal-actions">
-          <button class="btn-ghost" @click="showEvalHist = false">Cerrar</button>
+          <button class="btn-ghost" @click="showEvalHist = false">{{ t.btnClose }}</button>
         </div>
       </div>
     </div>
@@ -157,8 +157,60 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 import { usePermissions } from '@/utils/permissions'
+import { useLocale } from '@/composables/useLocale'
 
+const { locale } = useLocale()
 const { canManageCompras } = usePermissions()
+
+const TRANSLATIONS = {
+  es: {
+    title: 'Proveedores', btnNew: 'Nuevo proveedor',
+    search: 'Buscar por nombre, CUIT, categoría…',
+    loading: 'Cargando…', empty: 'Sin proveedores registrados.',
+    btnEval: 'Evaluar', evalCount: (n) => `Evaluaciones (${n})`,
+    modalCreate: 'Nuevo proveedor', modalEdit: 'Editar proveedor',
+    fNombre: 'Nombre *', phNombre: 'Nombre comercial',
+    fRazon: 'Razón social', fCuit: 'CUIT',
+    fCategoria: 'Categoría', phCategoria: 'Ej: Químicos, Envases…',
+    fContacto: 'Contacto', phContacto: 'Nombre del contacto',
+    fTelefono: 'Teléfono', fEmail: 'Email',
+    fDireccion: 'Dirección', phDireccion: 'Calle, ciudad…',
+    btnCancel: 'Cancelar', btnSave: 'Guardar', btnSaving: 'Guardando…',
+    evalTitle: (name) => `Evaluar — ${name}`,
+    evalComment: 'Comentario', phComment: 'Observaciones…',
+    btnSaveEval: 'Guardar evaluación',
+    histTitle: (name) => `Evaluaciones — ${name}`,
+    noEvals: 'Sin evaluaciones aún.', btnClose: 'Cerrar',
+    evalKeys: { calidad: 'Calidad', tiempoEntrega: 'Tiempo de entrega', precio: 'Precio', servicio: 'Servicio' },
+    delTitle: '¿Eliminar proveedor?',
+    delMsg: (name) => `Se eliminará "${name}". Esta acción no se puede deshacer.`,
+    delBtn: 'Eliminar',
+  },
+  pt: {
+    title: 'Fornecedores', btnNew: 'Novo fornecedor',
+    search: 'Pesquisar por nome, CNPJ, categoria…',
+    loading: 'Carregando…', empty: 'Sem fornecedores registrados.',
+    btnEval: 'Avaliar', evalCount: (n) => `Avaliações (${n})`,
+    modalCreate: 'Novo fornecedor', modalEdit: 'Editar fornecedor',
+    fNombre: 'Nome *', phNombre: 'Nome comercial',
+    fRazon: 'Razão social', fCuit: 'CNPJ',
+    fCategoria: 'Categoria', phCategoria: 'Ex: Químicos, Embalagens…',
+    fContacto: 'Contato', phContacto: 'Nome do contato',
+    fTelefono: 'Telefone', fEmail: 'E-mail',
+    fDireccion: 'Endereço', phDireccion: 'Rua, cidade…',
+    btnCancel: 'Cancelar', btnSave: 'Salvar', btnSaving: 'Salvando…',
+    evalTitle: (name) => `Avaliar — ${name}`,
+    evalComment: 'Comentário', phComment: 'Observações…',
+    btnSaveEval: 'Salvar avaliação',
+    histTitle: (name) => `Avaliações — ${name}`,
+    noEvals: 'Sem avaliações ainda.', btnClose: 'Fechar',
+    evalKeys: { calidad: 'Qualidade', tiempoEntrega: 'Prazo de entrega', precio: 'Preço', servicio: 'Atendimento' },
+    delTitle: 'Excluir fornecedor?',
+    delMsg: (name) => `O fornecedor "${name}" será excluído. Esta ação não pode ser desfeita.`,
+    delBtn: 'Excluir',
+  },
+}
+const t = computed(() => TRANSLATIONS[locale.value] || TRANSLATIONS.es)
 
 const authCfg = () => ({ headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } })
 const api = {
@@ -181,7 +233,7 @@ const showEval   = ref(false)
 const evalItem   = ref(null)
 const savingEval = ref(false)
 
-const evalKeys = { calidad: 'Calidad', tiempoEntrega: 'Tiempo de entrega', precio: 'Precio', servicio: 'Servicio' }
+const evalKeys = computed(() => t.value.evalKeys)
 const evalForm = ref({ calidad: 3, tiempoEntrega: 3, precio: 3, servicio: 3, comentario: '' })
 
 const showEvalHist = ref(false)

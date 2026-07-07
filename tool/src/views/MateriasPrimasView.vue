@@ -4,15 +4,15 @@
 
       <!-- ── Encabezado ── -->
       <div class="mp-header">
-        <h2 class="mp-title"><i class="bi bi-boxes"></i> Stock de Materias Primas</h2>
+        <h2 class="mp-title"><i class="bi bi-boxes"></i> {{ t.title }}</h2>
         <div class="mp-header-actions">
           <button class="btn-ghost btn-sm-icon" @click="printStock" title="Imprimir / PDF">
-            <i class="bi bi-printer"></i><span class="btn-label"> Imprimir</span>
+            <i class="bi bi-printer"></i><span class="btn-label"> {{ t.btnPrint }}</span>
           </button>
           <button class="btn-ghost btn-sm-icon" @click="exportExcel" title="Exportar Excel">
-            <i class="bi bi-file-earmark-spreadsheet"></i><span class="btn-label"> Excel</span>
+            <i class="bi bi-file-earmark-spreadsheet"></i><span class="btn-label"> {{ t.btnExcel }}</span>
           </button>
-          <button v-if="canManageCompras" class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> Nueva</button>
+          <button v-if="canManageCompras" class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> {{ t.btnNew }}</button>
         </div>
       </div>
 
@@ -22,15 +22,15 @@
         <!-- COLUMNA IZQUIERDA: lista -->
         <div class="mp-left">
           <div class="mp-filters">
-            <input v-model="search" class="mp-search" placeholder="Buscar…" />
+            <input v-model="search" class="mp-search" :placeholder="t.search" />
             <select v-model="filterCat" class="mp-select">
-              <option value="">Todas</option>
+              <option value="">{{ t.filterAll }}</option>
               <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
             </select>
           </div>
 
-          <div v-if="loading" class="mp-loading">Cargando…</div>
-          <div v-else-if="filtered.length === 0" class="mp-empty">Sin resultados.</div>
+          <div v-if="loading" class="mp-loading">{{ t.loading }}</div>
+          <div v-else-if="filtered.length === 0" class="mp-empty">{{ t.empty }}</div>
 
           <div v-else class="mp-list">
             <div
@@ -77,35 +77,35 @@
 
         <!-- COLUMNA DERECHA: dashboard -->
         <div class="mp-right">
-          <div class="dash-title">Dashboard mensual</div>
+          <div class="dash-title">{{ t.dashTitle }}</div>
 
           <div class="dash-kpis">
             <div class="kpi-card kpi-green">
-              <span class="kpi-label">Compras este mes</span>
+              <span class="kpi-label">{{ t.kpiPurchasesLabel }}</span>
               <span class="kpi-val">{{ kpiComprasMes }}</span>
-              <span class="kpi-sub">movimientos</span>
+              <span class="kpi-sub">{{ t.kpiMovements }}</span>
             </div>
             <div class="kpi-card kpi-orange">
-              <span class="kpi-label">Consumos este mes</span>
+              <span class="kpi-label">{{ t.kpiConsumptionLabel }}</span>
               <span class="kpi-val">{{ kpiConsumosMes }}</span>
-              <span class="kpi-sub">movimientos</span>
+              <span class="kpi-sub">{{ t.kpiMovements }}</span>
             </div>
             <div class="kpi-card kpi-red">
-              <span class="kpi-label">Stock bajo mínimo</span>
+              <span class="kpi-label">{{ t.kpiLowLabel }}</span>
               <span class="kpi-val">{{ kpiBajoMinimo }}</span>
-              <span class="kpi-sub">materias primas</span>
+              <span class="kpi-sub">{{ t.kpiRawMaterials }}</span>
             </div>
           </div>
 
           <div class="chart-section">
-            <div class="chart-label">Compras (entradas) — últimos 6 meses</div>
+            <div class="chart-label">{{ t.chartPurchasesLabel }}</div>
             <div class="canvas-wrap">
               <canvas ref="barComprasRef"></canvas>
             </div>
           </div>
 
           <div class="chart-section">
-            <div class="chart-label">Consumo (salidas) — últimos 6 meses</div>
+            <div class="chart-label">{{ t.chartConsumptionLabel }}</div>
             <div class="canvas-wrap">
               <canvas ref="barConsumoRef"></canvas>
             </div>
@@ -116,20 +116,20 @@
     <!-- ── Tabla solo para impresión ── -->
     <div class="mp-print-only">
       <div class="mp-print-header">
-        <h2>Stock de Materias Primas</h2>
-        <p>Exportado el {{ printDate }}</p>
+        <h2>{{ t.printTitle }}</h2>
+        <p>{{ t.printExported(printDate) }}</p>
       </div>
       <table class="mp-print-table">
         <thead>
           <tr>
-            <th>Nombre</th>
-            <th>Código</th>
-            <th>Categoría</th>
-            <th>Unidad</th>
-            <th>Stock actual</th>
-            <th>Stock mínimo</th>
-            <th>Precio unit.</th>
-            <th>Estado</th>
+            <th>{{ t.colName }}</th>
+            <th>{{ t.colCode }}</th>
+            <th>{{ t.colCategory }}</th>
+            <th>{{ t.colUnit }}</th>
+            <th>{{ t.colStock }}</th>
+            <th>{{ t.colMinStock }}</th>
+            <th>{{ t.colPrice }}</th>
+            <th>{{ t.colStatus }}</th>
           </tr>
         </thead>
         <tbody>
@@ -141,7 +141,7 @@
             <td>{{ mp.stock }}</td>
             <td>{{ mp.stockMinimo }}</td>
             <td>${{ formatNum(mp.precio) }}</td>
-            <td>{{ mp.stock <= mp.stockMinimo && mp.stockMinimo > 0 ? '⚠ Bajo mínimo' : mp.stock <= mp.stockMinimo * 1.2 && mp.stockMinimo > 0 ? '↓ Cercano' : 'OK' }}</td>
+            <td>{{ mp.stock <= mp.stockMinimo && mp.stockMinimo > 0 ? t.statusLow : mp.stock <= mp.stockMinimo * 1.2 && mp.stockMinimo > 0 ? t.statusNear : t.statusOk }}</td>
           </tr>
         </tbody>
       </table>
@@ -152,21 +152,21 @@
     <!-- Modal crear/editar -->
     <div v-if="showForm" class="modal-overlay" @click.self="closeForm">
       <div class="modal-box">
-        <h3>{{ editingId ? 'Editar materia prima' : 'Nueva materia prima' }}</h3>
+        <h3>{{ editingId ? t.modalEdit : t.modalCreate }}</h3>
         <div class="form-grid">
-          <label>Nombre *
-            <input v-model="form.nombre" placeholder="Ej: Resina epoxi" />
+          <label>{{ t.fName }}
+            <input v-model="form.nombre" :placeholder="t.phName" />
           </label>
-          <label>Código
-            <input v-model="form.codigo" placeholder="Ej: MP-001" />
+          <label>{{ t.fCode }}
+            <input v-model="form.codigo" :placeholder="t.phCode" />
           </label>
-          <label>Categoría
-            <input v-model="form.categoria" placeholder="Ej: Solventes" list="cat-list" />
+          <label>{{ t.fCategory }}
+            <input v-model="form.categoria" :placeholder="t.phCategory" list="cat-list" />
             <datalist id="cat-list">
               <option v-for="c in categories" :key="c" :value="c" />
             </datalist>
           </label>
-          <label>Unidad *
+          <label>{{ t.fUnit }}
             <select v-model="form.unidad">
               <option value="kg">kg</option>
               <option value="lt">lt</option>
@@ -176,20 +176,20 @@
               <option value="ml">ml</option>
             </select>
           </label>
-          <label>Stock inicial
+          <label>{{ t.fInitialStock }}
             <input v-model.number="form.stock" type="number" min="0" />
           </label>
-          <label>Stock mínimo
+          <label>{{ t.fMinStock }}
             <input v-model.number="form.stockMinimo" type="number" min="0" />
           </label>
-          <label>Precio unitario ($)
+          <label>{{ t.fPrice }}
             <input v-model.number="form.precio" type="number" min="0" step="0.01" />
           </label>
         </div>
         <div class="modal-actions">
-          <button class="btn-ghost" @click="closeForm">Cancelar</button>
+          <button class="btn-ghost" @click="closeForm">{{ t.btnCancel }}</button>
           <button class="btn-primary" :disabled="savingForm" @click="saveForm">
-            {{ savingForm ? 'Guardando…' : 'Guardar' }}
+            {{ savingForm ? t.btnSaving : t.btnSave }}
           </button>
         </div>
       </div>
@@ -200,28 +200,28 @@
       <div class="modal-box modal-sm">
         <h3>
           <i :class="movTipo === 'entrada' ? 'bi bi-arrow-down-circle text-green' : 'bi bi-arrow-up-circle text-red'"></i>
-          {{ movTipo === 'entrada' ? 'Entrada de stock' : 'Salida de stock' }}
+          {{ movTipo === 'entrada' ? t.movEntry : t.movExit }}
         </h3>
         <p class="mov-mp-name">{{ movItem?.nombre }}</p>
         <div class="form-grid">
-          <label>Cantidad ({{ movItem?.unidad }}) *
+          <label>{{ t.fQty(movItem?.unidad) }}
             <input v-model.number="movForm.cantidad" type="number" min="1" />
           </label>
-          <label>Motivo
-            <input v-model="movForm.motivo" placeholder="Ej: Compra, Producción…" />
+          <label>{{ t.fReason }}
+            <input v-model="movForm.motivo" :placeholder="t.phReason" />
           </label>
-          <label v-if="movTipo === 'entrada'">Precio unitario ($)
+          <label v-if="movTipo === 'entrada'">{{ t.fMovPrice }}
             <input v-model.number="movForm.precio" type="number" min="0" step="0.01" />
           </label>
         </div>
         <div class="modal-actions">
-          <button class="btn-ghost" @click="showMov = false">Cancelar</button>
+          <button class="btn-ghost" @click="showMov = false">{{ t.btnCancel }}</button>
           <button
             :class="['btn-primary', movTipo === 'salida' ? 'btn-danger' : '']"
             :disabled="savingMov"
             @click="saveMovimiento"
           >
-            {{ savingMov ? 'Guardando…' : 'Confirmar' }}
+            {{ savingMov ? t.btnSaving : t.btnConfirm }}
           </button>
         </div>
       </div>
@@ -230,18 +230,18 @@
     <!-- Modal historial -->
     <div v-if="showHist" class="modal-overlay" @click.self="showHist = false">
       <div class="modal-box modal-lg">
-        <h3><i class="bi bi-clock-history"></i> Historial — {{ histItem?.nombre }}</h3>
-        <div v-if="histLoading" class="mp-loading">Cargando…</div>
-        <div v-else-if="!histMovs.length" class="mp-empty">Sin movimientos registrados.</div>
+        <h3><i class="bi bi-clock-history"></i> {{ t.histTitle(histItem?.nombre) }}</h3>
+        <div v-if="histLoading" class="mp-loading">{{ t.loading }}</div>
+        <div v-else-if="!histMovs.length" class="mp-empty">{{ t.histEmpty }}</div>
         <table v-else class="hist-table">
           <thead>
             <tr>
-              <th>Fecha</th>
-              <th>Tipo</th>
-              <th>Cantidad</th>
-              <th>Motivo</th>
-              <th>Precio unit.</th>
-              <th>Usuario</th>
+              <th>{{ t.histColDate }}</th>
+              <th>{{ t.histColType }}</th>
+              <th>{{ t.histColQty }}</th>
+              <th>{{ t.histColReason }}</th>
+              <th>{{ t.histColPrice }}</th>
+              <th>{{ t.histColUser }}</th>
             </tr>
           </thead>
           <tbody>
@@ -260,7 +260,7 @@
           </tbody>
         </table>
         <div class="modal-actions">
-          <button class="btn-ghost" @click="showHist = false">Cerrar</button>
+          <button class="btn-ghost" @click="showHist = false">{{ t.btnClose }}</button>
         </div>
       </div>
     </div>
@@ -276,6 +276,62 @@ import {
   Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend
 } from 'chart.js'
 import { useDarkMode } from '@/composables/useDarkMode'
+import { useLocale } from '@/composables/useLocale'
+
+const { locale } = useLocale()
+const TRANSLATIONS = {
+  es: {
+    title: 'Stock de Materias Primas', btnPrint: 'Imprimir', btnExcel: 'Excel', btnNew: 'Nueva',
+    search: 'Buscar…', filterAll: 'Todas', loading: 'Cargando…', empty: 'Sin resultados.',
+    dashTitle: 'Dashboard mensual',
+    kpiPurchasesLabel: 'Compras este mes', kpiConsumptionLabel: 'Consumos este mes', kpiLowLabel: 'Stock bajo mínimo',
+    kpiMovements: 'movimientos', kpiRawMaterials: 'materias primas',
+    chartPurchasesLabel: 'Compras (entradas) — últimos 6 meses',
+    chartConsumptionLabel: 'Consumo (salidas) — últimos 6 meses',
+    printTitle: 'Stock de Materias Primas', printExported: (d) => `Exportado el ${d}`,
+    colName: 'Nombre', colCode: 'Código', colCategory: 'Categoría', colUnit: 'Unidad',
+    colStock: 'Stock actual', colMinStock: 'Stock mínimo', colPrice: 'Precio unit.', colStatus: 'Estado',
+    statusLow: '⚠ Bajo mínimo', statusNear: '↓ Cercano', statusOk: 'OK',
+    modalCreate: 'Nueva materia prima', modalEdit: 'Editar materia prima',
+    fName: 'Nombre *', fCode: 'Código', fCategory: 'Categoría', fUnit: 'Unidad *',
+    fInitialStock: 'Stock inicial', fMinStock: 'Stock mínimo', fPrice: 'Precio unitario ($)',
+    phName: 'Ej: Resina epoxi', phCode: 'Ej: MP-001', phCategory: 'Ej: Solventes',
+    btnCancel: 'Cancelar', btnSave: 'Guardar', btnSaving: 'Guardando…',
+    movEntry: 'Entrada de stock', movExit: 'Salida de stock',
+    fQty: (u) => `Cantidad (${u}) *`, fReason: 'Motivo', phReason: 'Ej: Compra, Producción…',
+    fMovPrice: 'Precio unitario ($)', btnConfirm: 'Confirmar',
+    histTitle: (name) => `Historial — ${name}`,
+    histColDate: 'Fecha', histColType: 'Tipo', histColQty: 'Cantidad',
+    histColReason: 'Motivo', histColPrice: 'Precio unit.', histColUser: 'Usuario',
+    histEmpty: 'Sin movimientos registrados.', btnClose: 'Cerrar',
+  },
+  pt: {
+    title: 'Estoque de Matérias-Primas', btnPrint: 'Imprimir', btnExcel: 'Excel', btnNew: 'Nova',
+    search: 'Pesquisar…', filterAll: 'Todas', loading: 'Carregando…', empty: 'Sem resultados.',
+    dashTitle: 'Dashboard mensal',
+    kpiPurchasesLabel: 'Compras este mês', kpiConsumptionLabel: 'Consumos este mês', kpiLowLabel: 'Estoque abaixo do mínimo',
+    kpiMovements: 'movimentos', kpiRawMaterials: 'matérias-primas',
+    chartPurchasesLabel: 'Compras (entradas) — últimos 6 meses',
+    chartConsumptionLabel: 'Consumo (saídas) — últimos 6 meses',
+    printTitle: 'Estoque de Matérias-Primas', printExported: (d) => `Exportado em ${d}`,
+    colName: 'Nome', colCode: 'Código', colCategory: 'Categoria', colUnit: 'Unidade',
+    colStock: 'Estoque atual', colMinStock: 'Estoque mínimo', colPrice: 'Preço unit.', colStatus: 'Status',
+    statusLow: '⚠ Abaixo do mínimo', statusNear: '↓ Próximo', statusOk: 'OK',
+    modalCreate: 'Nova matéria-prima', modalEdit: 'Editar matéria-prima',
+    fName: 'Nome *', fCode: 'Código', fCategory: 'Categoria', fUnit: 'Unidade *',
+    fInitialStock: 'Estoque inicial', fMinStock: 'Estoque mínimo', fPrice: 'Preço unitário ($)',
+    phName: 'Ex: Resina epóxi', phCode: 'Ex: MP-001', phCategory: 'Ex: Solventes',
+    btnCancel: 'Cancelar', btnSave: 'Salvar', btnSaving: 'Salvando…',
+    movEntry: 'Entrada de estoque', movExit: 'Saída de estoque',
+    fQty: (u) => `Quantidade (${u}) *`, fReason: 'Motivo', phReason: 'Ex: Compra, Produção…',
+    fMovPrice: 'Preço unitário ($)', btnConfirm: 'Confirmar',
+    histTitle: (name) => `Histórico — ${name}`,
+    histColDate: 'Data', histColType: 'Tipo', histColQty: 'Quantidade',
+    histColReason: 'Motivo', histColPrice: 'Preço unit.', histColUser: 'Usuário',
+    histEmpty: 'Sem movimentos registrados.', btnClose: 'Fechar',
+  },
+}
+const t = computed(() => TRANSLATIONS[locale.value] || TRANSLATIONS.es)
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 

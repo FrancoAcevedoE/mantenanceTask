@@ -61,7 +61,10 @@
       "Bash(node scripts/createTestUser.js)",
       "Bash(timeout 8 node server.js)",
       "Bash(grep -rn \"background:.*#f\\\\|background:.*rgba\\(255,255,255\\\\|color:.*#[134][0-9a-f]\\\\{5\\\\}\\\\|color:.*#[134][0-9a-f]\\\\{2,4\\\\}\" \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/components\" --include=\"*.vue\" -l)",
-      "Bash(grep -rn \"background:.*#f[0-9a-f]\\\\|color:.*#[23456][0-9a-f]\\\\{4,5\\\\}\" \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views\" --include=\"*.vue\" -l)"
+      "Bash(grep -rn \"background:.*#f[0-9a-f]\\\\|color:.*#[23456][0-9a-f]\\\\{4,5\\\\}\" \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views\" --include=\"*.vue\" -l)",
+      "Bash(awk 'NR<=425' \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views/inventoryView.vue\")",
+      "Bash(grep -v \"^$\\\\|^  *$\")",
+      "Bash(awk 'NR<=745' \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views/sellerView.vue\")"
     ]
   }
 }
