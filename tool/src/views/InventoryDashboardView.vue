@@ -149,9 +149,10 @@ function buildCharts() {
   if (!barRef.value || !doughnutRef.value) return
 
   const dark = isDark.value
+  Chart.defaults.color = dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.87)'
   const COLORS = dark ? COLORS_DARK : COLORS_LIGHT
-  const tickColor = dark ? 'rgba(255,255,255,0.5)' : undefined
-  const gridColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(107,142,58,0.1)'
+  const tickColor = dark ? 'rgba(255,255,255,0.7)' : undefined
+  const gridColor = dark ? 'rgba(255,255,255,0.15)' : 'rgba(107,142,58,0.1)'
   const borderColor = dark ? 'rgba(13,18,35,0.8)' : '#fff'
 
   // Bar: top 10 by price

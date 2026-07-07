@@ -705,8 +705,9 @@ export default {
       this.destroyCharts()
 
       const dark = document.documentElement.getAttribute('data-theme') === 'dark'
-      const tickColor = dark ? 'rgba(255,255,255,0.5)' : undefined
-      const gridColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'
+      Chart.defaults.color = dark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.87)'
+      const tickColor = dark ? 'rgba(255,255,255,0.7)' : undefined
+      const gridColor = dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'
 
       const chartData = this.stats.charts || {}
 
