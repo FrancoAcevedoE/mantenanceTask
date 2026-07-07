@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import NotificationBell from '@/components/NotificationBell.vue'
 import UserManual from '@/components/UserManual.vue'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useLocale } from '@/composables/useLocale'
 
 const route = useRoute()
 const router = useRouter()
@@ -81,11 +82,7 @@ function toggleDark() {
 }
 
 // Locale
-const locale = ref(localStorage.getItem('locale') || 'es')
-function toggleLocale() {
-  locale.value = locale.value === 'es' ? 'pt' : 'es'
-  localStorage.setItem('locale', locale.value)
-}
+const { locale, toggleLocale } = useLocale()
 
 const nav = computed(() => locale.value === 'pt' ? {
   maintenance: 'Manutenção', newJob: 'Novo trabalho', history: 'Histórico',

@@ -654,3 +654,48 @@ const fmtDate = (d) => {
   }
 }
 </style>
+
+<style>
+/* ── CrmActivities dark mode ── */
+[data-theme="dark"] .ca-item {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+}
+[data-theme="dark"] .ca-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35) !important; }
+[data-theme="dark"] .ca-item-title  { color: rgba(255,255,255,0.9) !important; }
+[data-theme="dark"] .ca-item-desc   { background: rgba(107,142,58,0.07) !important; color: rgba(255,255,255,0.75) !important; }
+[data-theme="dark"] .ca-meta-client { color: rgba(255,255,255,0.85) !important; }
+[data-theme="dark"] .ca-act-btn--done { background: rgba(34,197,94,0.15) !important;  color: #86efac !important; }
+[data-theme="dark"] .ca-act-btn--undo { background: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .ca-act-btn--del  { background: rgba(239,68,68,0.15) !important;   color: #fca5a5 !important; }
+
+/* Modal */
+[data-theme="dark"] .crm-modal {
+  background: rgba(10,14,28,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .crm-modal-header {
+  border-color: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.9) !important;
+}
+[data-theme="dark"] .crm-modal-header h2 { color: rgba(255,255,255,0.95) !important; }
+[data-theme="dark"] .crm-close {
+  background: rgba(255,255,255,0.07) !important;
+  color: rgba(255,255,255,0.8) !important;
+}
+[data-theme="dark"] .cm-field label { color: rgba(255,255,255,0.5) !important; }
+[data-theme="dark"] .cm-field input,
+[data-theme="dark"] .cm-field select,
+[data-theme="dark"] .cm-field textarea {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .crm-modal-footer { border-color: rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .cm-error {
+  background: rgba(239,68,68,0.1) !important;
+  color: #fca5a5 !important;
+}
+[data-theme="dark"] .del-confirm-txt { color: rgba(255,255,255,0.8) !important; }
+</style>

@@ -73,6 +73,7 @@
 <script>
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
+import { useLocale } from '@/composables/useLocale'
 
 const PWA_URL = import.meta.env.VITE_PWA_URL || "https://mantenance-task-francoacevedoes-projects.vercel.app/logUser"
 
@@ -108,6 +109,11 @@ const TRANSLATIONS = {
 }
 
 export default {
+  setup() {
+    const { locale, toggleLocale } = useLocale()
+    return { locale, toggleLocale }
+  },
+
   data() {
     return {
       dni: '',
@@ -117,7 +123,6 @@ export default {
       pwaUrl: PWA_URL,
       qrUrl: '',
       darkMode: localStorage.getItem('darkMode') === 'true',
-      locale: localStorage.getItem('locale') || 'es',
     }
   },
 
@@ -168,11 +173,6 @@ export default {
       document.documentElement.setAttribute('data-theme', this.darkMode ? 'dark' : 'light')
       localStorage.setItem('darkMode', String(this.darkMode))
       this._applyLoginBg()
-    },
-
-    toggleLocale() {
-      this.locale = this.locale === 'es' ? 'pt' : 'es'
-      localStorage.setItem('locale', this.locale)
     },
 
     _applyLoginBg() {
