@@ -898,3 +898,93 @@ onUnmounted(() => { chartCompras?.destroy(); chartConsumo?.destroy() })
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
+
+<style>
+[data-theme="dark"] .mp-card-wrap {
+  background: rgba(13,18,35,0.82) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.55) !important;
+}
+[data-theme="dark"] .mp-title { color: #ffffff !important; }
+[data-theme="dark"] .chart-label { color: rgba(255,255,255,0.55) !important; }
+[data-theme="dark"] .kpi-green  { background: rgba(34,197,94,0.12) !important; }
+[data-theme="dark"] .kpi-orange { background: rgba(249,115,22,0.12) !important; }
+[data-theme="dark"] .kpi-red    { background: rgba(239,68,68,0.12)  !important; }
+[data-theme="dark"] .kpi-green .kpi-val  { color: #86efac !important; }
+[data-theme="dark"] .kpi-orange .kpi-val { color: #fdba74 !important; }
+[data-theme="dark"] .kpi-red .kpi-val    { color: #fca5a5 !important; }
+[data-theme="dark"] .kpi-label { color: rgba(255,255,255,0.45) !important; }
+[data-theme="dark"] .kpi-sub   { color: rgba(255,255,255,0.3) !important; }
+
+/* Dashboard derecho */
+[data-theme="dark"] .mp-right {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .dash-title {
+  color: rgba(255,255,255,0.75) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* Filas de lista */
+[data-theme="dark"] .mp-row {
+  background: rgba(13,18,35,0.45) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .mp-row--low  { background: rgba(127,29,29,0.18) !important; border-color: rgba(239,68,68,0.2) !important; }
+[data-theme="dark"] .mp-row--warn { background: rgba(120,53,15,0.18) !important; border-color: rgba(249,115,22,0.2) !important; }
+[data-theme="dark"] .mp-row-name  { color: rgba(255,255,255,0.9) !important; }
+[data-theme="dark"] .mp-row-stock { color: rgba(255,255,255,0.75) !important; }
+[data-theme="dark"] .mp-row-price { color: rgba(255,255,255,0.4) !important; }
+
+/* Filtros */
+[data-theme="dark"] .mp-search,
+[data-theme="dark"] .mp-select {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+
+/* Botones de acción de fila */
+[data-theme="dark"] .btn-entrada  { background: rgba(34,197,94,0.15)  !important; color: #86efac !important; }
+[data-theme="dark"] .btn-salida   { background: rgba(239,68,68,0.15)  !important; color: #fca5a5 !important; }
+[data-theme="dark"] .btn-historial{ background: rgba(99,102,241,0.15) !important; color: #a5b4fc !important; }
+[data-theme="dark"] .btn-edit     { background: rgba(234,179,8,0.15)  !important; color: #fde68a !important; }
+[data-theme="dark"] .btn-del      { background: rgba(239,68,68,0.15)  !important; color: #fca5a5 !important; }
+
+/* Modales */
+[data-theme="dark"] .modal-box {
+  background: rgba(10,14,28,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .modal-box h3 { color: rgba(255,255,255,0.95) !important; }
+[data-theme="dark"] .mov-mp-name  { color: rgba(255,255,255,0.85) !important; }
+[data-theme="dark"] .form-grid label { color: rgba(255,255,255,0.6) !important; }
+[data-theme="dark"] .form-grid input,
+[data-theme="dark"] .form-grid select {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+
+/* Historial */
+[data-theme="dark"] .hist-table th {
+  background: rgba(13,18,35,0.75) !important;
+  color: rgba(255,255,255,0.55) !important;
+}
+[data-theme="dark"] .hist-table td {
+  color: rgba(255,255,255,0.8) !important;
+  border-color: rgba(255,255,255,0.06) !important;
+}
+[data-theme="dark"] .badge-green { background: rgba(34,197,94,0.15) !important;  color: #86efac !important; }
+[data-theme="dark"] .badge-red   { background: rgba(239,68,68,0.15) !important;  color: #fca5a5 !important; }
+
+/* Botones ghost */
+[data-theme="dark"] .btn-ghost {
+  background: transparent !important;
+  border-color: rgba(255,255,255,0.15) !important;
+  color: rgba(255,255,255,0.7) !important;
+}
+[data-theme="dark"] .btn-ghost:hover { background: rgba(255,255,255,0.05) !important; }
+</style>

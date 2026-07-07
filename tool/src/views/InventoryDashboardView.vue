@@ -378,3 +378,18 @@ function fmtBig(n) {
   .kpi-price { font-size: 1.2rem; }
 }
 </style>
+
+<style>
+[data-theme="dark"] .chart-card {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .chart-title { color: rgba(255,255,255,0.5) !important; }
+[data-theme="dark"] .kpi-card {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .kpi-label { color: rgba(255,255,255,0.45) !important; }
+[data-theme="dark"] .kpi-value { color: #ffffff !important; }
+[data-theme="dark"] .kpi-icon  { color: #FF8C42 !important; }
+</style>

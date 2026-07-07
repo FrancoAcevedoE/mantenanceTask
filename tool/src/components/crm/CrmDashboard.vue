@@ -855,3 +855,45 @@ const HistoryPanel = defineComponent({
   }
 }
 </style>
+
+<style>
+/* ── CrmDashboard dark mode ── */
+[data-theme="dark"] .month-nav {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+[data-theme="dark"] .month-label { color: rgba(255,255,255,0.9) !important; }
+[data-theme="dark"] .month-btn { color: rgba(255,255,255,0.5) !important; }
+[data-theme="dark"] .month-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08) !important; color: #FF8C42 !important; }
+[data-theme="dark"] .vt-btn.active { background: rgba(255,255,255,0.1) !important; color: #FF8C42 !important; box-shadow: none !important; }
+[data-theme="dark"] .dash-card {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .dash-value { color: #ffffff !important; }
+[data-theme="dark"] .dash-panel {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .pb-bar-track { background: rgba(255,255,255,0.05) !important; }
+[data-theme="dark"] .act-row {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.06) !important;
+}
+[data-theme="dark"] .act-title { color: rgba(255,255,255,0.9) !important; }
+[data-theme="dark"] .seller-row {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .seller-name { color: rgba(255,255,255,0.9) !important; }
+[data-theme="dark"] .seller-detail { border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .seller-row-hd:hover { background: rgba(255,255,255,0.04) !important; }
+[data-theme="dark"] .history-cell {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .history-cell:hover { background: rgba(13,18,35,0.82) !important; border-color: rgba(255,102,0,0.3) !important; }
+[data-theme="dark"] .hc-month { color: rgba(255,255,255,0.85) !important; }
+[data-theme="dark"] .hc-num   { color: rgba(255,255,255,0.85) !important; }
+[data-theme="dark"] .dash-overlay { background: rgba(10,14,28,0.65) !important; }
+</style>

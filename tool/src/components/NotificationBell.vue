@@ -451,3 +451,41 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
+<style>
+[data-theme="dark"] .notification-bell {
+  background: rgba(13,18,35,0.85) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.8) !important;
+}
+[data-theme="dark"] .notification-bell:hover {
+  background: rgba(255,102,0,0.15) !important;
+  color: #FF8C42 !important;
+}
+[data-theme="dark"] .notification-badge { border-color: rgba(13,18,35,0.85) !important; }
+[data-theme="dark"] .notification-panel {
+  background: rgba(10,14,28,0.97) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  box-shadow: 0 22px 48px rgba(0,0,0,0.6) !important;
+}
+[data-theme="dark"] .notification-panel__header h2 { color: #ffffff !important; }
+[data-theme="dark"] .notification-panel__eyebrow { color: rgba(255,255,255,0.45) !important; }
+[data-theme="dark"] .notification-text-button { color: #5eead4 !important; }
+[data-theme="dark"] .notification-history-button {
+  background: rgba(59,130,246,0.15) !important;
+  color: #93c5fd !important;
+}
+[data-theme="dark"] .notification-permission-button {
+  background: rgba(255,255,255,0.07) !important;
+  color: rgba(255,255,255,0.7) !important;
+}
+[data-theme="dark"] .notification-permission-text,
+[data-theme="dark"] .notification-state { color: rgba(255,255,255,0.45) !important; }
+[data-theme="dark"] .notification-item {
+  background: rgba(13,18,35,0.6) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .notification-item__body strong { color: rgba(255,255,255,0.95) !important; }
+[data-theme="dark"] .notification-item__body p { color: rgba(255,255,255,0.72) !important; }
+[data-theme="dark"] .notification-item__body small { color: rgba(255,255,255,0.4) !important; }
+</style>

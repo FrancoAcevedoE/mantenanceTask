@@ -1859,3 +1859,47 @@ h1 {
 .status-pill-pending   { background: #fef9c3; color: #854d0e; }
 .status-pill-stopped   { background: #fee2e2; color: #991b1b; }
 </style>
+
+<style>
+/* ── Dashboard dark mode ── */
+[data-theme="dark"] .chart-card {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .charts-section h2,
+[data-theme="dark"] .chart-card h3 {
+  color: #ffffff !important;
+}
+[data-theme="dark"] .recent-table-wrapper {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .recent-table th {
+  background: rgba(13,18,35,0.8) !important;
+  color: rgba(255,255,255,0.55) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .recent-table td {
+  border-color: rgba(255,255,255,0.05) !important;
+}
+[data-theme="dark"] .status-pill-finished { background: rgba(34,197,94,0.15) !important;  color: #86efac !important; }
+[data-theme="dark"] .status-pill-pending  { background: rgba(245,158,11,0.15) !important; color: #fde68a !important; }
+[data-theme="dark"] .status-pill-stopped  { background: rgba(239,68,68,0.15)  !important; color: #fca5a5 !important; }
+[data-theme="dark"] .machine-status-card {
+  background: rgba(13,18,35,0.65) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .machine-status-card .machine-name { color: rgba(255,255,255,0.85) !important; }
+[data-theme="dark"] .machine-status-card .machine-sector { color: rgba(255,255,255,0.45) !important; }
+[data-theme="dark"] .cards .card {
+  background: rgba(13,18,35,0.65) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .cards .card h3 { color: rgba(255,255,255,0.55) !important; }
+[data-theme="dark"] .cards .card p  { color: #FF8C42 !important; }
+[data-theme="dark"] .chart-detail-modal {
+  background: rgba(10,14,28,0.98) !important;
+  border-color: rgba(255,255,255,0.09) !important;
+}
+[data-theme="dark"] .chart-detail-header { border-bottom-color: rgba(255,255,255,0.08) !important; }
+</style>

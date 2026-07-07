@@ -1070,3 +1070,36 @@ function exportPDF() {
   .rb-fields-grid { grid-template-columns: 1fr; }
 }
 </style>
+
+<style>
+/* ── CrmReportBuilder dark mode ── */
+[data-theme="dark"] .rb-modal {
+  background: rgba(10,14,28,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .rb-date-input {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+  color-scheme: dark;
+}
+[data-theme="dark"] .rb-date-row { background: rgba(13,18,35,0.55) !important; border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .rb-date-label { color: rgba(255,255,255,0.55) !important; }
+[data-theme="dark"] .rb-date-sep   { color: rgba(255,255,255,0.4) !important; }
+[data-theme="dark"] .rb-section { border-color: rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .rb-section-hd { border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .rb-picker-input {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .rb-client-list { border-color: rgba(255,255,255,0.07) !important; }
+[data-theme="dark"] .rb-client-item { border-color: rgba(255,255,255,0.05) !important; }
+[data-theme="dark"] .rb-client-item:hover { background: rgba(255,255,255,0.04) !important; }
+[data-theme="dark"] .rb-filter-row select {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .rb-ft { background: rgba(10,14,28,0.98) !important; border-color: rgba(255,255,255,0.08) !important; }
+</style>

@@ -375,3 +375,25 @@ onMounted(() => {
   .crm-tab { padding: 0.5rem 0.75rem; font-size: 0.78rem; }
 }
 </style>
+
+<style>
+/* ── CrmView dark mode ── */
+[data-theme="dark"] .crm-tabs-bar { border-color: rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .calc-card {
+  background: rgba(13,18,35,0.82) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .calc-field input {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .calc-display {
+  background: rgba(13,18,35,0.55) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .calc-unit-toggle {
+  background: rgba(107,142,58,0.12) !important;
+  border-color: rgba(107,142,58,0.2) !important;
+}
+</style>

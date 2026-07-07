@@ -1223,3 +1223,64 @@ function snoozeAndOpen(client) {
   .cc-toolbar { flex-direction: column; align-items: stretch; }
 }
 </style>
+
+<style>
+/* ── CrmClients dark mode ── */
+[data-theme="dark"] .cc-card {
+  background: rgba(13,18,35,0.72) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+}
+[data-theme="dark"] .cc-card:hover { background: rgba(13,18,35,0.88) !important; }
+[data-theme="dark"] .cc-card-foot { border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .cc-search,
+[data-theme="dark"] .cc-select {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .cc-tipo--potencial { background: rgba(245,158,11,0.15) !important; color: #fbbf24 !important; }
+[data-theme="dark"] .cc-tipo--normal    { background: rgba(34,197,94,0.15) !important;  color: #86efac !important; }
+[data-theme="dark"] .cc-badge--activo   { background: rgba(107,142,58,0.15) !important; color: #a3c464 !important; }
+[data-theme="dark"] .cc-badge--inactivo { background: rgba(239,68,68,0.15) !important;  color: #fca5a5 !important; }
+[data-theme="dark"] .cc-ico-btn--edit { background: rgba(107,142,58,0.15) !important; }
+[data-theme="dark"] .cc-ico-btn--del  { background: rgba(239,68,68,0.15) !important; }
+
+/* Modal */
+[data-theme="dark"] .crm-modal {
+  background: rgba(10,14,28,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .crm-modal-hd {
+  background: rgba(10,14,28,0.98) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .crm-modal-hd h2 { color: #ffffff !important; }
+[data-theme="dark"] .crm-modal-ft {
+  background: rgba(10,14,28,0.98) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .crm-close {
+  background: rgba(255,255,255,0.07) !important;
+  color: rgba(255,255,255,0.8) !important;
+}
+[data-theme="dark"] .cm-section-title { border-color: rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .cm-phone-add {
+  background: rgba(107,142,58,0.1) !important;
+  border-color: rgba(107,142,58,0.25) !important;
+}
+[data-theme="dark"] .cm-map-lugar {
+  background: rgba(10,14,28,0.98) !important;
+  color: rgba(255,255,255,0.75) !important;
+  border-color: rgba(255,255,255,0.06) !important;
+}
+[data-theme="dark"] .cm-map-coords { background: rgba(13,18,35,0.6) !important; }
+[data-theme="dark"] .del-txt { color: rgba(255,255,255,0.85) !important; }
+[data-theme="dark"] .cm-tipo-opt {
+  background: rgba(255,255,255,0.05) !important;
+  color: rgba(255,255,255,0.55) !important;
+  border-color: transparent !important;
+}
+[data-theme="dark"] .cm-tipo-opt--pot { background: rgba(245,158,11,0.12) !important; color: #fbbf24 !important; border-color: rgba(245,158,11,0.3) !important; }
+[data-theme="dark"] .cm-tipo-opt--cli { background: rgba(34,197,94,0.12) !important;  color: #86efac !important; border-color: rgba(34,197,94,0.3) !important; }
+</style>

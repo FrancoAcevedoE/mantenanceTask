@@ -1124,4 +1124,14 @@ button:hover {
   background: rgba(13,18,35,0.55) !important;
   border-color: rgba(245,158,11,0.2) !important;
 }
+[data-theme="dark"] .danger-zone {
+  background: rgba(127,29,29,0.15) !important;
+  border-color: rgba(239,68,68,0.25) !important;
+}
+[data-theme="dark"] .danger-zone h3 { color: #fca5a5 !important; }
+[data-theme="dark"] .danger-zone p  { color: rgba(255,255,255,0.6) !important; }
+[data-theme="dark"] .danger-zone-button:disabled {
+  background: rgba(220,162,156,0.3) !important;
+  color: rgba(255,255,255,0.4) !important;
+}
 </style>
