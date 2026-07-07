@@ -113,7 +113,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
   <NotificationBell v-if="showNav" />
   <UserManual v-if="showNav" ref="manual" />
   <div v-if="showNav && mobileOpen" class="sidebar-backdrop" @click="closeMobile" />
-  <button v-if="showNav" class="mobile-toggle" @click="mobileOpen = !mobileOpen" type="button">
+  <button v-if="showNav" class="mobile-toggle" @click="mobileOpen = !mobileOpen" type="button" :aria-label="locale === 'pt' ? 'Abrir menu de navegação' : 'Abrir menú de navegación'">
     <i :class="mobileOpen ? 'bi bi-x' : 'bi bi-list'"></i>
   </button>
 

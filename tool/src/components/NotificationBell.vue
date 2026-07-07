@@ -154,7 +154,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="notification-shell">
-    <button type="button" class="notification-bell" @click.stop="notificationsStore.togglePanel()">
+    <button type="button" class="notification-bell" @click.stop="notificationsStore.togglePanel()" :aria-label="t.alertCenter">
       <i class="bi bi-bell-fill"></i>
       <span v-if="unreadCount" class="notification-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
     </button>

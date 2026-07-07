@@ -223,7 +223,7 @@ function getCurrentUser() {
   try { return JSON.parse(sessionStorage.getItem('user') || '{}') } catch { return {} }
 }
 
-const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#f59e0b','#6366f1','#22c55e','#ec4899','#6b8e3a','#ef4444']
+const AVATAR_COLORS = ['#1d4ed8','#6d28d9','#b45309','#4338ca','#15803d','#be185d','#4d6728','#b91c1c']
 
 export default {
   components: { ConfirmDialog },

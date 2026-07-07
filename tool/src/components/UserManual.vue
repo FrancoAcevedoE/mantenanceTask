@@ -773,15 +773,14 @@ onMounted(() => {
   height: 54px;
   border-radius: 14px;
   background: #ffffff;
-  color: #475569;
+  color: #4b5e75;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 12px rgba(30, 41, 59, 0.1);
+  box-shadow: 0 2px 12px rgba(30, 41, 59, 0.06);
   cursor: pointer;
   font-size: 1.1rem;
-  opacity: 0.45;
-  transition: opacity 0.2s, background 0.18s, color 0.18s, box-shadow 0.18s;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
 }
-.manual-btn:hover { opacity: 1; background: #f8fafc; color: #3b6b2e; box-shadow: 0 4px 16px rgba(30, 41, 59, 0.14); }
+.manual-btn:hover { background: #f8fafc; color: #3b6b2e; box-shadow: 0 4px 16px rgba(30, 41, 59, 0.14); }
 
 @media (max-width: 768px) {
   .manual-shell { display: none; }
