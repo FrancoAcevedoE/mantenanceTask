@@ -81,10 +81,15 @@ label {
 }
 
 button,
-input,
+input:not([type="checkbox"]):not([type="radio"]),
 textarea,
 select {
   transition: all 0.24s ease;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  transition: none;
 }
 
 button {

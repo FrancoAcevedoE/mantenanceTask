@@ -532,7 +532,8 @@ async function doDelete() {
 
 .mk-stage-check-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .mk-stage-check { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; cursor: pointer; }
-.mk-stage-check input { cursor: pointer; accent-color: var(--color-primary); }
+.mk-stage-check input { cursor: pointer; accent-color: var(--color-primary); width: 14px; height: 14px; flex-shrink: 0; }
+.mk-stage-check span { font-size: 0.8rem; white-space: nowrap; }
 
 .mk-preview-dest {
   font-size: 0.78rem; color: var(--color-muted);
