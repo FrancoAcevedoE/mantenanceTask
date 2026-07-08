@@ -66,7 +66,8 @@
       "Bash(grep -v \"^$\\\\|^  *$\")",
       "Bash(awk 'NR<=745' \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views/sellerView.vue\")",
       "Bash(npm list *)",
-      "Bash(node_modules/.bin/vite build *)"
+      "Bash(node_modules/.bin/vite build *)",
+      "Bash(xargs ls)"
     ]
   }
 }

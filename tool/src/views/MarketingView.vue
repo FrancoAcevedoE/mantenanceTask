@@ -26,6 +26,7 @@
       <MarketingCampaigns  v-else-if="activeTab === 'campanas'" />
       <MarketingContacts   v-else-if="activeTab === 'contactos'" />
       <MarketingAccounts   v-else-if="activeTab === 'cuentas'" />
+      <MarketingInventory  v-else-if="activeTab === 'inventario'" />
     </div>
   </div>
 </template>
@@ -38,6 +39,7 @@ import MarketingDashboard  from '@/components/marketing/MarketingDashboard.vue'
 import MarketingCampaigns  from '@/components/marketing/MarketingCampaigns.vue'
 import MarketingContacts   from '@/components/marketing/MarketingContacts.vue'
 import MarketingAccounts   from '@/components/marketing/MarketingAccounts.vue'
+import MarketingInventory  from '@/components/marketing/MarketingInventory.vue'
 
 const activeTab   = ref('dashboard')
 const crmStore    = useCrmStore()
@@ -51,6 +53,7 @@ const tabs = computed(() => [
     badge: mStore.contacts.length || null },
   { key: 'cuentas',    label: 'Cuentas',    icon: 'bi bi-building',
     badge: crmStore.visibleClients.length || null },
+  { key: 'inventario', label: 'Inventario', icon: 'bi bi-box-seam' },
 ])
 
 onMounted(async () => {

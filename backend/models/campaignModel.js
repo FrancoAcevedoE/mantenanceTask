@@ -18,6 +18,17 @@ const campaignSchema = new mongoose.Schema({
     respondidos: { type: Number, default: 0 },
     convertidos: { type: Number, default: 0 },
   },
+  coverImage: {
+    url:      { type: String, default: '' },
+    name:     { type: String, default: '' },
+    mimetype: { type: String, default: '' },
+  },
+  attachments: [{
+    url:      { type: String },
+    name:     { type: String },
+    mimetype: { type: String },
+    size:     { type: Number },
+  }],
   createdBy: { type: String, default: '' },
 }, { timestamps: true })
 

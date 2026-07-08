@@ -73,6 +73,42 @@ export const useMarketingStore = defineStore('marketing', () => {
     campaigns.value = campaigns.value.filter(c => c._id !== id)
   }
 
+  async function uploadCover(id, file) {
+    const fd = new FormData()
+    fd.append('cover', file)
+    const { data } = await axios.post(`${API_BASE_URL}/campaigns/${id}/cover`, fd, {
+      headers: { ...authHeader().headers, 'Content-Type': 'multipart/form-data' },
+    })
+    const idx = campaigns.value.findIndex(c => c._id === id)
+    if (idx !== -1) campaigns.value[idx] = data.campaign
+    return data.campaign
+  }
+
+  async function removeCover(id) {
+    const { data } = await axios.delete(`${API_BASE_URL}/campaigns/${id}/cover`, authHeader())
+    const idx = campaigns.value.findIndex(c => c._id === id)
+    if (idx !== -1) campaigns.value[idx].coverImage = { url: '', name: '', mimetype: '' }
+    return data
+  }
+
+  async function uploadAttachment(id, file) {
+    const fd = new FormData()
+    fd.append('file', file)
+    const { data } = await axios.post(`${API_BASE_URL}/campaigns/${id}/attachments`, fd, {
+      headers: { ...authHeader().headers, 'Content-Type': 'multipart/form-data' },
+    })
+    const idx = campaigns.value.findIndex(c => c._id === id)
+    if (idx !== -1) campaigns.value[idx] = data.campaign
+    return data.campaign
+  }
+
+  async function removeAttachment(id, attachId) {
+    const { data } = await axios.delete(`${API_BASE_URL}/campaigns/${id}/attachments/${attachId}`, authHeader())
+    const idx = campaigns.value.findIndex(c => c._id === id)
+    if (idx !== -1) campaigns.value[idx] = data.campaign
+    return data.campaign
+  }
+
   // Clientes que coinciden con el segmento de una campaña
   function campaignTargets(campaign) {
     const seg = campaign.segmento || {}
@@ -93,5 +129,6 @@ export const useMarketingStore = defineStore('marketing', () => {
   return {
     campaigns, loading, contacts, accounts, stats,
     fetchCampaigns, createCampaign, updateCampaign, deleteCampaign, campaignTargets,
+    uploadCover, removeCover, uploadAttachment, removeAttachment,
   }
 })
