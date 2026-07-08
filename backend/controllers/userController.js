@@ -78,6 +78,10 @@ export const getUsers = async (req, res) => {
         if (req.user?.role === 'admin_ventas') {
             baseQuery.role = 'vendedor'
         }
+        // admin_marketing solo puede ver usuarios marketing
+        if (req.user?.role === 'admin_marketing') {
+            baseQuery.role = 'marketing'
+        }
 
         const users = await User.find(baseQuery)
             .select("name dni role isDeleted deletedAt photo")
@@ -150,6 +154,10 @@ export const createUser = async (req, res) => {
         // admin_ventas solo puede crear vendedores
         if (req.user?.role === 'admin_ventas' && role !== 'vendedor') {
             return res.status(403).json({ message: 'Solo podés crear usuarios con rol vendedor' })
+        }
+        // admin_marketing solo puede crear usuarios marketing
+        if (req.user?.role === 'admin_marketing' && role !== 'marketing') {
+            return res.status(403).json({ message: 'Solo podés crear usuarios con rol marketing' })
         }
         const dniRaw = String(req.body.dni ?? "").trim()
         const passwordRaw = String(req.body.password ?? "").trim()
@@ -244,13 +252,17 @@ export const updateUser = async (req, res) => {
         }
 
         if (role !== undefined) {
-            const validRoles = ["admin", "admin_ventas", "operario", "supervisor", "vendedor", "compras", "admin_compras", "produccion"]
+            const validRoles = ["admin", "admin_ventas", "operario", "supervisor", "vendedor", "compras", "admin_compras", "produccion", "marketing", "admin_marketing"]
             if (!validRoles.includes(role)) {
                 return res.status(400).json({ message: "Rol invalido" })
             }
             // admin_ventas solo puede asignar rol vendedor
             if (req.user?.role === 'admin_ventas' && role !== 'vendedor') {
                 return res.status(403).json({ message: 'Solo podés asignar rol vendedor' })
+            }
+            // admin_marketing solo puede asignar rol marketing
+            if (req.user?.role === 'admin_marketing' && role !== 'marketing') {
+                return res.status(403).json({ message: 'Solo podés asignar rol marketing' })
             }
             updateData.role = role
         }
@@ -298,6 +310,10 @@ export const updateUser = async (req, res) => {
 
         // admin_ventas solo puede modificar vendedores
         if (req.user?.role === 'admin_ventas' && previousUser.role !== 'vendedor') {
+            return res.status(403).json({ message: 'No tenés permiso para modificar este usuario' })
+        }
+        // admin_marketing solo puede modificar usuarios marketing
+        if (req.user?.role === 'admin_marketing' && previousUser.role !== 'marketing') {
             return res.status(403).json({ message: 'No tenés permiso para modificar este usuario' })
         }
 
@@ -352,6 +368,13 @@ export const deleteUser = async (req, res) => {
         if (req.user?.role === 'admin_ventas') {
             const target = await User.findById(req.params.id).select('role').lean()
             if (!target || target.role !== 'vendedor') {
+                return res.status(403).json({ message: 'No tenés permiso para eliminar este usuario' })
+            }
+        }
+        // admin_marketing solo puede ocultar usuarios marketing
+        if (req.user?.role === 'admin_marketing') {
+            const target = await User.findById(req.params.id).select('role').lean()
+            if (!target || target.role !== 'marketing') {
                 return res.status(403).json({ message: 'No tenés permiso para eliminar este usuario' })
             }
         }
@@ -410,6 +433,13 @@ export const deleteUserPermanent = async (req, res) => {
         if (req.user?.role === 'admin_ventas') {
             const target = await User.findById(req.params.id).select('role').lean()
             if (!target || target.role !== 'vendedor') {
+                return res.status(403).json({ message: 'No tenés permiso para eliminar este usuario' })
+            }
+        }
+        // admin_marketing solo puede eliminar definitivamente usuarios marketing
+        if (req.user?.role === 'admin_marketing') {
+            const target = await User.findById(req.params.id).select('role').lean()
+            if (!target || target.role !== 'marketing') {
                 return res.status(403).json({ message: 'No tenés permiso para eliminar este usuario' })
             }
         }

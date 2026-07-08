@@ -17,6 +17,7 @@ export const useCrmStore = defineStore('crm', () => {
   const activities = ref([])
   const loadingClients = ref(false)
   const loadingActivities = ref(false)
+  const pendingQuoteClient = ref(null)
 
   const visibleClients = computed(() => clients.value.filter(c => !c.isDeleted))
 
@@ -111,10 +112,14 @@ export const useCrmStore = defineStore('crm', () => {
     return updateActivity(id, { completada: !act.completada })
   }
 
+  function setPendingQuoteClient(client) { pendingQuoteClient.value = client }
+  function clearPendingQuoteClient() { pendingQuoteClient.value = null }
+
   return {
-    clients, activities, loadingClients, loadingActivities,
+    clients, activities, loadingClients, loadingActivities, pendingQuoteClient,
     visibleClients, clientsByStage, recentActivities, pendingActivitiesCount,
     fetchClients, createClient, updateClient, deleteClient, updatePipelineStage,
     fetchActivities, createActivity, updateActivity, deleteActivity, toggleActivityComplete,
+    setPendingQuoteClient, clearPendingQuoteClient,
   }
 })

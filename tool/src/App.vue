@@ -28,18 +28,20 @@ const isDemoMode     = computed(() => currentUser.value?.isDemo === true)
 const isAdmin        = computed(() => role.value === 'admin')
 const canMantenim    = computed(() => ['admin', 'operario', 'supervisor'].includes(role.value))
 const canVentas      = computed(() => ['admin', 'admin_ventas', 'vendedor'].includes(role.value))
-const canCompras     = computed(() => ['admin', 'admin_compras', 'compras'].includes(role.value))
-const canProduccion  = computed(() => ['admin', 'produccion'].includes(role.value))
+const canCompras        = computed(() => ['admin', 'admin_compras', 'compras'].includes(role.value))
+const canProduccion     = computed(() => ['admin', 'produccion'].includes(role.value))
+const canMarketingOnly  = computed(() => ['marketing', 'admin_marketing'].includes(role.value))
 const canNewWork     = computed(() => ['admin', 'operario'].includes(role.value))
 const canHistory     = computed(() => !['vendedor', 'admin_ventas'].includes(role.value))
 const canNewMachine  = computed(() => isAdmin.value)
 const canUsers       = computed(() => ['admin', 'admin_ventas'].includes(role.value))
 
 // ── Módulos colapsables ─────────────────────────────────────────────────────
-const MANTENIM_PATHS  = ['/dashboard', '/new', '/history', '/notifications-history', '/newMachine']
-const VENTAS_PATHS    = ['/inventory', '/product', '/bulk-price', '/stock-management', '/inv-dashboard', '/product-log', '/product-groups', '/color-catalog', '/crm']
-const COMPRAS_PATHS   = ['/compras']
+const MANTENIM_PATHS   = ['/dashboard', '/new', '/history', '/notifications-history', '/newMachine']
+const VENTAS_PATHS     = ['/inventory', '/product', '/bulk-price', '/stock-management', '/inv-dashboard', '/product-log', '/product-groups', '/color-catalog', '/crm', '/marketing']
+const COMPRAS_PATHS    = ['/compras']
 const PRODUCCION_PATHS = ['/produccion']
+const MARKETING_PATHS  = ['/marketing', '/notifications-history', '/adminView']
 
 function pathInGroup(paths) {
   return paths.some(p => route.path === p || route.path.startsWith(p + '/') || route.path.startsWith(p))
@@ -49,12 +51,14 @@ const openMantenim   = ref(false)
 const openVentas     = ref(false)
 const openCompras    = ref(false)
 const openProduccion = ref(false)
+const openMarketing  = ref(false)
 
 function autoOpenModules() {
   if (pathInGroup(MANTENIM_PATHS))   openMantenim.value   = true
   if (pathInGroup(VENTAS_PATHS))     openVentas.value     = true
   if (pathInGroup(COMPRAS_PATHS))    openCompras.value    = true
   if (pathInGroup(PRODUCCION_PATHS)) openProduccion.value = true
+  if (pathInGroup(MARKETING_PATHS))  openMarketing.value  = true
 }
 
 watch(() => route.path, autoOpenModules, { immediate: true })
@@ -160,6 +164,9 @@ onBeforeUnmount(() => { notificationsStore.stop() })
             <router-link to="/crm" @click="closeMobile">
               <i class="bi bi-people-fill"></i><span class="nav-label">{{ nav.crm }}</span>
             </router-link>
+            <router-link to="/marketing" @click="closeMobile">
+              <i class="bi bi-megaphone-fill"></i><span class="nav-label">Marketing</span>
+            </router-link>
             <router-link to="/inventory" @click="closeMobile">
               <i class="bi bi-box-seam"></i><span class="nav-label">{{ nav.inventory }}</span>
             </router-link>
@@ -192,6 +199,25 @@ onBeforeUnmount(() => { notificationsStore.stop() })
         </Transition>
       </div>
 
+      <!-- ── MARKETING ── (solo para roles marketing puros) -->
+      <div v-if="canMarketingOnly" class="mod-group">
+        <button class="mod-header" @click="openMarketing = !openMarketing">
+          <i class="bi bi-megaphone-fill"></i>
+          <span>Marketing</span>
+          <i :class="['mod-chevron bi', openMarketing ? 'bi-chevron-up' : 'bi-chevron-down']"></i>
+        </button>
+        <Transition name="sidebar-collapse">
+          <div v-show="openMarketing" class="mod-links">
+            <router-link to="/marketing" @click="closeMobile">
+              <i class="bi bi-megaphone-fill"></i><span class="nav-label">Marketing</span>
+            </router-link>
+            <router-link to="/notifications-history" @click="closeMobile">
+              <i class="bi bi-bell"></i><span class="nav-label">Notificaciones</span>
+            </router-link>
+          </div>
+        </Transition>
+      </div>
+
       <!-- ── PRODUCCIÓN ── -->
       <div v-if="false" class="mod-group">
         <button class="mod-header" @click="openProduccion = !openProduccion">
@@ -210,6 +236,13 @@ onBeforeUnmount(() => { notificationsStore.stop() })
             <i class="bi bi-clipboard2-check"></i><span class="nav-label">Seguimiento</span>
           </router-link>
         </div>
+      </div>
+
+      <!-- ── ADMIN link para admin_marketing ── -->
+      <div v-if="canMarketingOnly && role === 'admin_marketing'" class="mod-group mod-group--admin">
+        <router-link to="/adminView" @click="closeMobile" class="mod-link-flat">
+          <i class="bi bi-person-plus-fill"></i><span class="nav-label">Usuarios</span>
+        </router-link>
       </div>
 
       <!-- ── ADMIN ── -->

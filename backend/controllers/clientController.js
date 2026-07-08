@@ -1,12 +1,22 @@
 import Client from "../models/clientModel.js"
 import { notifyNewClient } from "../services/crmNotificationService.js"
 
+async function nextCodigoCliente() {
+  const all = await Client.find({ codigoCliente: { $exists: true, $ne: '' } }, { codigoCliente: 1 })
+  let max = 0
+  for (const c of all) {
+    const n = parseInt(c.codigoCliente, 10)
+    if (!isNaN(n) && n > max) max = n
+  }
+  return String(max + 1).padStart(4, '0')
+}
+
 export const createClient = async (req, res) => {
   try {
     const {
       razonSocial, nombreComercial, contactoPrincipal,
       cuitCuil, telefono, telefonos, email, direccion, observaciones, estado, pipelineEstado,
-      lugar, latitud, longitud
+      lugar, latitud, longitud, codigoCliente
     } = req.body
 
     const displayName = (razonSocial || '').trim()
@@ -18,7 +28,10 @@ export const createClient = async (req, res) => {
       ? telefonos.filter(t => (t.numero || '').trim())
       : []
 
+    const codigo = (codigoCliente || '').trim() || await nextCodigoCliente()
+
     const client = await Client.create({
+      codigoCliente: codigo,
       razonSocial: displayName,
       nombreComercial: (nombreComercial || '').trim(),
       contactoPrincipal: (contactoPrincipal || '').trim(),
@@ -28,6 +41,7 @@ export const createClient = async (req, res) => {
       email: (email || '').trim(),
       direccion: (direccion || '').trim(),
       observaciones: observaciones || '',
+      tags: Array.isArray(tags) ? tags.map(t => String(t).trim()).filter(Boolean) : [],
       estado: estado || 'activo',
       pipelineEstado: pipelineEstado || 'nuevo_lead',
       // vendedor solo puede crear como potencial
@@ -95,10 +109,11 @@ export const updateClient = async (req, res) => {
     const {
       razonSocial, nombreComercial, contactoPrincipal,
       cuitCuil, telefono, telefonos, email, direccion, observaciones, estado, pipelineEstado,
-      lugar, latitud, longitud
+      lugar, latitud, longitud, codigoCliente
     } = req.body
 
     const update = {}
+    if (codigoCliente !== undefined) update.codigoCliente = codigoCliente.trim()
     if (razonSocial !== undefined) update.razonSocial = razonSocial.trim()
     if (nombreComercial !== undefined) update.nombreComercial = nombreComercial.trim()
     if (contactoPrincipal !== undefined) update.contactoPrincipal = contactoPrincipal.trim()
@@ -112,6 +127,7 @@ export const updateClient = async (req, res) => {
     if (email !== undefined) update.email = email.trim()
     if (direccion !== undefined) update.direccion = direccion.trim()
     if (observaciones !== undefined) update.observaciones = observaciones
+    if (req.body.tags !== undefined) update.tags = Array.isArray(req.body.tags) ? req.body.tags.map(t => String(t).trim()).filter(Boolean) : []
     if (estado !== undefined) update.estado = estado
     if (pipelineEstado !== undefined) update.pipelineEstado = pipelineEstado
     if (lugar !== undefined) update.lugar = lugar.trim()

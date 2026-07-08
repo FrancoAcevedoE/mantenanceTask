@@ -22,6 +22,7 @@ const clienteSchema = new mongoose.Schema({
   empresa: { type: String, default: '' },
   email: { type: String, default: '' },
   telefono: { type: String, default: '' },
+  codigoCliente: { type: String, default: '' },
 }, { _id: false })
 
 const quoteSchema = new mongoose.Schema({

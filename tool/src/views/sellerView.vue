@@ -745,7 +745,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { jsPDF } from 'jspdf'
 import axios from 'axios'
 import { useProductsStore } from '@/stores/products'
@@ -1042,6 +1042,18 @@ onMounted(async () => {
   } finally {
     loadingQuotes.value = false
   }
+  // Auto-seleccionar cliente si viene del panel de detalle del CRM
+  if (crmStore.pendingQuoteClient) {
+    selectCrmClient(crmStore.pendingQuoteClient)
+    crmStore.clearPendingQuoteClient()
+  }
+})
+
+watch(() => crmStore.pendingQuoteClient, (client) => {
+  if (client) {
+    selectCrmClient(client)
+    crmStore.clearPendingQuoteClient()
+  }
 })
 
 async function loadQuotes() {
@@ -1157,10 +1169,11 @@ function selectCrmClient(c) {
   form.value.clienteId = c._id
   form.value._crmClientLabel = c.razonSocial || c.nombreComercial || c.contactoPrincipal || c.name || ''
   form.value.cliente = {
-    nombre:   c.contactoPrincipal || c.name || '',
-    empresa:  c.razonSocial || c.nombreComercial || c.company || '',
-    email:    c.email || '',
-    telefono: firstPhone,
+    nombre:         c.contactoPrincipal || c.name || '',
+    empresa:        c.razonSocial || c.nombreComercial || c.company || '',
+    email:          c.email || '',
+    telefono:       firstPhone,
+    codigoCliente:  c.codigoCliente || '',
   }
   showCliente.value = true
   crmDropOpen.value = false
@@ -1721,7 +1734,7 @@ function buildQuoteHtml(q) {
 
   const clientHtml = (q.cliente?.nombre || q.cliente?.empresa || q.cliente?.email || q.cliente?.telefono) ? `
     <div style="margin-bottom:16px;padding:10px 14px;border:1px solid #d0d0d0;border-radius:6px;">
-      <div style="font-size:9px;font-weight:700;letter-spacing:.08em;color:#888;margin-bottom:4px;">DESTINATARIO</div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:.08em;color:#888;margin-bottom:4px;">DESTINATARIO${q.cliente?.codigoCliente ? ` &nbsp;·&nbsp; <span style="color:#6b8e3a">Cód. ${q.cliente.codigoCliente}</span>` : ''}</div>
       ${q.cliente?.nombre   ? `<div style="font-weight:700;">${q.cliente.nombre}</div>` : ''}
       ${q.cliente?.empresa  ? `<div>${q.cliente.empresa}</div>` : ''}
       ${q.cliente?.email    ? `<div>${q.cliente.email}</div>` : ''}
@@ -1910,6 +1923,11 @@ async function makeQuotePDF(q) {
     pdf.setFont('helvetica', 'bold')
     pdf.setTextColor(140, 140, 140)
     pdf.text(t.value.printRecipient, ML + 3, y + 4)
+    if (cl.codigoCliente) {
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(107, 142, 58)
+      pdf.text(`Cód. ${cl.codigoCliente}`, W - MR, y + 4, { align: 'right' })
+    }
     let by = y + 8
     for (const ln of boxLines) {
       pdf.setFont('helvetica', ln === cl.nombre ? 'bold' : 'normal')

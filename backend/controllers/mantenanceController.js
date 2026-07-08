@@ -809,7 +809,7 @@ export const notificationsController = async (req, res) => {
     try {
 
         const role = req.user?.role
-        const SALES_ROLES = new Set(["vendedor", "admin_ventas"])
+        const SALES_ROLES = new Set(["vendedor", "admin_ventas", "marketing", "admin_marketing"])
         const COMPRAS_ROLES = new Set(["compras", "admin_compras"])
 
         const notificationsFeed = SALES_ROLES.has(role)
@@ -937,8 +937,8 @@ export const notificationsHistoryController = async (req, res) => {
         
         const query = {}
 
-        // Roles CRM solo ven notificaciones de su área
-        const crmRoles = ['vendedor', 'admin_ventas']
+        // Roles CRM y marketing solo ven notificaciones de su área
+        const crmRoles = ['vendedor', 'admin_ventas', 'marketing', 'admin_marketing']
         if (crmRoles.includes(req.user?.role)) {
             query.audience = 'crm'
         }

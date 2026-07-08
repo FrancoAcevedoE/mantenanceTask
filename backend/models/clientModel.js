@@ -4,6 +4,7 @@ const clientSchema = new mongoose.Schema({
   name: { type: String, default: '' },
   company: { type: String, default: '' },
 
+  codigoCliente: { type: String, trim: true, default: '' },
   razonSocial: { type: String, trim: true, default: '' },
   nombreComercial: { type: String, trim: true, default: '' },
   contactoPrincipal: { type: String, trim: true, default: '' },
@@ -16,6 +17,7 @@ const clientSchema = new mongoose.Schema({
   email: { type: String, trim: true, default: '' },
   direccion: { type: String, trim: true, default: '' },
   observaciones: { type: String, default: '' },
+  tags: { type: [String], default: [] },
   estado: {
     type: String,
     enum: ['activo', 'inactivo'],

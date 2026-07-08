@@ -23,7 +23,7 @@
 
     <div class="crm-body">
       <CrmDashboard  v-if="activeTab === 'dashboard'" />
-      <CrmClients    v-else-if="activeTab === 'clientes'" :pending-edit="pendingEdit" />
+      <CrmClients    v-else-if="activeTab === 'clientes'" :pending-edit="pendingEdit" @new-quote="onNewQuote" />
       <CrmPipeline   v-else-if="activeTab === 'pipeline'" @edit-client="onEditClient" />
       <CrmActivities v-else-if="activeTab === 'actividades'" />
       <div v-else-if="activeTab === 'cotizaciones'" class="crm-quotes-wrap">
@@ -86,6 +86,10 @@ function onEditClient(client) {
   pendingEdit.value = client
   activeTab.value = 'clientes'
   setTimeout(() => { pendingEdit.value = null }, 400)
+}
+
+function onNewQuote() {
+  activeTab.value = 'cotizaciones'
 }
 
 const tabs = computed(() => [

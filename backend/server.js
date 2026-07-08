@@ -40,6 +40,7 @@ import materiasPrimasRoutes from "./routes/materiasPrimasRoutes.js"
 import proveedoresRoutes    from "./routes/proveedoresRoutes.js"
 import formulasResinaRoutes from "./routes/formulasResinaRoutes.js"
 import produccionRoutes     from "./routes/produccionRoutes.js"
+import campaignRoutes      from "./routes/campaignRoutes.js"
 import { uploadRouter, filesRouter } from "./routes/uploadRoutes.js"
 import User from "./models/userModels.js"
 import { demoGuard } from "./middlewares/demoGuard.js"
@@ -189,6 +190,7 @@ app.use("/api/materias-primas",  materiasPrimasRoutes)
 app.use("/api/proveedores",      proveedoresRoutes)
 app.use("/api/formulas-resina",  formulasResinaRoutes)
 app.use("/api/produccion",       produccionRoutes)
+app.use("/api/campaigns",       campaignRoutes)
 app.use("/api/upload", uploadRouter)
 app.use("/api/files", filesRouter)
 app.use("/uploads", express.static(resolve(__dirname, "uploads")))

@@ -38,12 +38,14 @@
           <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" :placeholder="t.phPassword"/>
 
           <label for="role">{{ t.labelRole }}</label>
-          <select id="role" v-model="user.role" :disabled="currentUserRole === 'admin_ventas'">
-            <option v-if="currentUserRole !== 'admin_ventas'" value="operario">Operario</option>
-            <option v-if="currentUserRole !== 'admin_ventas'" value="supervisor">Supervisor</option>
-            <option value="vendedor">Vendedor</option>
-            <option v-if="currentUserRole !== 'admin_ventas'" value="admin_ventas">Admin de ventas</option>
-            <option v-if="currentUserRole !== 'admin_ventas'" value="admin">Admin</option>
+          <select id="role" v-model="user.role" :disabled="currentUserRole === 'admin_ventas' || currentUserRole === 'admin_marketing'">
+            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="operario">Operario</option>
+            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="supervisor">Supervisor</option>
+            <option v-if="currentUserRole !== 'admin_marketing'" value="vendedor">Vendedor</option>
+            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="admin_ventas">Admin de ventas</option>
+            <option value="marketing">Marketing</option>
+            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="admin_marketing">Admin de marketing</option>
+            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="admin">Admin</option>
           </select>
 
           <p v-if="message" class="message">{{ message }}</p>
@@ -192,7 +194,7 @@ const TRANSLATIONS = {
     auditPlaceholder: 'El log se mostrará acá cuando lo generes.',
     auditMeta: (date, count) => `Última generación: ${date} | Eventos: ${count}`,
     roleDni: 'DNI',
-    roles: { admin: 'Admin', admin_ventas: 'Admin de ventas', vendedor: 'Vendedor', operario: 'Operario', supervisor: 'Supervisor', compras: 'Compras', admin_compras: 'Admin de compras', produccion: 'Producción' },
+    roles: { admin: 'Admin', admin_ventas: 'Admin de ventas', vendedor: 'Vendedor', operario: 'Operario', supervisor: 'Supervisor', compras: 'Compras', admin_compras: 'Admin de compras', produccion: 'Producción', marketing: 'Marketing', admin_marketing: 'Admin de marketing' },
   },
   pt: {
     panelTitle: 'Painel de Admin',
@@ -215,7 +217,7 @@ const TRANSLATIONS = {
     auditPlaceholder: 'O log será exibido aqui quando gerado.',
     auditMeta: (date, count) => `Última geração: ${date} | Eventos: ${count}`,
     roleDni: 'Doc.',
-    roles: { admin: 'Admin', admin_ventas: 'Admin de vendas', vendedor: 'Vendedor', operario: 'Operário', supervisor: 'Supervisor', compras: 'Compras', admin_compras: 'Admin de compras', produccion: 'Produção' },
+    roles: { admin: 'Admin', admin_ventas: 'Admin de vendas', vendedor: 'Vendedor', operario: 'Operário', supervisor: 'Supervisor', compras: 'Compras', admin_compras: 'Admin de compras', produccion: 'Produção', marketing: 'Marketing', admin_marketing: 'Admin de marketing' },
   },
 }
 
@@ -242,7 +244,7 @@ export default {
         name: "",
         dni: "",
         password: "",
-        role: currentUser.role === 'admin_ventas' ? 'vendedor' : 'operario',
+        role: currentUser.role === 'admin_ventas' ? 'vendedor' : currentUser.role === 'admin_marketing' ? 'marketing' : 'operario',
         photo: ""
       },
       users: [],

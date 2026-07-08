@@ -17,6 +17,7 @@ import ProductLogView from '@/views/ProductLogView.vue'
 import ProductGroupView from '@/views/ProductGroupView.vue'
 import ColorCatalogView from '@/views/ColorCatalogView.vue'
 import CrmView from '@/views/CrmView.vue'
+import MarketingView from '@/views/MarketingView.vue'
 import MateriasPrimasView from '@/views/MateriasPrimasView.vue'
 import ProveedoresView from '@/views/ProveedoresView.vue'
 import ResinaPlantaView from '@/views/ResinaPlantaView.vue'
@@ -45,7 +46,7 @@ const router = createRouter({
         path: '/logUser', name: 'LogUser', component: logUser
       },
       {
-        path: '/adminView', name: 'AdminView', component: adminView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas'] }
+        path: '/adminView', name: 'AdminView', component: adminView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'admin_marketing'] }
       },
       {
       path: '/newMachine', name: 'NewMachine', component: newMachine, meta: { requiresAuth: true, roles: ['admin'], bodyClass: 'bg-maintenance' }
@@ -60,7 +61,7 @@ const router = createRouter({
       path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor'] }
     },
     {
-      path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor', 'vendedor', 'admin_ventas'] }
+      path: '/notifications-history', name: 'NotificationsHistory', component: NotificationHistory, meta: { requiresAuth: true, roles: ['admin', 'operario', 'supervisor', 'vendedor', 'admin_ventas', 'marketing', 'admin_marketing'] }
     },
     {
       path: '/inventory', name: 'InventoryView', component: inventoryView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'], bodyClass: 'bg-maintenance' }
@@ -94,6 +95,9 @@ const router = createRouter({
     },
     {
       path: '/crm', name: 'CRM', component: CrmView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor'], bodyClass: 'bg-maintenance' }
+    },
+    {
+      path: '/marketing', name: 'Marketing', component: MarketingView, meta: { requiresAuth: true, roles: ['admin', 'admin_ventas', 'vendedor', 'marketing', 'admin_marketing'], bodyClass: 'bg-maintenance' }
     },
     {
       path: '/compras/materias-primas', name: 'MateriasPrimas', component: MateriasPrimasView, meta: { requiresAuth: true, roles: ['admin', 'admin_compras', 'compras'], bodyClass: 'bg-maintenance' }
