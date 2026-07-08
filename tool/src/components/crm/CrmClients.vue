@@ -701,8 +701,13 @@ function nextMonday(ts) {
 
 function daysSinceQuote(client) {
   if (client.tipoCliente !== 'normal') return 0
-  const base = client.lastQuoteAt || null
-  if (!base) return 9999 // nunca tuvo cotización → siempre cuenta
+  // Si tiene cotización, contar desde la última
+  if (client.lastQuoteAt) {
+    return Math.floor((Date.now() - new Date(client.lastQuoteAt).getTime()) / (1000 * 60 * 60 * 24))
+  }
+  // Sin cotización: contar desde creación (clientes nuevos no deben disparar la burbuja)
+  const base = client.createdAt || null
+  if (!base) return 9999
   return Math.floor((Date.now() - new Date(base).getTime()) / (1000 * 60 * 60 * 24))
 }
 
