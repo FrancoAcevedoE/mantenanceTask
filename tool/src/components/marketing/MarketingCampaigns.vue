@@ -89,6 +89,9 @@
         </div>
 
         <div class="mkcamp-card-ft">
+          <button v-if="c.tipo !== 'llamada'" class="mkcamp-ico-btn mkcamp-ico-btn--send" @click="openSend(c)" title="Enviar campaña">
+            <i class="bi bi-send-fill"></i>
+          </button>
           <button class="mkcamp-ico-btn" @click="openEdit(c)" title="Editar">
             <i class="bi bi-pencil"></i>
           </button>
@@ -305,6 +308,137 @@
       </div>
     </Teleport>
 
+    <!-- ── Modal de envío ── -->
+    <Teleport to="body">
+      <div v-if="sendCamp" class="mk-backdrop" @click.self="closeSend">
+        <div class="mk-modal mk-modal--send">
+          <div class="mk-modal-hd">
+            <div>
+              <div style="font-size:0.7rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Enviar campaña</div>
+              <h2 style="margin:0.1rem 0 0">{{ sendCamp.nombre }}</h2>
+            </div>
+            <button class="mk-close" @click="closeSend"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="mk-modal-bd">
+
+            <!-- Canal -->
+            <div class="mk-field">
+              <label>Canal</label>
+              <div class="mk-send-channels">
+                <label v-if="sendCamp.tipo === 'whatsapp' || sendCamp.tipo === 'mixta'"
+                  :class="['mk-send-ch', { active: sendUseWA }]">
+                  <input type="checkbox" v-model="sendUseWA" />
+                  <i class="bi bi-whatsapp"></i> WhatsApp
+                  <span class="mk-send-ch-count">({{ sendWithPhone.length }})</span>
+                </label>
+                <label v-if="sendCamp.tipo === 'email' || sendCamp.tipo === 'mixta'"
+                  :class="['mk-send-ch', { active: sendUseEmail }]">
+                  <input type="checkbox" v-model="sendUseEmail" />
+                  <i class="bi bi-envelope-fill"></i> Email
+                  <span class="mk-send-ch-count">({{ sendWithEmail.length }})</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Mensaje -->
+            <div class="mk-field">
+              <label>Mensaje *</label>
+              <textarea v-model="sendMessage" rows="5" maxlength="1000"
+                class="mk-send-textarea"
+                placeholder="Escribí el mensaje que se enviará..."></textarea>
+              <div style="font-size:0.7rem;color:#9ca3af;text-align:right">{{ sendMessage.length }} / 1000</div>
+            </div>
+
+            <div v-if="sendUseEmail || sendCamp.tipo === 'email'" class="mk-field">
+              <label>Asunto</label>
+              <input v-model="sendSubject" placeholder="Asunto del correo..." />
+            </div>
+
+            <!-- Destinatarios -->
+            <div class="mk-section-hd">
+              Destinatarios
+              <span class="mk-client-sel-count" style="margin-left:0.4rem">{{ sendTargets.length }}</span>
+            </div>
+
+            <!-- WhatsApp batches -->
+            <template v-if="sendUseWA && sendMessage">
+              <div v-if="!sendWithPhone.length" class="mk-send-warn">
+                <i class="bi bi-exclamation-triangle"></i> Ningún destinatario tiene teléfono registrado.
+              </div>
+              <template v-else>
+                <div v-if="sendWithPhone.length > 100" class="mk-send-warn">
+                  <i class="bi bi-info-circle"></i>
+                  WhatsApp limita a 100 contactos por difusión. Los contactos se dividen en batches.
+                </div>
+                <div v-for="(batch, bi) in waBatches" :key="bi" class="mk-send-batch">
+                  <div class="mk-send-batch-hd">
+                    <span>Batch {{ bi + 1 }} / {{ waBatches.length }} — {{ batch.length }} contactos</span>
+                    <div style="display:flex;gap:0.4rem">
+                      <button class="mk-send-batch-btn" @click="copyPhones(batch)">
+                        <i class="bi bi-clipboard"></i> Copiar números
+                      </button>
+                      <button class="mk-send-batch-btn mk-send-batch-btn--green" @click="openBatch(batch)">
+                        <i class="bi bi-whatsapp"></i> Abrir en WhatsApp
+                      </button>
+                    </div>
+                  </div>
+                  <div class="mk-send-contact-list">
+                    <a v-for="c in batch" :key="c._id"
+                      :href="waLink(firstPhone(c), sendMessage)"
+                      target="_blank" rel="noopener"
+                      class="mk-send-contact">
+                      <i class="bi bi-whatsapp" style="color:#25d366"></i>
+                      <span class="mk-send-contact-name">{{ c.razonSocial || c.nombreComercial || c.name }}</span>
+                      <span class="mk-send-contact-phone">{{ firstPhone(c) }}</span>
+                      <i class="bi bi-box-arrow-up-right" style="font-size:0.7rem;color:#9ca3af;margin-left:auto"></i>
+                    </a>
+                  </div>
+                </div>
+                <div v-if="sendNoPhone.length" class="mk-send-warn mk-send-warn--soft">
+                  <i class="bi bi-telephone-x"></i>
+                  {{ sendNoPhone.length }} sin teléfono no incluidos:
+                  {{ sendNoPhone.map(c => c.razonSocial || c.name).join(', ') }}
+                </div>
+              </template>
+            </template>
+
+            <!-- Email -->
+            <template v-if="sendUseEmail && sendMessage">
+              <div v-if="!sendWithEmail.length" class="mk-send-warn">
+                <i class="bi bi-exclamation-triangle"></i> Ningún destinatario tiene email registrado.
+              </div>
+              <template v-else>
+                <div class="mk-send-batch">
+                  <div class="mk-send-batch-hd">
+                    <span>{{ sendWithEmail.length }} destinatarios con email</span>
+                    <div style="display:flex;gap:0.4rem">
+                      <button class="mk-send-batch-btn" @click="copyEmails">
+                        <i class="bi bi-clipboard"></i> Copiar emails
+                      </button>
+                      <button class="mk-send-batch-btn" @click="openMailto">
+                        <i class="bi bi-envelope-fill"></i> Abrir cliente de correo
+                      </button>
+                    </div>
+                  </div>
+                  <div class="mk-send-contact-list">
+                    <div v-for="c in sendWithEmail" :key="c._id" class="mk-send-contact">
+                      <i class="bi bi-envelope-fill" style="color:#3b82f6"></i>
+                      <span class="mk-send-contact-name">{{ c.razonSocial || c.nombreComercial || c.name }}</span>
+                      <span class="mk-send-contact-phone">{{ c.email }}</span>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </template>
+
+          </div>
+          <div class="mk-modal-ft">
+            <button class="secondary-button" @click="closeSend">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- ── Confirm delete ── -->
     <Teleport to="body">
       <div v-if="deleting" class="mk-backdrop" @click.self="deleting = null">
@@ -350,6 +484,67 @@ const formError    = ref('')
 const deleting     = ref(null)
 const detailCamp   = ref(null)
 const clientSearch = ref('')
+
+// ── Send modal state ──
+const sendCamp    = ref(null)
+const sendMessage = ref('')
+const sendSubject = ref('')
+const sendUseWA   = ref(false)
+const sendUseEmail = ref(false)
+
+const sendTargets = computed(() => sendCamp.value ? mStore.campaignTargets(sendCamp.value) : [])
+
+function firstPhone(c) {
+  return c.telefonos?.[0]?.numero || c.telefono || ''
+}
+
+const sendWithPhone = computed(() => sendTargets.value.filter(c => firstPhone(c)))
+const sendWithEmail = computed(() => sendTargets.value.filter(c => c.email))
+const sendNoPhone   = computed(() => sendTargets.value.filter(c => !firstPhone(c)))
+
+const BATCH_SIZE = 100
+const waBatches = computed(() => {
+  const list = sendWithPhone.value
+  const batches = []
+  for (let i = 0; i < list.length; i += BATCH_SIZE) batches.push(list.slice(i, i + BATCH_SIZE))
+  return batches
+})
+
+function waLink(phone, msg) {
+  const num = phone.replace(/\D/g, '')
+  return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`
+}
+
+function openBatch(batch) {
+  for (const c of batch) window.open(waLink(firstPhone(c), sendMessage.value), '_blank', 'noopener')
+}
+
+function copyPhones(batch) {
+  const nums = batch.map(c => firstPhone(c).replace(/\D/g, '')).join('\n')
+  navigator.clipboard.writeText(nums).then(() => toast.success('Números copiados'))
+}
+
+function copyEmails() {
+  const emails = sendWithEmail.value.map(c => c.email).join(', ')
+  navigator.clipboard.writeText(emails).then(() => toast.success('Emails copiados'))
+}
+
+function openMailto() {
+  const bcc = sendWithEmail.value.map(c => c.email).join(',')
+  const subject = encodeURIComponent(sendSubject.value || sendCamp.value?.nombre || '')
+  const body = encodeURIComponent(sendMessage.value)
+  window.open(`mailto:?bcc=${bcc}&subject=${subject}&body=${body}`)
+}
+
+function openSend(c) {
+  sendCamp.value    = c
+  sendMessage.value = ''
+  sendSubject.value = c.nombre || ''
+  sendUseWA.value   = c.tipo === 'whatsapp' || c.tipo === 'mixta'
+  sendUseEmail.value = c.tipo === 'email' || c.tipo === 'mixta'
+}
+
+function closeSend() { sendCamp.value = null }
 
 const clientsForSelector = computed(() => {
   const q = clientSearch.value.trim().toLowerCase()
@@ -706,6 +901,8 @@ async function doDelete() {
 .mkcamp-ico-btn--detail:hover { background: rgba(59,130,246,.18); }
 .mkcamp-ico-btn--del { background: rgba(239,68,68,.08); color: #b91c1c; }
 .mkcamp-ico-btn--del:hover { background: rgba(239,68,68,.18); }
+.mkcamp-ico-btn--send { background: rgba(37,211,102,.1); color: #15803d; }
+.mkcamp-ico-btn--send:hover { background: rgba(37,211,102,.2); }
 
 /* ── Modales ── */
 .mk-backdrop {
@@ -837,6 +1034,68 @@ a.mk-attach-name:hover { text-decoration: underline; color: var(--color-primary)
 }
 .mk-dest-empty { font-size: 0.8rem; color: var(--color-muted); text-align: center; padding: 1rem; }
 
+/* Send modal */
+.mk-modal--send { max-width: 660px; }
+.mk-send-channels { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.mk-send-ch {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.4rem 0.9rem; border-radius: 8px;
+  border: 1.5px solid rgba(107,142,58,.2); background: #f9fafb;
+  font-size: 0.82rem; font-weight: 600; cursor: pointer;
+  color: var(--color-muted); transition: all .12s;
+}
+.mk-send-ch input { width: 14px; height: 14px; flex-shrink: 0; accent-color: var(--color-primary); }
+.mk-send-ch.active { border-color: var(--color-primary); background: rgba(107,142,58,.07); color: var(--color-primary); }
+.mk-send-ch-count { font-size: 0.72rem; opacity: .7; }
+
+.mk-send-textarea {
+  width: 100%; box-sizing: border-box; padding: 0.6rem 0.75rem;
+  border: 1px solid #d1d5db; border-radius: 10px; font-size: 0.82rem;
+  resize: vertical; line-height: 1.5; font-family: inherit;
+}
+.mk-send-textarea:focus { border-color: var(--color-primary); outline: none; }
+
+.mk-send-warn {
+  display: flex; align-items: flex-start; gap: 0.45rem;
+  font-size: 0.78rem; color: #92400e;
+  background: #fef3c7; border-radius: 8px; padding: 0.5rem 0.7rem;
+}
+.mk-send-warn--soft { background: rgba(148,163,184,.1); color: var(--color-muted); }
+
+.mk-send-batch {
+  border: 1px solid rgba(107,142,58,.15); border-radius: 10px; overflow: hidden;
+}
+.mk-send-batch-hd {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem;
+  padding: 0.5rem 0.75rem; background: rgba(107,142,58,.06);
+  font-size: 0.78rem; font-weight: 600; color: var(--color-text);
+}
+.mk-send-batch-btn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.28rem 0.7rem; border-radius: 6px;
+  border: 1px solid rgba(107,142,58,.25); background: #fff;
+  font-size: 0.73rem; font-weight: 600; color: var(--color-primary);
+  cursor: pointer; transition: background .12s;
+}
+.mk-send-batch-btn:hover { background: rgba(107,142,58,.08); transform: none; box-shadow: none; }
+.mk-send-batch-btn--green { border-color: rgba(37,211,102,.35); color: #15803d; }
+.mk-send-batch-btn--green:hover { background: rgba(37,211,102,.08); }
+
+.mk-send-contact-list {
+  max-height: 220px; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.mk-send-contact {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.32rem 0.75rem; font-size: 0.8rem;
+  border-top: 1px solid rgba(107,142,58,.07);
+  text-decoration: none; color: var(--color-text);
+  transition: background .1s;
+}
+.mk-send-contact:hover { background: rgba(107,142,58,.04); }
+.mk-send-contact-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.mk-send-contact-phone { font-size: 0.72rem; color: var(--color-muted); white-space: nowrap; flex-shrink: 0; }
+
 /* Client selector */
 .mk-client-selector {
   display: flex; flex-direction: column; gap: 0.45rem;
@@ -912,4 +1171,11 @@ a.mk-attach-name:hover { text-decoration: underline; color: var(--color-primary)
 [data-theme="dark"] .mk-client-row { border-bottom-color: rgba(255,255,255,.05) !important; }
 [data-theme="dark"] .mk-client-row:hover { background: rgba(255,255,255,.05) !important; }
 [data-theme="dark"] .mk-client-row.selected { background: rgba(107,142,58,.12) !important; }
+[data-theme="dark"] .mk-send-ch { background: rgba(13,18,35,.6) !important; border-color: rgba(255,255,255,.12) !important; }
+[data-theme="dark"] .mk-send-batch { border-color: rgba(255,255,255,.08) !important; }
+[data-theme="dark"] .mk-send-batch-hd { background: rgba(255,255,255,.04) !important; }
+[data-theme="dark"] .mk-send-batch-btn { background: rgba(13,18,35,.7) !important; border-color: rgba(255,255,255,.12) !important; }
+[data-theme="dark"] .mk-send-textarea { background: rgba(13,18,35,.7) !important; border-color: rgba(255,255,255,.12) !important; color: rgba(255,255,255,.85) !important; }
+[data-theme="dark"] .mk-send-contact { border-top-color: rgba(255,255,255,.05) !important; }
+[data-theme="dark"] .mk-send-contact:hover { background: rgba(255,255,255,.04) !important; }
 </style>

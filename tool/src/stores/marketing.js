@@ -112,17 +112,27 @@ export const useMarketingStore = defineStore('marketing', () => {
   // Clientes que coinciden con el segmento de una campaña
   function campaignTargets(campaign) {
     const seg = campaign.segmento || {}
-    let list = crmStore.visibleClients
+    const hasSegment = !!(seg.tipoCliente || seg.pipelineEstados?.length)
+    const hasExplicit = seg.clienteIds?.length > 0
 
-    if (seg.tipoCliente)          list = list.filter(c => c.tipoCliente === seg.tipoCliente)
+    // Solo clientes específicos (sin filtros de segmento)
+    if (hasExplicit && !hasSegment) {
+      const ids = seg.clienteIds.map(String)
+      return crmStore.visibleClients.filter(c => ids.includes(String(c._id)))
+    }
+
+    // Filtros de segmento (con o sin clientes explícitos adicionales)
+    let list = crmStore.visibleClients
+    if (seg.tipoCliente)             list = list.filter(c => c.tipoCliente === seg.tipoCliente)
     if (seg.pipelineEstados?.length) list = list.filter(c => seg.pipelineEstados.includes(c.pipelineEstado))
 
-    if (seg.clienteIds?.length) {
+    if (hasExplicit) {
       const ids = seg.clienteIds.map(String)
-      const explicit = crmStore.visibleClients.filter(c => ids.includes(String(c._id)))
-      const merged = [...list, ...explicit]
+      const extra = crmStore.visibleClients.filter(c => ids.includes(String(c._id)))
+      const merged = [...list, ...extra]
       return [...new Map(merged.map(c => [String(c._id), c])).values()]
     }
+
     return list
   }
 
