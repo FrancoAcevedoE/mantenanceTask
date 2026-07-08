@@ -167,13 +167,25 @@
       <table class="cc-table">
         <thead>
           <tr>
-            <th>Cód.</th>
-            <th>Razón social</th>
-            <th>Contacto</th>
+            <th class="cc-th-sort" @click="toggleSort('codigoCliente')">
+              Cód. <i :class="sortCol === 'codigoCliente' ? (sortAsc ? 'bi bi-sort-up' : 'bi bi-sort-down') : 'bi bi-arrow-down-up'" class="cc-sort-ico"></i>
+            </th>
+            <th class="cc-th-sort" @click="toggleSort('razonSocial')">
+              Razón social <i :class="sortCol === 'razonSocial' ? (sortAsc ? 'bi bi-sort-up' : 'bi bi-sort-down') : 'bi bi-arrow-down-up'" class="cc-sort-ico"></i>
+            </th>
+            <th class="cc-th-sort" @click="toggleSort('contacto')">
+              Contacto <i :class="sortCol === 'contacto' ? (sortAsc ? 'bi bi-sort-up' : 'bi bi-sort-down') : 'bi bi-arrow-down-up'" class="cc-sort-ico"></i>
+            </th>
             <th>Teléfono</th>
-            <th>Email</th>
-            <th>Etapa</th>
-            <th>Tipo</th>
+            <th class="cc-th-sort" @click="toggleSort('email')">
+              Email <i :class="sortCol === 'email' ? (sortAsc ? 'bi bi-sort-up' : 'bi bi-sort-down') : 'bi bi-arrow-down-up'" class="cc-sort-ico"></i>
+            </th>
+            <th class="cc-th-sort" @click="toggleSort('pipelineEstado')">
+              Etapa <i :class="sortCol === 'pipelineEstado' ? (sortAsc ? 'bi bi-sort-up' : 'bi bi-sort-down') : 'bi bi-arrow-down-up'" class="cc-sort-ico"></i>
+            </th>
+            <th class="cc-th-sort" @click="toggleSort('tipoCliente')">
+              Tipo <i :class="sortCol === 'tipoCliente' ? (sortAsc ? 'bi bi-sort-up' : 'bi bi-sort-down') : 'bi bi-arrow-down-up'" class="cc-sort-ico"></i>
+            </th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -556,7 +568,11 @@
 
           <div class="crm-modal-ft">
             <button class="secondary-button" @click="closeModal">Cancelar</button>
-            <button :disabled="saving" @click="saveClient">
+            <button v-if="!editing && !dupConfirmed" class="secondary-button" :disabled="saving" @click="saveClient(true)">
+              <div v-if="saving" class="btn-spin"></div>
+              <span v-else><i class="bi bi-plus-circle"></i> Guardar y crear otro</span>
+            </button>
+            <button :disabled="saving" @click="saveClient()">
               <div v-if="saving" class="btn-spin"></div>
               <span v-else>{{ dupConfirmed ? 'Crear de todas formas' : (editing ? 'Guardar cambios' : 'Crear cliente') }}</span>
             </button>
@@ -674,7 +690,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useCrmStore } from '@/stores/crm'
 import { usePermissions } from '@/utils/permissions'
 import * as XLSX from 'xlsx'
@@ -691,12 +707,44 @@ onMounted(() => { if (props.pendingEdit) openEdit(props.pendingEdit) })
 
 const crmStore = useCrmStore()
 
-// ── Filtros y vista ──
-const search         = ref('')
-const filterEstado   = ref('')
-const filterPipeline = ref('')
-const filterTag      = ref('')
-const viewMode       = ref('cards')
+// ── Filtros y vista (persistidos en localStorage) ──
+const FILTER_KEY = 'crm-client-filters'
+function loadFilters() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(FILTER_KEY) || '{}')
+    return {
+      search:         saved.search         || '',
+      filterEstado:   saved.filterEstado   || '',
+      filterPipeline: saved.filterPipeline || '',
+      filterTag:      saved.filterTag      || '',
+      viewMode:       saved.viewMode       || 'cards',
+    }
+  } catch { return { search: '', filterEstado: '', filterPipeline: '', filterTag: '', viewMode: 'cards' } }
+}
+const _init = loadFilters()
+const search         = ref(_init.search)
+const filterEstado   = ref(_init.filterEstado)
+const filterPipeline = ref(_init.filterPipeline)
+const filterTag      = ref(_init.filterTag)
+const viewMode       = ref(_init.viewMode)
+
+watch([search, filterEstado, filterPipeline, filterTag, viewMode], () => {
+  localStorage.setItem(FILTER_KEY, JSON.stringify({
+    search: search.value,
+    filterEstado: filterEstado.value,
+    filterPipeline: filterPipeline.value,
+    filterTag: filterTag.value,
+    viewMode: viewMode.value,
+  }))
+})
+
+// ── Ordenamiento tabla ──
+const sortCol = ref('')
+const sortAsc = ref(true)
+function toggleSort(col) {
+  if (sortCol.value === col) sortAsc.value = !sortAsc.value
+  else { sortCol.value = col; sortAsc.value = true }
+}
 
 // ── Modales ──
 const showModal      = ref(false)
@@ -790,6 +838,19 @@ const filtered = computed(() => {
       (c.telefonos || []).some(t => rx.test(t.numero)) ||
       (c.tags || []).some(t => rx.test(t))
     )
+  }
+  if (sortCol.value) {
+    list = [...list].sort((a, b) => {
+      let av = '', bv = ''
+      if (sortCol.value === 'razonSocial')   { av = a.razonSocial || a.name || ''; bv = b.razonSocial || b.name || '' }
+      if (sortCol.value === 'contacto')      { av = a.contactoPrincipal || ''; bv = b.contactoPrincipal || '' }
+      if (sortCol.value === 'email')         { av = a.email || ''; bv = b.email || '' }
+      if (sortCol.value === 'pipelineEstado'){ av = a.pipelineEstado || ''; bv = b.pipelineEstado || '' }
+      if (sortCol.value === 'tipoCliente')   { av = a.tipoCliente || ''; bv = b.tipoCliente || '' }
+      if (sortCol.value === 'codigoCliente') { av = a.codigoCliente || ''; bv = b.codigoCliente || '' }
+      const cmp = av.localeCompare(bv, 'es', { sensitivity: 'base' })
+      return sortAsc.value ? cmp : -cmp
+    })
   }
   return list
 })
@@ -944,16 +1005,14 @@ function openEdit(c) {
 
 function closeModal() { showModal.value = false; dupConfirmed.value = false }
 
-async function saveClient() {
+async function saveClient(keepOpen = false) {
   formError.value = ''
   if (!form.value.razonSocial.trim()) {
     formError.value = 'La razón social es obligatoria'
     return
   }
-  // Agregar tag pendiente si hay texto sin confirmar
   if (tagInput.value.trim()) addTag()
 
-  // Detección de duplicados (solo al crear)
   if (!editing.value && !dupConfirmed.value) {
     const key = form.value.razonSocial.trim().toLowerCase()
     const dup = crmStore.visibleClients.find(c =>
@@ -970,14 +1029,19 @@ async function saveClient() {
   try {
     if (editing.value) {
       const updated = await crmStore.updateClient(editing.value._id, { ...form.value })
-      // Actualizar el panel de detalle si estaba abierto con ese cliente
-      if (detailClient.value?._id === editing.value._id) {
-        detailClient.value = updated
-      }
+      if (detailClient.value?._id === editing.value._id) detailClient.value = updated
+      closeModal()
     } else {
       await crmStore.createClient({ ...form.value })
+      if (keepOpen) {
+        form.value = emptyForm()
+        formError.value = ''
+        tagInput.value = ''
+        toast.success('Cliente creado')
+      } else {
+        closeModal()
+      }
     }
-    closeModal()
   } catch (e) {
     formError.value = e.response?.data?.message || 'Error al guardar'
   } finally {
@@ -1622,7 +1686,7 @@ function snoozeAndOpenDetail(client) {
 .cc-table thead th {
   padding: 0.65rem 0.85rem;
   text-align: left;
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1631,6 +1695,15 @@ function snoozeAndOpenDetail(client) {
   border-bottom: 1px solid rgba(107,142,58,.12);
   white-space: nowrap;
 }
+
+.cc-th-sort {
+  cursor: pointer; user-select: none;
+  transition: color 0.15s, background 0.15s;
+}
+.cc-th-sort:hover { color: var(--color-primary); background: rgba(107,142,58,.08); }
+.cc-sort-ico { font-size: 0.7rem; margin-left: 3px; opacity: 0.5; transition: opacity 0.15s; }
+.cc-th-sort:hover .cc-sort-ico,
+.cc-th-sort .bi-sort-up, .cc-th-sort .bi-sort-down { opacity: 1; color: var(--color-primary); }
 
 .cc-tr {
   cursor: pointer;

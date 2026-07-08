@@ -3,6 +3,7 @@ import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NotificationBell from '@/components/NotificationBell.vue'
 import UserManual from '@/components/UserManual.vue'
+import GlobalSearch from '@/components/GlobalSearch.vue'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useLocale } from '@/composables/useLocale'
 import { useDarkModeToggle } from '@/composables/useDarkModeToggle'
@@ -116,6 +117,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
 <template>
   <NotificationBell v-if="showNav" />
   <UserManual v-if="showNav" ref="manual" />
+  <GlobalSearch v-if="showNav" ref="globalSearch" />
   <div v-if="showNav && mobileOpen" class="sidebar-backdrop" @click="closeMobile" />
   <button v-if="showNav" class="mobile-toggle" @click="mobileOpen = !mobileOpen" type="button" :aria-label="locale === 'pt' ? 'Abrir menu de navegação' : 'Abrir menú de navegación'">
     <i :class="mobileOpen ? 'bi bi-x' : 'bi bi-list'"></i>
@@ -255,6 +257,10 @@ onBeforeUnmount(() => { notificationsStore.stop() })
     </nav>
 
     <div class="sidebar-bottom-actions">
+      <button class="sidebar-search-btn" @click="$refs.globalSearch.openSearch(); closeMobile()" type="button">
+        <i class="bi bi-search"></i>
+        <span class="nav-label">Buscar <kbd>Ctrl+K</kbd></span>
+      </button>
       <button class="sidebar-manual-btn" @click="$refs.manual.open = true; closeMobile()" type="button">
         <i class="bi bi-question-circle-fill"></i>
         <span class="nav-label">{{ nav.manual }}</span>
@@ -458,7 +464,7 @@ main.app-content.nav-open { margin-left: var(--sidebar-w-open); }
   border-top: 1px solid #f1f5f9; padding-top: 0.5rem; margin-top: 0.5rem;
 }
 
-.sidebar-logout, .sidebar-manual-btn {
+.sidebar-logout, .sidebar-manual-btn, .sidebar-search-btn {
   display: flex; align-items: center; width: 100%; gap: 0;
   padding: 0.55rem 0.6rem; border-radius: 10px; border: none;
   background: transparent; font-weight: 500; font-size: 0.85rem;
@@ -467,10 +473,20 @@ main.app-content.nav-open { margin-left: var(--sidebar-w-open); }
 }
 .sidebar-logout { color: #64748b; }
 .sidebar-logout:hover { background: rgba(220,38,38,0.07); color: #dc2626; }
-.sidebar-logout i, .sidebar-manual-btn i { font-size: 1.1rem; flex-shrink: 0; width: 28px; text-align: center; }
+.sidebar-logout i, .sidebar-manual-btn i, .sidebar-search-btn i { font-size: 1.1rem; flex-shrink: 0; width: 28px; text-align: center; }
 
 .sidebar-manual-btn { display: none; color: #64748b; }
 .sidebar-manual-btn:hover { background: rgba(59,107,46,0.07); color: #1e293b; }
+
+.sidebar-search-btn { color: #64748b; }
+.sidebar-search-btn:hover { background: rgba(59,107,46,0.07); color: #3b6b2e; }
+.sidebar-search-btn .nav-label { display: flex; align-items: center; gap: 0.5rem; }
+.sidebar-search-btn kbd {
+  font-size: 0.65rem; font-weight: 700; color: #94a3b8;
+  background: #f1f5f9; border: 1px solid #e2e8f0;
+  border-radius: 4px; padding: 0 4px; line-height: 1.6;
+  font-family: inherit; text-transform: none;
+}
 
 .sidebar-dark-btn, .sidebar-lang-btn {
   display: flex; align-items: center; width: 100%; gap: 0;
@@ -562,11 +578,14 @@ main.app-content.nav-open { margin-left: var(--sidebar-w-open); }
 
 [data-theme="dark"] .sidebar-manual-btn,
 [data-theme="dark"] .sidebar-dark-btn,
-[data-theme="dark"] .sidebar-lang-btn { color: rgba(255,255,255,0.5); }
+[data-theme="dark"] .sidebar-lang-btn,
+[data-theme="dark"] .sidebar-search-btn { color: rgba(255,255,255,0.5); }
 
 [data-theme="dark"] .sidebar-manual-btn:hover,
 [data-theme="dark"] .sidebar-dark-btn:hover,
-[data-theme="dark"] .sidebar-lang-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+[data-theme="dark"] .sidebar-lang-btn:hover,
+[data-theme="dark"] .sidebar-search-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+[data-theme="dark"] .sidebar-search-btn kbd { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.35); }
 
 /* ── Mobile toggle: glassmorphism ── */
 [data-theme="dark"] .mobile-toggle {

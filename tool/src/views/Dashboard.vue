@@ -19,6 +19,59 @@
 
       <div v-else>
 
+        <!-- ── Tareas pendientes operativas ── -->
+        <section v-if="hasAlerts" class="dash-alerts-section">
+          <h2 class="dash-alerts-title"><i class="bi bi-lightning-charge-fill"></i> Alertas operativas</h2>
+          <div class="dash-alerts-grid">
+
+            <div v-if="clientesSinCotizar.length" class="dash-alert-card dash-alert-card--warn">
+              <div class="dash-alert-hd">
+                <i class="bi bi-file-earmark-x-fill"></i>
+                <span>Clientes sin cotizar (60+ días)</span>
+                <span class="dash-alert-count">{{ crmStore.visibleClients.filter(c => c.tipoCliente === 'normal' && (!c.ultimaCotizacion || (Date.now() - new Date(c.ultimaCotizacion).getTime()) > 5184000000)).length }}</span>
+              </div>
+              <ul class="dash-alert-list">
+                <li v-for="c in clientesSinCotizar" :key="c._id">
+                  <i class="bi bi-building"></i>
+                  {{ c.razonSocial || c.name }}
+                </li>
+              </ul>
+              <a class="dash-alert-link" href="/crm">Ver en CRM <i class="bi bi-arrow-right"></i></a>
+            </div>
+
+            <div v-if="clientesPotencialesSinActividad.length" class="dash-alert-card dash-alert-card--orange">
+              <div class="dash-alert-hd">
+                <i class="bi bi-person-exclamation"></i>
+                <span>Potenciales sin actividad (7+ días)</span>
+                <span class="dash-alert-count">{{ crmStore.visibleClients.filter(c => c.tipoCliente === 'potencial' && (!c.updatedAt || (Date.now() - new Date(c.updatedAt).getTime()) > 604800000)).length }}</span>
+              </div>
+              <ul class="dash-alert-list">
+                <li v-for="c in clientesPotencialesSinActividad" :key="c._id">
+                  <i class="bi bi-star-fill"></i>
+                  {{ c.razonSocial || c.name }}
+                </li>
+              </ul>
+              <a class="dash-alert-link" href="/crm">Ver en CRM <i class="bi bi-arrow-right"></i></a>
+            </div>
+
+            <div v-if="campanasActivas.length" class="dash-alert-card dash-alert-card--green">
+              <div class="dash-alert-hd">
+                <i class="bi bi-megaphone-fill"></i>
+                <span>Campañas activas</span>
+                <span class="dash-alert-count">{{ campanasActivas.length }}</span>
+              </div>
+              <ul class="dash-alert-list">
+                <li v-for="c in campanasActivas" :key="c._id">
+                  <i class="bi bi-megaphone"></i>
+                  {{ c.nombre }}
+                </li>
+              </ul>
+              <a class="dash-alert-link" href="/marketing">Ver en Marketing <i class="bi bi-arrow-right"></i></a>
+            </div>
+
+          </div>
+        </section>
+
         <section class="period-section">
           <h2>Periodo de gráficos</h2>
           <div class="period-toolbar">
@@ -348,6 +401,9 @@
 
 import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
+import { computed, onMounted } from 'vue'
+import { useCrmStore } from '@/stores/crm'
+import { useMarketingStore } from '@/stores/marketing'
 import {
   Chart,
   ArcElement,
@@ -382,6 +438,48 @@ Chart.register(
 )
 
 export default {
+  setup() {
+    const crmStore = useCrmStore()
+    const mStore = useMarketingStore()
+
+    const clientesSinCotizar = computed(() => {
+      const now = Date.now()
+      const DAYS60 = 60 * 24 * 60 * 60 * 1000
+      return crmStore.visibleClients.filter(c => {
+        if (c.tipoCliente !== 'normal') return false
+        const last = c.ultimaCotizacion ? new Date(c.ultimaCotizacion).getTime() : 0
+        return !last || (now - last) > DAYS60
+      }).slice(0, 5)
+    })
+
+    const clientesPotencialesSinActividad = computed(() => {
+      const now = Date.now()
+      const DAYS7 = 7 * 24 * 60 * 60 * 1000
+      return crmStore.visibleClients.filter(c => {
+        if (c.tipoCliente !== 'potencial') return false
+        const last = c.updatedAt ? new Date(c.updatedAt).getTime() : 0
+        return (now - last) > DAYS7
+      }).slice(0, 5)
+    })
+
+    const campanasActivas = computed(() =>
+      mStore.campaigns.filter(c => c.estado === 'activa').slice(0, 4)
+    )
+
+    const hasAlerts = computed(() =>
+      clientesSinCotizar.value.length > 0 ||
+      clientesPotencialesSinActividad.value.length > 0 ||
+      campanasActivas.value.length > 0
+    )
+
+    onMounted(() => {
+      if (!crmStore.visibleClients.length) crmStore.fetchClients().catch(() => {})
+      if (!mStore.campaigns.length) mStore.fetchCampaigns().catch(() => {})
+    })
+
+    return { clientesSinCotizar, clientesPotencialesSinActividad, campanasActivas, hasAlerts, crmStore, mStore }
+  },
+
   data() {
 
     return {
@@ -1858,6 +1956,64 @@ h1 {
 .status-pill-finished  { background: #dcfce7; color: #166534; }
 .status-pill-pending   { background: #fef9c3; color: #854d0e; }
 .status-pill-stopped   { background: #fee2e2; color: #991b1b; }
+
+/* ── Alertas operativas ── */
+.dash-alerts-section {
+  margin-bottom: 1.5rem;
+}
+.dash-alerts-title {
+  font-size: 0.88rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--color-muted);
+  margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.dash-alerts-title i { color: #f59e0b; font-size: 1rem; }
+.dash-alerts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.85rem;
+}
+.dash-alert-card {
+  border-radius: 14px; padding: 1rem 1.1rem;
+  border-left: 4px solid transparent;
+  background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.dash-alert-card--warn   { border-left-color: #f59e0b; background: #fffbeb; }
+.dash-alert-card--orange { border-left-color: #f97316; background: #fff7ed; }
+.dash-alert-card--green  { border-left-color: #22c55e; background: #f0fdf4; }
+.dash-alert-hd {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem; font-weight: 700; color: #374151;
+  margin-bottom: 0.6rem; flex-wrap: wrap;
+  text-transform: none; letter-spacing: 0;
+}
+.dash-alert-hd i { font-size: 1rem; }
+.dash-alert-card--warn .dash-alert-hd i   { color: #d97706; }
+.dash-alert-card--orange .dash-alert-hd i { color: #ea580c; }
+.dash-alert-card--green .dash-alert-hd i  { color: #16a34a; }
+.dash-alert-count {
+  margin-left: auto;
+  font-size: 0.78rem; font-weight: 800;
+  background: rgba(0,0,0,0.06); border-radius: 999px;
+  padding: 1px 8px;
+}
+.dash-alert-list {
+  list-style: none; padding: 0; margin: 0 0 0.65rem;
+  display: flex; flex-direction: column; gap: 0.3rem;
+}
+.dash-alert-list li {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.82rem; color: #374151;
+  text-transform: none; letter-spacing: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dash-alert-list li i { font-size: 0.78rem; opacity: 0.55; flex-shrink: 0; }
+.dash-alert-link {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.78rem; font-weight: 600; color: #3b6b2e;
+  text-decoration: none; text-transform: none; letter-spacing: 0;
+  transition: opacity 0.15s;
+}
+.dash-alert-link:hover { opacity: 0.75; }
 </style>
 
 <style>
@@ -1902,4 +2058,12 @@ h1 {
   border-color: rgba(255,255,255,0.09) !important;
 }
 [data-theme="dark"] .chart-detail-header { border-bottom-color: rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .dash-alert-card { background: rgba(13,18,35,0.65) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important; }
+[data-theme="dark"] .dash-alert-card--warn   { background: rgba(217,119, 6,0.08) !important; }
+[data-theme="dark"] .dash-alert-card--orange { background: rgba(234, 88,12,0.08) !important; }
+[data-theme="dark"] .dash-alert-card--green  { background: rgba( 22,163,74,0.08) !important; }
+[data-theme="dark"] .dash-alert-hd { color: rgba(255,255,255,0.85) !important; }
+[data-theme="dark"] .dash-alert-list li { color: rgba(255,255,255,0.65) !important; }
+[data-theme="dark"] .dash-alert-count { background: rgba(255,255,255,0.1) !important; color: rgba(255,255,255,0.7) !important; }
+[data-theme="dark"] .dash-alert-link { color: #FF8C42 !important; }
 </style>

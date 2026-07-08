@@ -222,6 +222,15 @@ select {
   padding: 1.8rem;
 }
 
+/* ── Accesibilidad tipográfica: mínimo legible ── */
+/* Ningún texto de interfaz debe ser menor a 0.78rem (≈12.5px a base 16px) */
+.cc-stale-badge { font-size: 0.75rem !important; }
+.cc-badge, .cc-tipo, .cc-stage, .cc-tag,
+.mk-tab-badge, .ca-type-badge, .ca-act-type,
+.ci-lbl, .ci-num { font-size: 0.78rem !important; }
+.cc-stale-tooltip, .dif-label, .dif-char-count,
+.ca-item-meta, .dif-muted { font-size: 0.78rem !important; }
+
 .machine-layout {
   width: min(700px, 90vw);
   max-width: 90vw;
