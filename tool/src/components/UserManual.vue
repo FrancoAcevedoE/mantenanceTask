@@ -16,14 +16,16 @@
           </header>
 
           <nav class="manual-nav">
-            <!-- Documentos de ventas (top) -->
-            <div class="manual-nav-group-label">Área de ventas</div>
-            <button v-for="s in SALES_SECTIONS" :key="s.id"
-              :class="['manual-nav-btn', 'manual-nav-btn--sales', { active: activeSection === s.id }]"
-              @click="activeSection = s.id">
-              <i :class="'bi ' + s.icon"></i> {{ s.label }}
-            </button>
-            <div class="manual-nav-divider" />
+            <!-- Documentos de ventas (top) — solo vendedor y admin_ventas -->
+            <template v-if="isSalesRole">
+              <div class="manual-nav-group-label">Área de ventas</div>
+              <button v-for="s in SALES_SECTIONS" :key="s.id"
+                :class="['manual-nav-btn', 'manual-nav-btn--sales', { active: activeSection === s.id }]"
+                @click="activeSection = s.id">
+                <i :class="'bi ' + s.icon"></i> {{ s.label }}
+              </button>
+              <div class="manual-nav-divider" />
+            </template>
             <!-- Manual técnico -->
             <div class="manual-nav-group-label">Manual técnico</div>
             <button v-for="s in sections" :key="s.id"
@@ -35,7 +37,7 @@
 
           <div class="manual-body">
             <!-- GUÍA DE VENTAS -->
-            <template v-if="activeSection === 'guia_ventas'">
+            <template v-if="activeSection === 'guia_ventas' && isSalesRole">
               <div class="manual-section sales-doc-section">
                 <div class="sales-doc-header">
                   <div class="sales-doc-title-row">
@@ -55,12 +57,48 @@
                 <template v-else-if="editing !== 'guia_ventas'">
                   <div v-if="docs.guia_ventas.content" class="sales-doc-content">{{ docs.guia_ventas.content }}</div>
                   <p v-else class="sales-doc-empty">Aún no hay contenido cargado.<span v-if="canEdit"> Hacé click en <strong>Editar</strong> para redactar la guía.</span></p>
+
+                  <!-- PDF adjunto -->
+                  <div class="sales-doc-pdf-section">
+                    <div v-if="docs.guia_ventas.pdfUrl" class="sales-doc-pdf-row">
+                      <i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444;font-size:1.1rem;flex-shrink:0"></i>
+                      <a :href="resolveFileUrl(docs.guia_ventas.pdfUrl)" target="_blank" rel="noopener" class="sales-doc-pdf-link">
+                        {{ docs.guia_ventas.pdfName || 'Guía de ventas.pdf' }}
+                      </a>
+                      <button v-if="canEdit" class="sales-doc-pdf-del" @click="removePdf('guia_ventas')" title="Quitar PDF">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                    <div v-else-if="canEdit" class="sales-doc-pdf-upload">
+                      <label class="sales-doc-upload-btn" :class="{ disabled: uploadingPdf }">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                        {{ uploadingPdf ? 'Subiendo…' : 'Adjuntar PDF' }}
+                        <input type="file" accept="application/pdf" :disabled="uploadingPdf"
+                          @change="e => uploadPdf('guia_ventas', e)" style="display:none" />
+                      </label>
+                    </div>
+                    <p v-else class="sales-doc-empty" style="margin-top:0.5rem">Sin PDF adjunto.</p>
+                  </div>
                 </template>
 
                 <!-- Modo edición -->
                 <template v-else>
                   <input v-model="editDraft.title" class="sales-doc-title-input" placeholder="Título del documento" />
-                  <textarea v-model="editDraft.content" class="sales-doc-textarea" rows="18" placeholder="Escribí aquí la guía de ventas…" />
+                  <textarea v-model="editDraft.content" class="sales-doc-textarea" rows="16" placeholder="Escribí aquí la guía de ventas…" />
+                  <!-- PDF también editable en modo edición -->
+                  <div class="sales-doc-pdf-section" style="margin-top:0.6rem">
+                    <div v-if="docs.guia_ventas.pdfUrl" class="sales-doc-pdf-row">
+                      <i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444;font-size:1.1rem;flex-shrink:0"></i>
+                      <span class="sales-doc-pdf-link">{{ docs.guia_ventas.pdfName || 'PDF adjunto' }}</span>
+                      <button class="sales-doc-pdf-del" @click="removePdf('guia_ventas')" title="Quitar PDF"><i class="bi bi-x"></i></button>
+                    </div>
+                    <label v-else class="sales-doc-upload-btn" :class="{ disabled: uploadingPdf }">
+                      <i class="bi bi-file-earmark-arrow-up"></i>
+                      {{ uploadingPdf ? 'Subiendo…' : 'Adjuntar PDF' }}
+                      <input type="file" accept="application/pdf" :disabled="uploadingPdf"
+                        @change="e => uploadPdf('guia_ventas', e)" style="display:none" />
+                    </label>
+                  </div>
                   <div class="sales-doc-actions">
                     <button class="sales-doc-save-btn" :disabled="saving" @click="saveDoc('guia_ventas')">
                       <i class="bi bi-check-lg"></i> {{ saving ? 'Guardando…' : 'Guardar' }}
@@ -72,7 +110,7 @@
             </template>
 
             <!-- PERFIL DE PUESTO -->
-            <template v-if="activeSection === 'perfil_puesto'">
+            <template v-if="activeSection === 'perfil_puesto' && isSalesRole">
               <div class="manual-section sales-doc-section">
                 <div class="sales-doc-header">
                   <div class="sales-doc-title-row">
@@ -609,7 +647,7 @@ defineExpose({ open })
 const currentUser = computed(() => {
   try { return JSON.parse(sessionStorage.getItem('user') || '{}') } catch { return {} }
 })
-const canEdit = computed(() => ['admin', 'admin_ventas'].includes(currentUser.value?.role))
+const canEdit = computed(() => currentUser.value?.role === 'admin_ventas')
 const isSalesRole = computed(() => ['admin_ventas', 'vendedor'].includes(currentUser.value?.role))
 
 // ── Documentos de ventas ──
@@ -738,7 +776,7 @@ const sectionByRoute = {
   AdminView: 'roles',
 }
 
-const activeSection = ref('guia_ventas')
+const activeSection = ref(isSalesRole.value ? 'guia_ventas' : 'maintenance')
 
 const toggleWithRoute = () => {
   const mapped = sectionByRoute[route.name] || (isSalesRole.value ? 'guia_ventas' : 'inventory')

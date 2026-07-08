@@ -1,10 +1,10 @@
 /// <reference lib="webworker" />
-import { clientsClaim } from 'workbox-core'
 import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
 
 self.skipWaiting()
-clientsClaim()
+// clientsClaim() eliminado: causaba que el SW tomara páginas abiertas mid-session,
+// disparando controllerchange → reload() y perdiendo el click de cambio de idioma en Windows.
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
