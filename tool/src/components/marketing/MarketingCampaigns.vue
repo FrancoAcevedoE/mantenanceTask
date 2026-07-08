@@ -218,30 +218,45 @@
                 </label>
               </div>
             </div>
+
+            <!-- Clientes específicos -->
+            <div class="mk-client-selector">
+              <div class="mk-client-sel-hd">
+                <span class="mk-client-sel-title">Clientes específicos</span>
+                <span v-if="form.segmento.clienteIds.length" class="mk-client-sel-count">
+                  {{ form.segmento.clienteIds.length }} seleccionado{{ form.segmento.clienteIds.length !== 1 ? 's' : '' }}
+                </span>
+                <button v-if="form.segmento.clienteIds.length" class="mk-client-clear" @click="form.segmento.clienteIds = []">
+                  Limpiar
+                </button>
+              </div>
+              <div class="mk-client-search-wrap">
+                <i class="bi bi-search mk-client-search-ico"></i>
+                <input v-model="clientSearch" type="text" placeholder="Buscar cliente por nombre, código..." class="mk-client-search" />
+              </div>
+              <div class="mk-client-list">
+                <div v-if="!clientsForSelector.length" class="mk-client-empty">
+                  {{ clientSearch ? 'Sin resultados' : 'No hay clientes cargados' }}
+                </div>
+                <label v-for="c in clientsForSelector" :key="c._id" class="mk-client-row"
+                  :class="{ selected: form.segmento.clienteIds.includes(String(c._id)) }">
+                  <input type="checkbox" :value="String(c._id)" v-model="form.segmento.clienteIds" />
+                  <span class="mk-client-info">
+                    <span class="mk-client-name">{{ c.razonSocial || c.nombreComercial }}</span>
+                    <span class="mk-client-meta">
+                      <span v-if="c.codigoCliente" class="mk-client-code">#{{ c.codigoCliente }}</span>
+                      <span class="mk-client-stage" :style="{ color: stageColor(c.pipelineEstado) }">
+                        {{ stageLabel(c.pipelineEstado) }}
+                      </span>
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
             <div class="mk-preview-dest">
               <i class="bi bi-people"></i>
               <strong>{{ previewTargetCount }}</strong> destinatario{{ previewTargetCount !== 1 ? 's' : '' }} con este segmento
-            </div>
-
-            <!-- Stats manuales -->
-            <div class="mk-section-hd">Métricas (actualización manual)</div>
-            <div class="mk-row">
-              <div class="mk-field">
-                <label>Enviados</label>
-                <input v-model.number="form.stats.enviados" type="number" min="0" />
-              </div>
-              <div class="mk-field">
-                <label>Abiertos</label>
-                <input v-model.number="form.stats.abiertos" type="number" min="0" />
-              </div>
-              <div class="mk-field">
-                <label>Respondidos</label>
-                <input v-model.number="form.stats.respondidos" type="number" min="0" />
-              </div>
-              <div class="mk-field">
-                <label>Convertidos</label>
-                <input v-model.number="form.stats.convertidos" type="number" min="0" />
-              </div>
             </div>
 
             <p v-if="formError" class="mk-error">{{ formError }}</p>
@@ -318,11 +333,13 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useMarketingStore } from '@/stores/marketing'
+import { useCrmStore }       from '@/stores/crm'
 import { useToast } from 'vue-toastification'
 import { API_BASE_URL } from '@/utils/api'
 
-const mStore = useMarketingStore()
-const toast  = useToast()
+const mStore   = useMarketingStore()
+const crmStore = useCrmStore()
+const toast    = useToast()
 
 const search       = ref('')
 const filterEstado = ref('')
@@ -332,6 +349,18 @@ const saving       = ref(false)
 const formError    = ref('')
 const deleting     = ref(null)
 const detailCamp   = ref(null)
+const clientSearch = ref('')
+
+const clientsForSelector = computed(() => {
+  const q = clientSearch.value.trim().toLowerCase()
+  let list = crmStore.visibleClients
+  if (q) list = list.filter(c =>
+    (c.razonSocial || c.nombreComercial || '').toLowerCase().includes(q) ||
+    String(c.codigoCliente || '').toLowerCase().includes(q) ||
+    (c.email || '').toLowerCase().includes(q)
+  )
+  return list.slice(0, 60)
+})
 
 // File state
 const pendingCover       = ref(null)   // File object pendiente de subir (nueva imagen)
@@ -395,7 +424,6 @@ function emptyForm() {
     nombre: '', tipo: 'email', estado: 'borrador',
     descripcion: '', fechaInicio: '', fechaFin: '',
     segmento: { tipoCliente: '', pipelineEstados: [], clienteIds: [] },
-    stats: { enviados: 0, abiertos: 0, respondidos: 0, convertidos: 0 },
   }
 }
 const form = ref(emptyForm())
@@ -432,6 +460,7 @@ function openNew() {
   editing.value = null
   form.value = emptyForm()
   formError.value = ''
+  clientSearch.value = ''
   resetFileState()
   showModal.value = true
 }
@@ -450,16 +479,10 @@ function openEdit(c) {
       pipelineEstados: [...(c.segmento?.pipelineEstados || [])],
       clienteIds:      [...(c.segmento?.clienteIds || [])],
     },
-    stats: {
-      enviados:    c.stats?.enviados    || 0,
-      abiertos:    c.stats?.abiertos    || 0,
-      respondidos: c.stats?.respondidos || 0,
-      convertidos: c.stats?.convertidos || 0,
-    },
   }
   formError.value = ''
+  clientSearch.value = ''
   resetFileState()
-  // Cargar datos de archivos existentes
   if (c.coverImage?.url) coverPreviewUrl.value = resolveUrl(c.coverImage.url)
   existingAttachments.value = c.attachments ? [...c.attachments] : []
   showModal.value = true
@@ -814,6 +837,63 @@ a.mk-attach-name:hover { text-decoration: underline; color: var(--color-primary)
 }
 .mk-dest-empty { font-size: 0.8rem; color: var(--color-muted); text-align: center; padding: 1rem; }
 
+/* Client selector */
+.mk-client-selector {
+  display: flex; flex-direction: column; gap: 0.45rem;
+}
+.mk-client-sel-hd {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.72rem;
+}
+.mk-client-sel-title {
+  font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--color-muted);
+}
+.mk-client-sel-count {
+  background: rgba(107,142,58,.12); color: var(--color-primary);
+  font-weight: 700; padding: 1px 8px; border-radius: 20px; font-size: 0.7rem;
+}
+.mk-client-clear {
+  font-size: 0.7rem; padding: 1px 8px; border-radius: 20px;
+  background: rgba(239,68,68,.08); color: #b91c1c;
+  border: 1px solid rgba(239,68,68,.2); cursor: pointer;
+  font-weight: 600; margin-left: auto;
+}
+.mk-client-clear:hover { background: rgba(239,68,68,.15); transform: none; box-shadow: none; }
+
+.mk-client-search-wrap { position: relative; }
+.mk-client-search-ico {
+  position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%);
+  color: var(--color-muted); font-size: 0.82rem; pointer-events: none;
+}
+.mk-client-search {
+  width: 100%; padding: 0.45rem 0.75rem 0.45rem 2rem;
+  border-radius: 8px; font-size: 0.82rem; box-sizing: border-box;
+}
+
+.mk-client-list {
+  max-height: 200px; overflow-y: auto;
+  border: 1px solid rgba(107,142,58,.15); border-radius: 10px;
+  display: flex; flex-direction: column;
+}
+.mk-client-empty {
+  padding: 1rem; text-align: center; font-size: 0.78rem; color: var(--color-muted);
+}
+.mk-client-row {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.4rem 0.75rem; cursor: pointer; font-size: 0.82rem;
+  border-bottom: 1px solid rgba(107,142,58,.06);
+  transition: background .12s;
+}
+.mk-client-row:last-child { border-bottom: none; }
+.mk-client-row:hover { background: rgba(107,142,58,.05); }
+.mk-client-row.selected { background: rgba(107,142,58,.09); }
+.mk-client-row input[type="checkbox"] { flex-shrink: 0; accent-color: var(--color-primary); width: 14px; height: 14px; }
+.mk-client-info { display: flex; flex-direction: column; gap: 0.05rem; flex: 1; min-width: 0; }
+.mk-client-name { font-weight: 600; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mk-client-meta { display: flex; align-items: center; gap: 0.4rem; }
+.mk-client-code { font-size: 0.65rem; font-weight: 700; color: var(--color-primary); }
+.mk-client-stage { font-size: 0.65rem; font-weight: 600; }
+
 [data-theme="dark"] .mkcamp-card,
 [data-theme="dark"] .mk-modal {
   background: rgba(13,18,35,.88) !important;
@@ -828,4 +908,8 @@ a.mk-attach-name:hover { text-decoration: underline; color: var(--color-primary)
 }
 [data-theme="dark"] .mk-attach-row { background: rgba(255,255,255,.03) !important; border-color: rgba(255,255,255,.07) !important; }
 [data-theme="dark"] .mk-attach-row--pending { background: rgba(59,130,246,.06) !important; border-color: rgba(59,130,246,.15) !important; }
+[data-theme="dark"] .mk-client-list { border-color: rgba(255,255,255,.1) !important; }
+[data-theme="dark"] .mk-client-row { border-bottom-color: rgba(255,255,255,.05) !important; }
+[data-theme="dark"] .mk-client-row:hover { background: rgba(255,255,255,.05) !important; }
+[data-theme="dark"] .mk-client-row.selected { background: rgba(107,142,58,.12) !important; }
 </style>
