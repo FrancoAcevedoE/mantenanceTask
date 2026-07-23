@@ -2,66 +2,13 @@
   <div class="page-container">
     <div class="admin-outer">
 
-      <!-- Columna izquierda: formulario (condicional) + lista de usuarios -->
+      <!-- Columna izquierda: lista de usuarios -->
       <div class="admin-left">
-        <div v-if="showCreateForm" class="panel-card admin-form">
-          <h2 class="title">{{ t.panelTitle }}</h2>
-
-          <!-- Foto de perfil -->
-          <div class="photo-picker-wrap">
-            <div class="photo-preview" @click="triggerPhotoInput" :title="user.photo ? 'Cambiar foto' : 'Agregar foto'">
-              <img v-if="user.photo" :src="user.photo" class="photo-img" alt="foto" />
-              <div v-else class="photo-placeholder">
-                <i class="bi bi-person-fill"></i>
-              </div>
-              <div class="photo-overlay"><i class="bi bi-camera-fill"></i></div>
-            </div>
-            <div class="photo-actions">
-              <button type="button" class="photo-btn" @click="triggerPhotoInput">
-                <i class="bi bi-upload"></i> {{ t.btnUploadPhoto }}
-              </button>
-              <button type="button" class="photo-btn photo-btn--camera" @click="triggerCamera">
-                <i class="bi bi-camera-fill"></i> {{ t.btnTakePhoto }}
-              </button>
-              <button v-if="user.photo" type="button" class="photo-btn photo-btn--remove" @click="user.photo = ''">
-                <i class="bi bi-trash-fill"></i> {{ t.btnRemovePhoto }}
-              </button>
-            </div>
-            <input ref="photoInputRef" type="file" accept="image/*" class="photo-input-hidden" @change="onPhotoFile" />
-            <input ref="cameraInputRef" type="file" accept="image/*" capture="user" class="photo-input-hidden" @change="onPhotoFile" />
-          </div>
-
-          <input type="text" id="name" v-model="user.name" :placeholder="t.phName"/>
-          <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" :placeholder="t.phDni"/>
-
-          <label for="password">{{ t.labelPassword }}</label>
-          <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" :placeholder="t.phPassword"/>
-
-          <label for="role">{{ t.labelRole }}</label>
-          <select id="role" v-model="user.role" :disabled="currentUserRole === 'admin_ventas' || currentUserRole === 'admin_marketing'">
-            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="operario">Operario</option>
-            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="supervisor">Supervisor</option>
-            <option v-if="currentUserRole !== 'admin_marketing'" value="vendedor">Vendedor</option>
-            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="admin_ventas">Admin de ventas</option>
-            <option value="marketing">Marketing</option>
-            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="admin_marketing">Admin de marketing</option>
-            <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="admin">Admin</option>
-          </select>
-
-          <p v-if="message" class="message">{{ message }}</p>
-
-          <div class="actions">
-            <button @click="createUser">{{ editingUserId ? t.btnSaveChanges : t.btnSaveUser }}</button>
-            <button class="secondary-button" @click="resetForm">{{ t.btnClear }}</button>
-            <button class="secondary-button" @click="toggleCreateForm">{{ t.btnCloseForm }}</button>
-          </div>
-        </div>
-
         <div class="panel-card users-panel">
           <div class="panel-header">
             <h2 class="title">{{ t.titleUsers }}</h2>
             <button class="toggle-form-button" @click="toggleCreateForm">
-              {{ showCreateForm ? t.btnHideForm : t.btnCreateUser }}
+              <i class="bi bi-person-plus-fill"></i> {{ t.btnCreateUser }}
             </button>
           </div>
 
@@ -154,6 +101,83 @@
       </div>
 
     </div>
+
+    <!-- ── Modal crear/editar usuario ── -->
+    <Teleport to="body">
+      <Transition name="au-fade">
+        <div v-if="showCreateForm" class="au-backdrop" @click.self="toggleCreateForm">
+          <div class="au-modal">
+            <div class="au-modal-hd">
+              <h2>{{ editingUserId ? t.editUserTitle : t.newUserTitle }}</h2>
+              <button type="button" class="au-close" @click="toggleCreateForm"><i class="bi bi-x-lg"></i></button>
+            </div>
+
+            <div class="au-modal-bd">
+              <!-- Foto de perfil -->
+              <div class="photo-picker-wrap">
+                <div class="photo-preview" @click="triggerPhotoInput" :title="user.photo ? 'Cambiar foto' : 'Agregar foto'">
+                  <img v-if="user.photo" :src="user.photo" class="photo-img" alt="foto" />
+                  <div v-else class="photo-placeholder">
+                    <i class="bi bi-person-fill"></i>
+                  </div>
+                  <div class="photo-overlay"><i class="bi bi-camera-fill"></i></div>
+                </div>
+                <div class="photo-actions">
+                  <button type="button" class="photo-btn" @click="triggerPhotoInput">
+                    <i class="bi bi-upload"></i> {{ t.btnUploadPhoto }}
+                  </button>
+                  <button type="button" class="photo-btn photo-btn--camera" @click="triggerCamera">
+                    <i class="bi bi-camera-fill"></i> {{ t.btnTakePhoto }}
+                  </button>
+                  <button v-if="user.photo" type="button" class="photo-btn photo-btn--remove" @click="user.photo = ''">
+                    <i class="bi bi-trash-fill"></i> {{ t.btnRemovePhoto }}
+                  </button>
+                </div>
+                <input ref="photoInputRef" type="file" accept="image/*" class="photo-input-hidden" @change="onPhotoFile" />
+                <input ref="cameraInputRef" type="file" accept="image/*" capture="user" class="photo-input-hidden" @change="onPhotoFile" />
+              </div>
+
+              <div class="au-field">
+                <label for="name">{{ t.labelName }}</label>
+                <input type="text" id="name" v-model="user.name" :placeholder="t.phName"/>
+              </div>
+
+              <div class="au-row">
+                <div class="au-field">
+                  <label for="dni">{{ t.labelDni }}</label>
+                  <input type="text" id="dni" v-model="user.dni" inputmode="numeric" maxlength="8" :placeholder="t.phDni"/>
+                </div>
+                <div class="au-field">
+                  <label for="password">{{ t.labelPassword }}</label>
+                  <input type="password" id="password" v-model="user.password" inputmode="numeric" maxlength="4" :placeholder="t.phPassword"/>
+                </div>
+              </div>
+
+              <div class="au-field">
+                <label for="role">{{ t.labelRole }}</label>
+                <select id="role" v-model="user.role" :disabled="currentUserRole === 'admin_ventas' || currentUserRole === 'admin_marketing'">
+                  <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="operario">Operario</option>
+                  <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="supervisor">Supervisor</option>
+                  <option v-if="currentUserRole !== 'admin_marketing'" value="vendedor">Vendedor</option>
+                  <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="admin_ventas">Admin de ventas</option>
+                  <option value="marketing">Marketing</option>
+                  <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="admin_marketing">Admin de marketing</option>
+                  <option v-if="currentUserRole !== 'admin_ventas' && currentUserRole !== 'admin_marketing'" value="admin">Admin</option>
+                </select>
+              </div>
+
+              <p v-if="message" class="message">{{ message }}</p>
+            </div>
+
+            <div class="au-modal-ft">
+              <button type="button" class="secondary-button" @click="resetForm">{{ t.btnClear }}</button>
+              <button type="button" @click="createUser">{{ editingUserId ? t.btnSaveChanges : t.btnSaveUser }}</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <ConfirmDialog
       :visible="confirmDialog.visible"
       :title="confirmDialog.title"
@@ -174,14 +198,15 @@ import { useLocale } from '@/composables/useLocale'
 
 const TRANSLATIONS = {
   es: {
-    panelTitle: 'Panel de Admin',
+    newUserTitle: 'Nuevo usuario', editUserTitle: 'Editar usuario',
     btnUploadPhoto: 'Subir foto', btnTakePhoto: 'Tomar foto', btnRemovePhoto: 'Quitar',
-    phName: 'Nombre', phDni: 'Documento', phPassword: 'Contraseña',
+    labelName: 'Nombre completo', labelDni: 'Documento (DNI)',
+    phName: 'Ej: Juan Pérez', phDni: 'Ej: 30123456', phPassword: '4 dígitos',
     labelPassword: 'Contraseña', labelRole: 'Rol',
     btnSaveChanges: 'Guardar cambios', btnSaveUser: 'Guardar usuario',
-    btnClear: 'Limpiar', btnCloseForm: 'Cerrar formulario',
+    btnClear: 'Limpiar',
     titleUsers: 'Usuarios',
-    btnHideForm: 'Ocultar formulario', btnCreateUser: 'Crear usuario',
+    btnCreateUser: 'Nuevo usuario',
     emptyUsers: 'No hay usuarios cargados todavía.',
     titleHidden: 'Usuarios ocultos',
     hiddenDesc: 'Estos usuarios no aparecen en formularios ni login. Desde aca podes eliminarlos definitivamente.',
@@ -197,14 +222,15 @@ const TRANSLATIONS = {
     roles: { admin: 'Admin', admin_ventas: 'Admin de ventas', vendedor: 'Vendedor', operario: 'Operario', supervisor: 'Supervisor', compras: 'Compras', admin_compras: 'Admin de compras', produccion: 'Producción', marketing: 'Marketing', admin_marketing: 'Admin de marketing' },
   },
   pt: {
-    panelTitle: 'Painel de Admin',
+    newUserTitle: 'Novo usuário', editUserTitle: 'Editar usuário',
     btnUploadPhoto: 'Enviar foto', btnTakePhoto: 'Tirar foto', btnRemovePhoto: 'Remover',
-    phName: 'Nome', phDni: 'Documento', phPassword: 'Senha',
+    labelName: 'Nome completo', labelDni: 'Documento (DNI)',
+    phName: 'Ex: João Silva', phDni: 'Ex: 30123456', phPassword: '4 dígitos',
     labelPassword: 'Senha', labelRole: 'Função',
     btnSaveChanges: 'Salvar alterações', btnSaveUser: 'Salvar usuário',
-    btnClear: 'Limpar', btnCloseForm: 'Fechar formulário',
+    btnClear: 'Limpar',
     titleUsers: 'Usuários',
-    btnHideForm: 'Ocultar formulário', btnCreateUser: 'Criar usuário',
+    btnCreateUser: 'Novo usuário',
     emptyUsers: 'Nenhum usuário registrado ainda.',
     titleHidden: 'Usuários ocultos',
     hiddenDesc: 'Estes usuários não aparecem em formulários nem no login. Aqui você pode excluí-los definitivamente.',
@@ -693,32 +719,106 @@ export default {
   letter-spacing: 0.03rem;
 }
 
-.admin-form label {
-  display: block;
-  width: 100%;
-  margin-top: 0.25rem;
-  color: #4b4b4b;
-  font-size: 0.95rem;
-  text-align: center;
+/* ── Modal crear/editar usuario ── */
+.au-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }
 
-.admin-form input,
-.admin-form select {
+.au-modal {
+  background: #fff;
+  border-radius: 20px;
+  width: min(480px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+}
+
+.au-modal-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.85rem;
+  border-bottom: 1px solid rgba(107, 142, 58, 0.12);
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+.au-modal-hd h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #1e293b;
+  letter-spacing: 0.03rem;
+}
+
+.au-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(107, 142, 58, 0.1);
+  color: #1e293b;
+  padding: 0;
+  font-size: 0.8rem;
+  box-shadow: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.au-modal-bd {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  flex: 1;
+}
+
+.au-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  text-align: left;
+}
+
+.au-field label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.au-field input,
+.au-field select {
   width: 100%;
-  padding: 8px 12px;
-  margin: 6px 0;
-  border-radius: 2rem;
+  padding: 0.55rem 0.85rem;
+  margin: 0;
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
   color: #1e293b;
-  text-align: center;
-  font-size: 0.9rem;
+  text-align: left;
+  font-size: 0.85rem;
 }
 
-.admin-form input:hover,
-.admin-form input:focus,
-.admin-form select:hover,
-.admin-form select:focus {
+.au-field input:hover,
+.au-field input:focus,
+.au-field select:hover,
+.au-field select:focus {
   outline: none;
   background: #ffffff;
   border-color: #3b6b2e;
@@ -726,11 +826,36 @@ export default {
   box-shadow: 0 0 0 3px rgba(59, 107, 46, 0.1);
 }
 
-.actions {
-  width: 100%;
+.au-row {
   display: grid;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+.au-modal-ft {
+  padding: 0.85rem 1.25rem 1rem;
+  border-top: 1px solid rgba(107, 142, 58, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+}
+
+.au-fade-enter-active,
+.au-fade-leave-active {
+  transition: opacity 0.2s;
+}
+.au-fade-enter-from,
+.au-fade-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .au-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 button {
@@ -1192,5 +1317,28 @@ button:hover {
 [data-theme="dark"] .danger-zone-button:disabled {
   background: rgba(220,162,156,0.3) !important;
   color: rgba(255,255,255,0.4) !important;
+}
+
+/* Modal crear/editar usuario dark */
+[data-theme="dark"] .au-modal {
+  background: rgba(10,14,28,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .au-modal-hd {
+  background: rgba(10,14,28,0.98) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .au-modal-hd h2 { color: #ffffff !important; }
+[data-theme="dark"] .au-close { background: rgba(255,255,255,0.07) !important; color: rgba(255,255,255,0.8) !important; }
+[data-theme="dark"] .au-field label { color: rgba(255,255,255,0.45) !important; }
+[data-theme="dark"] .au-field input,
+[data-theme="dark"] .au-field select {
+  background: rgba(13,18,35,0.7) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="dark"] .au-modal-ft {
+  background: rgba(10,14,28,0.98) !important;
+  border-color: rgba(255,255,255,0.08) !important;
 }
 </style>
