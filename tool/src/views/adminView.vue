@@ -674,9 +674,9 @@ export default {
 }
 
 .admin-outer {
-  width: min(1200px, 100%);
+  width: min(760px, 100%);
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: 360px 360px;
   gap: 1rem;
   align-items: start;
 }
