@@ -756,6 +756,7 @@ import { API_BASE_URL } from '@/utils/api'
 import { usePermissions } from '@/utils/permissions'
 import HelpTooltip from '@/components/HelpTooltip.vue'
 import { useLocale } from '@/composables/useLocale'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const { locale } = useLocale()
 
@@ -954,6 +955,7 @@ const { canManage, userId } = usePermissions()
 const productsStore = useProductsStore()
 const crmStore = useCrmStore()
 const toast = useToast()
+const { askPassword } = usePasswordConfirm()
 
 // ── Estado global ─────────────────────────────────────────────────────────────
 const activeTab = ref('list')
@@ -2128,8 +2130,9 @@ const quoteToDelete = ref(null)
 
 async function doDeleteQuote() {
   const q = quoteToDelete.value
-  quoteToDelete.value = null
   if (!q) return
+  try { await askPassword() } catch { quoteToDelete.value = null; return }
+  quoteToDelete.value = null
   try {
     await axios.delete(`${API_BASE_URL}/quotes/${q._id}`, authH())
     toast.success('Cotización eliminada.')

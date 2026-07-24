@@ -165,6 +165,7 @@ import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { usePermissions } from '@/utils/permissions'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const { canManage } = usePermissions()
 
@@ -290,12 +291,14 @@ async function saveGroup() {
   }
 }
 
+const { askPassword } = usePasswordConfirm()
 const groupToDelete = ref(null)
 
 async function doRemoveGroup() {
   const g = groupToDelete.value
   groupToDelete.value = null
   if (!g) return
+  try { await askPassword() } catch { return }
   try {
     await axios.delete(`${API_BASE_URL}/product-groups/${g._id}`, authHeader())
     toast.success('Grupo eliminado')

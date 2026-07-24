@@ -157,6 +157,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const authCfg = () => ({ headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } })
 const api = {
@@ -273,8 +274,11 @@ async function saveForm() {
   }
 }
 
+const { askPassword } = usePasswordConfirm()
+
 async function confirmDelete(f) {
   if (!confirm(`¿Eliminar la fórmula "${f.nombre}"?`)) return
+  try { await askPassword() } catch { return }
   await api.delete(`/formulas-resina/${f._id}`)
   formulas.value = formulas.value.filter(x => x._id !== f._id)
   if (selectedFormula.value?._id === f._id) selectedFormula.value = null

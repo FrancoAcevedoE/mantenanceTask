@@ -158,8 +158,10 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 import { usePermissions } from '@/utils/permissions'
 import { useLocale } from '@/composables/useLocale'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const { locale } = useLocale()
+const { askPassword } = usePasswordConfirm()
 const { canManageCompras } = usePermissions()
 
 const TRANSLATIONS = {
@@ -308,6 +310,7 @@ async function saveForm() {
 
 async function confirmDelete(p) {
   if (!confirm(`¿Eliminar "${p.nombre}"?`)) return
+  try { await askPassword() } catch { return }
   await api.delete(`/proveedores/${p._id}`)
   await load()
 }

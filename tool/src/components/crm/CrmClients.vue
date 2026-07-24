@@ -693,10 +693,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useCrmStore } from '@/stores/crm'
 import { usePermissions } from '@/utils/permissions'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 import * as XLSX from 'xlsx'
 import { useToast } from 'vue-toastification'
 
 const { canManage, userId } = usePermissions()
+const { askPassword } = usePasswordConfirm()
 const toast = useToast()
 
 const emit = defineEmits(['new-quote'])
@@ -1053,6 +1055,7 @@ function confirmDelete(c) { deleting.value = c }
 
 async function doDelete() {
   if (!deleting.value) return
+  try { await askPassword() } catch { return }
   saving.value = true
   try {
     await crmStore.deleteClient(deleting.value._id)

@@ -174,6 +174,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const authCfg = () => ({ headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } })
 const api = {
@@ -290,8 +291,11 @@ async function saveForm() {
   }
 }
 
+const { askPassword } = usePasswordConfirm()
+
 async function confirmDelete(r) {
   if (!confirm(`¿Eliminar el registro de "${r.producto}"?`)) return
+  try { await askPassword() } catch { return }
   await api.delete(`/produccion/registros/${r._id}`)
   registros.value = registros.value.filter(x => x._id !== r._id)
 }

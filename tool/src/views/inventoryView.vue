@@ -433,6 +433,7 @@ import InventorySubNav from '@/components/InventorySubNav.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { usePermissions } from '@/utils/permissions'
 import { useLocale } from '@/composables/useLocale'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const { locale } = useLocale()
 
@@ -571,6 +572,7 @@ const TRANSLATIONS = {
 const t = computed(() => TRANSLATIONS[locale.value] || TRANSLATIONS.es)
 
 const { canManage } = usePermissions()
+const { askPassword } = usePasswordConfirm()
 
 const store = useProductsStore()
 const toast = useToast()
@@ -634,6 +636,7 @@ function clearFilters() {
 const showDeleteAllConfirm = ref(false)
 
 async function deleteAll() {
+  try { await askPassword() } catch { showDeleteAllConfirm.value = false; return }
   try {
     const res = await store.deleteAllProducts()
     toast.success(res.message || 'Productos eliminados')

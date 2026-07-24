@@ -195,6 +195,7 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useLocale } from '@/composables/useLocale'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const TRANSLATIONS = {
   es: {
@@ -258,7 +259,8 @@ export default {
 
   setup() {
     const { locale } = useLocale()
-    return { locale }
+    const { askPassword } = usePasswordConfirm()
+    return { locale, askPassword }
   },
 
   data() {
@@ -408,6 +410,7 @@ export default {
       window.scrollTo({ top: 0, behavior: "smooth" })
     },
     async deleteUser(userId) {
+      try { await this.askPassword() } catch { return }
       try {
         await axios.delete(`${API_BASE_URL}/users/${userId}`, this.authConfig())
         this.message = "Usuario ocultado correctamente"
@@ -431,6 +434,7 @@ export default {
         'Eliminar definitivamente este usuario? Esta accion no se puede deshacer.',
         'Eliminar',
         async () => {
+          try { await this.askPassword() } catch { return }
           try {
             await axios.delete(`${API_BASE_URL}/users/${userId}/permanent`, this.authConfig())
             this.$notify.success("Usuario eliminado definitivamente")

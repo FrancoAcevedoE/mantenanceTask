@@ -470,10 +470,12 @@ import { useMarketingStore } from '@/stores/marketing'
 import { useCrmStore }       from '@/stores/crm'
 import { useToast } from 'vue-toastification'
 import { API_BASE_URL } from '@/utils/api'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const mStore   = useMarketingStore()
 const crmStore = useCrmStore()
 const toast    = useToast()
+const { askPassword } = usePasswordConfirm()
 
 const search       = ref('')
 const filterEstado = ref('')
@@ -771,6 +773,7 @@ async function save() {
 
 async function doDelete() {
   if (!deleting.value) return
+  try { await askPassword() } catch { return }
   saving.value = true
   try {
     await mStore.deleteCampaign(deleting.value._id)

@@ -127,6 +127,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const authCfg = () => ({ headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } })
 const api = {
@@ -226,8 +227,11 @@ async function saveForm() {
   }
 }
 
+const { askPassword } = usePasswordConfirm()
+
 async function confirmDelete(o) {
   if (!confirm(`¿Eliminar la orden #${o.numero}?`)) return
+  try { await askPassword() } catch { return }
   await api.delete(`/produccion/ordenes/${o._id}`)
   ordenes.value = ordenes.value.filter(x => x._id !== o._id)
 }

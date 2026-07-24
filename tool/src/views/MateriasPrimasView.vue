@@ -277,8 +277,10 @@ import {
 } from 'chart.js'
 import { useDarkMode } from '@/composables/useDarkMode'
 import { useLocale } from '@/composables/useLocale'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const { locale } = useLocale()
+const { askPassword } = usePasswordConfirm()
 const TRANSLATIONS = {
   es: {
     title: 'Stock de Materias Primas', btnPrint: 'Imprimir', btnExcel: 'Excel', btnNew: 'Nueva',
@@ -569,6 +571,7 @@ async function saveForm() {
 
 async function confirmDelete(mp) {
   if (!confirm(`¿Eliminar "${mp.nombre}"?`)) return
+  try { await askPassword() } catch { return }
   await api.delete(`/materias-primas/${mp._id}`)
   await load()
 }

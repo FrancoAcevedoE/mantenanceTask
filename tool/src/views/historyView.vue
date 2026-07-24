@@ -125,6 +125,7 @@ import axios from "axios"
 import { API_BASE_URL } from '@/utils/api'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useLocale } from '@/composables/useLocale'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const TRANSLATIONS = {
   es: {
@@ -170,7 +171,8 @@ export default {
 
   setup() {
     const { locale } = useLocale()
-    return { locale }
+    const { askPassword } = usePasswordConfirm()
+    return { locale, askPassword }
   },
 
   data() {
@@ -338,6 +340,7 @@ export default {
         message: `¿Eliminar el registro de ${item.machine}? Esta accion no se puede deshacer.`,
         confirmText: 'Eliminar', type: 'danger',
         action: async () => {
+          try { await this.askPassword() } catch { return }
           try {
             await axios.delete(`${API_BASE_URL}/maintenance/${item._id}`, this.authConfig())
             this.$notify.success("Registro eliminado correctamente")

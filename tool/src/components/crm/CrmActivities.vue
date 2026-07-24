@@ -202,6 +202,7 @@
 import { ref, computed } from 'vue'
 import { useCrmStore } from '@/stores/crm'
 import CrmDifusion from './CrmDifusion.vue'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const crmStore = useCrmStore()
 
@@ -274,10 +275,13 @@ async function toggleDone(act) {
   await crmStore.toggleActivityComplete(act._id)
 }
 
+const { askPassword } = usePasswordConfirm()
+
 function confirmDelete(act) { deleting.value = act }
 
 async function doDelete() {
   if (!deleting.value) return
+  try { await askPassword() } catch { return }
   saving.value = true
   try {
     await crmStore.deleteActivity(deleting.value._id)

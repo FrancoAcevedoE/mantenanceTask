@@ -148,8 +148,10 @@ import { useToast } from 'vue-toastification'
 import InventorySubNav from '@/components/InventorySubNav.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { usePermissions } from '@/utils/permissions'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 const { canManage } = usePermissions()
+const { askPassword } = usePasswordConfirm()
 
 const toast = useToast()
 const colors = ref([])
@@ -251,8 +253,9 @@ async function saveColor() {
 
 async function doDelete() {
   const c = colorToDelete.value
-  colorToDelete.value = null
   if (!c) return
+  try { await askPassword() } catch { colorToDelete.value = null; return }
+  colorToDelete.value = null
   try {
     await axios.delete(`${API_BASE_URL}/colors/${c._id}`, authHeader())
     toast.success('Color eliminado')

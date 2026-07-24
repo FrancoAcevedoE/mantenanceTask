@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import NotificationBell from '@/components/NotificationBell.vue'
 import UserManual from '@/components/UserManual.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
+import PasswordConfirmDialog from '@/components/PasswordConfirmDialog.vue'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useLocale } from '@/composables/useLocale'
 import { useDarkModeToggle } from '@/composables/useDarkModeToggle'
@@ -118,6 +119,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
   <NotificationBell v-if="showNav" />
   <UserManual v-if="showNav" ref="manual" />
   <GlobalSearch v-if="showNav" ref="globalSearch" />
+  <PasswordConfirmDialog />
   <div v-if="showNav && mobileOpen" class="sidebar-backdrop" @click="closeMobile" />
   <button v-if="showNav" class="mobile-toggle" @click="mobileOpen = !mobileOpen" type="button" :aria-label="locale === 'pt' ? 'Abrir menu de navegação' : 'Abrir menú de navegación'">
     <i :class="mobileOpen ? 'bi bi-x' : 'bi bi-list'"></i>

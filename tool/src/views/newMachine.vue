@@ -240,9 +240,14 @@
 import axios from 'axios'
 import { API_BASE_URL } from '@/utils/api'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { usePasswordConfirm } from '@/composables/usePasswordConfirm'
 
 export default {
   components: { ConfirmDialog },
+  setup() {
+    const { askPassword } = usePasswordConfirm()
+    return { askPassword }
+  },
   data() {
     return {
 
@@ -441,6 +446,7 @@ export default {
       const id = this.machineConfirm.id
       this.machineConfirm.visible = false
       if (!id) return
+      try { await this.askPassword() } catch { return }
       try {
         await axios.delete(`${API_BASE_URL}/machines/${id}`, this.authConfig())
         this.$notify.success("Maquina ocultada correctamente")
