@@ -67,7 +67,8 @@
       "Bash(awk 'NR<=745' \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask/tool/src/views/sellerView.vue\")",
       "Bash(npm list *)",
       "Bash(node_modules/.bin/vite build *)",
-      "Bash(xargs ls)"
+      "Bash(xargs ls)",
+      "Bash(git -C \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask\" ls-files tool/.env tool/.env.production tool/.env.development)"
     ]
   }
 }
