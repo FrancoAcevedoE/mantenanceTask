@@ -670,6 +670,7 @@ export default {
   justify-content: center;
   align-items: flex-start;
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .admin-outer {
@@ -701,7 +702,7 @@ export default {
   text-align: center;
   padding: 1.25rem 1.5rem;
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 12px rgba(30, 41, 59, 0.08);
 }
@@ -733,7 +734,7 @@ export default {
 
 .au-modal {
   background: #fff;
-  border-radius: 20px;
+  border-radius: 14px;
   width: min(480px, 100%);
   max-height: 92vh;
   overflow-y: auto;
@@ -859,7 +860,7 @@ export default {
 }
 
 button {
-  border-radius: 2rem;
+  border-radius: 10px;
   padding: 10px;
   background: #3b6b2e;
   color: #ffffff;
@@ -890,7 +891,7 @@ button:hover {
 .danger-zone {
   margin-top: 1rem;
   padding: 0.85rem 1rem;
-  border-radius: 1rem;
+  border-radius: 10px;
   border: 1px solid #fecaca;
   background: #fef2f2;
 }
@@ -1021,15 +1022,17 @@ button:hover {
 }
 
 .user-item {
+  position: relative;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.75rem;
+  gap: 0.55rem;
+  padding: 0.55rem 0.75rem;
+  padding-right: 5rem;
+  border-radius: 10px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   box-shadow: none;
+  min-height: 52px;
 }
 
 .user-info {
@@ -1054,6 +1057,9 @@ button:hover {
 }
 
 .user-actions {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.5rem;
   display: flex;
   gap: 0.3rem;
   flex-shrink: 0;
@@ -1106,7 +1112,7 @@ button:hover {
 .deleted-zone {
   margin-top: 1rem;
   padding: 1rem;
-  border-radius: 1rem;
+  border-radius: 10px;
   border: 1px solid #fde68a;
   background: #fffbeb;
 }
@@ -1207,7 +1213,7 @@ button:hover {
   align-items: center;
   gap: 0.3rem;
   padding: 0.3rem 0.7rem;
-  border-radius: 2rem;
+  border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 600;
   background: #6b8e3a;
@@ -1258,17 +1264,21 @@ button:hover {
 }
 
 @media (max-width: 768px) {
+  .page-container {
+    padding: 0.35rem 0;
+  }
+
+  .admin-outer {
+    gap: 0.5rem;
+  }
+
   .panel-card {
     padding: 1rem;
+    border-radius: 10px;
   }
 
   .title {
-    font-size: 1.6rem;
-  }
-
-  .user-item {
-    flex-direction: column;
-    align-items: stretch;
+    font-size: 1.4rem;
   }
 
   .panel-header {
