@@ -131,7 +131,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
   </button>
 
   <aside v-if="showNav" :class="['sidebar', { 'sidebar--open': mobileOpen }]">
-    <nav class="sidebar-nav">
+    <nav :class="['sidebar-nav', { 'has-open': anyOpen }]">
 
       <!-- ── MANTENIMIENTO ── -->
       <div v-if="canMantenim" :class="['mod-group', { 'mod-group--muted': anyOpen && !openMantenim }]">
@@ -410,9 +410,19 @@ main.app-content.nav-open { margin-left: var(--sidebar-w-open); }
 .mod-group {
   width: 100%;
   opacity: 1;
-  transition: opacity 0.2s ease;
+  border-radius: 10px;
+  transition: opacity 0.2s ease, background 0.2s ease;
 }
-.mod-group--muted { opacity: 0.38; }
+.mod-group--muted { opacity: 0.22; }
+.has-open .mod-group:not(.mod-group--muted) .mod-header {
+  background: rgba(59,107,46,0.09);
+  color: #1e293b;
+}
+
+[data-theme="dark"] .has-open .mod-group:not(.mod-group--muted) .mod-header {
+  background: rgba(255,102,0,0.13);
+  color: #ffffff;
+}
 
 .mod-header {
   display: flex; align-items: center; width: 100%; gap: 0;
