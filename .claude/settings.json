@@ -68,7 +68,12 @@
       "Bash(npm list *)",
       "Bash(node_modules/.bin/vite build *)",
       "Bash(xargs ls)",
-      "Bash(git -C \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask\" ls-files tool/.env tool/.env.production tool/.env.development)"
+      "Bash(git -C \"/Users/francoemanuelacevedo/Documents/Practica profesional/mantenanceTask\" ls-files tool/.env tool/.env.production tool/.env.development)",
+      "Bash(mongosh mantenanceDB --quiet --eval \"db.users.findOne\\({dni: '40317809'}, {nombre:1, role:1, dni:1, _id:0}\\)\")",
+      "Bash(mongosh mantenanceDB --eval \"db.users.findOne\\({dni: '40317809'}, {nombre:1, role:1, dni:1, _id:0}\\)\")",
+      "Bash(mongosh mantenanceDB --quiet --eval \"db.users.findOne\\({dni: 40317809}, {nombre:1, role:1, dni:1, _id:0}\\)\")",
+      "Bash(node scripts/seedProveedores.js)",
+      "Bash(node node_modules/vite/bin/vite.js build)"
     ]
   }
 }

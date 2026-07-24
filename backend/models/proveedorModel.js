@@ -31,7 +31,9 @@ const proveedorSchema = new mongoose.Schema({
   email:        { type: String, default: '' },
   direccion:    { type: String, default: '' },
   ciudad:       { type: String, default: '' },
-  categoria:    { type: String, default: '' },        // qué tipo de materia prima provee
+  categoria:    { type: String, default: '' },
+  perfil:       { type: String, default: '', enum: ['', 'Internacional', 'Local Insumos', 'Servicios/Fletes'] },
+  criticidad:   { type: String, default: '', enum: ['', 'Alta (Tipo A)', 'Media (Tipo B)', 'Baja (Tipo C)'] },
   web:          { type: String, default: '' },
   notas:        { type: String, default: '' },
   evaluaciones:  [evaluacionSchema],

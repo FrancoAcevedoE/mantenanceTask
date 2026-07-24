@@ -40,6 +40,8 @@
           <span v-if="p.telefono" class="prov-info-item"><i class="bi bi-telephone"></i> {{ p.telefono }}</span>
           <span v-if="p.email" class="prov-info-item"><i class="bi bi-envelope"></i> {{ p.email }}</span>
           <span v-if="p.categoria" class="prov-cat-badge">{{ p.categoria }}</span>
+          <span v-if="p.perfil" class="prov-cat-badge prov-cat-badge--perfil">{{ p.perfil }}</span>
+          <span v-if="p.criticidad" class="prov-cat-badge prov-cat-badge--crit">{{ p.criticidad }}</span>
         </div>
 
         <div class="prov-card-actions">
@@ -72,6 +74,22 @@
           </label>
           <label>{{ t.fCategoria }}
             <input v-model="form.categoria" :placeholder="t.phCategoria" />
+          </label>
+          <label>Perfil ISO
+            <select v-model="form.perfil">
+              <option value="">— Sin clasificar —</option>
+              <option value="Internacional">Internacional</option>
+              <option value="Local Insumos">Local Insumos</option>
+              <option value="Servicios/Fletes">Servicios/Fletes</option>
+            </select>
+          </label>
+          <label>Criticidad
+            <select v-model="form.criticidad">
+              <option value="">— Sin clasificar —</option>
+              <option value="Alta (Tipo A)">Alta (Tipo A)</option>
+              <option value="Media (Tipo B)">Media (Tipo B)</option>
+              <option value="Baja (Tipo C)">Baja (Tipo C)</option>
+            </select>
           </label>
           <label>{{ t.fContacto }}
             <input v-model="form.contacto" :placeholder="t.phContacto" />
@@ -258,7 +276,7 @@ const search  = ref('')
 const showForm   = ref(false)
 const editingId  = ref(null)
 const savingForm = ref(false)
-const form = ref({ nombre: '', razonSocial: '', cuit: '', categoria: '', contacto: '', telefono: '', email: '', direccion: '' })
+const form = ref({ nombre: '', razonSocial: '', cuit: '', categoria: '', perfil: '', criticidad: '', contacto: '', telefono: '', email: '', direccion: '' })
 
 // ── Configuración global de criterios ────────────────────────────────────────
 const globalCriterios = ref([])
@@ -322,13 +340,13 @@ async function load() {
 
 function openCreate() {
   editingId.value = null
-  form.value = { nombre: '', razonSocial: '', cuit: '', categoria: '', contacto: '', telefono: '', email: '', direccion: '' }
+  form.value = { nombre: '', razonSocial: '', cuit: '', categoria: '', perfil: '', criticidad: '', contacto: '', telefono: '', email: '', direccion: '' }
   showForm.value = true
 }
 
 function openEdit(p) {
   editingId.value = p._id
-  form.value = { nombre: p.nombre, razonSocial: p.razonSocial || '', cuit: p.cuit || '', categoria: p.categoria || '', contacto: p.contacto || '', telefono: p.telefono || '', email: p.email || '', direccion: p.direccion || '' }
+  form.value = { nombre: p.nombre, razonSocial: p.razonSocial || '', cuit: p.cuit || '', categoria: p.categoria || '', perfil: p.perfil || '', criticidad: p.criticidad || '', contacto: p.contacto || '', telefono: p.telefono || '', email: p.email || '', direccion: p.direccion || '' }
   showForm.value = true
 }
 
@@ -474,6 +492,8 @@ onMounted(() => { load(); loadConfig() })
 .prov-info-grid { display: flex; flex-wrap: wrap; gap: .5rem; font-size: .82rem; align-items: center; }
 .prov-info-item { color: #6b7280; display: flex; align-items: center; gap: .3rem; }
 .prov-cat-badge { background: rgba(99,102,241,.12); color: #6366f1; padding: 2px 8px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+.prov-cat-badge--perfil { background: rgba(14,144,210,.12); color: #0E90D2; }
+.prov-cat-badge--crit   { background: rgba(34,197,94,.12); color: #22C55E; }
 
 .prov-card-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
 

@@ -195,6 +195,9 @@ onBeforeUnmount(() => { notificationsStore.stop() })
         </button>
         <Transition name="sidebar-collapse">
           <div v-show="openCompras" class="mod-links">
+            <router-link to="/compras/dashboard" @click="closeMobile">
+              <i class="bi bi-pie-chart-fill"></i><span class="nav-label">Dashboard</span>
+            </router-link>
             <router-link to="/compras/materias-primas" @click="closeMobile">
               <i class="bi bi-boxes"></i><span class="nav-label">{{ nav.rawMaterials }}</span>
             </router-link>

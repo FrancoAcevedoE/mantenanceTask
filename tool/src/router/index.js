@@ -20,6 +20,7 @@ import CrmView from '@/views/CrmView.vue'
 import MarketingView from '@/views/MarketingView.vue'
 import MateriasPrimasView from '@/views/MateriasPrimasView.vue'
 import ProveedoresView from '@/views/ProveedoresView.vue'
+import ProveedoresDashboardView from '@/views/ProveedoresDashboardView.vue'
 import ResinaPlantaView from '@/views/ResinaPlantaView.vue'
 import ProduccionProgramacionView from '@/views/ProduccionProgramacionView.vue'
 import ProduccionSeguimientoView from '@/views/ProduccionSeguimientoView.vue'
@@ -104,6 +105,9 @@ const router = createRouter({
     },
     {
       path: '/compras/proveedores', name: 'Proveedores', component: ProveedoresView, meta: { requiresAuth: true, roles: ['admin', 'admin_compras', 'compras'], bodyClass: 'bg-maintenance' }
+    },
+    {
+      path: '/compras/dashboard', name: 'ComprasDashboard', component: ProveedoresDashboardView, meta: { requiresAuth: true, roles: ['admin', 'admin_compras', 'compras'], bodyClass: 'bg-maintenance' }
     },
     {
       path: '/produccion/resinas', name: 'ProduccionResinas', component: ResinaPlantaView, meta: { requiresAuth: true, roles: ['admin', 'produccion'], bodyClass: 'bg-maintenance' }
