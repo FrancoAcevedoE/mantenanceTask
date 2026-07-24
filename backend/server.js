@@ -38,6 +38,7 @@ import salesDocRoutes       from "./routes/salesDocRoutes.js"
 import dashboardRoutes      from "./routes/dashboardRoutes.js"
 import materiasPrimasRoutes from "./routes/materiasPrimasRoutes.js"
 import proveedoresRoutes    from "./routes/proveedoresRoutes.js"
+import proveedorConfigRoutes from "./routes/proveedorConfigRoutes.js"
 import formulasResinaRoutes from "./routes/formulasResinaRoutes.js"
 import produccionRoutes     from "./routes/produccionRoutes.js"
 import campaignRoutes      from "./routes/campaignRoutes.js"
@@ -187,7 +188,8 @@ app.use("/api/colors", colorRoutes)
 app.use("/api/sales-docs", salesDocRoutes)
 app.use("/api/dashboard",  dashboardRoutes)
 app.use("/api/materias-primas",  materiasPrimasRoutes)
-app.use("/api/proveedores",      proveedoresRoutes)
+app.use("/api/proveedores",       proveedoresRoutes)
+app.use("/api/proveedores-config", proveedorConfigRoutes)
 app.use("/api/formulas-resina",  formulasResinaRoutes)
 app.use("/api/produccion",       produccionRoutes)
 app.use("/api/campaigns",       campaignRoutes)

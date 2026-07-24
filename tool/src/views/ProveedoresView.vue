@@ -3,7 +3,14 @@
     <div class="prov-card-wrap">
     <div class="prov-header">
       <h2 class="prov-title"><i class="bi bi-truck"></i> {{ t.title }}</h2>
-      <button v-if="canManageCompras" class="btn-primary" @click="openCreate"><i class="bi bi-plus-lg"></i> {{ t.btnNew }}</button>
+      <div class="prov-header-actions">
+        <button v-if="isAdmin" class="btn-config" @click="openConfig">
+          <i class="bi bi-sliders"></i> Criterios de calificación
+        </button>
+        <button v-if="canManageCompras" class="btn-primary" @click="openCreate">
+          <i class="bi bi-plus-lg"></i> {{ t.btnNew }}
+        </button>
+      </div>
     </div>
 
     <div class="prov-filters">
@@ -131,17 +138,47 @@
       </div>
     </div>
 
+    <!-- Modal configuración de criterios globales -->
+    <div v-if="showConfig" class="modal-overlay" @click.self="showConfig = false">
+      <div class="modal-box modal-sm">
+        <h3><i class="bi bi-sliders"></i> Criterios de calificación</h3>
+        <p class="config-desc">Estos criterios se aplican a todos los proveedores al calificar.</p>
+
+        <div class="calif-criterios">
+          <div v-if="!configForm.length" class="calif-empty-hint">
+            Sin criterios. Agregá uno para empezar.
+          </div>
+          <div v-for="(cr, i) in configForm" :key="i" class="calif-row">
+            <input v-model="cr.nombre" placeholder="Ej: Cumplimiento, Precio…" class="calif-input" />
+            <button class="btn-rm-cr" type="button" @click="configForm.splice(i, 1)">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+          <button class="btn-add-cr" type="button" @click="configForm.push({ nombre: '' })">
+            <i class="bi bi-plus"></i> Agregar criterio
+          </button>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-ghost" @click="showConfig = false">Cancelar</button>
+          <button class="btn-primary" :disabled="savingConfig" @click="saveConfig">
+            {{ savingConfig ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal calificación A/B/C -->
     <div v-if="showCalif" class="modal-overlay" @click.self="showCalif = false">
       <div class="modal-box">
         <h3><i class="bi bi-clipboard-check"></i> Calificar — {{ califItem?.nombre }}</h3>
 
-        <div class="calif-criterios">
-          <div v-if="!califForm.criterios.length" class="calif-empty-hint">
-            Agregá al menos un criterio para calificar.
-          </div>
+        <div v-if="!califForm.criterios.length" class="calif-empty-hint">
+          No hay criterios configurados. Configuralos desde el botón "Criterios de calificación".
+        </div>
+        <div v-else class="calif-criterios">
           <div v-for="(cr, i) in califForm.criterios" :key="i" class="calif-row">
-            <input v-model="cr.nombre" placeholder="Nombre del criterio…" class="calif-input" />
+            <span class="calif-label-fixed">{{ cr.nombre }}</span>
             <div class="grade-picker">
               <button
                 v-for="g in ['A','B','C']"
@@ -151,13 +188,7 @@
                 @click="cr.valor = g"
               >{{ g }}</button>
             </div>
-            <button class="btn-rm-cr" type="button" @click="removeCriterio(i)">
-              <i class="bi bi-x"></i>
-            </button>
           </div>
-          <button class="btn-add-cr" type="button" @click="addCriterio">
-            <i class="bi bi-plus"></i> Agregar criterio
-          </button>
         </div>
 
         <label class="eval-comment-label">Comentario
@@ -166,7 +197,7 @@
 
         <div class="modal-actions">
           <button class="btn-ghost" @click="showCalif = false">Cancelar</button>
-          <button class="btn-primary" :disabled="savingCalif || !califForm.criterios.some(c => c.nombre.trim())" @click="saveCalif">
+          <button class="btn-primary" :disabled="savingCalif || !califForm.criterios.length" @click="saveCalif">
             {{ savingCalif ? 'Guardando…' : 'Guardar calificación' }}
           </button>
         </div>
@@ -325,6 +356,37 @@ const evalForm = ref({ calidad: 3, tiempoEntrega: 3, precio: 3, servicio: 3, com
 const showEvalHist = ref(false)
 const evalHistItem = ref(null)
 
+// ── Configuración global de criterios ────────────────────────────────────────
+const globalCriterios = ref([])   // [{ nombre }]
+const showConfig      = ref(false)
+const savingConfig    = ref(false)
+const configForm      = ref([])   // copia editable
+
+async function loadConfig() {
+  try {
+    const { data } = await api.get('/proveedores-config')
+    globalCriterios.value = data.criterios || []
+  } catch { /* sin criterios configurados */ }
+}
+
+function openConfig() {
+  configForm.value = globalCriterios.value.map(c => ({ nombre: c.nombre }))
+  showConfig.value = true
+}
+
+async function saveConfig() {
+  savingConfig.value = true
+  try {
+    const { data } = await api.put('/proveedores-config', {
+      criterios: configForm.value.filter(c => c.nombre.trim())
+    })
+    globalCriterios.value = data.criterios || []
+    showConfig.value = false
+  } finally {
+    savingConfig.value = false
+  }
+}
+
 // ── Calificaciones A/B/C ─────────────────────────────────────────────────────
 const showCalif     = ref(false)
 const califItem     = ref(null)
@@ -445,14 +507,11 @@ function formatDate(d) {
 
 function openCalif(p) {
   califItem.value = p
-  califForm.value = { criterios: [{ nombre: '', valor: 'A' }], comentario: '' }
+  califForm.value = {
+    criterios: globalCriterios.value.map(c => ({ nombre: c.nombre, valor: 'A' })),
+    comentario: ''
+  }
   showCalif.value = true
-}
-function addCriterio() {
-  califForm.value.criterios.push({ nombre: '', valor: 'A' })
-}
-function removeCriterio(i) {
-  califForm.value.criterios.splice(i, 1)
 }
 async function saveCalif() {
   if (!califForm.value.criterios.some(c => c.nombre.trim())) return
@@ -488,7 +547,7 @@ function overallGrade(cal) {
   return avg >= 2.67 ? 'A' : avg >= 1.67 ? 'B' : 'C'
 }
 
-onMounted(load)
+onMounted(() => { load(); loadConfig() })
 </script>
 
 <style scoped>
@@ -514,6 +573,15 @@ onMounted(load)
 }
 
 .prov-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin-bottom: 1.25rem; }
+.prov-header-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.btn-config {
+  background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+  border-radius: 2rem; padding: .5rem 1.1rem; cursor: pointer;
+  font-weight: 600; font-size: .85rem; display: flex; align-items: center; gap: .4rem;
+  transition: background .15s, color .15s;
+}
+.btn-config:hover { background: #e2e8f0; color: #1e293b; }
+.config-desc { font-size: .85rem; color: #6b7280; margin: -.25rem 0 .25rem; }
 .prov-title { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; margin: 0; color: #1e293b; }
 
 .prov-filters { margin-bottom: 1.25rem; }
@@ -568,6 +636,7 @@ onMounted(load)
 .calif-criterios { display: flex; flex-direction: column; gap: .6rem; }
 .calif-empty-hint { font-size: .85rem; color: #9ca3af; text-align: center; padding: .5rem; }
 .calif-row { display: flex; align-items: center; gap: .5rem; }
+.calif-label-fixed { flex: 1; font-size: .88rem; font-weight: 600; color: #374151; }
 .calif-input {
   flex: 1; padding: .45rem .75rem; border-radius: 2rem;
   border: 1px solid #d1d5db; background: #fff; color: #333;
@@ -687,6 +756,10 @@ onMounted(load)
 [data-theme="dark"] .btn-add-cr     { border-color: rgba(255,255,255,0.15) !important; color: rgba(255,255,255,0.45) !important; }
 [data-theme="dark"] .btn-add-cr:hover { border-color: #22c55e !important; color: #86efac !important; }
 [data-theme="dark"] .prov-grade-label { color: rgba(255,255,255,0.4) !important; }
+[data-theme="dark"] .btn-config { background: rgba(255,255,255,0.07) !important; border-color: rgba(255,255,255,0.1) !important; color: rgba(255,255,255,0.7) !important; }
+[data-theme="dark"] .btn-config:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; }
+[data-theme="dark"] .calif-label-fixed { color: rgba(255,255,255,0.85) !important; }
+[data-theme="dark"] .config-desc { color: rgba(255,255,255,0.4) !important; }
 [data-theme="dark"] .btn-ghost:hover { background: rgba(255,255,255,0.07) !important; }
 [data-theme="dark"] .eval-label-sm,
 [data-theme="dark"] .eval-hist-comment { color: rgba(255,255,255,0.5) !important; }
