@@ -1,5 +1,17 @@
 import mongoose from 'mongoose'
 
+const criterioCSchema = new mongoose.Schema({
+  nombre: { type: String, default: '' },
+  valor:  { type: String, enum: ['A', 'B', 'C'], default: 'A' },
+}, { _id: false })
+
+const calificacionSchema = new mongoose.Schema({
+  fecha:     { type: Date, default: Date.now },
+  criterios: [criterioCSchema],
+  comentario:{ type: String, default: '' },
+  usuario:   { type: String, default: '' },
+}, { _id: true })
+
 const evaluacionSchema = new mongoose.Schema({
   fecha:        { type: Date, default: Date.now },
   calidad:      { type: Number, min: 1, max: 5 },   // 1-5 estrellas
@@ -22,8 +34,9 @@ const proveedorSchema = new mongoose.Schema({
   categoria:    { type: String, default: '' },        // qué tipo de materia prima provee
   web:          { type: String, default: '' },
   notas:        { type: String, default: '' },
-  evaluaciones: [evaluacionSchema],
-  activo:       { type: Boolean, default: true },
+  evaluaciones:  [evaluacionSchema],
+  calificaciones:[calificacionSchema],
+  activo:        { type: Boolean, default: true },
 }, { timestamps: true })
 
 proveedorSchema.virtual('promedioEvaluacion').get(function () {

@@ -83,4 +83,30 @@ router.delete('/:id/evaluacion/:evId', verifyToken, checkRole(...CAN_USE_COMPRAS
   }
 })
 
+// POST /api/proveedores/:id/calificacion  (solo admin)
+router.post('/:id/calificacion', verifyToken, checkRole('admin'), async (req, res) => {
+  try {
+    const item = await Proveedor.findById(req.params.id)
+    if (!item) return res.status(404).json({ error: 'No encontrado' })
+    item.calificaciones.push({ ...req.body, usuario: req.user?.name || '', fecha: new Date() })
+    await item.save()
+    res.json(item)
+  } catch (e) {
+    res.status(400).json({ error: e.message })
+  }
+})
+
+// DELETE /api/proveedores/:id/calificacion/:calId  (solo admin)
+router.delete('/:id/calificacion/:calId', verifyToken, checkRole('admin'), async (req, res) => {
+  try {
+    const item = await Proveedor.findById(req.params.id)
+    if (!item) return res.status(404).json({ error: 'No encontrado' })
+    item.calificaciones = item.calificaciones.filter(c => String(c._id) !== req.params.calId)
+    await item.save()
+    res.json(item)
+  } catch (e) {
+    res.status(400).json({ error: e.message })
+  }
+})
+
 export default router
