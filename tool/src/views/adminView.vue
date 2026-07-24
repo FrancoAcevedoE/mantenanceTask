@@ -409,16 +409,23 @@ export default {
       }
       window.scrollTo({ top: 0, behavior: "smooth" })
     },
-    async deleteUser(userId) {
-      try { await this.askPassword() } catch { return }
-      try {
-        await axios.delete(`${API_BASE_URL}/users/${userId}`, this.authConfig())
-        this.message = "Usuario ocultado correctamente"
-        this.$notify.success("Usuario ocultado correctamente")
-        await this.loadUsers()
-      } catch (error) {
-        this.$notify.notifyApiError(error, "No se pudo eliminar el usuario")
-      }
+    deleteUser(userId) {
+      this.showConfirm(
+        'Ocultar usuario',
+        '¿Deseás ocultar este usuario? No se eliminará definitivamente.',
+        'Ocultar',
+        async () => {
+          try { await this.askPassword() } catch { return }
+          try {
+            await axios.delete(`${API_BASE_URL}/users/${userId}`, this.authConfig())
+            this.message = "Usuario ocultado correctamente"
+            this.$notify.success("Usuario ocultado correctamente")
+            await this.loadUsers()
+          } catch (error) {
+            this.$notify.notifyApiError(error, "No se pudo eliminar el usuario")
+          }
+        }
+      )
     },
     showConfirm(title, message, confirmText, action) {
       this.confirmDialog = { visible: true, title, message, confirmText, type: 'danger', action }
@@ -464,14 +471,7 @@ export default {
       )
     },
     async doPurge() {
-      const confirmationKeyword = window.prompt(
-        "Para confirmar definitivamente, escribi BORRAR"
-      )
-
-      if (confirmationKeyword !== "BORRAR") {
-        this.$notify.error("Operacion cancelada: palabra clave incorrecta")
-        return
-      }
+      try { await this.askPassword() } catch { return }
 
       this.isPurging = true
 
