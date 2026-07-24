@@ -55,6 +55,11 @@ const openCompras    = ref(false)
 const openProduccion = ref(false)
 const openMarketing  = ref(false)
 
+const anyOpen = computed(() =>
+  openMantenim.value || openVentas.value || openCompras.value ||
+  openProduccion.value || openMarketing.value
+)
+
 function autoOpenModules() {
   if (pathInGroup(MANTENIM_PATHS))   openMantenim.value   = true
   if (pathInGroup(VENTAS_PATHS))     openVentas.value     = true
@@ -129,7 +134,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
     <nav class="sidebar-nav">
 
       <!-- ── MANTENIMIENTO ── -->
-      <div v-if="canMantenim" class="mod-group">
+      <div v-if="canMantenim" :class="['mod-group', { 'mod-group--muted': anyOpen && !openMantenim }]">
         <button class="mod-header" @click="openMantenim = !openMantenim">
           <i class="bi bi-wrench-adjustable-circle"></i>
           <span>{{ nav.maintenance }}</span>
@@ -157,7 +162,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       </div>
 
       <!-- ── VENTAS ── -->
-      <div v-if="canVentas" class="mod-group">
+      <div v-if="canVentas" :class="['mod-group', { 'mod-group--muted': anyOpen && !openVentas }]">
         <button class="mod-header" @click="openVentas = !openVentas">
           <i class="bi bi-graph-up-arrow"></i>
           <span>{{ nav.sales }}</span>
@@ -182,7 +187,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       </div>
 
       <!-- ── COMPRAS ── -->
-      <div v-if="canCompras" class="mod-group">
+      <div v-if="canCompras" :class="['mod-group', { 'mod-group--muted': anyOpen && !openCompras }]">
         <button class="mod-header" @click="openCompras = !openCompras">
           <i class="bi bi-cart3"></i>
           <span>{{ nav.purchases }}</span>
@@ -204,7 +209,7 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       </div>
 
       <!-- ── MARKETING ── (solo para roles marketing puros) -->
-      <div v-if="canMarketingOnly" class="mod-group">
+      <div v-if="canMarketingOnly" :class="['mod-group', { 'mod-group--muted': anyOpen && !openMarketing }]">
         <button class="mod-header" @click="openMarketing = !openMarketing">
           <i class="bi bi-megaphone-fill"></i>
           <span>Marketing</span>
@@ -243,14 +248,14 @@ onBeforeUnmount(() => { notificationsStore.stop() })
       </div>
 
       <!-- ── ADMIN link para admin_marketing ── -->
-      <div v-if="canMarketingOnly && role === 'admin_marketing'" class="mod-group mod-group--admin">
+      <div v-if="canMarketingOnly && role === 'admin_marketing'" :class="['mod-group mod-group--admin', { 'mod-group--muted': anyOpen }]">
         <router-link to="/adminView" @click="closeMobile" class="mod-link-flat">
           <i class="bi bi-person-plus-fill"></i><span class="nav-label">Usuarios</span>
         </router-link>
       </div>
 
       <!-- ── ADMIN ── -->
-      <div v-if="canUsers" class="mod-group mod-group--admin">
+      <div v-if="canUsers" :class="['mod-group mod-group--admin', { 'mod-group--muted': anyOpen }]">
         <router-link to="/adminView" @click="closeMobile" class="mod-link-flat">
           <i class="bi bi-person-plus-fill"></i><span class="nav-label">{{ nav.users }}</span>
         </router-link>
@@ -402,7 +407,12 @@ main.app-content.nav-open { margin-left: var(--sidebar-w-open); }
 .sidebar-nav::-webkit-scrollbar { display: none; }
 
 /* ── Module group ── */
-.mod-group { width: 100%; }
+.mod-group {
+  width: 100%;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+.mod-group--muted { opacity: 0.38; }
 
 .mod-header {
   display: flex; align-items: center; width: 100%; gap: 0;
